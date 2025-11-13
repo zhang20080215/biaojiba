@@ -1,0 +1,2502 @@
+[
+  {
+    "rank": 1,
+    "title": "肖申克的救赎",
+    "rating": 9.7,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p480747492.jpg",
+    "localCover": "movie_covers\\001_1749479311.jpg",
+    "year": "1994",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 2,
+    "title": "霸王别姬",
+    "rating": 9.6,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2561716440.jpg",
+    "localCover": "movie_covers\\002_1749479312.jpg",
+    "year": "1993",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 3,
+    "title": "泰坦尼克号",
+    "rating": 9.5,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p457760035.jpg",
+    "localCover": "movie_covers\\003_1749479314.jpg",
+    "year": "1997",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 4,
+    "title": "阿甘正传",
+    "rating": 9.5,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2372307693.jpg",
+    "localCover": "movie_covers\\004_1749479316.jpg",
+    "year": "1994",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 5,
+    "title": "千与千寻",
+    "rating": 9.4,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2557573348.jpg",
+    "localCover": "movie_covers\\005_1749479316.jpg",
+    "year": "2001",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 6,
+    "title": "美丽人生",
+    "rating": 9.5,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2578474613.jpg",
+    "localCover": "movie_covers\\006_1749479317.jpg",
+    "year": "1997",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 7,
+    "title": "这个杀手不太冷",
+    "rating": 9.4,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2913554676.jpg",
+    "localCover": "movie_covers\\007_1749479318.jpg",
+    "year": "1994",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 8,
+    "title": "星际穿越",
+    "rating": 9.4,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2614988097.jpg",
+    "localCover": "movie_covers\\008_1749479320.jpg",
+    "year": "2014",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 9,
+    "title": "盗梦空间",
+    "rating": 9.4,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p513344864.jpg",
+    "localCover": "movie_covers\\009_1749479321.jpg",
+    "year": "2010",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 10,
+    "title": "楚门的世界",
+    "rating": 9.4,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p479682972.jpg",
+    "localCover": "movie_covers\\010_1749479324.jpg",
+    "year": "1998",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 11,
+    "title": "辛德勒的名单",
+    "rating": 9.5,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p492406163.jpg",
+    "localCover": "movie_covers\\011_1749479324.jpg",
+    "year": "1993",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 12,
+    "title": "忠犬八公的故事",
+    "rating": 9.4,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2587099240.jpg",
+    "localCover": "movie_covers\\012_1749479325.jpg",
+    "year": "2009",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 13,
+    "title": "海上钢琴师",
+    "rating": 9.3,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2914698334.jpg",
+    "localCover": "movie_covers\\013_1749479327.jpg",
+    "year": "1998",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 14,
+    "title": "三傻大闹宝莱坞",
+    "rating": 9.2,
+    "cover": "https://img2.doubanio.com/view/photo/s_ratio_poster/public/p579729551.jpg",
+    "localCover": "movie_covers\\014_1749479328.jpg",
+    "year": "2009",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 15,
+    "title": "疯狂动物城",
+    "rating": 9.2,
+    "cover": "https://img2.doubanio.com/view/photo/s_ratio_poster/public/p2323981221.jpg",
+    "localCover": "movie_covers\\015_1749479331.jpg",
+    "year": "2016",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 16,
+    "title": "放牛班的春天",
+    "rating": 9.3,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2884280708.jpg",
+    "localCover": "movie_covers\\016_1749479334.jpg",
+    "year": "2004",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 17,
+    "title": "机器人总动员",
+    "rating": 9.3,
+    "cover": "https://img2.doubanio.com/view/photo/s_ratio_poster/public/p1461851991.jpg",
+    "localCover": "movie_covers\\017_1749479336.jpg",
+    "year": "2008",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 18,
+    "title": "无间道",
+    "rating": 9.3,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2564556863.jpg",
+    "localCover": "movie_covers\\018_1749479339.jpg",
+    "year": "2002",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 19,
+    "title": "控方证人",
+    "rating": 9.6,
+    "cover": "https://img2.doubanio.com/view/photo/s_ratio_poster/public/p2911817201.jpg",
+    "localCover": "movie_covers\\019_1749479339.jpg",
+    "year": "1957",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 20,
+    "title": "大话西游之大圣娶亲",
+    "rating": 9.2,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2455050536.jpg",
+    "localCover": "movie_covers\\020_1749479342.jpg",
+    "year": "1995",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 21,
+    "title": "熔炉",
+    "rating": 9.3,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p1363250216.jpg",
+    "localCover": "movie_covers\\021_1749479344.jpg",
+    "year": "2011",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 22,
+    "title": "触不可及",
+    "rating": 9.3,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p1454261925.jpg",
+    "localCover": "movie_covers\\022_1749479346.jpg",
+    "year": "2011",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 23,
+    "title": "教父",
+    "rating": 9.3,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p616779645.jpg",
+    "localCover": "movie_covers\\023_1749479348.jpg",
+    "year": "1972",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 24,
+    "title": "寻梦环游记",
+    "rating": 9.1,
+    "cover": "https://img2.doubanio.com/view/photo/s_ratio_poster/public/p2505426431.jpg",
+    "localCover": "movie_covers\\024_1749479349.jpg",
+    "year": "2017",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 25,
+    "title": "当幸福来敲门",
+    "rating": 9.1,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p1312700628.jpg",
+    "localCover": "movie_covers\\025_1749479352.jpg",
+    "year": "2006",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 26,
+    "title": "末代皇帝",
+    "rating": 9.3,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p452089833.jpg",
+    "localCover": "movie_covers\\026_1749479356.jpg",
+    "year": "1987",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 27,
+    "title": "哈利·波特与魔法石",
+    "rating": 9.2,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2913781448.jpg",
+    "localCover": "movie_covers\\027_1749479357.jpg",
+    "year": "2001",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 28,
+    "title": "龙猫",
+    "rating": 9.2,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2540924496.jpg",
+    "localCover": "movie_covers\\028_1749479360.jpg",
+    "year": "1988",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 29,
+    "title": "怦然心动",
+    "rating": 9.1,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p501177648.jpg",
+    "localCover": "movie_covers\\029_1749479361.jpg",
+    "year": "2010",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 30,
+    "title": "活着",
+    "rating": 9.3,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2597919477.jpg",
+    "localCover": "movie_covers\\030_1749479363.jpg",
+    "year": "1994",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 31,
+    "title": "蝙蝠侠：黑暗骑士",
+    "rating": 9.2,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p462657443.jpg",
+    "localCover": "movie_covers\\031_1749479364.jpg",
+    "year": "2008",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 32,
+    "title": "指环王3：王者无敌",
+    "rating": 9.3,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2642829472.jpg",
+    "localCover": "movie_covers\\032_1749479364.jpg",
+    "year": "2003",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 33,
+    "title": "我不是药神",
+    "rating": 9.0,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2561305376.jpg",
+    "localCover": "movie_covers\\033_1749479365.jpg",
+    "year": "2018",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 34,
+    "title": "乱世佳人",
+    "rating": 9.3,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p1963126880.jpg",
+    "localCover": "movie_covers\\034_1749479367.jpg",
+    "year": "1939",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 35,
+    "title": "飞屋环游记",
+    "rating": 9.1,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2553594918.jpg",
+    "localCover": "movie_covers\\035_1749479369.jpg",
+    "year": "2009",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 36,
+    "title": "让子弹飞",
+    "rating": 9.0,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p1512562287.jpg",
+    "localCover": "movie_covers\\036_1749479371.jpg",
+    "year": "2010",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 37,
+    "title": "哈尔的移动城堡",
+    "rating": 9.1,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2907583906.jpg",
+    "localCover": "movie_covers\\037_1749479371.jpg",
+    "year": "2004",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 38,
+    "title": "素媛",
+    "rating": 9.3,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2118532944.jpg",
+    "localCover": "movie_covers\\038_1749479374.jpg",
+    "year": "2013",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 39,
+    "title": "十二怒汉",
+    "rating": 9.4,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2173577632.jpg",
+    "localCover": "movie_covers\\039_1749479377.jpg",
+    "year": "1957",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 40,
+    "title": "海蒂和爷爷",
+    "rating": 9.3,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2554525534.jpg",
+    "localCover": "movie_covers\\040_1749479377.jpg",
+    "year": "2015",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 41,
+    "title": "猫鼠游戏",
+    "rating": 9.1,
+    "cover": "https://img2.doubanio.com/view/photo/s_ratio_poster/public/p453924541.jpg",
+    "localCover": "movie_covers\\041_1749479380.jpg",
+    "year": "2002",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 42,
+    "title": "天空之城",
+    "rating": 9.2,
+    "cover": "https://img2.doubanio.com/view/photo/s_ratio_poster/public/p2892409201.jpg",
+    "localCover": "movie_covers\\042_1749479381.jpg",
+    "year": "1986",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 43,
+    "title": "摔跤吧！爸爸",
+    "rating": 9.0,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2401676338.jpg",
+    "localCover": "movie_covers\\043_1749479384.jpg",
+    "year": "2016",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 44,
+    "title": "鬼子来了",
+    "rating": 9.3,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2553104888.jpg",
+    "localCover": "movie_covers\\044_1749479387.jpg",
+    "year": "2000",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 45,
+    "title": "少年派的奇幻漂流",
+    "rating": 9.1,
+    "cover": "https://img2.doubanio.com/view/photo/s_ratio_poster/public/p1784592701.jpg",
+    "localCover": "movie_covers\\045_1749479389.jpg",
+    "year": "2012",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 46,
+    "title": "钢琴家",
+    "rating": 9.3,
+    "cover": "https://img2.doubanio.com/view/photo/s_ratio_poster/public/p1381339291.jpg",
+    "localCover": "movie_covers\\046_1749479391.jpg",
+    "year": "2002",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 47,
+    "title": "指环王2：双塔奇兵",
+    "rating": 9.2,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2640236255.jpg",
+    "localCover": "movie_covers\\047_1749479392.jpg",
+    "year": "2002",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 48,
+    "title": "大话西游之月光宝盒",
+    "rating": 9.0,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2561721372.jpg",
+    "localCover": "movie_covers\\048_1749479394.jpg",
+    "year": "1995",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 49,
+    "title": "死亡诗社",
+    "rating": 9.2,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2575465690.jpg",
+    "localCover": "movie_covers\\049_1749479394.jpg",
+    "year": "1989",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 50,
+    "title": "何以为家",
+    "rating": 9.1,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2555295759.jpg",
+    "localCover": "movie_covers\\050_1749479397.jpg",
+    "year": "2018",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 51,
+    "title": "闻香识女人",
+    "rating": 9.1,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2550757929.jpg",
+    "localCover": "movie_covers\\051_1749479400.jpg",
+    "year": "1992",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 52,
+    "title": "绿皮书",
+    "rating": 8.9,
+    "cover": "https://img2.doubanio.com/view/photo/s_ratio_poster/public/p2531065411.jpg",
+    "localCover": "movie_covers\\052_1749479402.jpg",
+    "year": "2018",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 53,
+    "title": "大闹天宫",
+    "rating": 9.4,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2184505167.jpg",
+    "localCover": "movie_covers\\053_1749479403.jpg",
+    "year": "1961(中国大陆)",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 54,
+    "title": "黑客帝国",
+    "rating": 9.1,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p451926968.jpg",
+    "localCover": "movie_covers\\054_1749479404.jpg",
+    "year": "1999",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 55,
+    "title": "指环王1：护戒使者",
+    "rating": 9.1,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2197698335.jpg",
+    "localCover": "movie_covers\\055_1749479406.jpg",
+    "year": "2001",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 56,
+    "title": "罗马假日",
+    "rating": 9.1,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2189265085.jpg",
+    "localCover": "movie_covers\\056_1749479408.jpg",
+    "year": "1953",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 57,
+    "title": "教父2",
+    "rating": 9.3,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2194138787.jpg",
+    "localCover": "movie_covers\\057_1749479410.jpg",
+    "year": "1974",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 58,
+    "title": "狮子王",
+    "rating": 9.1,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p726659067.jpg",
+    "localCover": "movie_covers\\058_1749479410.jpg",
+    "year": "1994",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 59,
+    "title": "天堂电影院",
+    "rating": 9.2,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2653054340.jpg",
+    "localCover": "movie_covers\\059_1749479411.jpg",
+    "year": "1988",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 60,
+    "title": "饮食男女",
+    "rating": 9.2,
+    "cover": "https://img2.doubanio.com/view/photo/s_ratio_poster/public/p1910899751.jpg",
+    "localCover": "movie_covers\\060_1749479413.jpg",
+    "year": "1994",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 61,
+    "title": "辩护人",
+    "rating": 9.2,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2158166535.jpg",
+    "localCover": "movie_covers\\061_1749479415.jpg",
+    "year": "2013",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 62,
+    "title": "搏击俱乐部",
+    "rating": 9.0,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p1910931622.jpg",
+    "localCover": "movie_covers\\062_1749479417.jpg",
+    "year": "1999",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 63,
+    "title": "本杰明·巴顿奇事",
+    "rating": 9.0,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2192535722.jpg",
+    "localCover": "movie_covers\\063_1749479417.jpg",
+    "year": "2008",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 64,
+    "title": "美丽心灵",
+    "rating": 9.1,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p1665997400.jpg",
+    "localCover": "movie_covers\\064_1749479418.jpg",
+    "year": "2001",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 65,
+    "title": "穿条纹睡衣的男孩",
+    "rating": 9.2,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p1473670352.jpg",
+    "localCover": "movie_covers\\065_1749479420.jpg",
+    "year": "2008",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 66,
+    "title": "情书",
+    "rating": 8.9,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2648230660.jpg",
+    "localCover": "movie_covers\\066_1749479420.jpg",
+    "year": "1995",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 67,
+    "title": "窃听风暴",
+    "rating": 9.2,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p1808872109.jpg",
+    "localCover": "movie_covers\\067_1749479421.jpg",
+    "year": "2006",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 68,
+    "title": "两杆大烟枪",
+    "rating": 9.1,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p792443418.jpg",
+    "localCover": "movie_covers\\068_1749479423.jpg",
+    "year": "1998",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 69,
+    "title": "哈利·波特与死亡圣器(下)",
+    "rating": 9.0,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2913457020.jpg",
+    "localCover": "movie_covers\\069_1749479425.jpg",
+    "year": "2011",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 70,
+    "title": "音乐之声",
+    "rating": 9.1,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p453788577.jpg",
+    "localCover": "movie_covers\\070_1749479428.jpg",
+    "year": "1965",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 71,
+    "title": "西西里的美丽传说",
+    "rating": 8.9,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2441988159.jpg",
+    "localCover": "movie_covers\\071_1749479429.jpg",
+    "year": "2000",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 72,
+    "title": "功夫",
+    "rating": 8.9,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2219011938.jpg",
+    "localCover": "movie_covers\\072_1749479431.jpg",
+    "year": "2004",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 73,
+    "title": "阿凡达",
+    "rating": 8.8,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2180085848.jpg",
+    "localCover": "movie_covers\\073_1749479434.jpg",
+    "year": "2009",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 74,
+    "title": "哈利·波特与阿兹卡班的囚徒",
+    "rating": 9.0,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2913456870.jpg",
+    "localCover": "movie_covers\\074_1749479436.jpg",
+    "year": "2004",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 75,
+    "title": "看不见的客人",
+    "rating": 8.8,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2498971355.jpg",
+    "localCover": "movie_covers\\075_1749479439.jpg",
+    "year": "2016",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 76,
+    "title": "拯救大兵瑞恩",
+    "rating": 9.1,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p1014542496.jpg",
+    "localCover": "movie_covers\\076_1749479443.jpg",
+    "year": "1998",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 77,
+    "title": "沉默的羔羊",
+    "rating": 8.9,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p1593414327.jpg",
+    "localCover": "movie_covers\\077_1749479444.jpg",
+    "year": "1991",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 78,
+    "title": "小鞋子",
+    "rating": 9.2,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2165511465.jpg",
+    "localCover": "movie_covers\\078_1749479444.jpg",
+    "year": "1997",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 79,
+    "title": "飞越疯人院",
+    "rating": 9.1,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p792238287.jpg",
+    "localCover": "movie_covers\\079_1749479446.jpg",
+    "year": "1975",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 80,
+    "title": "布达佩斯大饭店",
+    "rating": 8.9,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2183539003.jpg",
+    "localCover": "movie_covers\\080_1749479447.jpg",
+    "year": "2014",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 81,
+    "title": "蝴蝶效应",
+    "rating": 8.9,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2209066019.jpg",
+    "localCover": "movie_covers\\081_1749479447.jpg",
+    "year": "2004",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 82,
+    "title": "禁闭岛",
+    "rating": 8.9,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p450262388.jpg",
+    "localCover": "movie_covers\\082_1749479450.jpg",
+    "year": "2010",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 83,
+    "title": "致命魔术",
+    "rating": 8.9,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p480383375.jpg",
+    "localCover": "movie_covers\\083_1749479452.jpg",
+    "year": "2006",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 84,
+    "title": "心灵捕手",
+    "rating": 9.0,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p480965695.jpg",
+    "localCover": "movie_covers\\084_1749479454.jpg",
+    "year": "1997",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 85,
+    "title": "低俗小说",
+    "rating": 8.9,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p1910902213.jpg",
+    "localCover": "movie_covers\\085_1749479456.jpg",
+    "year": "1994",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 86,
+    "title": "超脱",
+    "rating": 9.0,
+    "cover": "https://img2.doubanio.com/view/photo/s_ratio_poster/public/p1305562621.jpg",
+    "localCover": "movie_covers\\086_1749479457.jpg",
+    "year": "2011",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 87,
+    "title": "哈利·波特与密室",
+    "rating": 8.9,
+    "cover": "https://img2.doubanio.com/view/photo/s_ratio_poster/public/p2913781951.jpg",
+    "localCover": "movie_covers\\087_1749479458.jpg",
+    "year": "2002",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 88,
+    "title": "摩登时代",
+    "rating": 9.3,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2263408369.jpg",
+    "localCover": "movie_covers\\088_1749479460.jpg",
+    "year": "1936",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 89,
+    "title": "喜剧之王",
+    "rating": 8.8,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2579932167.jpg",
+    "localCover": "movie_covers\\089_1749479463.jpg",
+    "year": "1999",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 90,
+    "title": "杀人回忆",
+    "rating": 8.9,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p1633113220.jpg",
+    "localCover": "movie_covers\\090_1749479463.jpg",
+    "year": "2003",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 91,
+    "title": "致命ID",
+    "rating": 8.9,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2558364386.jpg",
+    "localCover": "movie_covers\\091_1749479466.jpg",
+    "year": "2003",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 92,
+    "title": "春光乍泄",
+    "rating": 9.0,
+    "cover": "https://img2.doubanio.com/view/photo/s_ratio_poster/public/p465939041.jpg",
+    "localCover": "movie_covers\\092_1749479467.jpg",
+    "year": "1997",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 93,
+    "title": "一一",
+    "rating": 9.1,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2567845803.jpg",
+    "localCover": "movie_covers\\093_1749479469.jpg",
+    "year": "2000",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 94,
+    "title": "海豚湾",
+    "rating": 9.3,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2559579779.jpg",
+    "localCover": "movie_covers\\094_1749479469.jpg",
+    "year": "2009",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 95,
+    "title": "美国往事",
+    "rating": 9.1,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p477229647.jpg",
+    "localCover": "movie_covers\\095_1749479470.jpg",
+    "year": "1984",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 96,
+    "title": "加勒比海盗",
+    "rating": 8.8,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p1596085504.jpg",
+    "localCover": "movie_covers\\096_1749479470.jpg",
+    "year": "2003",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 97,
+    "title": "红辣椒",
+    "rating": 9.0,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2794776839.jpg",
+    "localCover": "movie_covers\\097_1749479472.jpg",
+    "year": "2006",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 98,
+    "title": "七宗罪",
+    "rating": 8.8,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2219586434.jpg",
+    "localCover": "movie_covers\\098_1749479476.jpg",
+    "year": "1995",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 99,
+    "title": "唐伯虎点秋香",
+    "rating": 8.7,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2357915564.jpg",
+    "localCover": "movie_covers\\099_1749479479.jpg",
+    "year": "1993",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 100,
+    "title": "还有明天",
+    "rating": 9.4,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2918279456.jpg",
+    "localCover": "movie_covers\\100_1749479482.jpg",
+    "year": "2023",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 101,
+    "title": "狩猎",
+    "rating": 9.1,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p1546987967.jpg",
+    "localCover": "movie_covers\\101_1749479484.jpg",
+    "year": "2012",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 102,
+    "title": "幽灵公主",
+    "rating": 8.9,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2920895053.jpg",
+    "localCover": "movie_covers\\102_1749479485.jpg",
+    "year": "1997",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 103,
+    "title": "甜蜜蜜",
+    "rating": 8.9,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2223011274.jpg",
+    "localCover": "movie_covers\\103_1749479485.jpg",
+    "year": "1996",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 104,
+    "title": "蝙蝠侠：黑暗骑士崛起",
+    "rating": 8.9,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p1706428744.jpg",
+    "localCover": "movie_covers\\104_1749479487.jpg",
+    "year": "2012",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 105,
+    "title": "7号房的礼物",
+    "rating": 8.9,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p1816276065.jpg",
+    "localCover": "movie_covers\\105_1749479490.jpg",
+    "year": "2013",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 106,
+    "title": "寄生虫",
+    "rating": 8.8,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2561439800.jpg",
+    "localCover": "movie_covers\\106_1749479493.jpg",
+    "year": "2019",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 107,
+    "title": "天书奇谭",
+    "rating": 9.2,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2700138245.jpg",
+    "localCover": "movie_covers\\107_1749479495.jpg",
+    "year": "1983(中国大陆)",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 108,
+    "title": "超能陆战队",
+    "rating": 8.8,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2224568669.jpg",
+    "localCover": "movie_covers\\108_1749479497.jpg",
+    "year": "2014",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 109,
+    "title": "爱在黎明破晓前",
+    "rating": 8.8,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2555762374.jpg",
+    "localCover": "movie_covers\\109_1749479501.jpg",
+    "year": "1995",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 110,
+    "title": "被嫌弃的松子的一生",
+    "rating": 8.8,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p884763596.jpg",
+    "localCover": "movie_covers\\110_1749479503.jpg",
+    "year": "2006",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 111,
+    "title": "第六感",
+    "rating": 8.9,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2220184425.jpg",
+    "localCover": "movie_covers\\111_1749479506.jpg",
+    "year": "1999",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 112,
+    "title": "爱在日落黄昏时",
+    "rating": 8.9,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2561542458.jpg",
+    "localCover": "movie_covers\\112_1749479506.jpg",
+    "year": "2004",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 113,
+    "title": "重庆森林",
+    "rating": 8.8,
+    "cover": "https://img2.doubanio.com/view/photo/s_ratio_poster/public/p792381411.jpg",
+    "localCover": "movie_covers\\113_1749479507.jpg",
+    "year": "1994",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 114,
+    "title": "入殓师",
+    "rating": 8.9,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2707581855.jpg",
+    "localCover": "movie_covers\\114_1749479509.jpg",
+    "year": "2008",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 115,
+    "title": "剪刀手爱德华",
+    "rating": 8.7,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p480956937.jpg",
+    "localCover": "movie_covers\\115_1749479511.jpg",
+    "year": "1990",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 116,
+    "title": "未麻的部屋",
+    "rating": 9.1,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p1351050722.jpg",
+    "localCover": "movie_covers\\116_1749479512.jpg",
+    "year": "1997",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 117,
+    "title": "断背山",
+    "rating": 8.8,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2154212680.jpg",
+    "localCover": "movie_covers\\117_1749479513.jpg",
+    "year": "2005",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 118,
+    "title": "菊次郎的夏天",
+    "rating": 8.9,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2620392435.jpg",
+    "localCover": "movie_covers\\118_1749479515.jpg",
+    "year": "1999",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 119,
+    "title": "哈利·波特与火焰杯",
+    "rating": 8.8,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2913456904.jpg",
+    "localCover": "movie_covers\\119_1749479517.jpg",
+    "year": "2005",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 120,
+    "title": "勇敢的心",
+    "rating": 8.9,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2004174709.jpg",
+    "localCover": "movie_covers\\120_1749479519.jpg",
+    "year": "1995",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 121,
+    "title": "借东西的小人阿莉埃蒂",
+    "rating": 8.9,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p617533616.jpg",
+    "localCover": "movie_covers\\121_1749479521.jpg",
+    "year": "2010",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 122,
+    "title": "茶馆",
+    "rating": 9.6,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2528965424.jpg",
+    "localCover": "movie_covers\\122_1749479523.jpg",
+    "year": "1982(中国大陆)",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 123,
+    "title": "头脑特工队",
+    "rating": 8.8,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2874927470.jpg",
+    "localCover": "movie_covers\\123_1749479526.jpg",
+    "year": "2015",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 124,
+    "title": "时空恋旅人",
+    "rating": 8.8,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2070153774.jpg",
+    "localCover": "movie_covers\\124_1749479528.jpg",
+    "year": "2013",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 125,
+    "title": "无人知晓",
+    "rating": 9.1,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p661160053.jpg",
+    "localCover": "movie_covers\\125_1749479531.jpg",
+    "year": "2004",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 126,
+    "title": "消失的爱人",
+    "rating": 8.7,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2221768894.jpg",
+    "localCover": "movie_covers\\126_1749479533.jpg",
+    "year": "2014",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 127,
+    "title": "倩女幽魂",
+    "rating": 8.8,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2918554634.jpg",
+    "localCover": "movie_covers\\127_1749479534.jpg",
+    "year": "1987",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 128,
+    "title": "完美的世界",
+    "rating": 9.1,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2190556408.jpg",
+    "localCover": "movie_covers\\128_1749479536.jpg",
+    "year": "1993",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 129,
+    "title": "阳光灿烂的日子",
+    "rating": 8.8,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2564685215.jpg",
+    "localCover": "movie_covers\\129_1749479538.jpg",
+    "year": "1994",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 130,
+    "title": "花样年华",
+    "rating": 8.8,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2918312477.jpg",
+    "localCover": "movie_covers\\130_1749479540.jpg",
+    "year": "2000",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 131,
+    "title": "驯龙高手",
+    "rating": 8.8,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2210954024.jpg",
+    "localCover": "movie_covers\\131_1749479541.jpg",
+    "year": "2010",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 132,
+    "title": "小森林 夏秋篇",
+    "rating": 9.0,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2564498893.jpg",
+    "localCover": "movie_covers\\132_1749479543.jpg",
+    "year": "2014",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 133,
+    "title": "天使爱美丽",
+    "rating": 8.7,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2447590313.jpg",
+    "localCover": "movie_covers\\133_1749479543.jpg",
+    "year": "2001",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 134,
+    "title": "新世界",
+    "rating": 8.9,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p1903379979.jpg",
+    "localCover": "movie_covers\\134_1749479544.jpg",
+    "year": "2013",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 135,
+    "title": "傲慢与偏见",
+    "rating": 8.7,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2016401659.jpg",
+    "localCover": "movie_covers\\135_1749479545.jpg",
+    "year": "2005",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 136,
+    "title": "一个叫欧维的男人决定去死",
+    "rating": 8.9,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2406624993.jpg",
+    "localCover": "movie_covers\\136_1749479547.jpg",
+    "year": "2015",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 137,
+    "title": "侧耳倾听",
+    "rating": 8.9,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p456692072.jpg",
+    "localCover": "movie_covers\\137_1749479547.jpg",
+    "year": "1995",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 138,
+    "title": "怪兽电力公司",
+    "rating": 8.8,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2513247938.jpg",
+    "localCover": "movie_covers\\138_1749479548.jpg",
+    "year": "2001",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 139,
+    "title": "玩具总动员3",
+    "rating": 8.9,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p1283675359.jpg",
+    "localCover": "movie_covers\\139_1749479550.jpg",
+    "year": "2010",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 140,
+    "title": "请以你的名字呼唤我",
+    "rating": 8.8,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2505525050.jpg",
+    "localCover": "movie_covers\\140_1749479554.jpg",
+    "year": "2017",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 141,
+    "title": "教父3",
+    "rating": 9.0,
+    "cover": "https://img2.doubanio.com/view/photo/s_ratio_poster/public/p2169664351.jpg",
+    "localCover": "movie_covers\\141_1749479556.jpg",
+    "year": "1990",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 142,
+    "title": "色，戒",
+    "rating": 8.7,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p453716305.jpg",
+    "localCover": "movie_covers\\142_1749479557.jpg",
+    "year": "2007",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 143,
+    "title": "幸福终点站",
+    "rating": 8.8,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2181698213.jpg",
+    "localCover": "movie_covers\\143_1749479559.jpg",
+    "year": "2004",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 144,
+    "title": "哪吒闹海",
+    "rating": 9.2,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2532803206.jpg",
+    "localCover": "movie_covers\\144_1749479560.jpg",
+    "year": "1979",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 145,
+    "title": "被解救的姜戈",
+    "rating": 8.8,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p1800813767.jpg",
+    "localCover": "movie_covers\\145_1749479563.jpg",
+    "year": "2012",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 146,
+    "title": "小森林 冬春篇",
+    "rating": 9.0,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2618201652.jpg",
+    "localCover": "movie_covers\\146_1749479563.jpg",
+    "year": "2015",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 147,
+    "title": "九品芝麻官",
+    "rating": 8.8,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p648370300.jpg",
+    "localCover": "movie_covers\\147_1749479563.jpg",
+    "year": "1994",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 148,
+    "title": "釜山行",
+    "rating": 8.6,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2360940399.jpg",
+    "localCover": "movie_covers\\148_1749479567.jpg",
+    "year": "2016",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 149,
+    "title": "神偷奶爸",
+    "rating": 8.7,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p792776858.jpg",
+    "localCover": "movie_covers\\149_1749479570.jpg",
+    "year": "2010",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 150,
+    "title": "萤火之森",
+    "rating": 8.8,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p1675053073.jpg",
+    "localCover": "movie_covers\\150_1749479572.jpg",
+    "year": "2011",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 151,
+    "title": "喜宴",
+    "rating": 9.0,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2249048907.jpg",
+    "localCover": "movie_covers\\151_1749479574.jpg",
+    "year": "1993",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 152,
+    "title": "告白",
+    "rating": 8.8,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p689520756.jpg",
+    "localCover": "movie_covers\\152_1749479575.jpg",
+    "year": "2010",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 153,
+    "title": "玛丽和马克思",
+    "rating": 9.0,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p488255145.jpg",
+    "localCover": "movie_covers\\153_1749479576.jpg",
+    "year": "2009",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 154,
+    "title": "头号玩家",
+    "rating": 8.6,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2516578307.jpg",
+    "localCover": "movie_covers\\154_1749479578.jpg",
+    "year": "2018",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 155,
+    "title": "模仿游戏",
+    "rating": 8.8,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2255040492.jpg",
+    "localCover": "movie_covers\\155_1749479578.jpg",
+    "year": "2014",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 156,
+    "title": "大鱼",
+    "rating": 8.8,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p692813374.jpg",
+    "localCover": "movie_covers\\156_1749479579.jpg",
+    "year": "2003",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 157,
+    "title": "七武士",
+    "rating": 9.3,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2215886505.jpg",
+    "localCover": "movie_covers\\157_1749479581.jpg",
+    "year": "1954",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 158,
+    "title": "惊魂记",
+    "rating": 9.0,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p1021883305.jpg",
+    "localCover": "movie_covers\\158_1749479584.jpg",
+    "year": "1960",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 159,
+    "title": "射雕英雄传之东成西就",
+    "rating": 8.7,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2609063922.jpg",
+    "localCover": "movie_covers\\159_1749479586.jpg",
+    "year": "1993",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 160,
+    "title": "血战钢锯岭",
+    "rating": 8.7,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2398141939.jpg",
+    "localCover": "movie_covers\\160_1749479587.jpg",
+    "year": "2016",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 161,
+    "title": "我是山姆",
+    "rating": 9.0,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p652417775.jpg",
+    "localCover": "movie_covers\\161_1749479590.jpg",
+    "year": "2001",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 162,
+    "title": "你的名字。",
+    "rating": 8.5,
+    "cover": "https://img2.doubanio.com/view/photo/s_ratio_poster/public/p2910701461.jpg",
+    "localCover": "movie_covers\\162_1749479591.jpg",
+    "year": "2016",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 163,
+    "title": "阳光姐妹淘",
+    "rating": 8.8,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p1374786017.jpg",
+    "localCover": "movie_covers\\163_1749479593.jpg",
+    "year": "2011",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 164,
+    "title": "恐怖直播",
+    "rating": 8.7,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2016930906.jpg",
+    "localCover": "movie_covers\\164_1749479594.jpg",
+    "year": "2013",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 165,
+    "title": "黑客帝国3：矩阵革命",
+    "rating": 8.8,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p443461818.jpg",
+    "localCover": "movie_covers\\165_1749479596.jpg",
+    "year": "2003",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 166,
+    "title": "背靠背，脸对脸",
+    "rating": 9.5,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2505048077.jpg",
+    "localCover": "movie_covers\\166_1749479598.jpg",
+    "year": "1994",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 167,
+    "title": "心灵奇旅",
+    "rating": 8.7,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2595591069.jpg",
+    "localCover": "movie_covers\\167_1749479599.jpg",
+    "year": "2020",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 168,
+    "title": "电锯惊魂",
+    "rating": 8.7,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p726839485.jpg",
+    "localCover": "movie_covers\\168_1749479600.jpg",
+    "year": "2004",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 169,
+    "title": "三块广告牌",
+    "rating": 8.7,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2502943384.jpg",
+    "localCover": "movie_covers\\169_1749479601.jpg",
+    "year": "2017",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 170,
+    "title": "小丑",
+    "rating": 8.7,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2567198874.jpg",
+    "localCover": "movie_covers\\170_1749479602.jpg",
+    "year": "2019",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 171,
+    "title": "谍影重重3",
+    "rating": 8.9,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p792223507.jpg",
+    "localCover": "movie_covers\\171_1749479604.jpg",
+    "year": "2007",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 172,
+    "title": "达拉斯买家俱乐部",
+    "rating": 8.8,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2166160837.jpg",
+    "localCover": "movie_covers\\172_1749479604.jpg",
+    "year": "2013",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 173,
+    "title": "疯狂原始人",
+    "rating": 8.7,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p1867084027.jpg",
+    "localCover": "movie_covers\\173_1749479605.jpg",
+    "year": "2013",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 174,
+    "title": "无间道2",
+    "rating": 8.8,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p958008320.jpg",
+    "localCover": "movie_covers\\174_1749479606.jpg",
+    "year": "2003",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 175,
+    "title": "绿里奇迹",
+    "rating": 8.9,
+    "cover": "https://img2.doubanio.com/view/photo/s_ratio_poster/public/p767586451.jpg",
+    "localCover": "movie_covers\\175_1749479608.jpg",
+    "year": "1999",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 176,
+    "title": "爱在午夜降临前",
+    "rating": 8.9,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2074715729.jpg",
+    "localCover": "movie_covers\\176_1749479610.jpg",
+    "year": "2013",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 177,
+    "title": "海街日记",
+    "rating": 8.8,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2603364117.jpg",
+    "localCover": "movie_covers\\177_1749479612.jpg",
+    "year": "2015",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 178,
+    "title": "风之谷",
+    "rating": 8.9,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p1917567652.jpg",
+    "localCover": "movie_covers\\178_1749479613.jpg",
+    "year": "1984",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 179,
+    "title": "上帝之城",
+    "rating": 9.0,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p455677490.jpg",
+    "localCover": "movie_covers\\179_1749479613.jpg",
+    "year": "2002",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 180,
+    "title": "英雄本色",
+    "rating": 8.6,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2504997087.jpg",
+    "localCover": "movie_covers\\180_1749479615.jpg",
+    "year": "1986",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 181,
+    "title": "疯狂的石头",
+    "rating": 8.6,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p712241453.jpg",
+    "localCover": "movie_covers\\181_1749479616.jpg",
+    "year": "2006",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 182,
+    "title": "雨中曲",
+    "rating": 9.1,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p1612355875.jpg",
+    "localCover": "movie_covers\\182_1749479616.jpg",
+    "year": "1952",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 183,
+    "title": "心迷宫",
+    "rating": 8.7,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2276780256.jpg",
+    "localCover": "movie_covers\\183_1749479619.jpg",
+    "year": "2014",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 184,
+    "title": "2001太空漫游",
+    "rating": 8.9,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2560717825.jpg",
+    "localCover": "movie_covers\\184_1749479621.jpg",
+    "year": "1968",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 185,
+    "title": "纵横四海",
+    "rating": 8.8,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2597918718.jpg",
+    "localCover": "movie_covers\\185_1749479624.jpg",
+    "year": "1991",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 186,
+    "title": "末路狂花",
+    "rating": 9.0,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p1910924635.jpg",
+    "localCover": "movie_covers\\186_1749479627.jpg",
+    "year": "1991",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 187,
+    "title": "记忆碎片",
+    "rating": 8.7,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p641688453.jpg",
+    "localCover": "movie_covers\\187_1749479630.jpg",
+    "year": "2000",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 188,
+    "title": "卢旺达饭店",
+    "rating": 8.9,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p470419493.jpg",
+    "localCover": "movie_covers\\188_1749479630.jpg",
+    "year": "2004",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 189,
+    "title": "高山下的花环",
+    "rating": 9.5,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2319879389.jpg",
+    "localCover": "movie_covers\\189_1749479630.jpg",
+    "year": "1984(中国大陆)",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 190,
+    "title": "无敌破坏王",
+    "rating": 8.7,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p1735642656.jpg",
+    "localCover": "movie_covers\\190_1749479633.jpg",
+    "year": "2012",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 191,
+    "title": "小偷家族",
+    "rating": 8.7,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2530599636.jpg",
+    "localCover": "movie_covers\\191_1749479635.jpg",
+    "year": "2018",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 192,
+    "title": "冰川时代",
+    "rating": 8.7,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p1910895719.jpg",
+    "localCover": "movie_covers\\192_1749479638.jpg",
+    "year": "2002",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 193,
+    "title": "恐怖游轮",
+    "rating": 8.5,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p462470694.jpg",
+    "localCover": "movie_covers\\193_1749479639.jpg",
+    "year": "2009",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 194,
+    "title": "东京教父",
+    "rating": 9.0,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p456703618.jpg",
+    "localCover": "movie_covers\\194_1749479641.jpg",
+    "year": "2003",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 195,
+    "title": "牯岭街少年杀人事件",
+    "rating": 8.9,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p848381236.jpg",
+    "localCover": "movie_covers\\195_1749479644.jpg",
+    "year": "1991",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 196,
+    "title": "魔女宅急便",
+    "rating": 8.7,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p456676352.jpg",
+    "localCover": "movie_covers\\196_1749479646.jpg",
+    "year": "1989",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 197,
+    "title": "岁月神偷",
+    "rating": 8.7,
+    "cover": "https://img2.doubanio.com/view/photo/s_ratio_poster/public/p456666151.jpg",
+    "localCover": "movie_covers\\197_1749479646.jpg",
+    "year": "2010",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 198,
+    "title": "忠犬八公物语",
+    "rating": 9.2,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2603716224.jpg",
+    "localCover": "movie_covers\\198_1749479649.jpg",
+    "year": "1987",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 199,
+    "title": "荒蛮故事",
+    "rating": 8.7,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2919686972.jpg",
+    "localCover": "movie_covers\\199_1749479650.jpg",
+    "year": "2014",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 200,
+    "title": "遗愿清单",
+    "rating": 8.7,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2676812053.jpg",
+    "localCover": "movie_covers\\200_1749479650.jpg",
+    "year": "2007",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 201,
+    "title": "大佛普拉斯",
+    "rating": 8.7,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2505928032.jpg",
+    "localCover": "movie_covers\\201_1749479652.jpg",
+    "year": "2017",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 202,
+    "title": "贫民窟的百万富翁",
+    "rating": 8.6,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2434249040.jpg",
+    "localCover": "movie_covers\\202_1749479652.jpg",
+    "year": "2008",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 203,
+    "title": "芙蓉镇",
+    "rating": 9.3,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2575337180.jpg",
+    "localCover": "movie_covers\\203_1749479655.jpg",
+    "year": "1987",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 204,
+    "title": "源代码",
+    "rating": 8.6,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p988260245.jpg",
+    "localCover": "movie_covers\\204_1749479658.jpg",
+    "year": "2011",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 205,
+    "title": "疯狂的麦克斯4：狂暴之路",
+    "rating": 8.7,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2236181653.jpg",
+    "localCover": "movie_covers\\205_1749479660.jpg",
+    "year": "2015",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 206,
+    "title": "你看起来好像很好吃",
+    "rating": 8.9,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p709670262.jpg",
+    "localCover": "movie_covers\\206_1749479661.jpg",
+    "year": "2010",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 207,
+    "title": "东邪西毒",
+    "rating": 8.6,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p1982176012.jpg",
+    "localCover": "movie_covers\\207_1749479661.jpg",
+    "year": "1994",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 208,
+    "title": "可可西里",
+    "rating": 8.9,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2363208684.jpg",
+    "localCover": "movie_covers\\208_1749479662.jpg",
+    "year": "2004",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 209,
+    "title": "爆裂鼓手",
+    "rating": 8.6,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2915975989.jpg",
+    "localCover": "movie_covers\\209_1749479663.jpg",
+    "year": "2014",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 210,
+    "title": "城市之光",
+    "rating": 9.3,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2170238828.jpg",
+    "localCover": "movie_covers\\210_1749479664.jpg",
+    "year": "1931",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 211,
+    "title": "波西米亚狂想曲",
+    "rating": 8.6,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2549558913.jpg",
+    "localCover": "movie_covers\\211_1749479666.jpg",
+    "year": "2018",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 212,
+    "title": "花束般的恋爱",
+    "rating": 8.6,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2868462052.jpg",
+    "localCover": "movie_covers\\212_1749479666.jpg",
+    "year": "2021",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 213,
+    "title": "黑天鹅",
+    "rating": 8.6,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2549648344.jpg",
+    "localCover": "movie_covers\\213_1749479667.jpg",
+    "year": "2010",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 214,
+    "title": "爱乐之城",
+    "rating": 8.4,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2901102612.jpg",
+    "localCover": "movie_covers\\214_1749479668.jpg",
+    "year": "2016",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 215,
+    "title": "青蛇",
+    "rating": 8.6,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2570901292.jpg",
+    "localCover": "movie_covers\\215_1749479668.jpg",
+    "year": "1993",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 216,
+    "title": "白日梦想家",
+    "rating": 8.6,
+    "cover": "https://img2.doubanio.com/view/photo/s_ratio_poster/public/p2160195181.jpg",
+    "localCover": "movie_covers\\216_1749479669.jpg",
+    "year": "2013",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 217,
+    "title": "哈利·波特与死亡圣器(上)",
+    "rating": 8.6,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2913456984.jpg",
+    "localCover": "movie_covers\\217_1749479672.jpg",
+    "year": "2010",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 218,
+    "title": "机器人之梦",
+    "rating": 9.1,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2904305126.jpg",
+    "localCover": "movie_covers\\218_1749479674.jpg",
+    "year": "2023",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 219,
+    "title": "终结者2：审判日",
+    "rating": 8.8,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p1910909085.jpg",
+    "localCover": "movie_covers\\219_1749479677.jpg",
+    "year": "1991",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 220,
+    "title": "初恋这件小事",
+    "rating": 8.5,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p1505312273.jpg",
+    "localCover": "movie_covers\\220_1749479679.jpg",
+    "year": "2010",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 221,
+    "title": "无耻混蛋",
+    "rating": 8.7,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2575043939.jpg",
+    "localCover": "movie_covers\\221_1749479680.jpg",
+    "year": "2009",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 222,
+    "title": "雨人",
+    "rating": 8.7,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2353324612.jpg",
+    "localCover": "movie_covers\\222_1749479684.jpg",
+    "year": "1988",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 223,
+    "title": "新龙门客栈",
+    "rating": 8.7,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p1421018669.jpg",
+    "localCover": "movie_covers\\223_1749479684.jpg",
+    "year": "1992",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 224,
+    "title": "人工智能",
+    "rating": 8.7,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p792257137.jpg",
+    "localCover": "movie_covers\\224_1749479686.jpg",
+    "year": "2001",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 225,
+    "title": "虎口脱险",
+    "rating": 8.9,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2399597512.jpg",
+    "localCover": "movie_covers\\225_1749479686.jpg",
+    "year": "1966",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 226,
+    "title": "崖上的波妞",
+    "rating": 8.6,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2627847859.jpg",
+    "localCover": "movie_covers\\226_1749479688.jpg",
+    "year": "2008",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 227,
+    "title": "大红灯笼高高挂",
+    "rating": 8.8,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p1254404823.jpg",
+    "localCover": "movie_covers\\227_1749479690.jpg",
+    "year": "1991",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 228,
+    "title": "真爱至上",
+    "rating": 8.5,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p475600770.jpg",
+    "localCover": "movie_covers\\228_1749479691.jpg",
+    "year": "2003",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 229,
+    "title": "千钧一发",
+    "rating": 8.8,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p792423963.jpg",
+    "localCover": "movie_covers\\229_1749479694.jpg",
+    "year": "1997",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 230,
+    "title": "罗生门",
+    "rating": 8.8,
+    "cover": "https://img2.doubanio.com/view/photo/s_ratio_poster/public/p1598883511.jpg",
+    "localCover": "movie_covers\\230_1749479694.jpg",
+    "year": "1950",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 231,
+    "title": "恋恋笔记本",
+    "rating": 8.5,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p483604864.jpg",
+    "localCover": "movie_covers\\231_1749479696.jpg",
+    "year": "2004",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 232,
+    "title": "彗星来的那一夜",
+    "rating": 8.6,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2187896734.jpg",
+    "localCover": "movie_covers\\232_1749479700.jpg",
+    "year": "2013",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 233,
+    "title": "哈利·波特与凤凰社",
+    "rating": 8.5,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2913456924.jpg",
+    "localCover": "movie_covers\\233_1749479702.jpg",
+    "year": "2007",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 234,
+    "title": "海边的曼彻斯特",
+    "rating": 8.6,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2421855655.jpg",
+    "localCover": "movie_covers\\234_1749479705.jpg",
+    "year": "2016",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 235,
+    "title": "火星救援",
+    "rating": 8.5,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2264592493.jpg",
+    "localCover": "movie_covers\\235_1749479706.jpg",
+    "year": "2015",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 236,
+    "title": "黑客帝国2：重装上阵",
+    "rating": 8.7,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p443461390.jpg",
+    "localCover": "movie_covers\\236_1749479706.jpg",
+    "year": "2003",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 237,
+    "title": "奇迹男孩",
+    "rating": 8.6,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2507709428.jpg",
+    "localCover": "movie_covers\\237_1749479708.jpg",
+    "year": "2017",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 238,
+    "title": "萤火虫之墓",
+    "rating": 8.7,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2237136718.jpg",
+    "localCover": "movie_covers\\238_1749479711.jpg",
+    "year": "1988",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 239,
+    "title": "战争之王",
+    "rating": 8.7,
+    "cover": "https://img2.doubanio.com/view/photo/s_ratio_poster/public/p792282381.jpg",
+    "localCover": "movie_covers\\239_1749479715.jpg",
+    "year": "2005",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 240,
+    "title": "千年女优",
+    "rating": 8.8,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2215102596.jpg",
+    "localCover": "movie_covers\\240_1749479717.jpg",
+    "year": "2001",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 241,
+    "title": "步履不停",
+    "rating": 8.8,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2375245718.jpg",
+    "localCover": "movie_covers\\241_1749479720.jpg",
+    "year": "2008",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 242,
+    "title": "谍影重重2",
+    "rating": 8.7,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p667644866.jpg",
+    "localCover": "movie_covers\\242_1749479722.jpg",
+    "year": "2004",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 243,
+    "title": "血钻",
+    "rating": 8.7,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2797308106.jpg",
+    "localCover": "movie_covers\\243_1749479724.jpg",
+    "year": "2006",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 244,
+    "title": "蜘蛛侠：平行宇宙",
+    "rating": 8.6,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2535851348.jpg",
+    "localCover": "movie_covers\\244_1749479727.jpg",
+    "year": "2018",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 245,
+    "title": "攻壳机动队",
+    "rating": 9.0,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2921045013.jpg",
+    "localCover": "movie_covers\\245_1749479729.jpg",
+    "year": "1995",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 246,
+    "title": "魂断蓝桥",
+    "rating": 8.8,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2351134499.jpg",
+    "localCover": "movie_covers\\246_1749479730.jpg",
+    "year": "1940",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 247,
+    "title": "房间",
+    "rating": 8.8,
+    "cover": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2259715855.jpg",
+    "localCover": "movie_covers\\247_1749479732.jpg",
+    "year": "2015",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 248,
+    "title": "冰雪奇缘",
+    "rating": 8.5,
+    "cover": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2151245053.jpg",
+    "localCover": "movie_covers\\248_1749479734.jpg",
+    "year": "2013",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 249,
+    "title": "隐藏人物",
+    "rating": 8.9,
+    "cover": "https://img1.doubanio.com/view/photo/s_ratio_poster/public/p2374067318.jpg",
+    "localCover": "movie_covers\\249_1749479735.jpg",
+    "year": "2016",
+    "category": "",
+    "description": ""
+  },
+  {
+    "rank": 250,
+    "title": "谍影重重",
+    "rating": 8.6,
+    "cover": "https://img2.doubanio.com/view/photo/s_ratio_poster/public/p1597183981.jpg",
+    "localCover": "movie_covers\\250_1749479737.jpg",
+    "year": "2002",
+    "category": "",
+    "description": ""
+  }
+]

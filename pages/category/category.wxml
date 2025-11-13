@@ -1,0 +1,55 @@
+<!--pages/category/category.wxml-->
+<view class="category-container">
+  <!-- 右上角登录区域 -->
+  <view class="login-header">
+    <view wx:if="{{!userInfo}}" class="login-btn" bindtap="onGetUserProfile">
+      <text class="login-text">登录</text>
+    </view>
+    <view wx:else class="user-avatar-container" bindtap="onLogout">
+      <image class="user-avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
+    </view>
+  </view>
+
+  <!-- 页面标题区域 -->
+  <view class="page-header">
+    <text class="page-title">标记吧</text>
+    <text class="page-subtitle">选择你感兴趣的主题开始标记</text>
+  </view>
+
+  <!-- 主题卡片网格 -->
+  <view class="themes-grid">
+    <view 
+      wx:for="{{themes}}" 
+      wx:key="id" 
+      class="theme-card" 
+      data-theme-id="{{item.id}}"
+      bindtap="onThemeTap"
+      style="--theme-color: {{item.color}}"
+    >
+      <!-- 主题图片容器 -->
+      <view class="theme-image-container">
+        <image class="theme-image" src="{{item.image}}" mode="aspectFill"></image>
+        <view class="theme-overlay"></view>
+      </view>
+
+      <!-- 主题信息 -->
+      <view class="theme-info">
+        <text class="theme-title">{{item.title}}</text>
+        <text class="theme-description">{{item.description}}</text>
+        <view class="theme-stats">
+          <text class="user-count">{{item.userCountText}}人参与</text>
+        </view>
+        
+        <!-- 进入箭头 -->
+        <view class="theme-arrow">
+          <text class="arrow-icon">›</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部提示 -->
+  <view class="bottom-tip">
+    <text class="tip-text">更多主题正在开发中...</text>
+  </view>
+</view>

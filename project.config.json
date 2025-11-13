@@ -1,0 +1,18 @@
+{
+  "description": "项目配置文件",
+  "miniprogramRoot": "./",
+  "cloudfunctionRoot": "cloudfunctions",
+  "setting": {
+    "urlCheck": true,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true
+  },
+  "compileType": "miniprogram",
+  "appid": "wx52ad9bb6303e6af1",
+  "projectname": "XiaoBiaoji",
+  "libVersion": "3.0.0",
+  "condition": {},
+  "cloudfunctionTemplateRoot": "cloudfunctionTemplate/"
+}

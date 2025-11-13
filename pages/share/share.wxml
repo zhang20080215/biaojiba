@@ -1,0 +1,47 @@
+<view class="container">
+  <view class="share-card {{shareType === 'poster' ? 'poster-wall' : ''}}">
+    <view class="card-title">豆瓣TOP250观影墙</view>
+    <view class="stats-container">
+      <view class="stat-item watched">
+        <text class="stat-label">已看</text>
+        <text class="stat-value">{{stats.watched}}</text>
+      </view>
+      <view class="stat-item wish">
+        <text class="stat-label">想看</text>
+        <text class="stat-value">{{stats.wish}}</text>
+      </view>
+      <view class="stat-item unwatched">
+        <text class="stat-label">未看</text>
+        <text class="stat-value">{{stats.unwatched}}</text>
+      </view>
+    </view>
+    
+    <!-- 海报墙视图 -->
+    <view class="poster-grid" wx:if="{{shareType === 'poster'}}">
+      <block wx:for="{{watchedMovies}}" wx:key="_id">
+        <view class="poster-item">
+          <image class="poster-image" src="{{item.cover}}" mode="aspectFill" />
+          <text class="poster-title">{{item.title}}</text>
+        </view>
+      </block>
+    </view>
+
+    <!-- 文字卡片视图 -->
+    <view class="movie-grid" wx:else>
+      <view class="movie-tags">
+        <block wx:for="{{allMovies}}" wx:key="_id">
+          <view class="movie-tag {{markStatusMap[item._id] ? markStatusMap[item._id].status : 'unwatched'}}">
+            {{item.title}}
+          </view>
+        </block>
+      </view>
+    </view>
+    
+    <view class="card-footer">使用微信小程序标记吧生成</view>
+  </view>
+  <view class="save-btn-container">
+    <button class="save-btn" bindtap="saveImage">保存图片</button>
+  </view>
+  <!-- 隐藏canvas用于图片导出 -->
+  <canvas type="2d" id="shareCanvas" style="width: 1242px; height: 1660px; position: fixed; left: -9999px;"></canvas>
+</view>

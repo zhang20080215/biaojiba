@@ -1,0 +1,20 @@
+{
+  "pages": [
+    "pages/category/category",
+    "pages/index/index",
+    "pages/mark/mark",
+    "pages/stats/stats",
+    "pages/generate/generate",
+    "pages/share/share"
+  ],
+  "window": {
+    "navigationBarTitleText": "标记吧",
+    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#f8f8f8",
+    "backgroundTextStyle": "light"
+  },
+  "cloud": true,
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

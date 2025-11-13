@@ -1,19 +1,14 @@
 {
-  "name": "fetchmovies",
+  "name": "getOpenid",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
-    "axios": "^1.9.0",
-    "cheerio": "^1.0.0",
-    "wx-server-sdk": "^3.0.1",
-    "sharp": "^0.32.6"
+    "wx-server-sdk": "latest"
   }
-}
+} 

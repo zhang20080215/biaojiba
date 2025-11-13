@@ -1,0 +1,10 @@
+{
+  "name": "importMovies",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest",
+    "axios": "^1.6.7"
+  }
+}

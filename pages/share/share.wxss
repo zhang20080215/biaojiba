@@ -1,0 +1,269 @@
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+  padding: 20rpx;
+  position: relative;
+  padding-bottom: 140rpx;
+  overflow: auto;
+  box-sizing: border-box;
+}
+
+.share-card {
+  background: #fcfcfc;
+  border-radius: 24rpx;
+  padding: 40rpx 30rpx 18rpx 30rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0,0,0,0.08);
+  margin-bottom: 0;
+  position: relative;
+  overflow: hidden;
+  border: 16rpx solid transparent;
+  background-clip: padding-box;
+  backdrop-filter: blur(10rpx);
+}
+
+/* 渐变边框效果 - 16px边框，左上角#fdecec，右下角#d2f1fe */
+.share-card::before {
+  content: '';
+  position: absolute;
+  top: -16rpx;
+  left: -16rpx;
+  right: -16rpx;
+  bottom: -16rpx;
+  background: linear-gradient(135deg, #fdecec 0%, #d2f1fe 100%);
+  border-radius: 40rpx;
+  z-index: -1;
+}
+
+.profile-bar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+.avatar {
+  width: 90rpx; height: 90rpx; border-radius: 50%;
+  background: #eee;
+  margin-right: 20rpx;
+}
+.nickname {
+  font-size: 36rpx; color: #555; font-weight: bold;
+}
+
+.card-title {
+  font-size: 44rpx;
+  font-weight: 600;
+  color: #2c3e50;
+  text-align: center;
+  margin-bottom: 36rpx;
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.05);
+  letter-spacing: 1rpx;
+}
+
+.stats-container {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 40rpx;
+  justify-content: center;
+}
+.stat-item {
+  padding: 12rpx 20rpx;
+  border-radius: 12rpx;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+  border: 1rpx solid rgba(255, 255, 255, 0.8);
+}
+.stat-item.watched { 
+  background: linear-gradient(135deg, rgba(76,175,80,0.12) 0%, rgba(76,175,80,0.08) 100%);
+  border-color: rgba(76,175,80,0.2);
+}
+.stat-item.wish { 
+  background: linear-gradient(135deg, rgba(255,193,7,0.12) 0%, rgba(255,193,7,0.08) 100%);
+  border-color: rgba(255,193,7,0.2);
+}
+.stat-item.unwatched { 
+  background: linear-gradient(135deg, rgba(158,158,158,0.12) 0%, rgba(158,158,158,0.08) 100%);
+  border-color: rgba(158,158,158,0.2);
+}
+.stat-label { font-size: 22rpx; font-weight: 500; }
+.stat-value { font-size: 26rpx; font-weight: 600; }
+.stat-item.watched .stat-label, .stat-item.watched .stat-value { color: #4CAF50; }
+.stat-item.wish .stat-label, .stat-item.wish .stat-value { color: #FF8F00; }
+.stat-item.unwatched .stat-label, .stat-item.unwatched .stat-value { color: #9E9E9E; }
+
+.movie-grid {
+  flex-wrap: wrap;
+  margin-bottom: 40rpx;
+  position: relative;
+  padding: 20rpx;
+  border-radius: 16rpx;
+  border: 16rpx solid transparent;
+  background-clip: padding-box;
+  background: rgba(255,255,255,0.97);
+}
+
+/* 文字卡片视图的渐变边框 */
+.movie-grid::before {
+  content: '';
+  position: absolute;
+  top: -16rpx;
+  left: -16rpx;
+  right: -16rpx;
+  bottom: -16rpx;
+  background: linear-gradient(135deg, #fdecec 0%, #fdecec 25%, #d2f1fe 75%, #d2f1fe 100%);
+  border-radius: 32rpx;
+  z-index: -1;
+}
+
+.movie-item {
+  padding: 6rpx 10rpx;
+  border-radius: 6rpx;
+  font-size: 22rpx;
+  line-height: 1.5;
+  display: inline-block;
+  white-space: nowrap;
+  position: relative;
+  box-sizing: border-box;
+  margin-right: 8rpx;
+  margin-bottom: 12rpx;
+}
+.movie-item.watched { background: rgba(76,175,80,0.10); color: #4CAF50; text-decoration: line-through;}
+.movie-item.wish { background: rgba(255,193,7,0.10); color: #FFC107; }
+.movie-item.unwatched { background: rgba(158,158,158,0.10); color: #9E9E9E; }
+
+/* 文字卡片视图样式 */
+.movie-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-bottom: 20rpx;
+}
+
+.movie-tag {
+  padding: 8rpx 16rpx;
+  border-radius: 16rpx;
+  font-size: 22rpx;
+  font-weight: 500;
+  text-align: center;
+  box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.08);
+  border: 1rpx solid rgba(255, 255, 255, 0.6);
+  transition: all 0.2s ease;
+}
+
+.movie-tag.watched {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.15) 0%, rgba(76, 175, 80, 0.08) 100%);
+  color: #4CAF50;
+  border-color: rgba(76, 175, 80, 0.3);
+  text-decoration: line-through;
+  text-decoration-thickness: 2rpx;
+}
+
+.movie-tag.wish {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.2) 0%, rgba(255, 193, 7, 0.12) 100%);
+  color: #FF8F00;
+  border-color: rgba(255, 193, 7, 0.4);
+  font-weight: 600;
+}
+
+.movie-tag.unwatched {
+  background: linear-gradient(135deg, rgba(158, 158, 158, 0.12) 0%, rgba(158, 158, 158, 0.06) 100%);
+  color: #9E9E9E;
+  border-color: rgba(158, 158, 158, 0.3);
+}
+
+.empty-tip {
+  text-align: center;
+  color: #999;
+  font-size: 24rpx;
+  padding: 40rpx 20rpx;
+}
+
+.more-tip {
+  text-align: center;
+  color: #666;
+  font-size: 20rpx;
+  padding: 20rpx;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 12rpx;
+  margin-top: 10rpx;
+}
+
+.save-btn-container {
+  position: fixed;
+  bottom: 0;
+  left: 0; right: 0;
+  padding: 18rpx 38rpx;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 -4rpx 16rpx rgba(0,0,0,0.05);
+  z-index: 100;
+}
+.save-btn {
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  color: white;
+  font-size: 24rpx;
+  font-weight: 500;
+  padding: 20rpx 0;
+  border-radius: 100rpx;
+  border: none;
+  box-shadow: 0 4rpx 12rpx rgba(76,175,80,0.20);
+  transition: all 0.3s ease;
+}
+.save-btn:active {
+  transform: translateY(2rpx);
+  box-shadow: 0 2rpx 8rpx rgba(76,175,80,0.20);
+}
+.card-footer {
+  text-align: center;
+  font-size: 22rpx;
+  color: #999;
+  padding: 16rpx 10rpx;
+  margin-top: 20rpx;
+  opacity: 0.8;
+}
+
+/* 海报墙样式 */
+.poster-wall {
+  padding: 40rpx 20rpx 18rpx 20rpx;
+}
+
+.poster-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10rpx;
+  margin-bottom: 40rpx;
+}
+
+.poster-item {
+  position: relative;
+  border-radius: 8rpx;
+  overflow: hidden;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.1);
+  aspect-ratio: 2/3;
+}
+
+.poster-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.poster-title {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8rpx;
+  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+  color: white;
+  font-size: 20rpx;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 调整海报墙下的保存按钮样式 */
+.poster-wall + .save-btn-container {
+  background: rgba(255,255,255,0.95);
+}

@@ -1,0 +1,242 @@
+/* 分类引导页面样式 */
+.category-container {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f6f9ff 0%, #f7f7fa 100%);
+  padding: 40rpx 24rpx 60rpx 24rpx;
+  box-sizing: border-box;
+  position: relative;
+}
+
+/* 右上角登录区域 */
+.login-header {
+  position: absolute;
+  top: 40rpx;
+  right: 24rpx;
+  z-index: 100;
+}
+
+.login-btn {
+  padding: 16rpx 24rpx;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10rpx);
+  transition: all 0.3s ease;
+  min-width: 100rpx;
+}
+
+.login-btn:active {
+  transform: scale(0.95);
+  background: rgba(255, 255, 255, 1);
+}
+
+.login-text {
+  font-size: 28rpx;
+  color: #666;
+  font-weight: 500;
+  letter-spacing: 1rpx;
+}
+
+.user-avatar-container {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.user-avatar-container:active {
+  transform: scale(0.95);
+}
+
+.user-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 页面标题区域 */
+.page-header {
+  text-align: center;
+  margin-bottom: 60rpx;
+}
+
+.page-title {
+  display: block;
+  font-size: 48rpx;
+  font-weight: 700;
+  color: #1a1f36;
+  margin-bottom: 16rpx;
+  letter-spacing: 2rpx;
+}
+
+.page-subtitle {
+  display: block;
+  font-size: 28rpx;
+  color: #8a8a8a;
+  font-weight: 400;
+  letter-spacing: 1rpx;
+}
+
+/* 主题卡片网格 */
+.themes-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24rpx;
+  margin-bottom: 60rpx;
+}
+
+/* 主题卡片 */
+.theme-card {
+  background: #fff;
+  border-radius: 24rpx;
+  box-shadow: 0 8px 32px rgba(64, 158, 255, 0.08);
+  overflow: hidden;
+  position: relative;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.theme-card:active {
+  transform: translateY(-4rpx);
+  box-shadow: 0 12px 40px rgba(64, 158, 255, 0.15);
+}
+
+/* 主题图片容器 */
+.theme-image-container {
+  position: relative;
+  height: 200rpx;
+  overflow: hidden;
+}
+
+.theme-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.theme-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.3) 100%);
+}
+
+/* 主题信息 */
+.theme-info {
+  padding: 24rpx 20rpx 20rpx 20rpx;
+  position: relative;
+}
+
+.theme-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #1a1f36;
+  margin-bottom: 8rpx;
+  line-height: 1.3;
+}
+
+.theme-description {
+  display: block;
+  font-size: 22rpx;
+  color: #8a8a8a;
+  margin-bottom: 16rpx;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.theme-stats {
+  display: flex;
+  align-items: center;
+}
+
+.user-count {
+  font-size: 20rpx;
+  color: var(--theme-color, #409eff);
+  font-weight: 600;
+  background: rgba(64, 158, 255, 0.1);
+  padding: 6rpx 12rpx;
+  border-radius: 12rpx;
+  letter-spacing: 0.5rpx;
+}
+
+/* 进入箭头 */
+.theme-arrow {
+  position: absolute;
+  top: 24rpx;
+  right: 20rpx;
+  width: 40rpx;
+  height: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  backdrop-filter: blur(10rpx);
+}
+
+.arrow-icon {
+  font-size: 32rpx;
+  color: var(--theme-color, #409eff);
+  font-weight: 700;
+  transform: translateX(2rpx);
+}
+
+/* 底部提示 */
+.bottom-tip {
+  text-align: center;
+  margin-top: 40rpx;
+}
+
+.tip-text {
+  font-size: 24rpx;
+  color: #b0b7c6;
+  font-weight: 400;
+  letter-spacing: 1rpx;
+}
+
+/* 响应式调整 */
+@media (max-width: 375px) {
+  .themes-grid {
+    grid-template-columns: 1fr;
+    gap: 20rpx;
+  }
+  
+  .theme-card {
+    margin: 0 10rpx;
+  }
+}
+
+/* 特殊主题卡片样式 */
+.theme-card[data-theme-id="douban_movies"] {
+  background: linear-gradient(135deg, #409eff 0%, #67c23a 100%);
+  color: #fff;
+}
+
+.theme-card[data-theme-id="douban_movies"] .theme-title,
+.theme-card[data-theme-id="douban_movies"] .theme-description {
+  color: #fff;
+}
+
+.theme-card[data-theme-id="douban_movies"] .user-count {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.theme-card[data-theme-id="douban_movies"] .arrow-icon {
+  color: #fff;
+}
+
+.theme-card[data-theme-id="douban_movies"] .theme-arrow {
+  background: rgba(255, 255, 255, 0.2);
+}
