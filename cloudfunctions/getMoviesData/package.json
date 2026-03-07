@@ -1,0 +1,9 @@
+{
+    "name": "getmoviesdata",
+    "version": "1.0.0",
+    "description": "聚合获取电影数据和用户标记",
+    "main": "index.js",
+    "dependencies": {
+        "wx-server-sdk": "~2.6.3"
+    }
+}

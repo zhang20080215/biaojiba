@@ -1,11 +1,7 @@
-<!-- pages/share/share.wxml -->
+<!-- 豆瓣电影 TOP 250 海报生成页 -->
 <view class="container">
-  <!-- 分享卡片预览区 -->
   <view class="share-card {{shareType === 'poster' ? 'poster-wall' : ''}}">
-    <!-- 卡片标题 -->
-    <view class="card-title">{{themeId === 'imdb_movies' ? 'IMDb 电影 TOP 250' : '豆瓣电影 TOP 250'}}观影海报墙</view>
-    
-    <!-- 统计数据 -->
+    <view class="card-title">豆瓣电影 TOP 250 观影海报墙</view>
     <view class="stats-container">
       <view class="stat-item watched">
         <text class="stat-label">已看</text>
@@ -20,61 +16,33 @@
         <text class="stat-value">{{stats.unwatched}}</text>
       </view>
     </view>
-    
-    <!-- 海报墙视图 -->
     <view class="poster-grid" wx:if="{{shareType === 'poster'}}">
       <block wx:for="{{watchedMovies}}" wx:key="_id">
         <view class="poster-item">
           <image class="poster-image" src="{{item.cover}}" mode="aspectFill" lazy-load />
         </view>
       </block>
-      <!-- 空状态提示 -->
-      <view class="empty-tip" wx:if="{{watchedMovies.length === 0}}">
-        暂无已观看电影
-      </view>
+      <view class="empty-tip" wx:if="{{watchedMovies.length === 0}}">暂无已观看电影</view>
     </view>
-
-    <!-- 文字卡片视图 -->
     <view class="movie-grid" wx:else>
       <view class="movie-tags">
         <block wx:for="{{allMovies}}" wx:key="_id">
-          <view class="movie-tag {{markStatusMap[item._id] ? markStatusMap[item._id].status : 'unwatched'}}">
-            {{item.title}}
-          </view>
+          <view class="movie-tag {{markStatusMap[item._id] || 'unwatched'}}">{{item.title}}</view>
         </block>
       </view>
-      <!-- 空状态提示 -->
-      <view class="empty-tip" wx:if="{{allMovies.length === 0}}">
-        暂无电影数据
-      </view>
-      <!-- 数量超过限制提示 -->
-      <view class="more-tip" wx:if="{{allMovies.length > displayLimit}}">
-        仅显示前 {{displayLimit}} 部电影
-      </view>
+      <view class="empty-tip" wx:if="{{allMovies.length === 0}}">暂无电影数据</view>
     </view>
-    
+    <view class="watermark-text">搜索小程序：标记吧  免费制作同款图片</view>
   </view>
 
-  <!-- 保存按钮 -->
   <view class="save-btn-container">
-    <button 
-      class="save-btn" 
-      bindtap="saveImage"
-      disabled="{{isGenerating}}"
-      loading="{{isGenerating}}"
-    >
+    <button class="save-btn" bindtap="saveImage" disabled="{{isGenerating}}" loading="{{isGenerating}}">
       {{isGenerating ? '生成中...' : '保存图片到相册'}}
     </button>
   </view>
 
-  <!-- 隐藏的 Canvas 用于图片导出 -->
-  <canvas 
-    type="2d" 
-    id="shareCanvas" 
-    style="width: {{canvasSize.width}}px; height: {{canvasSize.height}}px; position: fixed; left: -9999px; top: -9999px;"
-  ></canvas>
+  <canvas type="2d" id="shareCanvas" style="width: {{canvasSize.width}}px; height: {{canvasSize.height}}px; position: fixed; left: -9999px; top: -9999px;"></canvas>
 
-  <!-- 加载遮罩层（可选） -->
   <view class="loading-overlay" wx:if="{{isGenerating}}">
     <view class="loading-spinner"></view>
     <text class="loading-text">正在生成分享图...</text>

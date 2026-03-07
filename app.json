@@ -1,11 +1,13 @@
 {
   "pages": [
     "pages/category/category",
-    "pages/index/index",
+    "pages/douban/list/list",
+    "pages/douban/share/share",
+    "pages/imdb/list/list",
+    "pages/imdb/share/share",
     "pages/mark/mark",
     "pages/stats/stats",
-    "pages/generate/generate",
-    "pages/share/share"
+    "pages/generate/generate"
   ],
   "window": {
     "navigationBarTitleText": "标记吧",

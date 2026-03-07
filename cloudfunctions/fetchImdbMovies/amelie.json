@@ -1,0 +1,103 @@
+{
+  "id": "tt0211915",
+  "titleText": {
+    "text": "Le fabuleux destin d'Amélie Poulain",
+    "__typename": "TitleText"
+  },
+  "titleType": {
+    "id": "movie",
+    "text": "Movie",
+    "canHaveEpisodes": false,
+    "displayableProperty": {
+      "value": {
+        "plainText": "",
+        "__typename": "Markdown"
+      },
+      "__typename": "DisplayableTitleTypeProperty"
+    },
+    "__typename": "TitleType"
+  },
+  "originalTitleText": {
+    "text": "Le fabuleux destin d'Amélie Poulain",
+    "__typename": "TitleText"
+  },
+  "primaryImage": {
+    "id": "rm1617958656",
+    "width": 1280,
+    "height": 1920,
+    "url": "https://m.media-amazon.com/images/M/MV5BOTNmYzY0MWQtZGZmNy00Y2Y4LWFmMDQtMTZjYTdiYzEwZGQ2XkEyXkFqcGc@._V1_.jpg",
+    "caption": {
+      "plainText": "Audrey Tautou in Le fabuleux destin d'Amélie Poulain (2001)",
+      "__typename": "Markdown"
+    },
+    "__typename": "Image"
+  },
+  "releaseYear": {
+    "year": 2001,
+    "endYear": null,
+    "__typename": "YearRange"
+  },
+  "ratingsSummary": {
+    "aggregateRating": 8.3,
+    "voteCount": 836234,
+    "__typename": "RatingsSummary"
+  },
+  "runtime": {
+    "seconds": 7320,
+    "__typename": "Runtime"
+  },
+  "certificate": {
+    "rating": "R",
+    "__typename": "Certificate"
+  },
+  "canRate": {
+    "isRatable": true,
+    "__typename": "CanRate"
+  },
+  "titleGenres": {
+    "genres": [
+      {
+        "genre": {
+          "text": "Comedy",
+          "__typename": "GenreItem"
+        },
+        "__typename": "TitleGenre"
+      },
+      {
+        "genre": {
+          "text": "Romance",
+          "__typename": "GenreItem"
+        },
+        "__typename": "TitleGenre"
+      }
+    ],
+    "__typename": "TitleGenres"
+  },
+  "series": null,
+  "latestTrailer": {
+    "id": "vi1406515737",
+    "__typename": "Video"
+  },
+  "plot": {
+    "plotText": {
+      "plainText": "Despite being caught in her imaginative world, young waitress Amelie decides to help people find happiness. Her quest to spread joy leads her on a journey during which she finds true love.",
+      "__typename": "Markdown"
+    },
+    "__typename": "Plot"
+  },
+  "releaseDate": {
+    "day": 25,
+    "month": 4,
+    "year": 2001,
+    "__typename": "ReleaseDate"
+  },
+  "productionStatus": {
+    "currentProductionStage": {
+      "id": "released",
+      "text": "Released",
+      "__typename": "ProductionStage"
+    },
+    "__typename": "ProductionStatusDetails"
+  },
+  "__typename": "Title"
+}

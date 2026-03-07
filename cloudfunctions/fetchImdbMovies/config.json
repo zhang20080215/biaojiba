@@ -1,0 +1,13 @@
+{
+    "permissions": {
+        "openapi": []
+    },
+    "timeout": 600,
+    "triggers": [
+        {
+            "name": "dailyFetchMovies",
+            "type": "timer",
+            "config": "0 0 3 * * * *"
+        }
+    ]
+}

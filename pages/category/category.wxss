@@ -240,3 +240,135 @@
 .theme-card[data-theme-id="douban_movies"] .theme-arrow {
   background: rgba(255, 255, 255, 0.2);
 }
+
+/* 个人信息授权弹窗 */
+.auth-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4rpx);
+}
+
+.auth-content {
+  position: relative;
+  width: 80%;
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 40rpx 40rpx 50rpx 40rpx;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.auth-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 12rpx;
+}
+
+.auth-subtitle {
+  font-size: 24rpx;
+  color: #888;
+  margin-bottom: 40rpx;
+}
+
+.avatar-btn {
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.avatar-btn::after {
+  border: none;
+}
+
+.temp-avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 60rpx;
+  background: #f0f0f0;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.avatar-edit-tip {
+  font-size: 20rpx;
+  color: #409eff;
+  margin-top: 12rpx;
+}
+
+.nickname-input-group {
+  width: 100%;
+  margin-top: 40rpx;
+  border-bottom: 1rpx solid #eee;
+  display: flex;
+  align-items: center;
+  padding: 10rpx 0;
+}
+
+.input-label {
+  font-size: 28rpx;
+  color: #333;
+  width: 80rpx;
+}
+
+.nickname-input {
+  flex: 1;
+  font-size: 28rpx;
+  color: #333;
+  padding: 0 10rpx;
+}
+
+.auth-actions {
+  display: flex;
+  width: 100%;
+  margin-top: 50rpx;
+  justify-content: space-between;
+}
+
+.auth-btn {
+  width: 45%;
+  height: 80rpx;
+  line-height: 80rpx;
+  text-align: center;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+  padding: 0;
+  margin: 0;
+}
+
+.auth-btn::after {
+  border: none;
+}
+
+.auth-btn.cancel {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.auth-btn.confirm {
+  background: linear-gradient(135deg, #409eff 0%, #2b85e4 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(64,158,255,0.3);
+}

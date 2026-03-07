@@ -3,6 +3,9 @@ Page({
     userInfo: null,
     openid: '',
     loading: false,
+    showAuthModal: false,
+    tempAvatar: '',
+    tempNickname: '',
     themes: [
       {
         id: 'douban_movies',
@@ -13,45 +16,14 @@ Page({
         color: '#409eff'
       },
       {
-        id: 'books',
-        title: '经典书籍收藏',
-        description: '文学经典阅读记录',
-        image: 'https://img1.doubanio.com/view/subject/s/public/s1070959.jpg',
-        userCount: 856,
-        color: '#67c23a'
+        id: 'imdb_movies',
+        title: 'IMDB电影TOP250',
+        description: 'IMDB历史最高分250部电影',
+        image: 'https://m.media-amazon.com/images/M/MV5BM2MyNjYxNmUtYTAwNi00MTYxLWJmNWYtYzZlODY3ZTk3OTFlXkEyXkFqcGdeQXVyNzkwMjQ5NzM@._V1_UX182_CR0,0,182,268_AL__QL50.jpg',
+        userCount: 376,
+        color: '#f5c518'
       },
-      {
-        id: 'music',
-        title: '音乐专辑收藏',
-        description: '音乐作品收藏与评价',
-        image: 'https://img1.doubanio.com/view/subject/s/public/s1070959.jpg',
-        userCount: 642,
-        color: '#e6a23c'
-      },
-      {
-        id: 'games',
-        title: '游戏收藏',
-        description: '游戏作品体验记录',
-        image: 'https://img1.doubanio.com/view/subject/s/public/s1070959.jpg',
-        userCount: 423,
-        color: '#f56c6c'
-      },
-      {
-        id: 'travel',
-        title: '旅行足迹',
-        description: '旅行地点打卡记录',
-        image: 'https://img1.doubanio.com/view/subject/s/public/s1070959.jpg',
-        userCount: 789,
-        color: '#909399'
-      },
-      {
-        id: 'food',
-        title: '美食收藏',
-        description: '美食体验与评价',
-        image: 'https://img1.doubanio.com/view/subject/s/public/s1070959.jpg',
-        userCount: 567,
-        color: '#ff9a9e'
-      }
+
     ]
   },
 
@@ -75,81 +47,130 @@ Page({
   checkLoginStatus() {
     const userInfo = wx.getStorageSync('userInfo');
     if (userInfo) {
-      this.setData({ 
-        userInfo: userInfo, 
-        openid: userInfo._openid 
+      this.setData({
+        userInfo: userInfo,
+        openid: userInfo._openid
       });
     }
   },
 
-  // 微信授权登录
+  // 开始登录（获取openid并呼出弹窗）
   onGetUserProfile() {
     if (this.data.loading) return;
-    
     this.setData({ loading: true });
-    wx.showLoading({ title: '登录中...' });
-    
-    wx.getUserProfile({
-      desc: '用于完善会员资料',
-      success: res => {
-        const userInfo = res.userInfo;
-        wx.cloud.callFunction({
-          name: 'getOpenid',
-          success: ret => {
-            const _openid = ret.result.openid;
-            if (!_openid) {
-              wx.hideLoading();
-              this.setData({ loading: false });
-              wx.showToast({ title: '获取openid失败', icon: 'none' });
-              return;
-            }
-            userInfo._openid = _openid;
-            this.setData({ userInfo, openid: _openid });
-            wx.setStorageSync('userInfo', userInfo);
-            // 注册用户
-            const db = wx.cloud.database();
-            db.collection('users').where({ openid: _openid }).get().then(res => {
-              if (res.data.length === 0) {
-                db.collection('users').add({
-                  data: {
-                    openid: _openid,
-                    nickname: userInfo.nickName,
-                    avatarUrl: userInfo.avatarUrl,
-                    created_at: new Date(),
-                    updated_at: new Date()
-                  }
-                }).catch(err => {
-                  console.error('用户注册失败:', err);
-                  wx.hideLoading();
-                  this.setData({ loading: false });
-                  wx.showToast({ title: '注册失败，请重试', icon: 'none' });
-                });
-              }
-              wx.hideLoading();
-              this.setData({ loading: false });
-              wx.showToast({ title: '登录成功', icon: 'success' });
-            }).catch(err => {
-              console.error('查询用户失败:', err);
-              wx.hideLoading();
-              this.setData({ loading: false });
-              wx.showToast({ title: '登录失败，请重试', icon: 'none' });
-            });
-          },
-          fail: err => {
-            console.error('获取openid失败:', err);
-            wx.hideLoading();
-            this.setData({ loading: false });
-            wx.showToast({ title: '登录失败，请重试', icon: 'none' });
-          }
+    wx.showLoading({ title: '准备登录...' });
+
+    wx.cloud.callFunction({
+      name: 'getOpenid',
+      success: ret => {
+        const _openid = ret.result.openid;
+        if (!_openid) {
+          wx.hideLoading();
+          this.setData({ loading: false });
+          wx.showToast({ title: '获取openid失败', icon: 'none' });
+          return;
+        }
+        wx.hideLoading();
+        this.setData({
+          loading: false,
+          openid: _openid,
+          showAuthModal: true,
+          tempAvatar: '',
+          tempNickname: ''
         });
       },
       fail: err => {
-        console.error('用户授权失败:', err);
+        console.error('获取openid失败:', err);
         wx.hideLoading();
         this.setData({ loading: false });
-        wx.showToast({ title: '授权失败', icon: 'none' });
+        wx.showToast({ title: '网络错误，请重试', icon: 'none' });
       }
     });
+  },
+
+  // 关闭授权弹窗
+  onCancelAuth() {
+    this.setData({ showAuthModal: false });
+  },
+
+  // 获取用户头像
+  onChooseAvatar(e) {
+    const { avatarUrl } = e.detail;
+    this.setData({ tempAvatar: avatarUrl });
+  },
+
+  // 获取用户昵称
+  onNicknameInput(e) {
+    this.setData({ tempNickname: e.detail.value });
+  },
+
+  // 确认授权资料并保存
+  async onConfirmAuth() {
+    const { tempAvatar, tempNickname, openid } = this.data;
+    if (!tempAvatar || tempAvatar === '/images/default-avatar.svg') {
+      wx.showToast({ title: '请选择头像', icon: 'none' });
+      return;
+    }
+    if (!tempNickname || !tempNickname.trim()) {
+      wx.showToast({ title: '请输入昵称', icon: 'none' });
+      return;
+    }
+
+    wx.showLoading({ title: '保存中...', mask: true });
+    try {
+      let finalAvatarUrl = tempAvatar;
+      // 如果头像是本地临时文件，需要上传到云存储
+      if (tempAvatar.startsWith('wxfile://') || tempAvatar.startsWith('http://tmp/')) {
+        const ext = tempAvatar.split('.').pop() || 'png';
+        const cloudPath = `avatars/${openid}_${Date.now()}.${ext}`;
+        const uploadRes = await wx.cloud.uploadFile({
+          cloudPath: cloudPath,
+          filePath: tempAvatar
+        });
+        finalAvatarUrl = uploadRes.fileID;
+      }
+
+      const userInfo = {
+        _openid: openid,
+        nickName: tempNickname,
+        avatarUrl: finalAvatarUrl
+      };
+
+      // 注册或更新用户到数据库
+      const db = wx.cloud.database();
+      const userRes = await db.collection('users').where({ openid }).get();
+      if (userRes.data.length === 0) {
+        await db.collection('users').add({
+          data: {
+            openid: openid,
+            nickname: userInfo.nickName,
+            avatarUrl: userInfo.avatarUrl,
+            created_at: new Date(),
+            updated_at: new Date()
+          }
+        });
+      } else {
+        await db.collection('users').doc(userRes.data[0]._id).update({
+          data: {
+            nickname: userInfo.nickName,
+            avatarUrl: userInfo.avatarUrl,
+            updated_at: new Date()
+          }
+        });
+      }
+
+      wx.setStorageSync('userInfo', userInfo);
+      this.setData({
+        userInfo,
+        showAuthModal: false
+      });
+      wx.hideLoading();
+      wx.showToast({ title: '登录成功', icon: 'success' });
+    } catch (err) {
+      console.error('保存用户信息失败:', err);
+      wx.hideLoading();
+      wx.showToast({ title: '保存失败，请重试', icon: 'none' });
+    }
   },
 
   // 退出登录
@@ -173,16 +194,14 @@ Page({
   // 点击主题卡片
   onThemeTap(e) {
     if (this.data.loading) return;
-    
+
     const themeId = e.currentTarget.dataset.themeId;
-    
+
     if (themeId === 'douban_movies') {
-      // 跳转到豆瓣电影250标记页面（原来的首页）
-      wx.navigateTo({
-        url: '/pages/index/index'
-      });
+      wx.navigateTo({ url: '/pages/douban/list/list' });
+    } else if (themeId === 'imdb_movies') {
+      wx.navigateTo({ url: '/pages/imdb/list/list' });
     } else {
-      // 其他主题暂时显示开发中提示
       wx.showToast({
         title: '该主题正在开发中',
         icon: 'none',

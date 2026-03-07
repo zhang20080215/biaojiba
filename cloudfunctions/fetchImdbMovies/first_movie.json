@@ -1,0 +1,96 @@
+{
+  "id": "tt0111161",
+  "titleText": {
+    "text": "The Shawshank Redemption",
+    "__typename": "TitleText"
+  },
+  "titleType": {
+    "id": "movie",
+    "text": "Movie",
+    "canHaveEpisodes": false,
+    "displayableProperty": {
+      "value": {
+        "plainText": "",
+        "__typename": "Markdown"
+      },
+      "__typename": "DisplayableTitleTypeProperty"
+    },
+    "__typename": "TitleType"
+  },
+  "originalTitleText": {
+    "text": "The Shawshank Redemption",
+    "__typename": "TitleText"
+  },
+  "primaryImage": {
+    "id": "rm1690056449",
+    "width": 1200,
+    "height": 1800,
+    "url": "https://m.media-amazon.com/images/M/MV5BMDAyY2FhYjctNDc5OS00MDNlLThiMGUtY2UxYWVkNGY2ZjljXkEyXkFqcGc@._V1_.jpg",
+    "caption": {
+      "plainText": "Tim Robbins in The Shawshank Redemption (1994)",
+      "__typename": "Markdown"
+    },
+    "__typename": "Image"
+  },
+  "releaseYear": {
+    "year": 1994,
+    "endYear": null,
+    "__typename": "YearRange"
+  },
+  "ratingsSummary": {
+    "aggregateRating": 9.3,
+    "voteCount": 3164301,
+    "__typename": "RatingsSummary"
+  },
+  "runtime": {
+    "seconds": 8520,
+    "__typename": "Runtime"
+  },
+  "certificate": {
+    "rating": "R",
+    "__typename": "Certificate"
+  },
+  "canRate": {
+    "isRatable": true,
+    "__typename": "CanRate"
+  },
+  "titleGenres": {
+    "genres": [
+      {
+        "genre": {
+          "text": "Drama",
+          "__typename": "GenreItem"
+        },
+        "__typename": "TitleGenre"
+      }
+    ],
+    "__typename": "TitleGenres"
+  },
+  "series": null,
+  "latestTrailer": {
+    "id": "vi3877612057",
+    "__typename": "Video"
+  },
+  "plot": {
+    "plotText": {
+      "plainText": "A banker convicted of uxoricide forms a friendship over a quarter century with a hardened convict, while maintaining his innocence and trying to remain hopeful through simple compassion.",
+      "__typename": "Markdown"
+    },
+    "__typename": "Plot"
+  },
+  "releaseDate": {
+    "day": 14,
+    "month": 10,
+    "year": 1994,
+    "__typename": "ReleaseDate"
+  },
+  "productionStatus": {
+    "currentProductionStage": {
+      "id": "released",
+      "text": "Released",
+      "__typename": "ProductionStage"
+    },
+    "__typename": "ProductionStatusDetails"
+  },
+  "__typename": "Title"
+}

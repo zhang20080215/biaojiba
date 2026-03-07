@@ -52,4 +52,28 @@
   <view class="bottom-tip">
     <text class="tip-text">更多主题正在开发中...</text>
   </view>
+
+  <!-- 个人信息授权弹窗 -->
+  <view class="auth-modal" wx:if="{{showAuthModal}}">
+    <view class="auth-mask" bindtap="onCancelAuth"></view>
+    <view class="auth-content">
+      <view class="auth-title">完善个人资料</view>
+      <view class="auth-subtitle">请提供头像和昵称以获取更好的体验</view>
+      
+      <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+        <image class="temp-avatar" src="{{tempAvatar || '/images/default-avatar.svg'}}" mode="aspectFill"></image>
+        <view class="avatar-edit-tip">点击修改头像</view>
+      </button>
+
+      <view class="nickname-input-group">
+        <text class="input-label">昵称</text>
+        <input type="nickname" class="nickname-input" placeholder="请输入昵称" bindinput="onNicknameInput" bindblur="onNicknameInput" value="{{tempNickname}}" />
+      </view>
+
+      <view class="auth-actions">
+        <button class="auth-btn cancel" bindtap="onCancelAuth">暂不登录</button>
+        <button class="auth-btn confirm" bindtap="onConfirmAuth">保存并登录</button>
+      </view>
+    </view>
+  </view>
 </view>
