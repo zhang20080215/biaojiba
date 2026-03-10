@@ -171,8 +171,8 @@ Page({
             const allMovies = movies.map(m => ({
                 ...m,
                 _id: String(m._id),
-                // thumbCover：优先取 originalCover（原始 IMDb URL）转缩略图，cover 保留用于海报生成
-                thumbCover: imageCacheManager.getThumbnailUrl(m.originalCover || m.coverUrl || m.cover, 'list'),
+                // thumbCover：优先取 originalCover（原始 douban URL）转缩略图，cover 保留用于海报生成
+                thumbCover: imageCacheManager.getThumbnailUrl(m.cover || m.coverUrl || m.originalCover, 'list'),
                 imageLoaded: false,
                 imageError: false
             }));
@@ -193,7 +193,7 @@ Page({
         } catch (err) {
             console.error('加载电影/标记数据失败:', err);
             this.setData({ allMovies: [], movies: [], allCount: 0 });
-            wx.showToast({ title: '暂无数据或加载失败', icon: 'none' });
+            wx.showToast({ title: '无数据或加载失败', icon: 'none' });
             wx.hideNavigationBarLoading();
         }
     },
@@ -378,11 +378,11 @@ Page({
         if (movieId) {
             this.updateMovieImageStatus(movieId, { imageLoaded: true, imageError: false });
             this.addToImageCache(movieId, e.currentTarget.src);
-            // 后台静默预下载全尺寸图，供海报生成页复用（不 await，不阻塞 UI）
+            // ?????????????????????? await???? UI?
             const movie = this.data.allMovies.find(m => String(m._id) === String(movieId));
             if (movie) {
-                // 必须用 originalCover 作 key，与海报绘制器一致，才能命中缓存
-                const fullUrl = movie.originalCover || movie.coverUrl || movie.cover;
+                // ??? originalCover ? key????????????????
+                const fullUrl = movie.cover || movie.coverUrl || movie.originalCover;
                 if (fullUrl && !fullUrl.startsWith('cloud://')) imageCacheManager.prefetchToLocal(fullUrl);
             }
         }

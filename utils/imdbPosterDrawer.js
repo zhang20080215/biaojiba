@@ -61,9 +61,9 @@ ImdbPosterDrawer.prototype.drawSinglePoster = async function (movie, x, y, width
     ctx.restore();
 
     try {
-        // 优先使用 originalCover（与列表页预缓存 key 一致，可命中会话缓存直接绘制）
-        // 仅当 originalCover 不存在时才 fallback 到 cloud:// 路径
-        let imageUrl = movie.originalCover || movie.coverUrl || movie.cover;
+        // 优先使用云存储的 cover 字段（已上传到云端），避免从豆瓣/IMDB下载
+        // 只有当 cover 不存在时才使用 originalCover（降级方案）
+        let imageUrl = movie.cover || movie.coverUrl || movie.originalCover;
         if (!imageUrl) {
             throw new Error('无图片URL');
         }

@@ -67,7 +67,7 @@
 
       <view class="nickname-input-group">
         <text class="input-label">昵称</text>
-        <input type="nickname" class="nickname-input" placeholder="请输入昵称" bindinput="onNicknameInput" bindblur="onNicknameInput" value="{{tempNickname}}" />
+        <input wx:if="{{showAuthModal}}" type="nickname" class="nickname-input" placeholder="请输入昵称" bindinput="onNicknameInput" value="{{tempNickname}}" />
       </view>
 
       <view class="auth-actions">

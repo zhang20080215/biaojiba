@@ -16,9 +16,21 @@ const _localPathCache = {};
 function getThumbnailUrl(url, usage) {
     if (!url || typeof url !== 'string') return url;
 
-    // 仅 cloud:// 或已是本地路径，直接返回
-    if (url.startsWith('cloud://') || url.startsWith('wxfile://') ||
-        url.startsWith('/') || url.startsWith('data:')) {
+    // 云存储路径：添加图片处理参数（使用微信云存储的 imageMogr2 接口）
+    if (url.startsWith('cloud://')) {
+        if (usage === 'poster') return url; // 海报页用原图
+
+        // 如果是 IMDb 已经专门截好的 180x266 封面，避免再次经过云处理引发 500 错误
+        if (url.includes('imdb_covers')) {
+            return url;
+        }
+
+        // 列表页：压缩到宽度 200px，质量 75%
+        return url + '?imageMogr2/thumbnail/200x/quality/75';
+    }
+
+    // 本地路径直接返回
+    if (url.startsWith('wxfile://') || url.startsWith('/') || url.startsWith('data:')) {
         return url;
     }
 
@@ -39,6 +51,7 @@ function getThumbnailUrl(url, usage) {
             .replace(/_CR[\d,]+_/, '_CR0,0,128,190_');
     }
 
+    // 其他 URL 直接返回
     return url;
 }
 

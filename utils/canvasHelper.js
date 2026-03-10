@@ -49,13 +49,11 @@ CanvasHelper.prototype.loadImage = async function (url, retryCount = 3) {
       }
     }
 
-    // 3. 正常下载
+    // 3. 正常下载（静默，不输出日志）
     try {
-      console.log(`下载网络图片到本地: ${url.substring(0, 60)}...`);
       localPath = await this._downloadFile(url);
       // 写入跨页面会话缓存，供下次复用
       imageCacheManager.cacheLocalPath(url, localPath);
-      console.log(`下载成功，本地路径: ${localPath}`);
     } catch (err) {
       console.error('下载网络图片失败:', err);
       // 如果下载失败，尝试直接使用URL（某些情况下wx.getImageInfo支持网络URL）

@@ -17,14 +17,22 @@ async function translateTitle(imdbId, fallbackTitle) {
     const res = await axios.get(`https://m.douban.com/search/?query=${imdbId}&type=movie`, {
       timeout: 5000,
       headers: {
-        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1'
-      }
+        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1',
+        'Accept-Charset': 'utf-8'
+      },
+      responseType: 'text',
+      responseEncoding: 'utf8'
     });
 
     const $ = cheerio.load(res.data);
     const zhTitle = $('.subject-title').first().text().trim();
-    if (zhTitle) {
-      return zhTitle;
+
+    // 验证标题是否有效（不包含乱码或问号）
+    if (zhTitle && zhTitle.length > 0 && !zhTitle.includes('�') && zhTitle !== '?') {
+      // 检查是否包含中文字符
+      if (/[\u4e00-\u9fa5]/.test(zhTitle)) {
+        return zhTitle;
+      }
     }
 
     return fallbackTitle;
@@ -44,7 +52,7 @@ async function downloadAndUploadImage(imageUrl, movieId, existingImageMap, retry
       return existingImageMap[movieId];
     }
 
-    // 2. 如果不存在，则下载图片
+    // 2. 下载图片（已经是优化后的小图）
     const response = await axios({
       url: imageUrl,
       responseType: 'arraybuffer',
@@ -54,16 +62,20 @@ async function downloadAndUploadImage(imageUrl, movieId, existingImageMap, retry
       }
     });
 
-    // 生成文件名
+    const imageSize = response.data.length;
+    console.log(`下载图片: ${movieId} - 大小 ${(imageSize / 1024).toFixed(1)}KB`);
+
+    // 3. 生成文件名
     const fileName = `imdb_covers/${movieId}_${Date.now()}.jpg`;
 
-    // 上传到云存储
+    // 4. 上传到云存储
     const uploadResult = await cloud.uploadFile({
       cloudPath: fileName,
       fileContent: response.data
     });
 
-    const cdnUrl = `https://${uploadResult.fileID}`;
+    // 注意：fileID 通常是 cloud:// 环境下的格式，不能直接加 https://
+    const cdnUrl = uploadResult.fileID;
 
     // 保存图片信息
     await saveImageInfo(movieId, {
@@ -115,10 +127,24 @@ async function checkExistingImage(movieId) {
  */
 async function saveImageInfo(movieId, imageInfo) {
   try {
-    await db.collection('movie_images').add({
+    // 使用 set 替代 add，如果存在则更新，不存在则插入
+    await db.collection('movie_images').where({
+      movieId: movieId
+    }).update({
       data: {
-        movieId: movieId,
         ...imageInfo
+      }
+    }).catch(async (err) => {
+      // 如果记录不存在，则插入
+      if (err.errCode === -502005) {
+        await db.collection('movie_images').add({
+          data: {
+            movieId: movieId,
+            ...imageInfo
+          }
+        });
+      } else {
+        throw err;
       }
     });
   } catch (error) {
@@ -129,13 +155,13 @@ async function saveImageInfo(movieId, imageInfo) {
 exports.main = async (event, context) => {
   const _ = db.command;
   const START_TIME = Date.now();
-  const TIME_LIMIT = 45000; // 45 秒安全阈值，确保在微信云函数 60 秒硬限制前退出以便保存数据
+  const TIME_LIMIT = 40000; // 40 秒安全阈值，留足够时间保存数据
 
   try {
     console.log('Starting IMDb Top 250 scraping...');
 
     // 1. 抓取 IMDb Top 250 页面 (带中文语言参数)
-    const res = await axios.get('https://www.imdb.com/chart/top/?hl=zh-cn', {
+    const res = await axios.get('https://www.imdb.com/chart/top/?ref_=hm_nv_menu&hl=zh-cn', {
       timeout: 20000,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
@@ -161,13 +187,21 @@ exports.main = async (event, context) => {
     // 2. 解析数据并分批处理照片
     let moviesToProcess = edges.map((edge, index) => {
       const node = edge.node;
+      // IMDB 图片 URL 优化：添加尺寸参数，获取适中大小的图片
+      let coverUrl = node.primaryImage ? node.primaryImage.url : '';
+      if (coverUrl) {
+        const originalUrl = coverUrl;
+        // IMDB 图片 URL 格式：https://m.media-amazon.com/images/M/...@._V1_xxx.jpg
+        // 获取 180x266 大小的封面图
+        coverUrl = coverUrl.replace(/@\._V1_[^.]*\./, '@._V1_QL75_UX180_CR0,0,180,266_.');
+      }
       return {
         _id: node.id, // IMDb ID e.g., tt0111161
         rank: index + 1,
         title: node.titleText.text,
         rating: node.ratingsSummary ? node.ratingsSummary.aggregateRating : 0,
         year: node.releaseYear ? String(node.releaseYear.year) : '',
-        coverUrl: node.primaryImage ? node.primaryImage.url : '',
+        coverUrl: coverUrl,
         description: node.plot ? node.plot.plotText.plainText : 'No description available',
         category: ''
       };
@@ -205,11 +239,11 @@ exports.main = async (event, context) => {
     let moviesToUpdate = [];
     let processedMovies = [];
 
-    const CHUNK_SIZE = 5; // 保持适中并发，防止下载过快被封或内存溢出
+    const CHUNK_SIZE = 3; // 减少并发数，避免超时
     let stoppedEarly = false;
     for (let i = 0; i < moviesToProcess.length; i += CHUNK_SIZE) {
       if (Date.now() - START_TIME > TIME_LIMIT) {
-        console.warn(`[Timeout Guard] Execution time exceeded 45s threshold. Stopping at index ${i} to safely save progress. Run the function again to continue.`);
+        console.warn(`[Timeout Guard] Execution time exceeded 40s threshold. Stopping at index ${i} to safely save progress. Run the function again to continue.`);
         stoppedEarly = true;
         break;
       }
@@ -219,10 +253,18 @@ exports.main = async (event, context) => {
       const chunkResults = await Promise.all(chunk.map(async (movie) => {
         // 下载并上传封面图
         let imageInfo = null;
-        if (movie.coverUrl) {
+        let needsDownload = true;
+
+        // 如果之前的 originalCover 不是新格式（180x266），那么 coverUrl 不相等，则重新下载
+        const existingRecord = existingMap[movie._id];
+        if (existingRecord && existingRecord.cover && existingRecord.cover.startsWith('cloud://') && existingRecord.originalCover === movie.coverUrl) {
+          needsDownload = false;
+        }
+
+        if (movie.coverUrl && needsDownload) {
           try {
-            // 传入预加载的 Map
-            imageInfo = await downloadAndUploadImage(movie.coverUrl, movie._id, movieImageMap);
+            // 不传入预加载的 Map，强制按照新格式（180*266）重新下载并存成新的文件
+            imageInfo = await downloadAndUploadImage(movie.coverUrl, movie._id, null);
           } catch (err) {
             console.error(`Image process failed for ${movie._id}:`, err.message);
           }
@@ -240,8 +282,8 @@ exports.main = async (event, context) => {
           ...movie,
           title: finalTitle,
           originalTitle: movie.title,
-          cover: imageInfo && imageInfo.fileID ? imageInfo.fileID : movie.coverUrl,
-          coverUrl: imageInfo && imageInfo.cdnUrl ? imageInfo.cdnUrl : movie.coverUrl,
+          cover: imageInfo && imageInfo.fileID ? imageInfo.fileID : (existingRecord ? existingRecord.cover : movie.coverUrl),
+          coverUrl: imageInfo && imageInfo.cdnUrl ? imageInfo.cdnUrl : (existingRecord ? existingRecord.coverUrl : movie.coverUrl),
           originalCover: movie.coverUrl,
           isTop250: true,
           theme: 'imdb_movies',
@@ -253,8 +295,10 @@ exports.main = async (event, context) => {
           if (oldRecord.isTop250 === false) {
             finalMovieData.enterTop250Time = db.serverDate();
           }
+          // 不再保留旧图，使用新上传的小图
           moviesToUpdate.push(finalMovieData);
         } else {
+          // 新电影
           finalMovieData.createTime = db.serverDate();
           finalMovieData.enterTop250Time = db.serverDate();
           moviesToAdd.push(finalMovieData);
