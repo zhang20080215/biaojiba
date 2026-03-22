@@ -241,6 +241,50 @@
   background: rgba(255, 255, 255, 0.2);
 }
 
+/* 奥斯卡主题卡片 — 黑金风格 */
+.theme-card[data-theme-id="oscar_movies"] {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2c2c2c 100%);
+  color: #fff;
+  box-shadow: 0 8px 32px rgba(212, 175, 55, 0.15);
+}
+
+.theme-card[data-theme-id="oscar_movies"]:active {
+  box-shadow: 0 12px 40px rgba(212, 175, 55, 0.25);
+}
+
+.theme-card[data-theme-id="oscar_movies"] .theme-title {
+  color: #f5d98a;
+  font-weight: 800;
+}
+
+.theme-card[data-theme-id="oscar_movies"] .theme-description {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.theme-card[data-theme-id="oscar_movies"] .user-count {
+  background: rgba(212, 175, 55, 0.2);
+  color: #f5d98a;
+}
+
+.theme-card[data-theme-id="oscar_movies"] .arrow-icon {
+  color: #d4af37;
+}
+
+.theme-card[data-theme-id="oscar_movies"] .theme-arrow {
+  background: rgba(212, 175, 55, 0.2);
+}
+
+/* 小金人图标 */
+.oscar-badge {
+  position: absolute;
+  bottom: 12rpx;
+  right: 12rpx;
+  width: 56rpx;
+  height: 56rpx;
+  z-index: 2;
+  filter: drop-shadow(0 2px 6px rgba(212, 175, 55, 0.6));
+}
+
 /* 个人信息授权弹窗 */
 .auth-modal {
   position: fixed;

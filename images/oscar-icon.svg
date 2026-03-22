@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Oscar statuette silhouette -->
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f5d98a"/>
+      <stop offset="50%" stop-color="#d4af37"/>
+      <stop offset="100%" stop-color="#b8960c"/>
+    </linearGradient>
+  </defs>
+  <!-- Head -->
+  <circle cx="32" cy="10" r="5" fill="url(#gold)"/>
+  <!-- Body -->
+  <path d="M28 15 Q27 20 26 28 Q25 32 28 33 L36 33 Q39 32 38 28 Q37 20 36 15 Z" fill="url(#gold)"/>
+  <!-- Arms holding sword/reel -->
+  <path d="M26 18 Q20 20 18 24 Q17 26 19 26 L26 23" fill="url(#gold)"/>
+  <path d="M38 18 Q44 20 46 24 Q47 26 45 26 L38 23" fill="url(#gold)"/>
+  <!-- Sword/reel in front -->
+  <rect x="30.5" y="16" width="3" height="18" rx="1.5" fill="url(#gold)"/>
+  <!-- Base pedestal -->
+  <path d="M25 33 L24 38 Q23 40 22 42 L42 42 Q41 40 40 38 L39 33 Z" fill="url(#gold)"/>
+  <!-- Bottom base -->
+  <rect x="20" y="42" width="24" height="4" rx="2" fill="url(#gold)"/>
+  <rect x="18" y="46" width="28" height="5" rx="2.5" fill="url(#gold)"/>
+</svg>

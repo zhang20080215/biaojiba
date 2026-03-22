@@ -68,8 +68,8 @@
   </block>
 </view>
 
-<!-- 个人信息授权弹窗 -->
-<view class="auth-modal" wx:if="{{showAuthModal}}">
+<!-- 个人信息授权弹窗（使用 hidden 避免 type="nickname" 原生输入框销毁时报错） -->
+<view class="auth-modal" hidden="{{!showAuthModal}}">
   <view class="auth-mask" bindtap="onCancelAuth"></view>
   <view class="auth-content">
     <view class="auth-title">完善个人资料</view>

@@ -3,6 +3,8 @@ import imageCacheManager from '../../../utils/imageCacheManager';
 
 Page({
     data: {
+        statusBarHeight: 0,
+        navBarHeight: 0,
         userInfo: null,
         openid: '',
         allMovies: [],
@@ -23,6 +25,7 @@ Page({
         loadingImages: {},
         loading: false,
         showAuthModal: false,
+        showShareModal: false,
         tempAvatar: '',
         tempNickname: ''
     },
@@ -32,7 +35,12 @@ Page({
             wx.showToast({ title: '请升级基础库', icon: 'none' });
             return;
         }
-        wx.setNavigationBarTitle({ title: '奥斯卡最佳影片' });
+        // 沉浸式布局：获取状态栏和导航栏高度
+        const sysInfo = wx.getWindowInfo();
+        const menuBtn = wx.getMenuButtonBoundingClientRect();
+        const statusBarHeight = sysInfo.statusBarHeight || 20;
+        const navBarHeight = (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
+        this.setData({ statusBarHeight, navBarHeight });
         this.checkLoginStatus();
         this.loadAllMovies(true); // 强制跳过24小时缓存拉取最新数据
     },
@@ -69,13 +77,17 @@ Page({
             this.onGetUserProfile();
             return;
         }
-        wx.showActionSheet({
-            itemList: ['海报墙', '文字卡片'],
-            success: (res) => {
-                const type = res.tapIndex === 0 ? 'poster' : 'text';
-                wx.navigateTo({ url: `/pages/oscar/share/share?type=${type}` });
-            }
-        });
+        this.setData({ showShareModal: true });
+    },
+
+    onShareSelect(e) {
+        const type = e.currentTarget.dataset.type;
+        this.setData({ showShareModal: false });
+        wx.navigateTo({ url: `/pages/oscar/share/share?type=${type}` });
+    },
+
+    onCloseShareModal() {
+        this.setData({ showShareModal: false });
     },
 
     onHeaderLoginClick() {
@@ -203,7 +215,7 @@ Page({
         if (!this.data.userInfo || !this.data.userInfo._openid) return;
         wx.showNavigationBarLoading();
         try {
-            const { marks } = await DataLoader.loadMoviesData('oscar', openid, false);
+            const { marks } = await DataLoader.loadMoviesData('oscar', this.data.userInfo._openid, false);
             const { markStatusMap, markDateMap, watchedIds, wishIds, stats } = DataLoader.processMarks(marks, this.data.allMovies);
             this.setData({
                 markStatusMap, markDateMap, watchedIds, wishIds,

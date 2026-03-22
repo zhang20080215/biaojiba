@@ -1,89 +1,142 @@
-/* ===== 整体页面背景 ===== */
+/* ===== 奥斯卡最佳影片 — 黑金典礼风格 ===== */
 page {
-  background: linear-gradient(180deg,#f6f9ff 0%,#f7f7fa 100%);
+  background: linear-gradient(180deg, #0d0d0d 0%, #1a1a1a 100%);
   min-height: 100vh;
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', Arial, 'Hiragino Sans GB', 'Microsoft Yahei', sans-serif;
 }
 
-
-/* ===== 顶部通栏 Header 样式 ===== */
-.top-action-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: linear-gradient(135deg, #1a1a1a 0%, #2c2c2c 100%);
-  box-shadow: 0 4px 16px rgba(212, 175, 55, 0.15);
-  margin: 20rpx 16rpx;
-  padding: 20rpx 28rpx;
-  border-radius: 24rpx;
+/* ===== 沉浸式顶部 Header ===== */
+.immersive-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  background: linear-gradient(180deg, #0a0a0a 0%, rgba(13, 13, 13, 0.96) 100%);
+  backdrop-filter: blur(20px);
 }
 
-/* 左侧：头像昵称 */
-.user-profile-section {
+/* 导航栏：与胶囊按钮同行，只放标题 */
+.nav-bar {
   display: flex;
   align-items: center;
+  padding: 0 28rpx;
+}
+
+/* 返回按钮 */
+.back-btn {
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8rpx;
+}
+
+.back-btn:active {
+  opacity: 0.6;
+}
+
+.back-icon {
+  width: 18rpx;
+  height: 18rpx;
+  border-left: 4rpx solid #d4af37;
+  border-bottom: 4rpx solid #d4af37;
+  transform: rotate(45deg);
+  margin-left: 6rpx;
+}
+
+/* 小金人图标 */
+.header-oscar-icon {
+  width: 44rpx;
+  height: 44rpx;
+  margin-right: 12rpx;
+  filter: drop-shadow(0 2px 4px rgba(212, 175, 55, 0.5));
+}
+
+.header-title-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.header-title {
+  font-size: 30rpx;
+  font-weight: 800;
+  color: #f5d98a;
+  letter-spacing: 1rpx;
+}
+
+.header-subtitle {
+  font-size: 16rpx;
+  color: rgba(212, 175, 55, 0.5);
+  letter-spacing: 1rpx;
+  margin-top: 2rpx;
+  font-weight: 400;
+}
+
+/* 金色分割线 */
+.gold-divider {
+  height: 2rpx;
+  background: linear-gradient(90deg, transparent 0%, #d4af37 30%, #f5d98a 50%, #d4af37 70%, transparent 100%);
+  margin: 0;
+  opacity: 0.5;
+}
+
+/* ===== 分栏 Tabs ===== */
+.tabs-bar {
+  display: flex;
+  background: rgba(26, 26, 26, 0.95);
+  margin: 14rpx 16rpx 0 16rpx;
+  border-radius: 18rpx;
+  padding: 4rpx 0 8rpx 0;
+  border: 1rpx solid rgba(212, 175, 55, 0.12);
+}
+
+.tab {
   flex: 1;
-}
-
-.avatar-small {
-  width: 64rpx;
-  height: 64rpx;
-  border-radius: 32rpx;
-  margin-right: 16rpx;
-  background-color: #f0f0f5;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-}
-
-.nickname-small {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #fcebbb;
-  max-width: 320rpx;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* 右侧：返回首页样式 */
-.home-nav-section {
-  display: flex;
-  align-items: center;
-  padding: 8rpx 20rpx;
-  background: #f7f8fa;
-  border-radius: 30rpx;
-  border: 1rpx solid #eee;
-}
-
-.home-text {
-  font-size: 24rpx;
-  color: #d4af37;
+  text-align: center;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.4);
+  padding: 14rpx 0 10rpx 0;
+  position: relative;
   font-weight: 500;
+  letter-spacing: 0.5px;
+  transition: color 0.18s;
 }
 
-.home-nav-section:active {
-  background: #eeeff0;
+.tab.active {
+  color: #f5d98a;
+  font-weight: 700;
 }
 
-/* 吸顶容器 */
+.tab.active::after {
+  content: '';
+  display: block;
+  width: 32rpx;
+  height: 6rpx;
+  background: linear-gradient(90deg, #d4af37, #f5d98a);
+  border-radius: 3rpx;
+  margin: 2rpx auto 0;
+}
+
+/* ===== 吸顶操作栏 ===== */
 .sticky-action-container {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(246, 249, 255, 0.9);
+  background: rgba(13, 13, 13, 0.92);
   backdrop-filter: blur(10px);
-  padding: 10rpx 0;
-  margin-top: -10rpx;
+  padding: 14rpx 0 0;
 }
 
-/* 中部功能操作栏 */
 .middle-action-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 0 20rpx 10rpx 20rpx;
+  margin: 0 20rpx 0 20rpx;
 }
 
-/* 左侧：操作区 */
+/* 批量操作按钮 */
 .batch-options {
   display: flex;
   align-items: center;
@@ -91,52 +144,52 @@ page {
 }
 
 .icon-btn {
-  font-size: 24rpx;
+  font-size: 26rpx;
   font-weight: 600;
-  padding: 10rpx 28rpx;
-  border-radius: 40rpx; /* 增加圆角，形成药丸形状 */
+  padding: 14rpx 36rpx;
+  border-radius: 40rpx;
   transition: all 0.2s ease;
   line-height: 1.2;
 }
 
-/* 批量小按钮颜色 - 使用浅色背景和圆角，维持简洁感 */
 .batch-icon {
-  background: rgba(212, 175, 55, 0.1); 
-  color: #d4af37;
+  background: rgba(212, 175, 55, 0.15);
+  color: #e5c05c;
+  border: 1rpx solid rgba(212, 175, 55, 0.2);
 }
 
 .batch-icon:active {
-  background: rgba(64, 158, 255, 0.15);
+  background: rgba(212, 175, 55, 0.25);
 }
 
 .action-cancel {
-  background: #f5f5f5;
-  color: #999;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .action-watched {
-  background: rgba(103, 194, 58, 0.08);
-  color: #67c23a;
+  background: rgba(76, 175, 80, 0.15);
+  color: #66bb6a;
 }
 
 .action-wish {
-  background: rgba(230, 162, 60, 0.08);
-  color: #e6a23c;
+  background: rgba(255, 193, 7, 0.15);
+  color: #ffd54f;
 }
 
-/* 右侧：生成卡片按钮 */
+/* 生成海报按钮 */
 .generate-card-wrapper {
   flex: 0 0 auto;
 }
 
 .generate-card-btn-large {
-  background: linear-gradient(135deg, #d4af37 0%, #fdf0a6 50%, #d4af37 100%);
-  color: #333;
+  background: linear-gradient(135deg, #b8960c 0%, #d4af37 30%, #f5d98a 50%, #d4af37 70%, #b8960c 100%);
+  color: #1a1a1a;
   font-size: 26rpx;
   font-weight: 700;
   padding: 14rpx 36rpx;
   border-radius: 40rpx;
-  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+  box-shadow: 0 4px 16px rgba(212, 175, 55, 0.35);
   transition: all 0.2s ease;
   letter-spacing: 1rpx;
 }
@@ -151,136 +204,46 @@ page {
   opacity: 0.9;
 }
 
-/* ===== 分栏 tabs 样式 ===== */
-.tabs-bar {
-  display: flex;
-  background: rgba(255, 255, 255, 0.98);
-  margin: 0 16rpx 20rpx 16rpx;
-  border-radius: 18rpx;
-  padding: 6rpx 0 10rpx 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-}
-
-.tab {
-  flex: 1;
-  text-align: center;
-  font-size: 16px;
-  color: #b0b7c6;
-  padding: 20rpx 0 12rpx 0;
-  position: relative;
-  font-weight: 500;
-  letter-spacing: 0.5px;
-  transition: color 0.18s;
-}
-.tab.active {
-  color: #d4af37;
-  font-weight: 700;
-}
-.tab.active::after {
-  content: '';
-  display: block;
-  width: 32rpx;
-  height: 6rpx;
-  background: linear-gradient(90deg,#e5c05c,#d4af37);
-  border-radius: 3rpx;
-  margin: 0 auto;
-  margin-top: 2rpx;
-}
-
-/* ===== 批量标记按钮区 ===== */
-.batch-options {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  margin: 0 0 20rpx 0;
-  padding: 0 16rpx;
-  box-sizing: border-box;
-  gap: 12rpx;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  padding: 16rpx;
-  margin: 0;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  transform: translateY(-1px); /* 微调位置，消除间隙 */
-}
-
-.batch-btn {
-  font-size: 14px;
-  padding: 12rpx 24rpx;
-  border-radius: 14px;
-  border: none;
-  font-weight: 500;
-  text-align: center;
-  background: #f0f0f0;
-  color: #333;
-  transition: all 0.2s ease;
-  min-width: 100rpx;
-}
-
-.batch-btn:active {
-  transform: translateY(1px);
-  opacity: 0.9;
-}
-
-.batch-btn-watched {
-  background: linear-gradient(90deg,#e5c05c 0%,#d4af37 100%);
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
-}
-
-.batch-btn-wish {
-  background: linear-gradient(90deg,#ffc107 0%,#ff9800 100%);
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.2);
-}
-
-.batch-btn-cancel {
-  background: #e0e0e0;
-  color: #666;
-}
-
-/* ===== 电影列表整体 ===== */
+/* ===== 电影列表 ===== */
 .movie-list {
   width: 100%;
   margin: 0;
-  padding-bottom: 40rpx;
+  padding: 4rpx 0 40rpx;
 }
 
-/* ===== 单行电影卡片 ===== */
+/* ===== 电影卡片 ===== */
 .movie-row {
   display: flex;
   align-items: center;
-  background: #fff;
-  border-radius: 28rpx;
-  box-shadow: 0 8px 30px 0 rgba(212, 175, 55, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
-  margin: 18rpx 16rpx;
-  padding: 18rpx 16rpx 18rpx 16rpx;
+  background: linear-gradient(135deg, #1e1e1e 0%, #252525 100%);
+  border-radius: 20rpx;
+  border: 1rpx solid rgba(212, 175, 55, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  margin: 14rpx 16rpx;
+  padding: 18rpx 16rpx;
   position: relative;
   overflow: hidden;
-  transition: box-shadow 0.15s, padding 0.3s;
+  transition: all 0.15s;
 }
+
 .movie-row:active {
-  box-shadow: 0 2px 12px 0 rgba(212, 175, 55, 0.15);
+  border-color: rgba(212, 175, 55, 0.2);
+  box-shadow: 0 4px 24px rgba(212, 175, 55, 0.12);
 }
 
-/* 电影内容容器，用于右移和隐藏单个按钮 */
+/* 电影内容容器 */
 .movie-content {
-  flex: 1; /* 填充剩余空间 */
-  display: flex; /* 保持内部flex布局 */
+  flex: 1;
+  display: flex;
   align-items: center;
-  transition: transform 0.3s; /* 添加右移过渡 */
+  transition: transform 0.3s;
 }
 
-/* 批量编辑模式下电影内容右移 */
 .movie-content.batch-editing {
-  transform: translateX(40rpx); /* 向右移动，为复选框留空间 */
+  transform: translateX(40rpx);
 }
 
-/* 复选框样式（可选调整） */
+/* 复选框 */
 .batch-checkbox {
   margin-left: 16rpx;
   margin-right: -24rpx;
@@ -298,18 +261,19 @@ page {
   color: #fff;
 }
 
-/* ===== 电影封面小图 ===== */
+/* ===== 电影封面 ===== */
 .movie-thumb {
   width: 62px;
   height: 88px;
-  border-radius: 16rpx;
-  box-shadow: 0 2px 10px rgba(80,120,200,0.08);
+  border-radius: 12rpx;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
   margin-right: 18rpx;
   object-fit: cover;
-  background: #f3f4f8;
+  background: #2a2a2a;
+  border: 1rpx solid rgba(212, 175, 55, 0.1);
 }
 
-/* ===== 电影信息区 ===== */
+/* ===== 电影信息 ===== */
 .movie-info {
   flex: 1;
   display: flex;
@@ -317,9 +281,10 @@ page {
   justify-content: center;
   min-width: 0;
 }
+
 .movie-title {
   font-size: 14px;
-  color: #181c2e;
+  color: #f0f0f0;
   font-weight: 700;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -327,37 +292,61 @@ page {
   margin: 0 0 6rpx 0;
   max-width: 100%;
 }
+
+.movie-meta {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 4rpx;
+}
+
+.movie-year {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 400;
+}
+
+.movie-ceremony {
+  font-size: 11px;
+  color: #d4af37;
+  font-weight: 600;
+  background: rgba(212, 175, 55, 0.12);
+  padding: 2rpx 10rpx;
+  border-radius: 6rpx;
+  letter-spacing: 0.5px;
+}
+
 .movie-rating {
-  font-size: 15px;
-  color: #39aaff;
+  font-size: 13px;
+  color: #e5c05c;
   margin: 2rpx 0 0 0;
   font-weight: 500;
   letter-spacing: 0.4px;
 }
 
-/* ===== 标记状态显示区 ===== */
+/* ===== 标记状态 ===== */
 .mark-status {
-  margin-left: auto; /* 推到最右边 */
-  padding: 0 10rpx; /* 调整内边距 */
-  border-radius: 10rpx; /* 可选：圆角 */
-  display: flex; /* 使用flex居中文本 */
+  margin-left: auto;
+  padding: 0 10rpx;
+  border-radius: 10rpx;
+  display: flex;
   align-items: center;
-  height: 100%; /* 填充父容器高度 */
+  height: 100%;
 }
 
 .mark-text {
-  font-size: 13px; /* 调整字体大小 */
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.3px;
-  white-space: nowrap; /* 防止换行 */
+  white-space: nowrap;
 }
 
 .mark-text.watched {
-  color: #4CAF50; /* 已看颜色 */
+  color: #66bb6a;
 }
 
 .mark-text.wish {
-  color: #FFC107; /* 想看颜色 */
+  color: #ffd54f;
 }
 
 /* ===== 标记按钮 ===== */
@@ -367,6 +356,7 @@ page {
   gap: 6rpx;
   margin-left: 12rpx;
 }
+
 .mark-btn {
   min-width: 40px;
   max-width: 60px;
@@ -378,28 +368,163 @@ page {
   line-height: 30px;
   padding: 0 12rpx;
   margin-left: 0;
-  background: #fdfaf0;
-  color: #d4af37;
-  box-shadow: 0 2px 8px rgba(212, 175, 55, 0.1);
-  transition: background 0.16s, color 0.16s;
-}
-.mark-btn-wish {
-  background: #fcf4e8;
-  color: #e6a23c;
-}
-.mark-btn:active {
-  background: #faedcc;
-  color: #b58d19;
-  opacity: .8;
+  background: rgba(212, 175, 55, 0.12);
+  color: #e5c05c;
+  border: 1rpx solid rgba(212, 175, 55, 0.2);
+  transition: all 0.16s;
 }
 
-/* ===== 滚动条优化（仅在支持的环境生效） ===== */
+.mark-btn-wish {
+  background: rgba(255, 193, 7, 0.1);
+  color: #ffd54f;
+  border-color: rgba(255, 193, 7, 0.2);
+}
+
+.mark-btn:active {
+  background: rgba(212, 175, 55, 0.25);
+  color: #f5d98a;
+  opacity: 0.8;
+}
+
+/* ===== 滚动条 ===== */
 ::-webkit-scrollbar {
   width: 0;
   height: 0;
 }
 
-/* 个人信息授权弹窗 */
+/* ===== 生成海报弹窗 ===== */
+.share-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.share-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6rpx);
+}
+
+.share-sheet {
+  position: relative;
+  width: 100%;
+  background: linear-gradient(180deg, #1e1e1e 0%, #141414 100%);
+  border-radius: 32rpx 32rpx 0 0;
+  padding: 40rpx 32rpx calc(40rpx + env(safe-area-inset-bottom));
+  border-top: 2rpx solid rgba(212, 175, 55, 0.15);
+}
+
+.share-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  margin-bottom: 36rpx;
+}
+
+.share-sheet-icon {
+  width: 40rpx;
+  height: 40rpx;
+  filter: drop-shadow(0 2px 4px rgba(212, 175, 55, 0.4));
+}
+
+.share-sheet-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #f5d98a;
+  letter-spacing: 1rpx;
+}
+
+.share-sheet-options {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-bottom: 32rpx;
+}
+
+.share-option {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1rpx solid rgba(212, 175, 55, 0.1);
+  border-radius: 20rpx;
+  padding: 28rpx 24rpx;
+  transition: all 0.15s;
+}
+
+.share-option:active {
+  background: rgba(212, 175, 55, 0.1);
+  border-color: rgba(212, 175, 55, 0.25);
+}
+
+.share-option-icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 18rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  margin-right: 24rpx;
+  flex-shrink: 0;
+}
+
+.poster-icon {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(212, 175, 55, 0.08) 100%);
+}
+
+.text-icon {
+  background: linear-gradient(135deg, rgba(245, 217, 138, 0.2) 0%, rgba(245, 217, 138, 0.08) 100%);
+}
+
+.share-option-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.share-option-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #f0f0f0;
+}
+
+.share-option-desc {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.share-option-arrow {
+  font-size: 32rpx;
+  color: rgba(212, 175, 55, 0.5);
+  font-weight: 700;
+  margin-left: 12rpx;
+}
+
+.share-sheet-cancel {
+  text-align: center;
+  font-size: 28rpx;
+  color: rgba(255, 255, 255, 0.4);
+  padding: 20rpx;
+  border-top: 1rpx solid rgba(255, 255, 255, 0.06);
+}
+
+.share-sheet-cancel:active {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* ===== 授权弹窗 ===== */
 .auth-modal {
   position: fixed;
   top: 0;
@@ -418,17 +543,18 @@ page {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(4rpx);
 }
 
 .auth-content {
   position: relative;
   width: 80%;
-  background: #fff;
+  background: linear-gradient(180deg, #252525 0%, #1a1a1a 100%);
   border-radius: 24rpx;
   padding: 40rpx 40rpx 50rpx 40rpx;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  border: 1rpx solid rgba(212, 175, 55, 0.15);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -437,13 +563,13 @@ page {
 .auth-title {
   font-size: 36rpx;
   font-weight: 700;
-  color: #333;
+  color: #f5d98a;
   margin-bottom: 12rpx;
 }
 
 .auth-subtitle {
   font-size: 24rpx;
-  color: #888;
+  color: rgba(255, 255, 255, 0.5);
   margin-bottom: 40rpx;
 }
 
@@ -466,20 +592,21 @@ page {
   width: 120rpx;
   height: 120rpx;
   border-radius: 60rpx;
-  background: #f0f0f0;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  background: #2a2a2a;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  border: 2rpx solid rgba(212, 175, 55, 0.3);
 }
 
 .avatar-edit-tip {
   font-size: 20rpx;
-  color: #409eff;
+  color: #d4af37;
   margin-top: 12rpx;
 }
 
 .nickname-input-group {
   width: 100%;
   margin-top: 40rpx;
-  border-bottom: 1rpx solid #eee;
+  border-bottom: 1rpx solid rgba(212, 175, 55, 0.15);
   display: flex;
   align-items: center;
   padding: 10rpx 0;
@@ -487,14 +614,14 @@ page {
 
 .input-label {
   font-size: 28rpx;
-  color: #333;
+  color: rgba(255, 255, 255, 0.7);
   width: 80rpx;
 }
 
 .nickname-input {
   flex: 1;
   font-size: 28rpx;
-  color: #333;
+  color: #f0f0f0;
   padding: 0 10rpx;
 }
 
@@ -521,12 +648,13 @@ page {
 }
 
 .auth-btn.cancel {
-  background: #f5f5f5;
-  color: #666;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .auth-btn.confirm {
-  background: linear-gradient(135deg, #409eff 0%, #2b85e4 100%);
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(64,158,255,0.3);
+  background: linear-gradient(135deg, #d4af37 0%, #f5d98a 100%);
+  color: #1a1a1a;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
 }

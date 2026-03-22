@@ -13,20 +13,18 @@ OscarPosterDrawer.prototype.getTitle = function () {
 
 OscarPosterDrawer.prototype.drawPosterWall = async function (movies, canvasSize, updateProgress) {
     const { width, height } = canvasSize;
-    const padding = 40;
+    const padding = 60;
     const colsPerRow = 12;
-    const gap = 12;
+    const gap = 10;
 
     const availableWidth = width - padding * 2;
     const posterWidth = Math.floor((availableWidth - gap * (colsPerRow - 1)) / colsPerRow);
     const posterHeight = Math.floor(posterWidth * 1.4);
 
-    const posterAreaStartY = 280;
-    const posterAreaHeight = height - posterAreaStartY - padding - 40;
-    const maxRows = Math.floor(posterAreaHeight / (posterHeight + gap));
-    const maxPosters = maxRows * colsPerRow;
+    // 与 share.js drawPosterWall 中 header(100) + stats(130+50) + gap 保持一致
+    const posterAreaStartY = 200;
 
-    const displayMovies = movies.slice(0, maxPosters);
+    const displayMovies = movies;
     const total = displayMovies.length;
 
     const batchSize = 8;
@@ -56,7 +54,7 @@ OscarPosterDrawer.prototype.drawSinglePoster = async function (movie, x, y, widt
     ctx.save();
     this.helper.drawRoundRectPath(x, y, width, height, 12);
     ctx.clip();
-    ctx.fillStyle = '#f0f0f0';
+    ctx.fillStyle = '#2a2a2a';
     ctx.fillRect(x, y, width, height);
     ctx.restore();
 
@@ -79,8 +77,8 @@ OscarPosterDrawer.prototype.drawSinglePoster = async function (movie, x, y, widt
         ctx.clip();
         ctx.drawImage(imagePath, x, y, width, height);
 
-        ctx.strokeStyle = 'rgba(0,0,0,0.1)';
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'rgba(212, 175, 55, 0.15)';
+        ctx.lineWidth = 1;
         this.helper.drawRoundRectPath(x, y, width, height, 12);
         ctx.stroke();
         ctx.restore();
@@ -94,16 +92,22 @@ OscarPosterDrawer.prototype.drawSinglePoster = async function (movie, x, y, widt
 OscarPosterDrawer.prototype._drawPlaceholder = function (title, x, y, width, height) {
     const ctx = this.ctx;
 
-    ctx.fillStyle = '#e0e0e0';
+    ctx.fillStyle = '#2a2a2a';
     ctx.fillRect(x, y, width, height);
 
-    ctx.fillStyle = '#999';
+    // 金色边框
+    ctx.strokeStyle = 'rgba(212, 175, 55, 0.3)';
+    ctx.lineWidth = 1;
+    this.helper.drawRoundRectPath(x, y, width, height, 12);
+    ctx.stroke();
+
+    ctx.fillStyle = '#d4af37';
     ctx.font = '24px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('🎬', x + width / 2, y + height / 2 - 10);
+    ctx.fillText('🏆', x + width / 2, y + height / 2 - 10);
 
-    ctx.fillStyle = '#666';
+    ctx.fillStyle = 'rgba(245, 217, 138, 0.7)';
     ctx.font = 'bold 12px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';

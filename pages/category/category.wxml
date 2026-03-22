@@ -30,6 +30,8 @@
       <view class="theme-image-container">
         <image class="theme-image" src="{{item.image}}" mode="aspectFill"></image>
         <view class="theme-overlay"></view>
+        <!-- 奥斯卡小金人图标 -->
+        <image wx:if="{{item.id === 'oscar_movies'}}" class="oscar-badge" src="/images/oscar-icon.svg" mode="aspectFit"></image>
       </view>
 
       <!-- 主题信息 -->
@@ -53,13 +55,13 @@
     <text class="tip-text">更多主题正在开发中...</text>
   </view>
 
-  <!-- 个人信息授权弹窗 -->
-  <view class="auth-modal" wx:if="{{showAuthModal}}">
+  <!-- 个人信息授权弹窗（使用 hidden 避免 type="nickname" 原生输入框销毁时报错） -->
+  <view class="auth-modal" hidden="{{!showAuthModal}}">
     <view class="auth-mask" bindtap="onCancelAuth"></view>
     <view class="auth-content">
       <view class="auth-title">完善个人资料</view>
       <view class="auth-subtitle">请提供头像和昵称以获取更好的体验</view>
-      
+
       <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
         <image class="temp-avatar" src="{{tempAvatar || '/images/default-avatar.svg'}}" mode="aspectFill"></image>
         <view class="avatar-edit-tip">点击修改头像</view>
@@ -67,7 +69,7 @@
 
       <view class="nickname-input-group">
         <text class="input-label">昵称</text>
-        <input wx:if="{{showAuthModal}}" type="nickname" class="nickname-input" placeholder="请输入昵称" bindinput="onNicknameInput" value="{{tempNickname}}" />
+        <input type="nickname" class="nickname-input" placeholder="请输入昵称" bindinput="onNicknameInput" value="{{tempNickname}}" />
       </view>
 
       <view class="auth-actions">
