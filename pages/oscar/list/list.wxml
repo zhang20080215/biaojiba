@@ -1,0 +1,90 @@
+<!-- IMDb 电影 TOP 250 列表页 -->
+
+<!-- 顶部功能集合栏 -->
+<view class="top-action-bar">
+  <view class="user-profile-section" bindtap="onHeaderLoginClick">
+    <image class="avatar-small" src="{{userInfo.avatarUrl || '/images/default-avatar.svg'}}" mode="aspectFill"></image>
+    <text class="nickname-small">{{userInfo.nickName || '点击登录'}}</text>
+  </view>
+  <view class="home-nav-section" bindtap="onBackHome">
+    <text class="home-text">返回首页</text>
+  </view>
+</view>
+
+<!-- 统计与分栏 Tab -->
+<view class="tabs-bar">
+  <view class="tab {{activeTab === 0 ? 'active' : ''}}" data-idx="0" bindtap="onTabChange">全部({{allCount}})</view>
+  <view class="tab {{activeTab === 1 ? 'active' : ''}}" data-idx="1" bindtap="onTabChange">已看({{watchedCount}})</view>
+  <view class="tab {{activeTab === 2 ? 'active' : ''}}" data-idx="2" bindtap="onTabChange">想看({{wishCount}})</view>
+  <view class="tab {{activeTab === 3 ? 'active' : ''}}" data-idx="3" bindtap="onTabChange">未看({{unwatchedCount}})</view>
+</view>
+
+<!-- 共享内容生成与批量操作区域 -->
+<view class="sticky-action-container">
+  <view class="middle-action-section">
+    <view wx:if="{{userInfo}}" class="batch-options">
+      <block wx:if="{{!isBatchEditing}}">
+        <view class="icon-btn batch-icon" bindtap="onStartBatchEdit">批量标记</view>
+      </block>
+      <block wx:elif="{{isBatchEditing}}">
+        <view class="icon-btn action-watched" bindtap="onBatchWatch">批量已看</view>
+        <view class="icon-btn action-wish" bindtap="onBatchWish">想看</view>
+        <view class="icon-btn action-cancel" bindtap="onCancelBatchEdit">取消</view>
+      </block>
+    </view>
+    <view class="generate-card-wrapper" bindtap="onShareTap" wx:if="{{!isBatchEditing}}">
+      <view class="generate-card-btn-large">生成观影海报</view>
+    </view>
+  </view>
+</view>
+
+<!-- 电影列表区 -->
+<view class="movie-list">
+  <block wx:for="{{movies}}" wx:key="_id">
+    <view class="movie-row" bindtap="{{isBatchEditing ? 'onMovieCheck' : ''}}" data-movie-id="{{item._id}}">
+      <checkbox wx:if="{{isBatchEditing}}" class="batch-checkbox" value="{{item._id}}" checked="{{item.checked}}" catchtap="onMovieCheck" data-movie-id="{{item._id}}" />
+      <view class="movie-content {{isBatchEditing ? 'batch-editing' : ''}}">
+        <image class="movie-thumb" src="{{item.thumbCover || item.cover}}" lazy-load="true" mode="aspectFill" binderror="onImageError" bindload="onImageLoad" data-movie-id="{{item._id}}" show-menu-by-longpress="false" />
+        <view class="movie-info">
+          <view class="movie-title">{{item.year}}年 {{item.title}}</view>
+          <view class="movie-rating">豆瓣评分：{{item.rating}}</view>
+        </view>
+        <block wx:if="{{!isBatchEditing}}">
+          <block wx:if="{{markStatusMap[item._id] === 'watched'}}">
+            <view class="mark-status"><text class="mark-text watched">{{markDateMap[item._id]}}已看</text></view>
+          </block>
+          <block wx:elif="{{markStatusMap[item._id] === 'wish'}}">
+            <view class="mark-status"><text class="mark-text wish">{{markDateMap[item._id]}}想看</text></view>
+          </block>
+          <block wx:else>
+            <view class="mark-buttons">
+              <button class="mark-btn" data-id="{{item._id}}" data-type="watched" catchtap="onMarkTap">已看</button>
+              <button class="mark-btn mark-btn-wish" data-id="{{item._id}}" data-type="wish" catchtap="onMarkTap">想看</button>
+            </view>
+          </block>
+        </block>
+      </view>
+    </view>
+  </block>
+</view>
+
+<!-- 个人信息授权弹窗 -->
+<view class="auth-modal" wx:if="{{showAuthModal}}">
+  <view class="auth-mask" bindtap="onCancelAuth"></view>
+  <view class="auth-content">
+    <view class="auth-title">完善个人资料</view>
+    <view class="auth-subtitle">请提供头像和昵称以获取更好的体验</view>
+    <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+      <image class="temp-avatar" src="{{tempAvatar || '/images/default-avatar.svg'}}" mode="aspectFill"></image>
+      <view class="avatar-edit-tip">点击修改头像</view>
+    </button>
+    <view class="nickname-input-group">
+      <text class="input-label">昵称</text>
+      <input type="nickname" class="nickname-input" placeholder="请输入昵称" bindinput="onNicknameInput" bindblur="onNicknameInput" value="{{tempNickname}}" />
+    </view>
+    <view class="auth-actions">
+      <button class="auth-btn cancel" bindtap="onCancelAuth">暂不登录</button>
+      <button class="auth-btn confirm" bindtap="onConfirmAuth">保存并登录</button>
+    </view>
+  </view>
+</view>

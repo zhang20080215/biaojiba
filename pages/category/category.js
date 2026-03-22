@@ -23,6 +23,14 @@ Page({
         userCount: 376,
         color: '#f5c518'
       },
+      {
+        id: 'oscar_movies',
+        title: '历届奥斯卡最佳影片',
+        description: '每年一步经典必看',
+        image: 'https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2876555451.jpg',
+        userCount: 0,
+        color: '#d4af37'
+      }
 
     ]
   },
@@ -201,6 +209,8 @@ Page({
       wx.navigateTo({ url: '/pages/douban/list/list' });
     } else if (themeId === 'imdb_movies') {
       wx.navigateTo({ url: '/pages/imdb/list/list' });
+    } else if (themeId === 'oscar_movies') {
+      wx.navigateTo({ url: '/pages/oscar/list/list' });
     } else {
       wx.showToast({
         title: '该主题正在开发中',

@@ -40,14 +40,24 @@ exports.main = async (event, context) => {
             return { success: true, movies: [], marks };
         }
 
-        const collectionName = theme === 'imdb' ? 'imdb_movies' : 'movies';
+        let collectionName = 'movies';
+        let orderByField = 'rank';
+        let orderDirection = 'asc';
+
+        if (theme === 'imdb') {
+            collectionName = 'imdb_movies';
+        } else if (theme === 'oscar') {
+            collectionName = 'oscar_movies';
+            orderDirection = 'desc'; // 奥斯卡由最新往旧排序，比如 96届, 95届...
+        }
+
         const _ = db.command;
 
         // 并发查询：电影列表 + 用户标记（如果有 openid）
         const moviesQuery = db
             .collection(collectionName)
             .where({ isTop250: _.neq(false) })
-            .orderBy('rank', 'asc');
+            .orderBy(orderByField, orderDirection);
 
         const [movies, marks] = await Promise.all([
             readAll(collectionName, moviesQuery),

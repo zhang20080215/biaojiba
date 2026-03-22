@@ -1,0 +1,532 @@
+/* ===== 整体页面背景 ===== */
+page {
+  background: linear-gradient(180deg,#f6f9ff 0%,#f7f7fa 100%);
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', Arial, 'Hiragino Sans GB', 'Microsoft Yahei', sans-serif;
+}
+
+
+/* ===== 顶部通栏 Header 样式 ===== */
+.top-action-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2c2c2c 100%);
+  box-shadow: 0 4px 16px rgba(212, 175, 55, 0.15);
+  margin: 20rpx 16rpx;
+  padding: 20rpx 28rpx;
+  border-radius: 24rpx;
+}
+
+/* 左侧：头像昵称 */
+.user-profile-section {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.avatar-small {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 32rpx;
+  margin-right: 16rpx;
+  background-color: #f0f0f5;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.nickname-small {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #fcebbb;
+  max-width: 320rpx;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 右侧：返回首页样式 */
+.home-nav-section {
+  display: flex;
+  align-items: center;
+  padding: 8rpx 20rpx;
+  background: #f7f8fa;
+  border-radius: 30rpx;
+  border: 1rpx solid #eee;
+}
+
+.home-text {
+  font-size: 24rpx;
+  color: #d4af37;
+  font-weight: 500;
+}
+
+.home-nav-section:active {
+  background: #eeeff0;
+}
+
+/* 吸顶容器 */
+.sticky-action-container {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(246, 249, 255, 0.9);
+  backdrop-filter: blur(10px);
+  padding: 10rpx 0;
+  margin-top: -10rpx;
+}
+
+/* 中部功能操作栏 */
+.middle-action-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0 20rpx 10rpx 20rpx;
+}
+
+/* 左侧：操作区 */
+.batch-options {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.icon-btn {
+  font-size: 24rpx;
+  font-weight: 600;
+  padding: 10rpx 28rpx;
+  border-radius: 40rpx; /* 增加圆角，形成药丸形状 */
+  transition: all 0.2s ease;
+  line-height: 1.2;
+}
+
+/* 批量小按钮颜色 - 使用浅色背景和圆角，维持简洁感 */
+.batch-icon {
+  background: rgba(212, 175, 55, 0.1); 
+  color: #d4af37;
+}
+
+.batch-icon:active {
+  background: rgba(64, 158, 255, 0.15);
+}
+
+.action-cancel {
+  background: #f5f5f5;
+  color: #999;
+}
+
+.action-watched {
+  background: rgba(103, 194, 58, 0.08);
+  color: #67c23a;
+}
+
+.action-wish {
+  background: rgba(230, 162, 60, 0.08);
+  color: #e6a23c;
+}
+
+/* 右侧：生成卡片按钮 */
+.generate-card-wrapper {
+  flex: 0 0 auto;
+}
+
+.generate-card-btn-large {
+  background: linear-gradient(135deg, #d4af37 0%, #fdf0a6 50%, #d4af37 100%);
+  color: #333;
+  font-size: 26rpx;
+  font-weight: 700;
+  padding: 14rpx 36rpx;
+  border-radius: 40rpx;
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+  transition: all 0.2s ease;
+  letter-spacing: 1rpx;
+}
+
+.generate-card-btn-large:active {
+  transform: translateY(2rpx);
+  opacity: 0.9;
+}
+
+.icon-btn:active {
+  transform: translateY(1px);
+  opacity: 0.9;
+}
+
+/* ===== 分栏 tabs 样式 ===== */
+.tabs-bar {
+  display: flex;
+  background: rgba(255, 255, 255, 0.98);
+  margin: 0 16rpx 20rpx 16rpx;
+  border-radius: 18rpx;
+  padding: 6rpx 0 10rpx 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.tab {
+  flex: 1;
+  text-align: center;
+  font-size: 16px;
+  color: #b0b7c6;
+  padding: 20rpx 0 12rpx 0;
+  position: relative;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  transition: color 0.18s;
+}
+.tab.active {
+  color: #d4af37;
+  font-weight: 700;
+}
+.tab.active::after {
+  content: '';
+  display: block;
+  width: 32rpx;
+  height: 6rpx;
+  background: linear-gradient(90deg,#e5c05c,#d4af37);
+  border-radius: 3rpx;
+  margin: 0 auto;
+  margin-top: 2rpx;
+}
+
+/* ===== 批量标记按钮区 ===== */
+.batch-options {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin: 0 0 20rpx 0;
+  padding: 0 16rpx;
+  box-sizing: border-box;
+  gap: 12rpx;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 16rpx;
+  margin: 0;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px); /* 微调位置，消除间隙 */
+}
+
+.batch-btn {
+  font-size: 14px;
+  padding: 12rpx 24rpx;
+  border-radius: 14px;
+  border: none;
+  font-weight: 500;
+  text-align: center;
+  background: #f0f0f0;
+  color: #333;
+  transition: all 0.2s ease;
+  min-width: 100rpx;
+}
+
+.batch-btn:active {
+  transform: translateY(1px);
+  opacity: 0.9;
+}
+
+.batch-btn-watched {
+  background: linear-gradient(90deg,#e5c05c 0%,#d4af37 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
+}
+
+.batch-btn-wish {
+  background: linear-gradient(90deg,#ffc107 0%,#ff9800 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.2);
+}
+
+.batch-btn-cancel {
+  background: #e0e0e0;
+  color: #666;
+}
+
+/* ===== 电影列表整体 ===== */
+.movie-list {
+  width: 100%;
+  margin: 0;
+  padding-bottom: 40rpx;
+}
+
+/* ===== 单行电影卡片 ===== */
+.movie-row {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 28rpx;
+  box-shadow: 0 8px 30px 0 rgba(212, 175, 55, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+  margin: 18rpx 16rpx;
+  padding: 18rpx 16rpx 18rpx 16rpx;
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.15s, padding 0.3s;
+}
+.movie-row:active {
+  box-shadow: 0 2px 12px 0 rgba(212, 175, 55, 0.15);
+}
+
+/* 电影内容容器，用于右移和隐藏单个按钮 */
+.movie-content {
+  flex: 1; /* 填充剩余空间 */
+  display: flex; /* 保持内部flex布局 */
+  align-items: center;
+  transition: transform 0.3s; /* 添加右移过渡 */
+}
+
+/* 批量编辑模式下电影内容右移 */
+.movie-content.batch-editing {
+  transform: translateX(40rpx); /* 向右移动，为复选框留空间 */
+}
+
+/* 复选框样式（可选调整） */
+.batch-checkbox {
+  margin-left: 16rpx;
+  margin-right: -24rpx;
+  transform: scale(0.9);
+}
+
+.batch-checkbox .wx-checkbox-input.wx-checkbox-input-checked {
+  background: #d4af37 !important;
+  border-color: #d4af37 !important;
+}
+
+.batch-checkbox .wx-checkbox-input.wx-checkbox-input-checked::before {
+  font-weight: bold;
+  font-size: 28rpx;
+  color: #fff;
+}
+
+/* ===== 电影封面小图 ===== */
+.movie-thumb {
+  width: 62px;
+  height: 88px;
+  border-radius: 16rpx;
+  box-shadow: 0 2px 10px rgba(80,120,200,0.08);
+  margin-right: 18rpx;
+  object-fit: cover;
+  background: #f3f4f8;
+}
+
+/* ===== 电影信息区 ===== */
+.movie-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+.movie-title {
+  font-size: 14px;
+  color: #181c2e;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  margin: 0 0 6rpx 0;
+  max-width: 100%;
+}
+.movie-rating {
+  font-size: 15px;
+  color: #39aaff;
+  margin: 2rpx 0 0 0;
+  font-weight: 500;
+  letter-spacing: 0.4px;
+}
+
+/* ===== 标记状态显示区 ===== */
+.mark-status {
+  margin-left: auto; /* 推到最右边 */
+  padding: 0 10rpx; /* 调整内边距 */
+  border-radius: 10rpx; /* 可选：圆角 */
+  display: flex; /* 使用flex居中文本 */
+  align-items: center;
+  height: 100%; /* 填充父容器高度 */
+}
+
+.mark-text {
+  font-size: 13px; /* 调整字体大小 */
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  white-space: nowrap; /* 防止换行 */
+}
+
+.mark-text.watched {
+  color: #4CAF50; /* 已看颜色 */
+}
+
+.mark-text.wish {
+  color: #FFC107; /* 想看颜色 */
+}
+
+/* ===== 标记按钮 ===== */
+.mark-buttons {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  margin-left: 12rpx;
+}
+.mark-btn {
+  min-width: 40px;
+  max-width: 60px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 20rpx;
+  border: none;
+  height: 30px;
+  line-height: 30px;
+  padding: 0 12rpx;
+  margin-left: 0;
+  background: #fdfaf0;
+  color: #d4af37;
+  box-shadow: 0 2px 8px rgba(212, 175, 55, 0.1);
+  transition: background 0.16s, color 0.16s;
+}
+.mark-btn-wish {
+  background: #fcf4e8;
+  color: #e6a23c;
+}
+.mark-btn:active {
+  background: #faedcc;
+  color: #b58d19;
+  opacity: .8;
+}
+
+/* ===== 滚动条优化（仅在支持的环境生效） ===== */
+::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+/* 个人信息授权弹窗 */
+.auth-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4rpx);
+}
+
+.auth-content {
+  position: relative;
+  width: 80%;
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 40rpx 40rpx 50rpx 40rpx;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.auth-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 12rpx;
+}
+
+.auth-subtitle {
+  font-size: 24rpx;
+  color: #888;
+  margin-bottom: 40rpx;
+}
+
+.avatar-btn {
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.avatar-btn::after {
+  border: none;
+}
+
+.temp-avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 60rpx;
+  background: #f0f0f0;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.avatar-edit-tip {
+  font-size: 20rpx;
+  color: #409eff;
+  margin-top: 12rpx;
+}
+
+.nickname-input-group {
+  width: 100%;
+  margin-top: 40rpx;
+  border-bottom: 1rpx solid #eee;
+  display: flex;
+  align-items: center;
+  padding: 10rpx 0;
+}
+
+.input-label {
+  font-size: 28rpx;
+  color: #333;
+  width: 80rpx;
+}
+
+.nickname-input {
+  flex: 1;
+  font-size: 28rpx;
+  color: #333;
+  padding: 0 10rpx;
+}
+
+.auth-actions {
+  display: flex;
+  width: 100%;
+  margin-top: 50rpx;
+  justify-content: space-between;
+}
+
+.auth-btn {
+  width: 45%;
+  height: 80rpx;
+  line-height: 80rpx;
+  text-align: center;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+  padding: 0;
+  margin: 0;
+}
+
+.auth-btn::after {
+  border: none;
+}
+
+.auth-btn.cancel {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.auth-btn.confirm {
+  background: linear-gradient(135deg, #409eff 0%, #2b85e4 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(64,158,255,0.3);
+}

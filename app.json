@@ -7,7 +7,9 @@
     "pages/imdb/share/share",
     "pages/mark/mark",
     "pages/stats/stats",
-    "pages/generate/generate"
+    "pages/generate/generate",
+    "pages/oscar/list/list",
+    "pages/oscar/share/share"
   ],
   "window": {
     "navigationBarTitleText": "标记吧",
