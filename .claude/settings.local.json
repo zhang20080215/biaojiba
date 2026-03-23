@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(*)",
+      "Write(*)",
+      "Edit(*)",
+      "Create(*)",
+      "Delete(*)",
+      "Bash(*)",
+      "Bash(git:*)",
+      "Bash(node:*)",
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(python:*)",
+      "Bash(pip:*)",
+      "Bash(conda:*)",
+      "Bash(curl:*)",
+      "Bash(wget:*)",
+      "Bash(cmd:*)",
+      "Bash(powershell:*)",
+      "Bash(where:*)",
+    ]
+  }
+}
