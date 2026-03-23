@@ -1,15 +1,25 @@
-<!-- 豆瓣电影 TOP 250 列表页 -->
+<!-- 奥斯卡最佳影片列表页 — 沉浸式布局 -->
 
-<!-- 顶部功能集合栏 -->
-<view class="top-action-bar">
-  <view class="user-profile-section" bindtap="onHeaderLoginClick">
-    <image class="avatar-small" src="{{userInfo.avatarUrl || '/images/default-avatar.svg'}}" mode="aspectFill"></image>
-    <text class="nickname-small">{{userInfo.nickName || '点击登录'}}</text>
+<!-- 沉浸式顶部栏 -->
+<view class="immersive-header">
+  <!-- 状态栏占位 -->
+  <view style="height: {{statusBarHeight}}px;"></view>
+  <!-- 导航栏 -->
+  <view class="nav-bar" style="height: {{navBarHeight}}px;">
+    <view class="back-btn" bindtap="onBackHome">
+      <view class="back-icon"></view>
+    </view>
+    <image class="header-oscar-icon" src="/images/oscar-icon.svg" mode="aspectFit"></image>
+    <view class="header-title-group">
+      <text class="header-title">奥斯卡最佳影片</text>
+      <text class="header-subtitle">Academy Awards · Best Picture</text>
+    </view>
   </view>
-  <view class="home-nav-section" bindtap="onBackHome">
-    <text class="home-text">返回首页</text>
-  </view>
+  <view class="gold-divider"></view>
 </view>
+
+<!-- 占位：与沉浸式 header 等高 -->
+<view style="height: {{statusBarHeight + navBarHeight + 2}}px;"></view>
 
 <!-- 统计与分栏 Tab -->
 <view class="tabs-bar">
@@ -46,8 +56,12 @@
       <view class="movie-content {{isBatchEditing ? 'batch-editing' : ''}}">
         <image class="movie-thumb" src="{{item.thumbCover || item.cover}}" lazy-load="true" mode="aspectFill" binderror="onImageError" bindload="onImageLoad" data-movie-id="{{item._id}}" show-menu-by-longpress="false" />
         <view class="movie-info">
-          <view class="movie-title">{{item.rank}}. {{item.title}}</view>
-          <view class="movie-rating">评分：{{item.rating}}</view>
+          <view class="movie-title">{{item.title}}</view>
+          <view class="movie-meta">
+            <text class="movie-year">{{item.year}}年</text>
+            <text class="movie-ceremony">第{{item.rank}}届</text>
+          </view>
+          <view class="movie-rating">豆瓣 {{item.rating}}</view>
         </view>
         <block wx:if="{{!isBatchEditing}}">
           <block wx:if="{{markStatusMap[item._id] === 'watched'}}">
@@ -66,6 +80,36 @@
       </view>
     </view>
   </block>
+</view>
+
+<!-- 生成海报选择弹窗 -->
+<view class="share-modal" wx:if="{{showShareModal}}">
+  <view class="share-mask" bindtap="onCloseShareModal"></view>
+  <view class="share-sheet">
+    <view class="share-sheet-header">
+      <image class="share-sheet-icon" src="/images/oscar-icon.svg" mode="aspectFit"></image>
+      <text class="share-sheet-title">生成观影海报</text>
+    </view>
+    <view class="share-sheet-options">
+      <view class="share-option" data-type="wall" bindtap="onShareSelect">
+        <view class="share-option-icon wall-icon">🏆</view>
+        <view class="share-option-info">
+          <text class="share-option-name">电影墙</text>
+          <text class="share-option-desc">全部电影海报+标记状态</text>
+        </view>
+        <view class="share-option-arrow">›</view>
+      </view>
+      <view class="share-option" data-type="text" bindtap="onShareSelect">
+        <view class="share-option-icon text-icon">📝</view>
+        <view class="share-option-info">
+          <text class="share-option-name">文字卡片</text>
+          <text class="share-option-desc">全部电影标记一览</text>
+        </view>
+        <view class="share-option-arrow">›</view>
+      </view>
+    </view>
+    <view class="share-sheet-cancel" bindtap="onCloseShareModal">取消</view>
+  </view>
 </view>
 
 <!-- 个人信息授权弹窗（使用 hidden 避免 type="nickname" 原生输入框销毁时报错） -->

@@ -20,8 +20,8 @@ function getThumbnailUrl(url, usage) {
     if (url.startsWith('cloud://')) {
         if (usage === 'poster') return url; // 海报页用原图
 
-        // 如果是 IMDb 已经专门截好的 180x266 封面，避免再次经过云处理引发 500 错误
-        if (url.includes('imdb_covers')) {
+        // 如果是已被处理过的封面，避免再次经过云处理引发 500 错误
+        if (url.includes('imdb_covers') || url.includes('oscar_covers')) {
             return url;
         }
 
