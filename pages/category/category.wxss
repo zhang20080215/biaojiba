@@ -119,6 +119,17 @@
   object-fit: cover;
 }
 
+.growth-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #27ae60, #2ecc71);
+}
+
+.growth-icon-text {
+  font-size: 80rpx;
+}
+
 .theme-overlay {
   position: absolute;
   top: 0;

@@ -1,0 +1,80 @@
+<view class="container">
+  <!-- 标题 -->
+  <view class="header">
+    <text class="title">儿童生长评估</text>
+    <text class="subtitle">依据 WS/T 423-2022 国家标准</text>
+  </view>
+
+  <!-- 性别选择 -->
+  <view class="section">
+    <text class="section-label">性别</text>
+    <view class="gender-group">
+      <view class="gender-btn {{gender === 'male' ? 'active male' : ''}}" data-gender="male" bindtap="onGenderTap">
+        <text class="gender-icon">♂</text>
+        <text class="gender-text">男</text>
+      </view>
+      <view class="gender-btn {{gender === 'female' ? 'active female' : ''}}" data-gender="female" bindtap="onGenderTap">
+        <text class="gender-icon">♀</text>
+        <text class="gender-text">女</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 年龄选择 -->
+  <view class="section">
+    <text class="section-label">年龄</text>
+    <view class="age-picker-row">
+      <picker mode="selector" range="{{yearRange}}" value="{{yearIndex}}" bindchange="onYearChange">
+        <view class="picker-box">
+          <text class="picker-value">{{yearRange[yearIndex]}}</text>
+          <text class="picker-arrow">▾</text>
+        </view>
+      </picker>
+      <picker mode="selector" range="{{monthRange}}" value="{{monthIndex}}" bindchange="onMonthChange">
+        <view class="picker-box">
+          <text class="picker-value">{{monthRange[monthIndex]}}</text>
+          <text class="picker-arrow">▾</text>
+        </view>
+      </picker>
+      <text class="age-display">= {{ageText}}</text>
+    </view>
+  </view>
+
+  <!-- 体重 -->
+  <view class="section">
+    <text class="section-label">体重</text>
+    <view class="input-row">
+      <input type="digit" class="input-field" placeholder="请输入体重" value="{{weight}}" bindinput="onWeightInput" />
+      <text class="input-unit">kg</text>
+    </view>
+  </view>
+
+  <!-- 身高/身长 -->
+  <view class="section">
+    <text class="section-label">{{ageMonths < 24 ? '身长' : '身高'}}</text>
+    <view class="input-row">
+      <input type="digit" class="input-field" placeholder="请输入{{ageMonths < 24 ? '身长' : '身高'}}" value="{{height}}" bindinput="onHeightInput" />
+      <text class="input-unit">cm</text>
+    </view>
+  </view>
+
+  <!-- 头围（3岁以下） -->
+  <view class="section" wx:if="{{showHeadCirc}}">
+    <text class="section-label">头围 <text class="optional">（选填）</text></text>
+    <view class="input-row">
+      <input type="digit" class="input-field" placeholder="请输入头围" value="{{headCirc}}" bindinput="onHeadCircInput" />
+      <text class="input-unit">cm</text>
+    </view>
+  </view>
+
+  <!-- 提交按钮 -->
+  <view class="submit-btn" bindtap="onSubmit">
+    <text class="submit-text">开始评估</text>
+  </view>
+
+  <!-- 底部说明 -->
+  <view class="footer">
+    <text class="footer-text">适用范围：0~7岁以下儿童</text>
+    <text class="footer-text">2岁以下测量身长（卧位），2岁以上测量身高（站位）</text>
+  </view>
+</view>

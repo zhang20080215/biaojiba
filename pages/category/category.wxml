@@ -28,7 +28,10 @@
     >
       <!-- 主题图片容器 -->
       <view class="theme-image-container">
-        <image class="theme-image" src="{{item.image}}" mode="aspectFill"></image>
+        <image wx:if="{{item.image}}" class="theme-image" src="{{item.image}}" mode="aspectFill"></image>
+        <view wx:elif="{{item.icon === 'growth'}}" class="theme-image growth-placeholder">
+          <text class="growth-icon-text">📏</text>
+        </view>
         <view class="theme-overlay"></view>
         <!-- 奥斯卡小金人图标 -->
         <image wx:if="{{item.id === 'oscar_movies'}}" class="oscar-badge" src="/images/oscar-icon.svg" mode="aspectFit"></image>

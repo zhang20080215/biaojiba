@@ -1,0 +1,162 @@
+<view class="container" wx:if="{{input}}">
+  <!-- 儿童信息摘要 -->
+  <view class="summary-card">
+    <view class="summary-row">
+      <view class="gender-badge {{input.gender}}">
+        <text>{{genderIcon}}</text>
+      </view>
+      <view class="summary-info">
+        <text class="summary-age">{{ageText}}</text>
+        <view class="summary-metrics">
+          <text>体重 {{input.weight}}kg</text>
+          <text class="dot">·</text>
+          <text>{{input.ageMonths < 24 ? '身长' : '身高'}} {{input.height}}cm</text>
+          <block wx:if="{{input.headCirc}}">
+            <text class="dot">·</text>
+            <text>头围 {{input.headCirc}}cm</text>
+          </block>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 营养状况 -->
+  <view class="nutrition-card" wx:if="{{nutrition}}">
+    <text class="card-title">发育状况综合评价</text>
+    <view class="nutrition-items">
+      <view class="nutrition-item">
+        <text class="nutrition-label">体重</text>
+        <text class="nutrition-value {{nutrition.weightStatus === '正常' ? 'normal' : (nutrition.weightStatus.indexOf('略') >= 0 ? 'mild' : 'warning')}}">{{nutrition.weightStatus}}</text>
+      </view>
+      <view class="nutrition-item">
+        <text class="nutrition-label">身高</text>
+        <text class="nutrition-value {{nutrition.heightStatus === '正常' ? 'normal' : (nutrition.heightStatus.indexOf('略') >= 0 ? 'mild' : 'warning')}}">{{nutrition.heightStatus}}</text>
+      </view>
+      <view class="nutrition-item">
+        <text class="nutrition-label">体型</text>
+        <text class="nutrition-value {{nutrition.bodyStatus === '正常' ? 'normal' : (nutrition.bodyStatus === '偏瘦' || nutrition.bodyStatus === '超重' ? 'mild' : 'warning')}}">{{nutrition.bodyStatus}}</text>
+      </view>
+    </view>
+
+    <!-- 评估区间说明 -->
+    <view class="range-toggle" bindtap="onToggleRange">
+      <text class="range-toggle-text">评估标准说明</text>
+      <text class="range-toggle-arrow {{showRange ? 'expanded' : ''}}">›</text>
+    </view>
+    <view class="range-section" wx:if="{{showRange}}">
+      <view class="range-table">
+        <view class="range-header">
+          <text class="range-th col-range">百分位区间</text>
+          <text class="range-th col-weight">体重</text>
+          <text class="range-th col-height">身高</text>
+          <text class="range-th col-body">体型(BMI)</text>
+        </view>
+        <view class="range-row">
+          <text class="range-td col-range">&lt; 0.1%</text>
+          <text class="range-td col-weight warning">重度偏轻</text>
+          <text class="range-td col-height warning">重度偏矮</text>
+          <text class="range-td col-body warning">重度消瘦</text>
+        </view>
+        <view class="range-row">
+          <text class="range-td col-range">0.1% ~ 2.3%</text>
+          <text class="range-td col-weight warning">偏轻</text>
+          <text class="range-td col-height warning">偏矮</text>
+          <text class="range-td col-body warning">消瘦</text>
+        </view>
+        <view class="range-row">
+          <text class="range-td col-range">2.3% ~ 15.9%</text>
+          <text class="range-td col-weight mild">略偏轻</text>
+          <text class="range-td col-height mild">略偏矮</text>
+          <text class="range-td col-body mild">偏瘦</text>
+        </view>
+        <view class="range-row highlight">
+          <text class="range-td col-range">15.9% ~ 84.1%</text>
+          <text class="range-td col-weight normal">正常</text>
+          <text class="range-td col-height normal">正常</text>
+          <text class="range-td col-body normal">正常</text>
+        </view>
+        <view class="range-row">
+          <text class="range-td col-range">84.1% ~ 97.7%</text>
+          <text class="range-td col-weight mild">略偏重</text>
+          <text class="range-td col-height mild">略偏高</text>
+          <text class="range-td col-body mild">超重</text>
+        </view>
+        <view class="range-row">
+          <text class="range-td col-range">97.7% ~ 99.9%</text>
+          <text class="range-td col-weight warning">偏重</text>
+          <text class="range-td col-height warning">偏高</text>
+          <text class="range-td col-body warning">肥胖</text>
+        </view>
+        <view class="range-row">
+          <text class="range-td col-range">&gt; 99.9%</text>
+          <text class="range-td col-weight warning">明显偏重</text>
+          <text class="range-td col-height warning">明显偏高</text>
+          <text class="range-td col-body warning">重度肥胖</text>
+        </view>
+      </view>
+      <text class="range-note">基于Z-score标准差法：±1SD ≈ 15.9%/84.1%，±2SD ≈ 2.3%/97.7%，±3SD ≈ 0.1%/99.9%</text>
+    </view>
+  </view>
+
+  <!-- 各指标详情 -->
+  <view class="indicator-card" wx:for="{{indicators}}" wx:key="name">
+    <view class="indicator-header">
+      <text class="indicator-name">{{item.name}}<text wx:if="{{item.subName}}" class="indicator-sub-name">（{{item.subName}}）</text></text>
+      <view class="level-badge" style="background: {{item.color}}">
+        <text>{{item.level}}</text>
+      </view>
+    </view>
+
+    <!-- 百分位数值 -->
+    <view class="percentile-row">
+      <text class="percentile-value">{{item.percentile}}%</text>
+      <text class="percentile-desc">超过{{item.percentile}}%的同龄儿童</text>
+    </view>
+
+    <!-- 百分位条形图 -->
+    <view class="percentile-bar-container">
+      <view class="percentile-bar">
+        <view class="bar-zones">
+          <view class="zone zone-low" style="width: 3%"></view>
+          <view class="zone zone-below" style="width: 22%"></view>
+          <view class="zone zone-normal" style="width: 50%"></view>
+          <view class="zone zone-above" style="width: 22%"></view>
+          <view class="zone zone-high" style="width: 3%"></view>
+        </view>
+        <view class="bar-marker" style="left: {{item.percentile > 99 ? 99 : (item.percentile < 1 ? 1 : item.percentile)}}%">
+          <view class="marker-dot"></view>
+        </view>
+      </view>
+      <view class="bar-labels">
+        <text>3%</text>
+        <text>25%</text>
+        <text>50%</text>
+        <text>75%</text>
+        <text>97%</text>
+      </view>
+    </view>
+
+    <!-- 详细信息 -->
+    <view class="indicator-detail">
+      <text class="detail-item">测量值: {{item.value}} {{item.unit}}</text>
+      <text class="detail-item">中位数: {{item.median}} {{item.unit}}</text>
+      <text class="detail-item">Z值: {{item.zScore}}</text>
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="actions">
+    <view class="action-btn secondary" bindtap="onBackTap">
+      <text>重新评估</text>
+    </view>
+    <view class="action-btn primary" bindtap="onShareTap">
+      <text>生成海报</text>
+    </view>
+  </view>
+
+  <!-- 参考说明 -->
+  <view class="reference">
+    <text class="ref-text">参考标准：WS/T 423-2022《7岁以下儿童生长标准》</text>
+    <text class="ref-text">评价方法：标准差法（Z-score），精确百分位数换算</text>
+  </view>
+</view>

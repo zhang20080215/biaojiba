@@ -30,8 +30,16 @@ Page({
         image: 'https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2876555451.jpg',
         userCount: 0,
         color: '#d4af37'
+      },
+      {
+        id: 'child_growth',
+        title: '儿童生长评估',
+        description: '0~7岁身高体重发育评估',
+        image: '',
+        userCount: 0,
+        color: '#27ae60',
+        icon: 'growth'
       }
-
     ]
   },
 
@@ -211,6 +219,8 @@ Page({
       wx.navigateTo({ url: '/pages/imdb/list/list' });
     } else if (themeId === 'oscar_movies') {
       wx.navigateTo({ url: '/pages/oscar/list/list' });
+    } else if (themeId === 'child_growth') {
+      wx.navigateTo({ url: '/pages/growth/input/input' });
     } else {
       wx.showToast({
         title: '该主题正在开发中',

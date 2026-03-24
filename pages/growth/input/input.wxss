@@ -1,0 +1,191 @@
+.container {
+  padding: 30rpx;
+  background: #f5f6fa;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.header {
+  text-align: center;
+  padding: 20rpx 0 40rpx;
+}
+
+.title {
+  display: block;
+  font-size: 44rpx;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+.subtitle {
+  display: block;
+  font-size: 24rpx;
+  color: #95a5a6;
+  margin-top: 8rpx;
+}
+
+.section {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  margin-bottom: 24rpx;
+}
+
+.section-label {
+  display: block;
+  font-size: 28rpx;
+  color: #7f8c8d;
+  margin-bottom: 20rpx;
+  font-weight: 500;
+}
+
+.optional {
+  font-size: 24rpx;
+  color: #bdc3c7;
+}
+
+/* 性别选择 */
+.gender-group {
+  display: flex;
+  gap: 24rpx;
+}
+
+.gender-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  height: 88rpx;
+  border-radius: 16rpx;
+  border: 2rpx solid #e0e0e0;
+  background: #fafafa;
+  transition: all 0.2s;
+}
+
+.gender-btn.active.male {
+  border-color: #3498db;
+  background: #ebf5fb;
+}
+
+.gender-btn.active.female {
+  border-color: #e91e8c;
+  background: #fde8f4;
+}
+
+.gender-icon {
+  font-size: 36rpx;
+}
+
+.gender-btn.active.male .gender-icon {
+  color: #3498db;
+}
+
+.gender-btn.active.female .gender-icon {
+  color: #e91e8c;
+}
+
+.gender-text {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #555;
+}
+
+.gender-btn.active.male .gender-text {
+  color: #3498db;
+}
+
+.gender-btn.active.female .gender-text {
+  color: #e91e8c;
+}
+
+/* 年龄选择 */
+.age-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.picker-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  height: 80rpx;
+  padding: 0 30rpx;
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  border: 2rpx solid #e0e0e0;
+}
+
+.picker-value {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.picker-arrow {
+  font-size: 22rpx;
+  color: #95a5a6;
+}
+
+.age-display {
+  font-size: 26rpx;
+  color: #95a5a6;
+}
+
+/* 输入行 */
+.input-row {
+  display: flex;
+  align-items: center;
+  height: 88rpx;
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  border: 2rpx solid #e0e0e0;
+  padding: 0 24rpx;
+}
+
+.input-field {
+  flex: 1;
+  font-size: 32rpx;
+  color: #2c3e50;
+}
+
+.input-unit {
+  font-size: 28rpx;
+  color: #95a5a6;
+  margin-left: 12rpx;
+}
+
+/* 提交按钮 */
+.submit-btn {
+  margin-top: 40rpx;
+  height: 96rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 20rpx;
+  box-shadow: 0 8rpx 24rpx rgba(102, 126, 234, 0.35);
+}
+
+.submit-text {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 4rpx;
+}
+
+/* 底部说明 */
+.footer {
+  margin-top: 40rpx;
+  padding: 0 20rpx;
+}
+
+.footer-text {
+  display: block;
+  font-size: 22rpx;
+  color: #bdc3c7;
+  line-height: 1.8;
+  text-align: center;
+}

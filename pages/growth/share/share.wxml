@@ -1,0 +1,13 @@
+<view class="container">
+  <view class="preview-hint">
+    <text>点击下方按钮生成并保存海报</text>
+  </view>
+
+  <canvas type="2d" id="growthCanvas" style="width: {{canvasWidth}}px; height: {{canvasHeight}}px; position: fixed; left: -9999px; top: -9999px;"></canvas>
+
+  <view class="save-btn-container">
+    <button class="save-btn" bindtap="saveImage" disabled="{{isGenerating}}" loading="{{isGenerating}}">
+      {{isGenerating ? '生成中...' : '保存海报到相册'}}
+    </button>
+  </view>
+</view>
