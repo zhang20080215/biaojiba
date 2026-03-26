@@ -10,6 +10,8 @@
     "pages/generate/generate",
     "pages/oscar/list/list",
     "pages/oscar/share/share",
+    "pages/boxoffice/list/list",
+    "pages/boxoffice/share/share",
     "pages/growth/input/input",
     "pages/growth/result/result"
   ],

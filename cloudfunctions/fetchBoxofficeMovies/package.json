@@ -1,0 +1,9 @@
+{
+  "name": "fetchBoxofficeMovies",
+  "version": "1.0.0",
+  "description": "全球电影票房榜数据导入",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

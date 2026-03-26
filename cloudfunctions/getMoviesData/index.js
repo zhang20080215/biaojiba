@@ -49,6 +49,8 @@ exports.main = async (event, context) => {
         } else if (theme === 'oscar') {
             collectionName = 'oscar_movies';
             orderDirection = 'desc'; // 奥斯卡由最新往旧排序，比如 96届, 95届...
+        } else if (theme === 'boxoffice') {
+            collectionName = 'boxoffice_movies';
         }
 
         const _ = db.command;

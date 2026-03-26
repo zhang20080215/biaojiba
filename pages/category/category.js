@@ -39,6 +39,16 @@ Page({
         category: 'movie'
       },
       {
+        id: 'boxoffice_movies',
+        title: '全球电影票房榜',
+        description: '全球票房最高的电影，见证影史商业传奇',
+        image: 'https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2180085848.jpg',
+        userCount: 0,
+        color: '#FF4757',
+        tag: '电影',
+        category: 'movie'
+      },
+      {
         id: 'child_growth',
         title: '儿童生长发育评估',
         description: '依据国家标准，精准评估0~7岁宝宝发育状况',
@@ -242,6 +252,8 @@ Page({
       wx.navigateTo({ url: '/pages/imdb/list/list' });
     } else if (themeId === 'oscar_movies') {
       wx.navigateTo({ url: '/pages/oscar/list/list' });
+    } else if (themeId === 'boxoffice_movies') {
+      wx.navigateTo({ url: '/pages/boxoffice/list/list' });
     } else if (themeId === 'child_growth') {
       wx.navigateTo({ url: '/pages/growth/input/input' });
     } else {
