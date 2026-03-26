@@ -11,8 +11,7 @@
     "pages/oscar/list/list",
     "pages/oscar/share/share",
     "pages/growth/input/input",
-    "pages/growth/result/result",
-    "pages/growth/share/share"
+    "pages/growth/result/result"
   ],
   "window": {
     "navigationBarTitleText": "标记吧",

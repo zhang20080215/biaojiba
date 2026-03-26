@@ -1,84 +1,94 @@
 <!--pages/category/category.wxml-->
 <view class="category-container">
-  <!-- 右上角登录区域 -->
-  <view class="login-header">
-    <view wx:if="{{!userInfo}}" class="login-btn" bindtap="onGetUserProfile">
-      <text class="login-text">登录</text>
+
+  <!-- Hero Banner -->
+  <view class="hero-banner">
+    <view class="login-area">
+      <view wx:if="{{!userInfo}}" class="login-btn" bindtap="onGetUserProfile">
+        <text class="login-text">登录</text>
+      </view>
+      <view wx:else class="user-avatar-container" bindtap="onLogout">
+        <image class="user-avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
+      </view>
     </view>
-    <view wx:else class="user-avatar-container" bindtap="onLogout">
-      <image class="user-avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
+    <text class="hero-title">标记吧</text>
+    <text class="hero-subtitle">发现有价值的内容，留下专属记录</text>
+  </view>
+
+  <!-- 分类Tab导航 -->
+  <view class="tab-bar">
+    <view class="tab-item {{activeTab === 'all' ? 'active' : ''}}" data-tab="all" bindtap="onTabTap">
+      <text>全部</text>
+    </view>
+    <view class="tab-item {{activeTab === 'movie' ? 'active' : ''}}" data-tab="movie" bindtap="onTabTap">
+      <text>电影</text>
+    </view>
+    <view class="tab-item {{activeTab === 'parenting' ? 'active' : ''}}" data-tab="parenting" bindtap="onTabTap">
+      <text>育儿</text>
     </view>
   </view>
 
-  <!-- 页面标题区域 -->
-  <view class="page-header">
-    <text class="page-title">标记吧</text>
-    <text class="page-subtitle">选择你感兴趣的主题开始标记</text>
-  </view>
-
-  <!-- 主题卡片网格 -->
+  <!-- 主题卡片网格（2列） -->
   <view class="themes-grid">
-    <view 
-      wx:for="{{themes}}" 
-      wx:key="id" 
-      class="theme-card" 
+    <view
+      wx:for="{{filteredThemes}}"
+      wx:key="id"
+      class="theme-card {{item.id}}"
       data-theme-id="{{item.id}}"
       bindtap="onThemeTap"
       style="--theme-color: {{item.color}}"
     >
-      <!-- 主题图片容器 -->
-      <view class="theme-image-container">
-        <image wx:if="{{item.image}}" class="theme-image" src="{{item.image}}" mode="aspectFill"></image>
-        <view wx:elif="{{item.icon === 'growth'}}" class="theme-image growth-placeholder">
-          <text class="growth-icon-text">📏</text>
+      <!-- 封面图区域 -->
+      <view class="theme-cover">
+        <image wx:if="{{item.image}}" class="cover-image" src="{{item.image}}" mode="aspectFill"></image>
+        <view wx:elif="{{item.id === 'child_growth'}}" class="growth-cover">
+          <text class="growth-sun">☀️</text>
+          <text class="growth-baby">👶</text>
         </view>
-        <view class="theme-overlay"></view>
-        <!-- 奥斯卡小金人图标 -->
+        <view class="cover-overlay"></view>
         <image wx:if="{{item.id === 'oscar_movies'}}" class="oscar-badge" src="/images/oscar-icon.svg" mode="aspectFit"></image>
+        <!-- 分类tag浮层 -->
+        <view class="cover-tag">
+          <text class="cover-tag-text">{{item.tag}}</text>
+        </view>
       </view>
 
       <!-- 主题信息 -->
       <view class="theme-info">
         <text class="theme-title">{{item.title}}</text>
-        <text class="theme-description">{{item.description}}</text>
-        <view class="theme-stats">
-          <text class="user-count">{{item.userCountText}}人参与</text>
-        </view>
-        
-        <!-- 进入箭头 -->
-        <view class="theme-arrow">
-          <text class="arrow-icon">›</text>
+        <text class="theme-desc">{{item.description}}</text>
+        <view class="theme-footer">
+          <text wx:if="{{item.userCount > 0}}" class="user-count">{{item.userCountText}}人参与</text>
+          <view class="theme-arrow-btn">
+            <text class="theme-arrow-icon">›</text>
+          </view>
         </view>
       </view>
     </view>
   </view>
 
-  <!-- 底部提示 -->
-  <view class="bottom-tip">
-    <text class="tip-text">更多主题正在开发中...</text>
-  </view>
+  <!-- 广告位 -->
+  <!-- <ad unit-id="你的广告单元ID" ad-type="banner"></ad> -->
 
-  <!-- 个人信息授权弹窗（使用 hidden 避免 type="nickname" 原生输入框销毁时报错） -->
+  <!-- 个人信息授权弹窗 -->
   <view class="auth-modal" hidden="{{!showAuthModal}}">
     <view class="auth-mask" bindtap="onCancelAuth"></view>
     <view class="auth-content">
       <view class="auth-title">完善个人资料</view>
       <view class="auth-subtitle">请提供头像和昵称以获取更好的体验</view>
-
       <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
         <image class="temp-avatar" src="{{tempAvatar || '/images/default-avatar.svg'}}" mode="aspectFill"></image>
         <view class="avatar-edit-tip">点击修改头像</view>
       </button>
-
       <view class="nickname-input-group">
         <text class="input-label">昵称</text>
         <input type="nickname" class="nickname-input" placeholder="请输入昵称" bindinput="onNicknameInput" value="{{tempNickname}}" />
       </view>
-
       <view class="auth-actions">
         <button class="auth-btn cancel" bindtap="onCancelAuth">暂不登录</button>
         <button class="auth-btn confirm" bindtap="onConfirmAuth">保存并登录</button>
       </view>
     </view>
   </view>
+
 </view>

@@ -1,23 +1,40 @@
+/* 结果页 - 男女主题化 */
 .container {
-  padding: 24rpx;
-  background: #f5f6fa;
+  padding: 0 0 60rpx;
+  background: #f2f4f8;
   min-height: 100vh;
   box-sizing: border-box;
-  padding-bottom: 60rpx;
 }
 
-/* 儿童信息摘要 */
+/* ========== 顶部 Summary 卡片 ========== */
 .summary-card {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  border-radius: 20rpx;
-  padding: 32rpx;
-  margin-bottom: 24rpx;
+  background: linear-gradient(135deg, #667eea 0%, #5b7bd5 60%, #7c63d8 100%);
+  padding: 48rpx 32rpx 32rpx;
+  margin-bottom: 20rpx;
+  position: relative;
+  overflow: hidden;
 }
 
-.summary-row {
+.summary-card::before {
+  content: '';
+  position: absolute;
+  top: -60rpx;
+  right: -40rpx;
+  width: 240rpx;
+  height: 240rpx;
+  background: rgba(255,255,255,0.07);
+  border-radius: 50%;
+}
+
+.theme-female .summary-card {
+  background: linear-gradient(135deg, #f093fb 0%, #d6409f 60%, #e06db0 100%);
+}
+
+.summary-top {
   display: flex;
   align-items: center;
   gap: 24rpx;
+  margin-bottom: 28rpx;
 }
 
 .gender-badge {
@@ -27,20 +44,25 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+}
+
+.gender-badge.male {
+  background: rgba(52,152,219,0.4);
+}
+
+.gender-badge.female {
+  background: rgba(255,255,255,0.25);
+}
+
+.gender-icon-text {
   font-size: 40rpx;
   color: #fff;
 }
 
-.gender-badge.male {
-  background: rgba(52, 152, 219, 0.6);
-}
-
-.gender-badge.female {
-  background: rgba(233, 30, 140, 0.6);
-}
-
 .summary-info {
   flex: 1;
+  min-width: 0;
 }
 
 .summary-age {
@@ -48,6 +70,7 @@
   font-size: 36rpx;
   font-weight: 700;
   color: #fff;
+  margin-bottom: 8rpx;
 }
 
 .summary-metrics {
@@ -55,88 +78,82 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 4rpx;
-  margin-top: 8rpx;
   font-size: 24rpx;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255,255,255,0.85);
 }
 
 .dot {
-  margin: 0 8rpx;
+  margin: 0 6rpx;
 }
 
-/* 营养状况卡片 */
-.nutrition-card {
+/* 营养 chips */
+.nutrition-chips {
+  display: flex;
+  gap: 14rpx;
+}
+
+.chip {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14rpx 8rpx;
+  border-radius: 16rpx;
+}
+
+.chip-normal {
+  background: rgba(16,185,129,0.25);
+  border: 1rpx solid rgba(16,185,129,0.4);
+}
+
+.chip-mild {
+  background: rgba(251,191,36,0.25);
+  border: 1rpx solid rgba(251,191,36,0.4);
+}
+
+.chip-warn {
+  background: rgba(248,113,113,0.25);
+  border: 1rpx solid rgba(248,113,113,0.4);
+}
+
+.chip-label {
+  font-size: 20rpx;
+  color: rgba(255,255,255,0.75);
+  margin-bottom: 6rpx;
+}
+
+.chip-val {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* ========== 通用section卡片 ========== */
+.section-card {
   background: #fff;
   border-radius: 20rpx;
-  padding: 28rpx;
-  margin-bottom: 24rpx;
+  padding: 28rpx 28rpx;
+  margin: 0 20rpx 20rpx;
+  box-shadow: 0 2rpx 16rpx rgba(0,0,0,0.05);
 }
 
-.card-title {
-  display: block;
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #2c3e50;
-  margin-bottom: 20rpx;
-}
-
-.nutrition-items {
-  display: flex;
-  gap: 16rpx;
-}
-
-.nutrition-item {
-  flex: 1;
-  text-align: center;
-  padding: 16rpx 0;
-  background: #f8f9fa;
-  border-radius: 12rpx;
-}
-
-.nutrition-label {
-  display: block;
-  font-size: 22rpx;
-  color: #95a5a6;
-  margin-bottom: 8rpx;
-}
-
-.nutrition-value {
-  display: block;
-  font-size: 28rpx;
-  font-weight: 600;
-}
-
-.nutrition-value.normal {
-  color: #27ae60;
-}
-
-.nutrition-value.mild {
-  color: #f39c12;
-}
-
-.nutrition-value.warning {
-  color: #e74c3c;
-}
-
-/* 评估区间折叠 */
+/* ========== 评估区间卡片 ========== */
 .range-toggle {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 16rpx 0 0;
-  margin-top: 16rpx;
-  border-top: 1rpx solid #f0f0f0;
+  justify-content: space-between;
 }
 
 .range-toggle-text {
-  font-size: 24rpx;
-  color: #999;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #2c3e50;
 }
 
 .range-toggle-arrow {
-  font-size: 28rpx;
-  color: #999;
-  margin-left: 8rpx;
+  font-size: 36rpx;
+  color: #b0b8c4;
+  font-weight: 700;
   transition: transform 0.3s;
   display: inline-block;
   transform: rotate(0deg);
@@ -146,27 +163,25 @@
   transform: rotate(90deg);
 }
 
-/* 评估区间表格 */
 .range-section {
   margin-top: 20rpx;
-  padding-top: 8rpx;
 }
 
 .range-table {
   border-radius: 12rpx;
   overflow: hidden;
-  border: 1rpx solid #eee;
+  border: 1rpx solid #eef0f4;
 }
 
 .range-header {
   display: flex;
-  background: #f8f9fa;
+  background: #f8f9fc;
   padding: 14rpx 0;
-  border-bottom: 1rpx solid #eee;
+  border-bottom: 1rpx solid #eef0f4;
 }
 
 .range-th {
-  font-size: 22rpx;
+  font-size: 21rpx;
   color: #666;
   font-weight: 600;
   text-align: center;
@@ -175,196 +190,161 @@
 .range-row {
   display: flex;
   padding: 12rpx 0;
-  border-bottom: 1rpx solid #f5f5f5;
+  border-bottom: 1rpx solid #f5f6f8;
 }
 
-.range-row:last-child {
-  border-bottom: none;
-}
+.range-row:last-child { border-bottom: none; }
 
-.range-row.highlight {
-  background: #f0faf4;
-}
+.range-row.highlight { background: #f0fdf4; }
 
 .range-td {
-  font-size: 22rpx;
+  font-size: 21rpx;
   color: #333;
   text-align: center;
 }
 
-.col-range {
-  width: 34%;
-  flex-shrink: 0;
-}
+.col-range { width: 36%; flex-shrink: 0; }
+.col-weight, .col-height, .col-body { width: 21.3%; flex-shrink: 0; }
 
-.col-weight,
-.col-height,
-.col-body {
-  width: 22%;
-  flex-shrink: 0;
-}
-
-.range-td.normal {
-  color: #27ae60;
-  font-weight: 600;
-}
-
-.range-td.mild {
-  color: #f39c12;
-}
-
-.range-td.warning {
-  color: #e74c3c;
-}
+.range-td.normal { color: #10b981; font-weight: 600; }
+.range-td.mild { color: #f59e0b; }
+.range-td.warn { color: #ef4444; }
 
 .range-note {
   display: block;
   font-size: 20rpx;
-  color: #aaa;
-  margin-top: 12rpx;
+  color: #b0b8c4;
+  margin-top: 14rpx;
   line-height: 1.5;
+  text-align: center;
 }
 
-/* 指标卡片 */
+/* ========== 指标卡片 ========== */
 .indicator-card {
-  background: #fff;
-  border-radius: 20rpx;
   padding: 28rpx;
-  margin-bottom: 20rpx;
 }
 
 .indicator-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16rpx;
+  margin-bottom: 18rpx;
 }
 
 .indicator-name {
   font-size: 30rpx;
-  font-weight: 600;
-  color: #2c3e50;
-}
-
-.indicator-sub-name {
-  font-size: 24rpx;
-  font-weight: 400;
-  color: #95a5a6;
+  font-weight: 700;
+  color: #1a1f36;
 }
 
 .level-badge {
-  padding: 4rpx 20rpx;
+  padding: 6rpx 22rpx;
   border-radius: 20rpx;
   color: #fff;
   font-size: 24rpx;
   font-weight: 600;
 }
 
-/* 百分位数 */
+/* 百分位大数字 */
 .percentile-row {
   display: flex;
   align-items: baseline;
   gap: 12rpx;
-  margin-bottom: 20rpx;
+  margin-bottom: 24rpx;
 }
 
 .percentile-value {
-  font-size: 48rpx;
-  font-weight: 700;
-  color: #2c3e50;
+  font-size: 52rpx;
+  font-weight: 800;
+  color: #1a1f36;
+  line-height: 1;
 }
 
 .percentile-desc {
-  font-size: 24rpx;
-  color: #95a5a6;
+  font-size: 23rpx;
+  color: #9ca3af;
 }
 
-/* 百分位条形图 */
-.percentile-bar-container {
-  margin-bottom: 16rpx;
+/* 百分位彩虹条 */
+.bar-wrap {
+  margin-bottom: 18rpx;
 }
 
-.percentile-bar {
+.bar-track {
   position: relative;
-  height: 24rpx;
-  border-radius: 12rpx;
+  height: 22rpx;
+  border-radius: 11rpx;
   overflow: visible;
+  margin-bottom: 6rpx;
 }
 
 .bar-zones {
   display: flex;
   height: 100%;
-  border-radius: 12rpx;
+  border-radius: 11rpx;
   overflow: hidden;
 }
 
-.zone {
-  height: 100%;
-}
+.zone { height: 100%; }
+.zone-red    { background: #ef4444; }
+.zone-orange { background: #f59e0b; }
+.zone-green  { background: #10b981; }
 
-.zone-low {
-  background: #e74c3c;
-}
-
-.zone-below {
-  background: #f39c12;
-}
-
-.zone-normal {
-  background: #27ae60;
-}
-
-.zone-above {
-  background: #f39c12;
-}
-
-.zone-high {
-  background: #e74c3c;
-}
-
+/* 标记点 */
 .bar-marker {
   position: absolute;
-  top: -8rpx;
-  transform: translateX(-50%);
+  top: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .marker-dot {
-  width: 20rpx;
-  height: 40rpx;
-  background: #2c3e50;
-  border-radius: 10rpx;
+  width: 28rpx;
+  height: 28rpx;
+  border-radius: 50%;
+  background: #1a1f36;
   border: 4rpx solid #fff;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.3);
 }
 
+/* 标签行（绝对定位） */
 .bar-labels {
-  display: flex;
-  justify-content: space-between;
+  position: relative;
+  height: 28rpx;
   margin-top: 8rpx;
-  font-size: 20rpx;
-  color: #bdc3c7;
-  padding: 0 0;
 }
 
-/* 详细信息 */
+.bar-labels text {
+  position: absolute;
+  font-size: 19rpx;
+  color: #c4cad4;
+  transform: translateX(-50%);
+}
+
+/* 详细数值 */
 .indicator-detail {
   display: flex;
+  align-items: center;
   flex-wrap: wrap;
-  gap: 16rpx;
+  gap: 8rpx;
   padding-top: 16rpx;
-  border-top: 1rpx solid #f0f0f0;
+  border-top: 1rpx solid #f2f4f8;
 }
 
 .detail-item {
-  font-size: 24rpx;
-  color: #7f8c8d;
+  font-size: 22rpx;
+  color: #9ca3af;
 }
 
-/* 操作按钮 */
+.detail-sep {
+  font-size: 22rpx;
+  color: #d1d5db;
+}
+
+/* ========== 操作按钮 ========== */
 .actions {
   display: flex;
   gap: 20rpx;
-  margin-top: 32rpx;
+  margin: 8rpx 20rpx 0;
 }
 
 .action-btn {
@@ -373,7 +353,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 16rpx;
+  border-radius: 18rpx;
   font-size: 30rpx;
   font-weight: 600;
 }
@@ -384,13 +364,23 @@
   border: 2rpx solid #667eea;
 }
 
-.action-btn.primary {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: #fff;
-  box-shadow: 0 8rpx 24rpx rgba(102, 126, 234, 0.35);
+.theme-female .action-btn.secondary {
+  color: #d6409f;
+  border-color: #d6409f;
 }
 
-/* 参考说明 */
+.action-btn.primary {
+  background: linear-gradient(135deg, #667eea, #5b7bd5);
+  color: #fff;
+  box-shadow: 0 8rpx 24rpx rgba(102,126,234,0.35);
+}
+
+.theme-female .action-btn.primary {
+  background: linear-gradient(135deg, #f093fb, #d6409f);
+  box-shadow: 0 8rpx 24rpx rgba(214,64,159,0.35);
+}
+
+/* ========== 参考说明 ========== */
 .reference {
   margin-top: 32rpx;
   padding: 0 20rpx;
@@ -398,8 +388,8 @@
 
 .ref-text {
   display: block;
-  font-size: 22rpx;
-  color: #bdc3c7;
+  font-size: 21rpx;
+  color: #c4cad4;
   line-height: 1.8;
   text-align: center;
 }

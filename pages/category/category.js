@@ -6,57 +6,89 @@ Page({
     showAuthModal: false,
     tempAvatar: '',
     tempNickname: '',
+    activeTab: 'all',
     themes: [
       {
         id: 'douban_movies',
-        title: '豆瓣电影TOP250',
-        description: '电影海报墙分享',
+        title: '豆瓣电影 TOP250',
+        description: '华语影迷的经典片单，记录你的观影旅程',
         image: 'https://img1.doubanio.com/view/photo/s_ratio_poster/public/p480747492.jpg',
         userCount: 1234,
-        color: '#409eff'
+        color: '#409eff',
+        tag: '电影',
+        category: 'movie'
       },
       {
         id: 'imdb_movies',
-        title: 'IMDB电影TOP250',
-        description: 'IMDB历史最高分250部电影',
+        title: 'IMDb 电影 TOP250',
+        description: '全球影迷票选，史上最高分250部电影',
         image: 'https://m.media-amazon.com/images/M/MV5BM2MyNjYxNmUtYTAwNi00MTYxLWJmNWYtYzZlODY3ZTk3OTFlXkEyXkFqcGdeQXVyNzkwMjQ5NzM@._V1_UX182_CR0,0,182,268_AL__QL50.jpg',
         userCount: 376,
-        color: '#f5c518'
+        color: '#f5c518',
+        tag: '电影',
+        category: 'movie'
       },
       {
         id: 'oscar_movies',
         title: '历届奥斯卡最佳影片',
-        description: '每年一步经典必看',
+        description: '奥斯卡金像奖历年最佳，每年一部经典',
         image: 'https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2876555451.jpg',
         userCount: 0,
-        color: '#d4af37'
+        color: '#d4af37',
+        tag: '电影',
+        category: 'movie'
       },
       {
         id: 'child_growth',
-        title: '儿童生长评估',
-        description: '0~7岁身高体重发育评估',
+        title: '儿童生长发育评估',
+        description: '依据国家标准，精准评估0~7岁宝宝发育状况',
         image: '',
         userCount: 0,
-        color: '#27ae60',
-        icon: 'growth'
+        color: '#f59e0b',
+        tag: '育儿',
+        category: 'parenting'
       }
-    ]
+    ],
+    filteredThemes: []
   },
 
   onLoad() {
-    // 页面加载时的初始化
     this.checkLoginStatus();
+    this.filterThemes('all');
   },
 
   onShow() {
-    // 页面显示时检查登录状态
     this.checkLoginStatus();
-    // 格式化用户数量显示
+    // 格式化用户数量并过滤
     const themes = this.data.themes.map(theme => ({
       ...theme,
       userCountText: this.formatUserCount(theme.userCount)
     }));
     this.setData({ themes });
+    this.filterThemes(this.data.activeTab);
+  },
+
+  // 分类Tab切换
+  onTabTap(e) {
+    const tab = e.currentTarget.dataset.tab;
+    this.setData({ activeTab: tab });
+    this.filterThemes(tab);
+  },
+
+  filterThemes(tab) {
+    const { themes } = this.data;
+    let filtered;
+    if (tab === 'all') {
+      filtered = themes;
+    } else {
+      filtered = themes.filter(t => t.category === tab);
+    }
+    // 确保 userCountText 存在
+    filtered = filtered.map(t => ({
+      ...t,
+      userCountText: t.userCountText || this.formatUserCount(t.userCount)
+    }));
+    this.setData({ filteredThemes: filtered });
   },
 
   // 检查登录状态
@@ -70,7 +102,7 @@ Page({
     }
   },
 
-  // 开始登录（获取openid并呼出弹窗）
+  // 开始登录
   onGetUserProfile() {
     if (this.data.loading) return;
     this.setData({ loading: true });
@@ -104,23 +136,19 @@ Page({
     });
   },
 
-  // 关闭授权弹窗
   onCancelAuth() {
     this.setData({ showAuthModal: false });
   },
 
-  // 获取用户头像
   onChooseAvatar(e) {
     const { avatarUrl } = e.detail;
     this.setData({ tempAvatar: avatarUrl });
   },
 
-  // 获取用户昵称
   onNicknameInput(e) {
     this.setData({ tempNickname: e.detail.value });
   },
 
-  // 确认授权资料并保存
   async onConfirmAuth() {
     const { tempAvatar, tempNickname, openid } = this.data;
     if (!tempAvatar || tempAvatar === '/images/default-avatar.svg') {
@@ -135,7 +163,6 @@ Page({
     wx.showLoading({ title: '保存中...', mask: true });
     try {
       let finalAvatarUrl = tempAvatar;
-      // 如果头像是本地临时文件，需要上传到云存储
       if (tempAvatar.startsWith('wxfile://') || tempAvatar.startsWith('http://tmp/')) {
         const ext = tempAvatar.split('.').pop() || 'png';
         const cloudPath = `avatars/${openid}_${Date.now()}.${ext}`;
@@ -152,7 +179,6 @@ Page({
         avatarUrl: finalAvatarUrl
       };
 
-      // 注册或更新用户到数据库
       const db = wx.cloud.database();
       const userRes = await db.collection('users').where({ openid }).get();
       if (userRes.data.length === 0) {
@@ -189,7 +215,6 @@ Page({
     }
   },
 
-  // 退出登录
   onLogout() {
     wx.showModal({
       title: '确认退出',
@@ -207,10 +232,8 @@ Page({
     });
   },
 
-  // 点击主题卡片
   onThemeTap(e) {
     if (this.data.loading) return;
-
     const themeId = e.currentTarget.dataset.themeId;
 
     if (themeId === 'douban_movies') {
@@ -222,20 +245,14 @@ Page({
     } else if (themeId === 'child_growth') {
       wx.navigateTo({ url: '/pages/growth/input/input' });
     } else {
-      wx.showToast({
-        title: '该主题正在开发中',
-        icon: 'none',
-        duration: 2000
-      });
+      wx.showToast({ title: '该主题正在开发中', icon: 'none', duration: 2000 });
     }
   },
 
-  // 格式化用户数量显示
   formatUserCount(count) {
     if (count >= 1000) {
       return (count / 1000).toFixed(1) + 'k';
     }
     return count.toString();
-  },
-
+  }
 });
