@@ -1,0 +1,38 @@
+{
+  "desc": "关于本文件的更多信息，请参考文档 https://developers.weixin.qq.com/miniprogram/dev/framework/sitemap.html",
+  "rules": [
+    {
+      "action": "allow",
+      "page": "pages/category/category"
+    },
+    {
+      "action": "allow",
+      "page": "pages/douban/list/list"
+    },
+    {
+      "action": "allow",
+      "page": "pages/imdb/list/list"
+    },
+    {
+      "action": "allow",
+      "page": "pages/oscar/list/list"
+    },
+    {
+      "action": "allow",
+      "page": "pages/boxoffice/list/list"
+    },
+    {
+      "action": "allow",
+      "page": "pages/growth/input/input"
+    },
+    {
+      "action": "allow",
+      "page": "pages/growth/result/result",
+      "params": ["gender", "ageMonths", "weight", "height"]
+    },
+    {
+      "action": "disallow",
+      "page": "*"
+    }
+  ]
+}

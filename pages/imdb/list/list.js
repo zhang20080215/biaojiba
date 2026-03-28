@@ -423,6 +423,13 @@ Page({
         this.setData({ movies, allMovies });
     },
 
+    onShareAppMessage() {
+        return {
+            title: 'IMDb 电影 TOP 250 - 全球影迷票选经典',
+            path: '/pages/imdb/list/list'
+        };
+    },
+
     preloadVisibleImages() {
         const visibleMovies = this.data.movies.slice(0, 20);
         visibleMovies.forEach(movie => {

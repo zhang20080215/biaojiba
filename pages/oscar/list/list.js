@@ -41,6 +41,7 @@ Page({
         const statusBarHeight = sysInfo.statusBarHeight || 20;
         const navBarHeight = (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
         this.setData({ statusBarHeight, navBarHeight });
+        wx.setNavigationBarTitle({ title: '历届奥斯卡最佳影片' });
         this.checkLoginStatus();
         this.loadAllMovies(true); // 强制跳过24小时缓存拉取最新数据
     },
@@ -432,6 +433,13 @@ Page({
         const movies = this.data.movies.map(m => String(m._id) === String(movieId) ? { ...m, cover: imageUrl } : m);
         const allMovies = this.data.allMovies.map(m => String(m._id) === String(movieId) ? { ...m, cover: imageUrl } : m);
         this.setData({ movies, allMovies });
+    },
+
+    onShareAppMessage() {
+        return {
+            title: '历届奥斯卡最佳影片 - 每年一部经典',
+            path: '/pages/oscar/list/list'
+        };
     },
 
     preloadVisibleImages() {

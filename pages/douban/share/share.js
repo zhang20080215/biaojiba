@@ -24,6 +24,7 @@ Page({
 
     async onLoad(options) {
         try {
+            wx.setNavigationBarTitle({ title: '豆瓣电影 TOP 250 海报' });
             const shareType = options.type || 'text';
             this.setData({ shareType });
             await this.loadUserInfo();
@@ -483,6 +484,13 @@ Page({
             console.error('请求权限失败:', err);
             throw err;
         }
+    },
+
+    onShareAppMessage() {
+        return {
+            title: '我的豆瓣电影 TOP 250 观影海报',
+            path: '/pages/douban/list/list'
+        };
     },
 
     onUnload() {

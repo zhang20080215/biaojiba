@@ -21,7 +21,7 @@ function getThumbnailUrl(url, usage) {
         if (usage === 'poster') return url; // 海报页用原图
 
         // 如果是已被处理过的封面，避免再次经过云处理引发 500 错误
-        if (url.includes('imdb_covers') || url.includes('oscar_covers')) {
+        if (url.includes('imdb_covers') || url.includes('oscar_covers') || url.includes('boxoffice_covers')) {
             return url;
         }
 

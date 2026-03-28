@@ -188,8 +188,7 @@ async function fetchDoubanInfo(movieTitle, chineseTitle, year) {
  */
 async function downloadAndUploadImage(imageUrl, movieId) {
     try {
-        // 拉取最佳质量大图 （s_ratio_poster -> m_ratio_poster）
-        // 豆瓣通常m图比较稳定，大图有些没有权限访问。如果直接抓取的是 s_ratio_poster，我们可以升级为 m
+        // 拉取中图 （s_ratio_poster -> m_ratio_poster，~200px宽）
         const highResBufferUrl = imageUrl.replace('/s_ratio_poster/', '/m_ratio_poster/');
 
         const response = await axios({

@@ -1,6 +1,17 @@
 const { formatAge } = require('../../../utils/growthCalculator.js');
 
 Page({
+  onLoad() {
+    wx.setNavigationBarTitle({ title: '儿童生长发育评估' });
+  },
+
+  onShareAppMessage() {
+    return {
+      title: '儿童生长发育评估 - 依据国家标准精准评估',
+      path: '/pages/growth/input/input'
+    };
+  },
+
   data: {
     gender: 'male',
     // 年龄picker
@@ -84,10 +95,7 @@ Page({
       }
     }
 
-    // 存储数据到全局，navigateTo结果页
-    const app = getApp();
-    app.globalData = app.globalData || {};
-    app.globalData.growthInput = {
+    const inputData = {
       gender,
       ageMonths,
       weight: w,
@@ -95,8 +103,14 @@ Page({
       headCirc: (showHeadCirc && headCirc) ? hc : null
     };
 
-    wx.navigateTo({
-      url: '/pages/growth/result/result'
-    });
+    // 存储数据到全局（兼容旧逻辑）
+    const app = getApp();
+    app.globalData = app.globalData || {};
+    app.globalData.growthInput = inputData;
+
+    // 同时通过 URL 参数传递（支持独立访问，利于 SEO）
+    let url = `/pages/growth/result/result?gender=${gender}&ageMonths=${ageMonths}&weight=${w}&height=${h}`;
+    if (inputData.headCirc) url += `&headCirc=${inputData.headCirc}`;
+    wx.navigateTo({ url });
   }
 });

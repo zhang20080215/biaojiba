@@ -1,22 +1,51 @@
 <!-- 全球电影票房榜 海报生成页 -->
 <view class="container">
-  <view class="share-card {{shareType === 'poster' ? 'poster-wall' : ''}}">
-    <view class="card-title">全球电影票房榜观影海报墙</view>
+  <view class="share-card {{shareType === 'poster' ? 'poster-wall' : ''}} {{shareType === 'wall' ? 'wall-mode' : ''}}">
+    <!-- 顶部装饰 -->
+    <view class="card-header">
+      <text class="card-header-icon">🏆</text>
+      <view class="card-title-group">
+        <text class="card-title">全球电影票房榜观影海报墙</text>
+        <text class="card-subtitle">Worldwide Box Office · Top 100</text>
+      </view>
+    </view>
+
+    <view class="coral-line"></view>
+
     <view class="stats-container">
       <view class="stat-item watched">
+        <view class="stat-icon watched" wx:if="{{shareType === 'wall'}}"><text class="stat-icon-badge">✓</text></view>
         <text class="stat-label">已看</text>
         <text class="stat-value">{{stats.watched}}</text>
       </view>
       <view class="stat-item wish">
+        <view class="stat-icon wish" wx:if="{{shareType === 'wall'}}"><text class="stat-icon-badge wish">♡</text></view>
         <text class="stat-label">想看</text>
         <text class="stat-value">{{stats.wish}}</text>
       </view>
       <view class="stat-item unwatched">
+        <view class="stat-icon unwatched" wx:if="{{shareType === 'wall'}}"></view>
         <text class="stat-label">未看</text>
         <text class="stat-value">{{stats.unwatched}}</text>
       </view>
     </view>
-    <view class="poster-grid" wx:if="{{shareType === 'poster'}}">
+
+    <!-- 电影墙模式：全部电影海报 + 状态蒙层 -->
+    <view class="wall-grid" wx:if="{{shareType === 'wall'}}">
+      <block wx:for="{{allMovies}}" wx:key="_id">
+        <view class="wall-item {{markStatusMap[item._id] || 'unwatched'}}">
+          <image class="wall-poster" src="{{item.thumbCover || item.cover}}" mode="aspectFill" lazy-load />
+          <view class="wall-overlay {{markStatusMap[item._id] || 'unwatched'}}"></view>
+          <view class="wall-status-icon" wx:if="{{markStatusMap[item._id] === 'watched'}}">✓</view>
+          <view class="wall-status-icon wish-icon" wx:elif="{{markStatusMap[item._id] === 'wish'}}">♡</view>
+          <text class="wall-title">{{item.title}}</text>
+        </view>
+      </block>
+      <view class="empty-tip" wx:if="{{allMovies.length === 0}}">暂无电影数据</view>
+    </view>
+
+    <!-- 海报墙模式 -->
+    <view class="poster-grid" wx:elif="{{shareType === 'poster'}}">
       <block wx:for="{{watchedMovies}}" wx:key="_id">
         <view class="poster-item">
           <image class="poster-image" src="{{item.cover}}" mode="aspectFill" lazy-load />
@@ -24,15 +53,19 @@
       </block>
       <view class="empty-tip" wx:if="{{watchedMovies.length === 0}}">暂无已观看电影</view>
     </view>
-    <view class="movie-grid" wx:else>
-      <view class="movie-tags">
-        <block wx:for="{{allMovies}}" wx:key="_id">
-          <view class="movie-tag {{markStatusMap[item._id] || 'unwatched'}}">{{item.title}}</view>
-        </block>
-      </view>
+
+    <!-- 文字海报模式：5列规则网格 -->
+    <view class="text-grid" wx:else>
+      <block wx:for="{{allMovies}}" wx:key="_id">
+        <view class="text-cell {{markStatusMap[item._id] || 'unwatched'}}">
+          <text class="text-cell-rank">No.{{item.rank}}</text>
+          <text class="text-cell-title">{{item.title}}</text>
+        </view>
+      </block>
       <view class="empty-tip" wx:if="{{allMovies.length === 0}}">暂无电影数据</view>
     </view>
-    <view class="watermark-text">搜索小程序：标记吧  免费制作同款图片</view>
+
+    <view class="watermark-text">搜索小程序：标记吧 免费制作同款图片</view>
   </view>
 
   <view class="save-btn-container">

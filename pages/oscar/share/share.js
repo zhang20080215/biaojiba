@@ -21,6 +21,7 @@ Page({
 
     async onLoad(options) {
         try {
+            wx.setNavigationBarTitle({ title: '奥斯卡最佳影片海报' });
             const shareType = options.type || 'wall';
             this.setData({ shareType });
             await this.loadUserInfo();
@@ -857,6 +858,13 @@ Page({
             console.error('请求权限失败:', err);
             throw err;
         }
+    },
+
+    onShareAppMessage() {
+        return {
+            title: '我的奥斯卡最佳影片观影海报',
+            path: '/pages/oscar/list/list'
+        };
     },
 
     onUnload() {

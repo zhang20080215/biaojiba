@@ -13,20 +13,22 @@ Page({
         title: '豆瓣电影 TOP250',
         description: '华语影迷的经典片单，记录你的观影旅程',
         image: 'https://img1.doubanio.com/view/photo/s_ratio_poster/public/p480747492.jpg',
-        userCount: 1234,
-        color: '#409eff',
+        userCount: 0,
+        color: '#5b9bd5',
         tag: '电影',
-        category: 'movie'
+        category: 'movie',
+        url: '/pages/douban/list/list'
       },
       {
         id: 'imdb_movies',
         title: 'IMDb 电影 TOP250',
         description: '全球影迷票选，史上最高分250部电影',
         image: 'https://m.media-amazon.com/images/M/MV5BM2MyNjYxNmUtYTAwNi00MTYxLWJmNWYtYzZlODY3ZTk3OTFlXkEyXkFqcGdeQXVyNzkwMjQ5NzM@._V1_UX182_CR0,0,182,268_AL__QL50.jpg',
-        userCount: 376,
-        color: '#f5c518',
+        userCount: 0,
+        color: '#e0a050',
         tag: '电影',
-        category: 'movie'
+        category: 'movie',
+        url: '/pages/imdb/list/list'
       },
       {
         id: 'oscar_movies',
@@ -34,9 +36,10 @@ Page({
         description: '奥斯卡金像奖历年最佳，每年一部经典',
         image: 'https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2876555451.jpg',
         userCount: 0,
-        color: '#d4af37',
+        color: '#e0a050',
         tag: '电影',
-        category: 'movie'
+        category: 'movie',
+        url: '/pages/oscar/list/list'
       },
       {
         id: 'boxoffice_movies',
@@ -44,9 +47,10 @@ Page({
         description: '全球票房最高的电影，见证影史商业传奇',
         image: 'https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2180085848.jpg',
         userCount: 0,
-        color: '#FF4757',
+        color: '#e8707a',
         tag: '电影',
-        category: 'movie'
+        category: 'movie',
+        url: '/pages/boxoffice/list/list'
       },
       {
         id: 'child_growth',
@@ -54,17 +58,27 @@ Page({
         description: '依据国家标准，精准评估0~7岁宝宝发育状况',
         image: '',
         userCount: 0,
-        color: '#f59e0b',
+        color: '#f0a050',
         tag: '育儿',
-        category: 'parenting'
+        category: 'parenting',
+        url: '/pages/growth/input/input'
       }
     ],
     filteredThemes: []
   },
 
   onLoad() {
+    wx.setNavigationBarTitle({ title: '标记吧 - 发现有价值的内容' });
     this.checkLoginStatus();
     this.filterThemes('all');
+    this.loadUserCounts();
+  },
+
+  onShareAppMessage() {
+    return {
+      title: '标记吧 - 发现有价值的内容，留下专属记录',
+      path: '/pages/category/category'
+    };
   },
 
   onShow() {
@@ -261,10 +275,82 @@ Page({
     }
   },
 
-  formatUserCount(count) {
-    if (count >= 1000) {
-      return (count / 1000).toFixed(1) + 'k';
+  async loadUserCounts() {
+    const db = wx.cloud.database();
+    const _ = db.command;
+    const themeConfigs = [
+      { id: 'douban_movies', collection: 'movies' },
+      { id: 'imdb_movies', collection: 'imdb_movies' },
+      { id: 'oscar_movies', collection: 'oscar_movies' },
+      { id: 'boxoffice_movies', collection: 'boxoffice_movies' }
+    ];
+
+    const themes = [...this.data.themes];
+
+    // 并行统计每个主题的独立用户数
+    const results = await Promise.allSettled(
+      themeConfigs.map(config => this._countThemeUsers(db, _, config))
+    );
+
+    results.forEach((result, index) => {
+      const themeIdx = themes.findIndex(t => t.id === themeConfigs[index].id);
+      if (themeIdx === -1) return;
+      const realUsers = result.status === 'fulfilled' ? result.value : 0;
+      const displayCount = realUsers + 100;
+      themes[themeIdx].userCount = displayCount;
+      themes[themeIdx].userCountText = this.formatUserCount(displayCount);
+    });
+
+    // 育儿主题：暂无独立统计（评估数据纯本地计算，未入库）
+    // 不显示用户数
+
+    this.setData({ themes });
+    this.filterThemes(this.data.activeTab);
+  },
+
+  async _countThemeUsers(db, _, config) {
+    // 1. 获取该主题所有电影 ID
+    const movieIds = [];
+    let offset = 0;
+    const limit = 100;
+    while (true) {
+      const res = await db.collection(config.collection)
+        .skip(offset).limit(limit).field({ _id: true }).get();
+      movieIds.push(...res.data.map(m => m._id));
+      if (res.data.length < limit) break;
+      offset += limit;
     }
-    return count.toString();
+    if (movieIds.length === 0) return 0;
+
+    // 2. 聚合统计独立用户数
+    try {
+      const res = await db.collection('Marks').aggregate()
+        .match({ movieId: _.in(movieIds) })
+        .group({ _id: '$openid' })
+        .count('total')
+        .end();
+      return res.list.length > 0 ? res.list[0].total : 0;
+    } catch (e) {
+      // 降级：计算标记总数 / 平均每人标记数
+      let markCount = 0;
+      const chunkSize = 100;
+      for (let i = 0; i < movieIds.length; i += chunkSize) {
+        const chunk = movieIds.slice(i, i + chunkSize);
+        const { total } = await db.collection('Marks')
+          .where({ movieId: _.in(chunk) }).count();
+        markCount += total;
+      }
+      return Math.ceil(markCount / 3);
+    }
+  },
+
+  formatUserCount(count) {
+    // 向下取整到最近的100步长
+    const stepped = Math.floor(count / 100) * 100;
+    if (stepped >= 1000) {
+      const k = stepped / 1000;
+      return (k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)) + 'k';
+    }
+    return stepped + '+';
   }
 });

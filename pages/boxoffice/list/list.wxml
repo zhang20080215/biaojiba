@@ -44,15 +44,31 @@
     <view class="movie-row" bindtap="{{isBatchEditing ? 'onMovieCheck' : ''}}" data-movie-id="{{item._id}}">
       <checkbox wx:if="{{isBatchEditing}}" class="batch-checkbox" value="{{item._id}}" checked="{{item.checked}}" catchtap="onMovieCheck" data-movie-id="{{item._id}}" />
       <view class="movie-content {{isBatchEditing ? 'batch-editing' : ''}}">
+        <!-- 排名徽章 -->
+        <view class="rank-badge {{item.rank <= 3 ? 'rank-top3' : (item.rank <= 10 ? 'rank-top10' : '')}}">
+          <image wx:if="{{item.rank === 1}}" class="trophy-icon" src="/images/trophy-gold.svg" mode="aspectFit" />
+          <image wx:elif="{{item.rank === 2}}" class="trophy-icon" src="/images/trophy-silver.svg" mode="aspectFit" />
+          <image wx:elif="{{item.rank === 3}}" class="trophy-icon" src="/images/trophy-bronze.svg" mode="aspectFit" />
+          <text wx:else class="rank-num">{{item.rank}}</text>
+        </view>
+        <!-- 封面 -->
         <image class="movie-thumb" src="{{item.thumbCover || item.cover}}" lazy-load="true" mode="aspectFill" binderror="onImageError" bindload="onImageLoad" data-movie-id="{{item._id}}" show-menu-by-longpress="false" />
+        <!-- 信息区 -->
         <view class="movie-info">
-          <view class="movie-title">{{item.rank}}. {{item.title}}</view>
+          <text class="movie-title">{{item.title}}</text>
           <view class="movie-meta">
-            <text class="movie-boxoffice">{{item.boxOfficeText || ''}}</text>
-            <text class="movie-country" wx:if="{{item.country}}">{{item.country}}</text>
+            <view class="boxoffice-tag" wx:if="{{item.boxOfficeText}}">
+              <text class="boxoffice-val">{{item.boxOfficeText}}</text>
+            </view>
             <text class="movie-year" wx:if="{{item.year}}">{{item.year}}</text>
+            <text class="movie-country" wx:if="{{item.country}}">{{item.country}}</text>
+          </view>
+          <view class="movie-extra" wx:if="{{item.rating}}">
+            <image class="douban-icon" src="/images/douban_logo.png" mode="aspectFit" />
+            <text class="rating-tag">{{item.rating}}</text>
           </view>
         </view>
+        <!-- 标记区 -->
         <block wx:if="{{!isBatchEditing}}">
           <block wx:if="{{markStatusMap[item._id] === 'watched'}}">
             <view class="mark-status"><text class="mark-text watched">{{markDateMap[item._id]}}已看</text></view>
@@ -70,6 +86,36 @@
       </view>
     </view>
   </block>
+</view>
+
+<!-- 生成海报选择弹窗 -->
+<view class="share-modal" wx:if="{{showShareModal}}">
+  <view class="share-mask" bindtap="onCloseShareModal"></view>
+  <view class="share-sheet">
+    <view class="share-sheet-header">
+      <text class="share-sheet-icon">🏆</text>
+      <text class="share-sheet-title">生成观影海报</text>
+    </view>
+    <view class="share-sheet-options">
+      <view class="share-option" data-type="wall" bindtap="onShareSelect">
+        <view class="share-option-icon wall-icon">🎬</view>
+        <view class="share-option-info">
+          <text class="share-option-name">电影墙</text>
+          <text class="share-option-desc">全部电影海报+标记状态</text>
+        </view>
+        <view class="share-option-arrow">›</view>
+      </view>
+      <view class="share-option" data-type="text" bindtap="onShareSelect">
+        <view class="share-option-icon text-icon">📝</view>
+        <view class="share-option-info">
+          <text class="share-option-name">文字卡片</text>
+          <text class="share-option-desc">全部电影标记一览</text>
+        </view>
+        <view class="share-option-arrow">›</view>
+      </view>
+    </view>
+    <view class="share-sheet-cancel" bindtap="onCloseShareModal">取消</view>
+  </view>
 </view>
 
 <!-- 个人信息授权弹窗 -->

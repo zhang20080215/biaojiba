@@ -30,12 +30,12 @@
 
   <!-- 主题卡片网格（2列） -->
   <view class="themes-grid">
-    <view
+    <navigator
       wx:for="{{filteredThemes}}"
       wx:key="id"
       class="theme-card {{item.id}}"
-      data-theme-id="{{item.id}}"
-      bindtap="onThemeTap"
+      url="{{item.url}}"
+      hover-class="none"
       style="--theme-color: {{item.color}}"
     >
       <!-- 封面图区域 -->
@@ -64,7 +64,7 @@
           </view>
         </view>
       </view>
-    </view>
+    </navigator>
   </view>
 
   <!-- 广告位 -->

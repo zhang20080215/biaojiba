@@ -423,6 +423,13 @@ Page({
         this.setData({ movies, allMovies });
     },
 
+    onShareAppMessage() {
+        return {
+            title: '豆瓣电影 TOP 250 - 记录你的观影旅程',
+            path: '/pages/douban/list/list'
+        };
+    },
+
     preloadVisibleImages() {
         const visibleMovies = this.data.movies.slice(0, 20);
         visibleMovies.forEach(movie => {

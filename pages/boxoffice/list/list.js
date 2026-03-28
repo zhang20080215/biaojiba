@@ -24,7 +24,8 @@ Page({
         loading: false,
         showAuthModal: false,
         tempAvatar: '',
-        tempNickname: ''
+        tempNickname: '',
+        showShareModal: false
     },
 
     onLoad() {
@@ -68,13 +69,17 @@ Page({
             this.onGetUserProfile();
             return;
         }
-        wx.showActionSheet({
-            itemList: ['海报墙', '文字卡片'],
-            success: (res) => {
-                const type = res.tapIndex === 0 ? 'poster' : 'text';
-                wx.navigateTo({ url: `/pages/boxoffice/share/share?type=${type}` });
-            }
-        });
+        this.setData({ showShareModal: true });
+    },
+
+    onShareSelect(e) {
+        const type = e.currentTarget.dataset.type;
+        this.setData({ showShareModal: false });
+        wx.navigateTo({ url: `/pages/boxoffice/share/share?type=${type}` });
+    },
+
+    onCloseShareModal() {
+        this.setData({ showShareModal: false });
     },
 
     onHeaderLoginClick() {
@@ -166,10 +171,16 @@ Page({
             const openid = this.data.userInfo ? this.data.userInfo._openid : null;
             const { movies, marks } = await DataLoader.loadMoviesData('boxoffice', openid, forceRefresh);
 
+            // 检测缓存数据是否缺少封面（首条有cover字段说明数据完整）
+            if (!forceRefresh && movies.length > 0 && !movies[0].cover) {
+                DataLoader.invalidateMovieCache('boxoffice');
+                return this.loadAllMovies(true);
+            }
+
             const allMovies = movies.map(m => ({
                 ...m,
                 _id: String(m._id),
-                thumbCover: imageCacheManager.getThumbnailUrl(m.originalCover || m.coverUrl || m.cover, 'list'),
+                thumbCover: imageCacheManager.getThumbnailUrl(m.cover || m.coverUrl || m.originalCover, 'list'),
                 imageLoaded: false,
                 imageError: false
             }));
@@ -373,11 +384,6 @@ Page({
         if (movieId) {
             this.updateMovieImageStatus(movieId, { imageLoaded: true, imageError: false });
             this.addToImageCache(movieId, e.currentTarget.src);
-            const movie = this.data.allMovies.find(m => String(m._id) === String(movieId));
-            if (movie) {
-                const fullUrl = movie.originalCover || movie.coverUrl || movie.cover;
-                if (fullUrl && !fullUrl.startsWith('cloud://')) imageCacheManager.prefetchToLocal(fullUrl);
-            }
         }
     },
 
@@ -402,18 +408,21 @@ Page({
     },
 
     tryFallbackImage(movieId) {
-        const movie = this.data.movies.find(m => String(m._id) === String(movieId));
-        if (movie && movie.originalCover && movie.cover !== movie.originalCover) {
-            this.updateMovieImage(movieId, movie.originalCover);
-        } else {
-            this.updateMovieImage(movieId, 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQ1MCIgdmlld0JveD0iMCAwIDMwMCA0NTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iNDUwIiBmaWxsPSIjRjVGNUY1Ii8+CjxwYXRoIGQ9Ik0xNTAgMjAwTDEyMCAyNTBMMTUwIDMwMEwyMDAgMjUwTDE1MCAyMDBaIiBmaWxsPSIjQ0NDQ0NDIi8+Cjx0ZXh0IHg9IjE1MCIgeT0iMzUwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOTk5OTk5IiBmb250LXNpemU9IjE0Ij7lm77niYfmlrDpl7vnpL7kvJ08L3RleHQ+Cjwvc3ZnPgo=');
-        }
+        // 直接使用默认占位图（originalCover 是豆瓣外链，小程序无法加载）
+        this.updateMovieImage(movieId, '/images/default-movie.jpg');
     },
 
     updateMovieImage(movieId, imageUrl) {
         const movies = this.data.movies.map(m => String(m._id) === String(movieId) ? { ...m, cover: imageUrl } : m);
         const allMovies = this.data.allMovies.map(m => String(m._id) === String(movieId) ? { ...m, cover: imageUrl } : m);
         this.setData({ movies, allMovies });
+    },
+
+    onShareAppMessage() {
+        return {
+            title: '全球电影票房榜 - 见证影史商业传奇',
+            path: '/pages/boxoffice/list/list'
+        };
     },
 
     preloadVisibleImages() {

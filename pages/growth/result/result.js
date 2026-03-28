@@ -14,9 +14,24 @@ Page({
     isGenerating: false
   },
 
-  onLoad() {
-    const app = getApp();
-    const input = app.globalData?.growthInput;
+  onLoad(options) {
+    wx.setNavigationBarTitle({ title: '生长发育评估结果' });
+
+    // 优先从 URL 参数读取（SEO 爬虫可独立访问），其次从 globalData 读取
+    let input;
+    if (options.gender && options.ageMonths && options.weight && options.height) {
+      input = {
+        gender: options.gender,
+        ageMonths: parseInt(options.ageMonths),
+        weight: parseFloat(options.weight),
+        height: parseFloat(options.height),
+        headCirc: options.headCirc ? parseFloat(options.headCirc) : null
+      };
+    } else {
+      const app = getApp();
+      input = app.globalData?.growthInput;
+    }
+
     if (!input) {
       wx.showModal({
         title: '数据错误',
@@ -118,6 +133,22 @@ Page({
       this.setData({ isGenerating: false });
       wx.hideLoading();
     }
+  },
+
+  onShareAppMessage() {
+    const { input } = this.data;
+    if (input) {
+      let path = `/pages/growth/result/result?gender=${input.gender}&ageMonths=${input.ageMonths}&weight=${input.weight}&height=${input.height}`;
+      if (input.headCirc) path += `&headCirc=${input.headCirc}`;
+      return {
+        title: `${this.data.genderText}宝宝${this.data.ageText}生长发育评估报告`,
+        path
+      };
+    }
+    return {
+      title: '儿童生长发育评估',
+      path: '/pages/growth/input/input'
+    };
   },
 
   onBackTap() {

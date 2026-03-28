@@ -77,8 +77,8 @@ BoxofficePosterDrawer.prototype.drawSinglePoster = async function (movie, x, y, 
         ctx.clip();
         ctx.drawImage(imagePath, x, y, width, height);
 
-        // 珊瑚红半透明边框
-        ctx.strokeStyle = 'rgba(255, 71, 87, 0.15)';
+        // 低饱和暖色半透明边框
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.06)';
         ctx.lineWidth = 2;
         this.helper.drawRoundRectPath(x, y, width, height, 12);
         ctx.stroke();
