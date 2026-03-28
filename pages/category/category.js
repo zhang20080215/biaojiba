@@ -68,7 +68,7 @@ Page({
   },
 
   onLoad() {
-    wx.setNavigationBarTitle({ title: '标记吧 - 发现有价值的内容' });
+    wx.setNavigationBarTitle({ title: '标记吧——标记生活的仪式感' });
     this.checkLoginStatus();
     this.filterThemes('all');
     this.loadUserCounts();
@@ -76,7 +76,7 @@ Page({
 
   onShareAppMessage() {
     return {
-      title: '标记吧 - 发现有价值的内容，留下专属记录',
+      title: '标记吧——标记生活的仪式感，分享专属记录',
       path: '/pages/category/category'
     };
   },
@@ -301,8 +301,22 @@ Page({
       themes[themeIdx].userCountText = this.formatUserCount(displayCount);
     });
 
-    // 育儿主题：暂无独立统计（评估数据纯本地计算，未入库）
-    // 不显示用户数
+    // 育儿主题：从 growth_records 集合统计独立用户数
+    try {
+      const growthRes = await db.collection('growth_records').aggregate()
+        .group({ _id: '$openid' })
+        .count('total')
+        .end();
+      const growthUsers = growthRes.list.length > 0 ? growthRes.list[0].total : 0;
+      const idx = themes.findIndex(t => t.id === 'child_growth');
+      if (idx !== -1) {
+        const displayCount = growthUsers + 100;
+        themes[idx].userCount = displayCount;
+        themes[idx].userCountText = this.formatUserCount(displayCount);
+      }
+    } catch (e) {
+      console.error('加载育儿统计失败:', e);
+    }
 
     this.setData({ themes });
     this.filterThemes(this.data.activeTab);

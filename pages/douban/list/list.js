@@ -437,6 +437,11 @@ Page({
                 this.data.loadingImages[movie._id] = true;
                 const img = this.data.movies.find(m => m._id === movie._id);
                 if (img && img.cover) {
+                    if (img.cover.startsWith('cloud://')) {
+                        this.updateMovieImageStatus(movie._id, { imageLoaded: true });
+                        delete this.data.loadingImages[movie._id];
+                        return;
+                    }
                     wx.getImageInfo({
                         src: img.cover,
                         success: () => { this.updateMovieImageStatus(movie._id, { imageLoaded: true }); },

@@ -408,8 +408,33 @@ Page({
     },
 
     tryFallbackImage(movieId) {
-        // 直接使用默认占位图（originalCover 是豆瓣外链，小程序无法加载）
-        this.updateMovieImage(movieId, '/images/default-movie.jpg');
+        // 找到原始电影数据，尝试 cloud:// 转临时URL
+        const movie = this.data.allMovies.find(m => String(m._id) === String(movieId));
+        const cloudUrl = movie && (movie.cover || movie.coverUrl);
+        if (cloudUrl && cloudUrl.startsWith('cloud://')) {
+            if (!this._fallbackAttempted) this._fallbackAttempted = {};
+            if (this._fallbackAttempted[movieId]) {
+                this.updateMovieImage(movieId, '/images/default-movie.jpg');
+                return;
+            }
+            this._fallbackAttempted[movieId] = true;
+            wx.cloud.getTempFileURL({
+                fileList: [cloudUrl],
+                success: (res) => {
+                    const fileItem = res.fileList && res.fileList[0];
+                    if (fileItem && fileItem.tempFileURL) {
+                        this.updateMovieImage(movieId, fileItem.tempFileURL);
+                    } else {
+                        this.updateMovieImage(movieId, '/images/default-movie.jpg');
+                    }
+                },
+                fail: () => {
+                    this.updateMovieImage(movieId, '/images/default-movie.jpg');
+                }
+            });
+        } else {
+            this.updateMovieImage(movieId, '/images/default-movie.jpg');
+        }
     },
 
     updateMovieImage(movieId, imageUrl) {
@@ -432,6 +457,12 @@ Page({
                 this.data.loadingImages[movie._id] = true;
                 const img = this.data.movies.find(m => m._id === movie._id);
                 if (img && img.cover) {
+                    // cloud:// 文件 ID 不能用 wx.getImageInfo 预检，<image> 组件可直接渲染
+                    if (img.cover.startsWith('cloud://')) {
+                        this.updateMovieImageStatus(movie._id, { imageLoaded: true });
+                        delete this.data.loadingImages[movie._id];
+                        return;
+                    }
                     wx.getImageInfo({
                         src: img.cover,
                         success: () => { this.updateMovieImageStatus(movie._id, { imageLoaded: true }); },
