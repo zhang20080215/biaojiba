@@ -1,0 +1,146 @@
+<view class="container">
+
+  <!-- 标题卡片 -->
+  <view class="header-card">
+    <text class="header-title">健身打卡</text>
+    <text class="header-desc">记录每次训练，见证你的蜕变</text>
+    <view class="header-actions">
+      <view class="history-btn" bindtap="goToHistory">
+        <text class="history-icon">📋</text>
+        <text class="history-text">训练记录</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 表单卡片 -->
+  <view class="form-card">
+
+    <!-- 日期 -->
+    <view class="form-row">
+      <text class="form-label">日期</text>
+      <picker mode="date" value="{{date}}" bindchange="onDateChange">
+        <view class="picker-box">
+          <text class="picker-value">{{date}}</text>
+          <text class="picker-arrow">▾</text>
+        </view>
+      </picker>
+    </view>
+
+    <!-- 大类选择 -->
+    <view class="form-row no-border">
+      <text class="form-label">类型</text>
+      <view class="category-group">
+        <view
+          wx:for="{{categories}}"
+          wx:key="id"
+          class="category-btn {{activeCategory === item.id ? 'active' : ''}}"
+          data-category="{{item.id}}"
+          bindtap="onCategoryTap"
+        >
+          <text class="category-icon">{{item.icon}}</text>
+          <text class="category-name">{{item.name}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 子类型网格 -->
+    <view class="type-grid">
+      <block wx:for="{{categories}}" wx:key="id">
+        <block wx:if="{{item.id === activeCategory}}">
+          <view
+            wx:for="{{item.types}}"
+            wx:for-item="type"
+            wx:key="name"
+            class="type-item {{selectedType === type.name ? 'active' : ''}}"
+            data-type="{{type.name}}"
+            bindtap="onTypeTap"
+          >
+            <text class="type-icon">{{type.icon}}</text>
+            <text class="type-name">{{type.name}}</text>
+          </view>
+        </block>
+      </block>
+    </view>
+
+    <!-- 动态输入字段 -->
+    <view class="dynamic-fields" wx:if="{{selectedType}}">
+
+      <!-- 时长 -->
+      <view class="form-row" wx:if="{{showDuration}}">
+        <text class="form-label">时长</text>
+        <view class="input-box">
+          <input type="digit" class="input-field" placeholder="请输入" value="{{duration}}" bindinput="onDurationInput" />
+          <text class="input-unit">分钟</text>
+        </view>
+      </view>
+
+      <!-- 距离 -->
+      <view class="form-row" wx:if="{{showDistance}}">
+        <text class="form-label">距离</text>
+        <view class="input-box">
+          <input type="digit" class="input-field" placeholder="请输入" value="{{distance}}" bindinput="onDistanceInput" />
+          <text class="input-unit">{{distanceUnit}}</text>
+        </view>
+      </view>
+
+      <!-- 力量：组数 -->
+      <view class="form-row" wx:if="{{showStrength}}">
+        <text class="form-label">组数</text>
+        <view class="input-box">
+          <input type="number" class="input-field" placeholder="请输入" value="{{sets}}" bindinput="onSetsInput" />
+          <text class="input-unit">组</text>
+        </view>
+      </view>
+
+      <!-- 力量：次数 -->
+      <view class="form-row" wx:if="{{showStrength}}">
+        <text class="form-label">次数</text>
+        <view class="input-box">
+          <input type="number" class="input-field" placeholder="每组次数" value="{{reps}}" bindinput="onRepsInput" />
+          <text class="input-unit">次/组</text>
+        </view>
+      </view>
+
+      <!-- 力量：重量（选填） -->
+      <view class="form-row no-border" wx:if="{{showStrength}}">
+        <view class="form-label-row">
+          <text class="form-label-text">重量</text>
+          <text class="optional-badge">选填</text>
+        </view>
+        <view class="input-box">
+          <input type="digit" class="input-field" placeholder="请输入" value="{{weight}}" bindinput="onWeightInput" />
+          <text class="input-unit">kg</text>
+        </view>
+      </view>
+
+    </view>
+
+  </view>
+
+  <!-- 提交按钮 -->
+  <view class="submit-btn" bindtap="onSubmit">
+    <text class="submit-text">{{userInfo ? '完成打卡' : '登录后打卡'}}</text>
+  </view>
+
+  <!-- 登录弹窗 -->
+  <view class="auth-modal" hidden="{{!showAuthModal}}">
+    <view class="auth-mask" bindtap="onCancelAuth"></view>
+    <view class="auth-content">
+      <view class="auth-title">完善个人资料</view>
+      <view class="auth-subtitle">登录后即可记录训练数据</view>
+      <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+        <image class="temp-avatar" src="{{tempAvatar || '/images/default-avatar.svg'}}" mode="aspectFill"></image>
+        <view class="avatar-edit-tip">点击修改头像</view>
+      </button>
+      <view class="nickname-input-group">
+        <text class="input-label-auth">昵称</text>
+        <input type="nickname" class="nickname-input-auth" placeholder="请输入昵称" bindinput="onNicknameInput" value="{{tempNickname}}" />
+      </view>
+      <view class="auth-actions">
+        <button class="auth-btn cancel" bindtap="onCancelAuth">暂不登录</button>
+        <button class="auth-btn confirm" bindtap="onConfirmAuth">保存并登录</button>
+      </view>
+    </view>
+  </view>
+
+</view>

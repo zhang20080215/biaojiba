@@ -62,6 +62,17 @@ Page({
         tag: '育儿',
         category: 'parenting',
         url: '/pages/growth/input/input'
+      },
+      {
+        id: 'fitness',
+        title: '健身打卡',
+        description: '记录每次训练，生成专属打卡海报',
+        image: '',
+        userCount: 0,
+        color: '#4A7FD4',
+        tag: '健身',
+        category: 'fitness',
+        url: '/pages/fitness/input/input'
       }
     ],
     filteredThemes: []
@@ -316,6 +327,23 @@ Page({
       }
     } catch (e) {
       console.error('加载育儿统计失败:', e);
+    }
+
+    // 健身主题：从 fitness_records 集合统计独立用户数
+    try {
+      const fitnessRes = await db.collection('fitness_records').aggregate()
+        .group({ _id: '$openid' })
+        .count('total')
+        .end();
+      const fitnessUsers = fitnessRes.list.length > 0 ? fitnessRes.list[0].total : 0;
+      const fitIdx = themes.findIndex(t => t.id === 'fitness');
+      if (fitIdx !== -1) {
+        const displayCount = fitnessUsers + 100;
+        themes[fitIdx].userCount = displayCount;
+        themes[fitIdx].userCountText = this.formatUserCount(displayCount);
+      }
+    } catch (e) {
+      console.error('加载健身统计失败:', e);
     }
 
     this.setData({ themes });

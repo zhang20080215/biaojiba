@@ -13,7 +13,10 @@
     "pages/boxoffice/list/list",
     "pages/boxoffice/share/share",
     "pages/growth/input/input",
-    "pages/growth/result/result"
+    "pages/growth/result/result",
+    "pages/fitness/input/input",
+    "pages/fitness/history/history",
+    "pages/fitness/share/share"
   ],
   "window": {
     "navigationBarTitleText": "标记吧",

@@ -318,6 +318,52 @@
   color: #d4af37;
 }
 
+/* 健身卡片 - 蓝橙双色 */
+.fitness-cover {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #4A7FD4 0%, #5B9BE6 50%, #F08C4A 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.fitness-cover::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200rpx;
+  height: 200rpx;
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.05) 60%, transparent 80%);
+  border-radius: 50%;
+}
+
+.fitness-dumbbell {
+  font-size: 68rpx;
+  position: absolute;
+  top: 16rpx;
+  right: 20rpx;
+  z-index: 1;
+}
+
+.fitness-runner {
+  font-size: 72rpx;
+  position: relative;
+  z-index: 2;
+}
+
+.theme-card.fitness {
+  box-shadow: 0 2rpx 16rpx rgba(0,0,0,0.05);
+}
+
+.theme-card.fitness .theme-arrow-btn {
+  background: rgba(74,127,212,0.10);
+}
+
 /* 育儿卡片暖色 */
 .theme-card.child_growth {
   box-shadow: 0 2rpx 16rpx rgba(0,0,0,0.05);
