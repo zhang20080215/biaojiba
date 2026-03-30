@@ -26,9 +26,11 @@
     <view class="tab-item {{activeTab === 'parenting' ? 'active' : ''}}" data-tab="parenting" bindtap="onTabTap">
       <text>育儿</text>
     </view>
+    <!-- 健身Tab（暂未上线）
     <view class="tab-item {{activeTab === 'fitness' ? 'active' : ''}}" data-tab="fitness" bindtap="onTabTap">
       <text>健身</text>
     </view>
+    -->
   </view>
 
   <!-- 主题卡片网格（2列） -->
@@ -48,10 +50,12 @@
           <text class="growth-sun">☀️</text>
           <text class="growth-baby">👶</text>
         </view>
+        <!-- 健身封面（暂未上线）
         <view wx:elif="{{item.id === 'fitness'}}" class="fitness-cover">
           <text class="fitness-dumbbell">🏋️</text>
           <text class="fitness-runner">🏃</text>
         </view>
+        -->
         <view class="cover-overlay"></view>
         <image wx:if="{{item.id === 'oscar_movies'}}" class="oscar-badge" src="/images/oscar-icon.svg" mode="aspectFit"></image>
         <!-- 分类tag浮层 -->

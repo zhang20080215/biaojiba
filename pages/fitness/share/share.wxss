@@ -1,6 +1,6 @@
 .container {
   min-height: 100vh;
-  background: #f0f4f8;
+  background: #0a0f1e;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -13,7 +13,7 @@
   height: calc(90vw * 1660 / 1242);
   border-radius: 24rpx;
   overflow: hidden;
-  box-shadow: 0 8rpx 40rpx rgba(0,0,0,0.10);
+  box-shadow: 0 12rpx 60rpx rgba(0,0,0,0.5);
 }
 
 .poster-canvas {
@@ -37,7 +37,7 @@
   justify-content: center;
   background: linear-gradient(135deg, #4A7FD4, #5B9BE6);
   border-radius: 44rpx;
-  box-shadow: 0 6rpx 24rpx rgba(74,127,212,0.25);
+  box-shadow: 0 6rpx 24rpx rgba(74,127,212,0.35);
 }
 
 .save-btn.disabled {
@@ -60,9 +60,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #fff;
+  background: rgba(255,255,255,0.08);
   border-radius: 44rpx;
-  border: 2rpx solid #e0e4ec;
+  border: 2rpx solid rgba(255,255,255,0.15);
   padding: 0;
   margin: 0;
 }
@@ -70,11 +70,11 @@
 .share-btn::after { border: none; }
 
 .share-btn:active {
-  background: #f8f9fc;
+  background: rgba(255,255,255,0.15);
 }
 
 .share-text {
   font-size: 30rpx;
   font-weight: 600;
-  color: #4A7FD4;
+  color: rgba(255,255,255,0.8);
 }
