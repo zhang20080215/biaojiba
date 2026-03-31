@@ -64,6 +64,11 @@
   opacity: 0.6;
 }
 
+/* ==================== 广告 ==================== */
+.ad-banner-container {
+  margin: 20rpx 24rpx 0;
+}
+
 /* ==================== 加载状态 ==================== */
 .loading-overlay {
   position: fixed;

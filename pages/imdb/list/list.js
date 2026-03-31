@@ -1,5 +1,7 @@
 import DataLoader from '../../../utils/dataLoader';
 import imageCacheManager from '../../../utils/imageCacheManager';
+var adConfig = require('../../../utils/adConfig');
+var adManager = require('../../../utils/adManager');
 
 Page({
     data: {
@@ -24,7 +26,11 @@ Page({
         loading: false,
         showAuthModal: false,
         tempAvatar: '',
-        tempNickname: ''
+        tempNickname: '',
+        showInfeedAd: false,
+        adUnitIds: {
+            movielist_infeed: adConfig.getAdUnitId('movielist_infeed') || '',
+        },
     },
 
     onLoad() {
@@ -35,6 +41,7 @@ Page({
         wx.setNavigationBarTitle({ title: 'IMDB电影TOP250' });
         this.checkLoginStatus();
         this.loadAllMovies();
+        this.initAds();
     },
 
     // 下拉刷新 - 强制绕过缓存
@@ -73,7 +80,9 @@ Page({
             itemList: ['海报墙', '文字卡片'],
             success: (res) => {
                 const type = res.tapIndex === 0 ? 'poster' : 'text';
-                wx.navigateTo({ url: `/pages/imdb/share/share?type=${type}` });
+                adManager.showInterstitial('share_interstitial').then(function () {
+                    wx.navigateTo({ url: `/pages/imdb/share/share?type=${type}` });
+                });
             }
         });
     },
@@ -428,6 +437,17 @@ Page({
             title: 'IMDb 电影 TOP 250 - 全球影迷票选经典',
             path: '/pages/imdb/list/list'
         };
+    },
+
+    // ========== 广告 ==========
+    initAds() {
+        if (this.data.adUnitIds.movielist_infeed) {
+            this.setData({ showInfeedAd: true });
+        }
+    },
+    onInfeedAdLoad() {},
+    onInfeedAdError() {
+        this.setData({ showInfeedAd: false });
     },
 
     preloadVisibleImages() {

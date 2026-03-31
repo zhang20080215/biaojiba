@@ -84,6 +84,8 @@ function prefetchToLocal(url) {
     if (!url || _localPathCache[url]) return; // 已缓存则跳过
     if (url.startsWith('cloud://') || url.startsWith('wxfile://') ||
         url.startsWith('/') || url.startsWith('data:')) return;
+    // 豆瓣图片服务器拒绝小程序 downloadFile 请求，直接跳过
+    if (url.includes('doubanio.com')) return;
 
     wx.downloadFile({
         url: url,

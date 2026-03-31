@@ -74,6 +74,11 @@
     </button>
   </view>
 
+  <!-- 广告位：Banner -->
+  <view class="ad-banner-container" wx:if="{{showBannerAd}}">
+    <ad unit-id="{{adUnitIds.share_banner}}" ad-type="banner" bindload="onBannerAdLoad" binderror="onBannerAdError"></ad>
+  </view>
+
   <canvas type="2d" id="shareCanvas" style="width: {{canvasSize.width}}px; height: {{canvasSize.height}}px; position: fixed; left: -9999px; top: -9999px;"></canvas>
 
   <view class="loading-overlay" wx:if="{{isGenerating}}">

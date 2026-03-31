@@ -1,4 +1,6 @@
 // app.js
+var adConfig = require('./utils/adConfig')
+
 App({
   onLaunch() {
     if (!wx.cloud) {
@@ -9,6 +11,9 @@ App({
         traceUser: true,
       })
     }
+
+    // 拉取远程广告配置（异步，不阻塞启动）
+    adConfig.fetchRemoteConfig()
 
     // 获取用户openid
     wx.cloud.callFunction({

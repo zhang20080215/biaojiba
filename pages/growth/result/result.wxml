@@ -113,6 +113,11 @@
     </view>
   </view>
 
+  <!-- 广告位：原生模板广告 -->
+  <view class="ad-native-container" wx:if="{{showNativeAd}}">
+    <ad-custom unit-id="{{adUnitIds.growth_result_native}}" bindload="onNativeAdLoad" binderror="onNativeAdError"></ad-custom>
+  </view>
+
   <!-- 离屏 Canvas -->
   <canvas type="2d" id="posterCanvas" style="width:1242px;height:1660px;position:fixed;left:-9999px;top:-9999px;"></canvas>
 

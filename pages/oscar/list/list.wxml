@@ -51,6 +51,10 @@
 <!-- 电影列表区 -->
 <view class="movie-list">
   <block wx:for="{{movies}}" wx:key="_id">
+    <!-- 信息流广告位 -->
+    <view wx:if="{{showInfeedAd && (index === 10 || index === 50)}}" class="ad-infeed-container">
+      <ad-custom unit-id="{{adUnitIds.movielist_infeed}}" bindload="onInfeedAdLoad" binderror="onInfeedAdError"></ad-custom>
+    </view>
     <view class="movie-row" bindtap="{{isBatchEditing ? 'onMovieCheck' : ''}}" data-movie-id="{{item._id}}">
       <checkbox wx:if="{{isBatchEditing}}" class="batch-checkbox" value="{{item._id}}" checked="{{item.checked}}" catchtap="onMovieCheck" data-movie-id="{{item._id}}" />
       <view class="movie-content {{isBatchEditing ? 'batch-editing' : ''}}">

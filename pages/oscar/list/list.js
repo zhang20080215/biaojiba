@@ -1,5 +1,7 @@
 import DataLoader from '../../../utils/dataLoader';
 import imageCacheManager from '../../../utils/imageCacheManager';
+var adConfig = require('../../../utils/adConfig');
+var adManager = require('../../../utils/adManager');
 
 Page({
     data: {
@@ -27,7 +29,11 @@ Page({
         showAuthModal: false,
         showShareModal: false,
         tempAvatar: '',
-        tempNickname: ''
+        tempNickname: '',
+        showInfeedAd: false,
+        adUnitIds: {
+            movielist_infeed: adConfig.getAdUnitId('movielist_infeed') || '',
+        },
     },
 
     onLoad() {
@@ -44,6 +50,7 @@ Page({
         wx.setNavigationBarTitle({ title: '历届奥斯卡最佳影片' });
         this.checkLoginStatus();
         this.loadAllMovies(true); // 强制跳过24小时缓存拉取最新数据
+        this.initAds();
     },
 
     // 下拉刷新 - 强制绕过缓存
@@ -84,7 +91,9 @@ Page({
     onShareSelect(e) {
         const type = e.currentTarget.dataset.type;
         this.setData({ showShareModal: false });
-        wx.navigateTo({ url: `/pages/oscar/share/share?type=${type}` });
+        adManager.showInterstitial('share_interstitial').then(function () {
+            wx.navigateTo({ url: `/pages/oscar/share/share?type=${type}` });
+        });
     },
 
     onCloseShareModal() {
@@ -440,6 +449,17 @@ Page({
             title: '历届奥斯卡最佳影片 - 每年一部经典',
             path: '/pages/oscar/list/list'
         };
+    },
+
+    // ========== 广告 ==========
+    initAds() {
+        if (this.data.adUnitIds.movielist_infeed) {
+            this.setData({ showInfeedAd: true });
+        }
+    },
+    onInfeedAdLoad() {},
+    onInfeedAdError() {
+        this.setData({ showInfeedAd: false });
     },
 
     preloadVisibleImages() {

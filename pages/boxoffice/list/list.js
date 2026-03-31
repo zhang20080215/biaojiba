@@ -1,5 +1,7 @@
 import DataLoader from '../../../utils/dataLoader';
 import imageCacheManager from '../../../utils/imageCacheManager';
+var adConfig = require('../../../utils/adConfig');
+var adManager = require('../../../utils/adManager');
 
 Page({
     data: {
@@ -25,7 +27,11 @@ Page({
         showAuthModal: false,
         tempAvatar: '',
         tempNickname: '',
-        showShareModal: false
+        showShareModal: false,
+        showInfeedAd: false,
+        adUnitIds: {
+            movielist_infeed: adConfig.getAdUnitId('movielist_infeed') || '',
+        },
     },
 
     onLoad() {
@@ -36,6 +42,7 @@ Page({
         wx.setNavigationBarTitle({ title: '全球电影票房榜' });
         this.checkLoginStatus();
         this.loadAllMovies();
+        this.initAds();
     },
 
     async onPullDownRefresh() {
@@ -75,7 +82,9 @@ Page({
     onShareSelect(e) {
         const type = e.currentTarget.dataset.type;
         this.setData({ showShareModal: false });
-        wx.navigateTo({ url: `/pages/boxoffice/share/share?type=${type}` });
+        adManager.showInterstitial('share_interstitial').then(function () {
+            wx.navigateTo({ url: `/pages/boxoffice/share/share?type=${type}` });
+        });
     },
 
     onCloseShareModal() {
@@ -448,6 +457,17 @@ Page({
             title: '全球电影票房榜 - 见证影史商业传奇',
             path: '/pages/boxoffice/list/list'
         };
+    },
+
+    // ========== 广告 ==========
+    initAds() {
+        if (this.data.adUnitIds.movielist_infeed) {
+            this.setData({ showInfeedAd: true });
+        }
+    },
+    onInfeedAdLoad() {},
+    onInfeedAdError() {
+        this.setData({ showInfeedAd: false });
     },
 
     preloadVisibleImages() {

@@ -3,6 +3,7 @@ const CanvasHelper = require('../../../utils/canvasHelper.js');
 const DataLoader = require('../../../utils/dataLoader.js');
 const ImdbLoader = require('../../../utils/imdbLoader.js');
 const ImdbPosterDrawer = require('../../../utils/imdbPosterDrawer.js');
+var adConfig = require('../../../utils/adConfig');
 
 const TITLE = 'IMDB电影TOP250观影海报墙';
 
@@ -16,7 +17,11 @@ Page({
         shareType: 'text',
         canvasSize: { width: 1242, height: 1660 },
         loadProgress: 0,
-        isGenerating: false
+        isGenerating: false,
+        showBannerAd: false,
+        adUnitIds: {
+            share_banner: adConfig.getAdUnitId('share_banner') || '',
+        },
     },
 
     canvasHelper: null,
@@ -29,6 +34,7 @@ Page({
             this.setData({ shareType });
             await this.loadUserInfo();
             await this.loadData();
+            this.initAds();
         } catch (err) {
             console.error('页面加载失败:', err);
             wx.showModal({ title: '加载失败', content: err.message || '请重试', showCancel: false });
@@ -484,6 +490,19 @@ Page({
             console.error('请求权限失败:', err);
             throw err;
         }
+    },
+
+    // ========== 广告 ==========
+    initAds() {
+        if (this.data.adUnitIds.share_banner) {
+            this.setData({ showBannerAd: true });
+        }
+    },
+    onBannerAdLoad() {
+        this.setData({ showBannerAd: true });
+    },
+    onBannerAdError() {
+        this.setData({ showBannerAd: false });
     },
 
     onShareAppMessage() {

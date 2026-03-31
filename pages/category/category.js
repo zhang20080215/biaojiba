@@ -1,3 +1,5 @@
+var adConfig = require('../../utils/adConfig')
+
 Page({
   data: {
     userInfo: null,
@@ -7,6 +9,13 @@ Page({
     tempAvatar: '',
     tempNickname: '',
     activeTab: 'all',
+    // 广告相关
+    showNativeAd: false,
+    showBannerAd: false,
+    adUnitIds: {
+      category_native: adConfig.getAdUnitId('category_native') || '',
+      category_banner: adConfig.getAdUnitId('category_banner') || '',
+    },
     themes: [
       {
         id: 'douban_movies',
@@ -83,6 +92,7 @@ Page({
     this.checkLoginStatus();
     this.filterThemes('all');
     this.loadUserCounts();
+    this.initAds();
   },
 
   onShareAppMessage() {
@@ -394,5 +404,35 @@ Page({
       return (k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)) + 'k';
     }
     return stepped + '+';
-  }
+  },
+
+  // ========== 广告 ==========
+  initAds() {
+    var ids = this.data.adUnitIds;
+    // 优先展示原生广告，有 unitId 才尝试
+    if (ids.category_native) {
+      this.setData({ showNativeAd: true });
+    }
+    // Banner 作为兜底，原生广告失败时显示
+    if (ids.category_banner && !ids.category_native) {
+      this.setData({ showBannerAd: true });
+    }
+  },
+
+  onNativeAdLoad() {
+    this.setData({ showNativeAd: true });
+  },
+  onNativeAdError() {
+    this.setData({ showNativeAd: false });
+    // 原生广告失败，降级为 Banner
+    if (this.data.adUnitIds.category_banner) {
+      this.setData({ showBannerAd: true });
+    }
+  },
+  onBannerAdLoad() {
+    this.setData({ showBannerAd: true });
+  },
+  onBannerAdError() {
+    this.setData({ showBannerAd: false });
+  },
 });

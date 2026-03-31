@@ -78,8 +78,14 @@
     </navigator>
   </view>
 
-  <!-- 广告位 -->
-  <!-- <ad unit-id="你的广告单元ID" ad-type="banner"></ad> -->
+  <!-- 广告位：原生模板广告 -->
+  <view class="ad-container" wx:if="{{showNativeAd}}">
+    <ad-custom unit-id="{{adUnitIds.category_native}}" bindload="onNativeAdLoad" binderror="onNativeAdError"></ad-custom>
+  </view>
+  <!-- 广告位：Banner 兜底 -->
+  <view class="ad-banner-container" wx:if="{{showBannerAd}}">
+    <ad unit-id="{{adUnitIds.category_banner}}" ad-type="banner" bindload="onBannerAdLoad" binderror="onBannerAdError"></ad>
+  </view>
 
   <!-- 个人信息授权弹窗 -->
   <view class="auth-modal" hidden="{{!showAuthModal}}">

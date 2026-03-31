@@ -1,5 +1,7 @@
 import DataLoader from '../../../utils/dataLoader';
 import imageCacheManager from '../../../utils/imageCacheManager';
+var adConfig = require('../../../utils/adConfig');
+var adManager = require('../../../utils/adManager');
 
 Page({
     data: {
@@ -24,7 +26,12 @@ Page({
         loading: false,
         showAuthModal: false,
         tempAvatar: '',
-        tempNickname: ''
+        tempNickname: '',
+        // 广告相关
+        showInfeedAd: false,
+        adUnitIds: {
+            movielist_infeed: adConfig.getAdUnitId('movielist_infeed') || '',
+        },
     },
 
     onLoad() {
@@ -35,6 +42,7 @@ Page({
         wx.setNavigationBarTitle({ title: '豆瓣电影 TOP 250' });
         this.checkLoginStatus();
         this.loadAllMovies();
+        this.initAds();
     },
 
     // 下拉刷新 - 强制绕过缓存
@@ -73,7 +81,9 @@ Page({
             itemList: ['海报墙', '文字卡片'],
             success: (res) => {
                 const type = res.tapIndex === 0 ? 'poster' : 'text';
-                wx.navigateTo({ url: `/pages/douban/share/share?type=${type}` });
+                adManager.showInterstitial('share_interstitial').then(function () {
+                    wx.navigateTo({ url: `/pages/douban/share/share?type=${type}` });
+                });
             }
         });
     },
@@ -381,8 +391,8 @@ Page({
             // 后台静默预下载全尺寸图，供海报生成页复用（不 await，不阻塞 UI）
             const movie = this.data.allMovies.find(m => String(m._id) === String(movieId));
             if (movie) {
-                // 必须用 originalCover 作 key，与海报绘制器一致，才能命中缓存
-                const fullUrl = movie.originalCover || movie.coverUrl || movie.cover;
+                // 优先用云存储 cover，与海报绘制器一致（cover || coverUrl || originalCover）
+                const fullUrl = movie.cover || movie.coverUrl || movie.originalCover;
                 if (fullUrl && !fullUrl.startsWith('cloud://')) imageCacheManager.prefetchToLocal(fullUrl);
             }
         }
@@ -428,6 +438,17 @@ Page({
             title: '豆瓣电影 TOP 250 - 记录你的观影旅程',
             path: '/pages/douban/list/list'
         };
+    },
+
+    // ========== 广告 ==========
+    initAds() {
+        if (this.data.adUnitIds.movielist_infeed) {
+            this.setData({ showInfeedAd: true });
+        }
+    },
+    onInfeedAdLoad() {},
+    onInfeedAdError() {
+        this.setData({ showInfeedAd: false });
     },
 
     preloadVisibleImages() {

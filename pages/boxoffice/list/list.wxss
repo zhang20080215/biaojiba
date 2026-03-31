@@ -180,6 +180,13 @@ page {
   margin-top: 2rpx;
 }
 
+/* ===== 信息流广告 ===== */
+.ad-infeed-container {
+  margin: 18rpx 16rpx;
+  border-radius: 28rpx;
+  overflow: hidden;
+}
+
 /* ===== 电影列表 ===== */
 .movie-list {
   width: 100%;

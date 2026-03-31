@@ -243,6 +243,13 @@ page {
   color: #666;
 }
 
+/* ===== 信息流广告 ===== */
+.ad-infeed-container {
+  margin: 18rpx 16rpx;
+  border-radius: 28rpx;
+  overflow: hidden;
+}
+
 /* ===== 电影列表整体 ===== */
 .movie-list {
   width: 100%;

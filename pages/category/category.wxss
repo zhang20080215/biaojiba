@@ -373,6 +373,15 @@
   background: rgba(255,179,0,0.10);
 }
 
+/* ========== 广告容器 ========== */
+.ad-container {
+  margin: 0 24rpx 24rpx;
+}
+
+.ad-banner-container {
+  margin: 0 24rpx 24rpx;
+}
+
 /* ========== 弹窗 ========== */
 .auth-modal {
   position: fixed;

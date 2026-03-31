@@ -340,6 +340,11 @@
   color: #d1d5db;
 }
 
+/* ========== 广告 ========== */
+.ad-native-container {
+  margin: 20rpx 20rpx 0;
+}
+
 /* ========== 操作按钮 ========== */
 .actions {
   display: flex;

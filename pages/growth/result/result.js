@@ -1,5 +1,7 @@
 const { evaluate, formatAge } = require('../../../utils/growthCalculator.js');
 const GrowthPosterDrawer = require('../../../utils/growthPosterDrawer.js');
+var adConfig = require('../../../utils/adConfig');
+var adManager = require('../../../utils/adManager');
 
 Page({
   data: {
@@ -11,7 +13,11 @@ Page({
     ageText: '',
     genderIcon: '',
     showRange: false,
-    isGenerating: false
+    isGenerating: false,
+    showNativeAd: false,
+    adUnitIds: {
+      growth_result_native: adConfig.getAdUnitId('growth_result_native') || '',
+    },
   },
 
   onLoad(options) {
@@ -62,6 +68,7 @@ Page({
       genderIcon: input.gender === 'male' ? '♂' : '♀',
       ageText: formatAge(input.ageMonths)
     });
+    this.initAds();
   },
 
   onToggleRange() {
@@ -75,6 +82,9 @@ Page({
       wx.showToast({ title: '数据未准备好', icon: 'none' });
       return;
     }
+
+    // 保存前展示插屏广告
+    await adManager.showInterstitial('growth_result_interstitial');
 
     try {
       this.setData({ isGenerating: true });
@@ -133,6 +143,19 @@ Page({
       this.setData({ isGenerating: false });
       wx.hideLoading();
     }
+  },
+
+  // ========== 广告 ==========
+  initAds() {
+    if (this.data.adUnitIds.growth_result_native) {
+      this.setData({ showNativeAd: true });
+    }
+  },
+  onNativeAdLoad() {
+    this.setData({ showNativeAd: true });
+  },
+  onNativeAdError() {
+    this.setData({ showNativeAd: false });
   },
 
   onShareAppMessage() {
