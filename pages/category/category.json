@@ -1,8 +1,6 @@
 {
-  "navigationBarTitleText": "标记吧",
-  "navigationBarBackgroundColor": "#ffffff",
-  "navigationBarTextStyle": "black",
-  "backgroundColor": "#f6f9ff",
+  "navigationStyle": "custom",
+  "backgroundColor": "#FFFCF5",
   "backgroundTextStyle": "light"
 }
 

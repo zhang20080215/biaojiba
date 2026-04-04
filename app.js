@@ -31,6 +31,8 @@ App({
   },
 
   globalData: {
-    openid: null
+    openid: null,
+    // 主题色：'' (默认粉色) | 'theme-gold' (暖金) | 'theme-green' (橄榄绿) | 'theme-sand' (暖沙)
+    theme: 'theme-green'
   }
 });

@@ -1,109 +1,176 @@
 <!--pages/category/category.wxml-->
-<view class="category-container">
+<view class="page-root {{themeClass}}">
 
-  <!-- Hero Banner -->
-  <view class="hero-banner">
-    <view class="login-area">
-      <view wx:if="{{!userInfo}}" class="login-btn" bindtap="onGetUserProfile">
-        <text class="login-text">登录</text>
-      </view>
-      <view wx:else class="user-avatar-container" bindtap="onLogout">
-        <image class="user-avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
+  <!-- Hero 区 -->
+  <view class="hero-section" style="padding-top: {{headerPadTop}}px">
+    <view class="header">
+      <view class="header-left">
+        <view class="header-top">
+          <text class="app-name">标记吧</text>
+          <view class="theme-toggle" bindtap="onToggleThemePicker"><view class="theme-toggle-dot"></view></view>
+        </view>
+        <text class="app-slogan">标记生活的仪式感，分享专属记录</text>
+        <!-- 登录/用户卡片 -->
+        <view wx:if="{{!userInfo}}" class="user-card" bindtap="onGetUserProfile">
+          <view class="user-card-accent"></view>
+          <view class="user-card-body">
+            <text class="user-card-title">点击登录</text>
+            <text class="user-card-sub">登录后开始你的标记旅程</text>
+          </view>
+          <text class="user-card-arrow">›</text>
+        </view>
+        <view wx:else class="user-card" bindtap="onLogout">
+          <view class="user-card-accent"></view>
+          <image class="user-card-avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
+          <view class="user-card-body">
+            <text class="user-card-title">{{userInfo.nickName}}</text>
+            <text class="user-card-sub">欢迎回来，继续标记吧</text>
+          </view>
+        </view>
       </view>
     </view>
-    <text class="hero-title">标记吧</text>
-    <text class="hero-subtitle">标记生活的仪式感，分享专属记录</text>
   </view>
 
-  <!-- 分类Tab导航 -->
-  <view class="tab-bar">
-    <view class="tab-item {{activeTab === 'all' ? 'active' : ''}}" data-tab="all" bindtap="onTabTap">
+  <!-- 分类筛选（横滑 chip 样式） -->
+  <scroll-view class="filter-scroll" scroll-x enable-flex>
+    <view
+      class="filter-chip {{activeTab === 'all' ? 'active' : ''}}"
+      data-tab="all" bindtap="onTabTap"
+    >
+      <view class="chip-dot" wx:if="{{activeTab === 'all'}}"></view>
       <text>全部</text>
     </view>
-    <view class="tab-item {{activeTab === 'movie' ? 'active' : ''}}" data-tab="movie" bindtap="onTabTap">
+    <view
+      class="filter-chip {{activeTab === 'movie' ? 'active' : ''}}"
+      data-tab="movie" bindtap="onTabTap"
+    >
+      <view class="chip-dot" wx:if="{{activeTab === 'movie'}}"></view>
       <text>电影</text>
     </view>
-    <view class="tab-item {{activeTab === 'parenting' ? 'active' : ''}}" data-tab="parenting" bindtap="onTabTap">
+    <view
+      class="filter-chip {{activeTab === 'parenting' ? 'active' : ''}}"
+      data-tab="parenting" bindtap="onTabTap"
+    >
+      <view class="chip-dot" wx:if="{{activeTab === 'parenting'}}"></view>
       <text>育儿</text>
     </view>
-    <!-- 健身Tab（暂未上线）
-    <view class="tab-item {{activeTab === 'fitness' ? 'active' : ''}}" data-tab="fitness" bindtap="onTabTap">
-      <text>健身</text>
-    </view>
-    -->
-  </view>
+  </scroll-view>
 
-  <!-- 主题卡片网格（2列） -->
-  <view class="themes-grid">
+  <!-- 主题卡片网格（两列） -->
+  <view class="card-grid">
     <navigator
       wx:for="{{filteredThemes}}"
       wx:key="id"
-      class="theme-card {{item.id}}"
+      class="theme-card"
       url="{{item.url}}"
       hover-class="none"
-      style="--theme-color: {{item.color}}"
     >
-      <!-- 封面图区域 -->
-      <view class="theme-cover">
-        <image wx:if="{{item.image}}" class="cover-image" src="{{item.image}}" mode="aspectFill"></image>
-        <view wx:elif="{{item.id === 'child_growth'}}" class="growth-cover">
-          <text class="growth-sun">☀️</text>
-          <text class="growth-baby">👶</text>
+      <!-- 封面 -->
+      <view class="card-cover">
+        <image wx:if="{{item.image}}" class="cover-img" src="{{item.image}}" mode="aspectFill"></image>
+        <view wx:elif="{{item.id === 'child_growth'}}" class="cover-placeholder growth">
+          <view class="ruler-icon"></view>
+          <text class="placeholder-text">成长评估</text>
         </view>
-        <!-- 健身封面（暂未上线）
-        <view wx:elif="{{item.id === 'fitness'}}" class="fitness-cover">
-          <text class="fitness-dumbbell">🏋️</text>
-          <text class="fitness-runner">🏃</text>
+        <view class="cover-mask"></view>
+        <view class="tag-badge">
+          <text>{{item.tag}}</text>
         </view>
-        -->
-        <view class="cover-overlay"></view>
-        <image wx:if="{{item.id === 'oscar_movies'}}" class="oscar-badge" src="/images/oscar-icon.svg" mode="aspectFit"></image>
-        <!-- 分类tag浮层 -->
-        <view class="cover-tag">
-          <text class="cover-tag-text">{{item.tag}}</text>
-        </view>
+        <image
+          wx:if="{{item.id === 'oscar_movies'}}"
+          class="oscar-icon"
+          src="/images/oscar-icon.svg"
+          mode="aspectFit"
+        ></image>
       </view>
 
-      <!-- 主题信息 -->
-      <view class="theme-info">
-        <text class="theme-title">{{item.title}}</text>
-        <text class="theme-desc">{{item.description}}</text>
-        <view class="theme-footer">
-          <text wx:if="{{item.userCount > 0}}" class="user-count">{{item.userCountText}}人参与</text>
-          <view class="theme-arrow-btn">
-            <text class="theme-arrow-icon">›</text>
+      <!-- 信息区 -->
+      <view class="card-body">
+        <text class="card-title">{{item.title}}</text>
+        <text class="card-desc">{{item.description}}</text>
+        <view class="card-meta">
+          <text wx:if="{{item.userCount > 0}}" class="meta-count">{{item.userCountText}}人参与</text>
+          <view class="meta-arrow">
+            <text>›</text>
           </view>
         </view>
       </view>
     </navigator>
   </view>
 
-  <!-- 广告位：原生模板广告 -->
-  <view class="ad-container" wx:if="{{showNativeAd}}">
+  <!-- 广告 -->
+  <view class="ad-zone" wx:if="{{showNativeAd}}">
     <ad-custom unit-id="{{adUnitIds.category_native}}" bindload="onNativeAdLoad" binderror="onNativeAdError"></ad-custom>
   </view>
-  <!-- 广告位：Banner 兜底 -->
-  <view class="ad-banner-container" wx:if="{{showBannerAd}}">
+  <view class="ad-zone" wx:if="{{showBannerAd}}">
     <ad unit-id="{{adUnitIds.category_banner}}" ad-type="banner" bindload="onBannerAdLoad" binderror="onBannerAdError"></ad>
   </view>
 
-  <!-- 个人信息授权弹窗 -->
-  <view class="auth-modal" hidden="{{!showAuthModal}}">
-    <view class="auth-mask" bindtap="onCancelAuth"></view>
-    <view class="auth-content">
-      <view class="auth-title">完善个人资料</view>
-      <view class="auth-subtitle">请提供头像和昵称以获取更好的体验</view>
-      <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
-        <image class="temp-avatar" src="{{tempAvatar || '/images/default-avatar.svg'}}" mode="aspectFill"></image>
-        <view class="avatar-edit-tip">点击修改头像</view>
+  <!-- 授权弹窗 -->
+  <view class="modal-overlay" hidden="{{!showAuthModal}}">
+    <view class="modal-mask" bindtap="onCancelAuth"></view>
+    <view class="modal-card">
+      <text class="modal-title">完善个人资料</text>
+      <text class="modal-hint">设置头像和昵称，开始你的标记旅程</text>
+
+      <button class="avatar-picker" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+        <image class="picker-img" src="{{tempAvatar || '/images/default-avatar.svg'}}" mode="aspectFill"></image>
+        <text class="picker-tip">点击选择头像</text>
       </button>
-      <view class="nickname-input-group">
+
+      <view class="input-row">
         <text class="input-label">昵称</text>
-        <input type="nickname" class="nickname-input" placeholder="请输入昵称" bindinput="onNicknameInput" value="{{tempNickname}}" />
+        <input
+          type="nickname"
+          class="input-field"
+          placeholder="请输入昵称"
+          placeholder-class="input-placeholder"
+          bindinput="onNicknameInput"
+          value="{{tempNickname}}"
+        />
       </view>
-      <view class="auth-actions">
-        <button class="auth-btn cancel" bindtap="onCancelAuth">暂不登录</button>
-        <button class="auth-btn confirm" bindtap="onConfirmAuth">保存并登录</button>
+
+      <view class="modal-actions">
+        <button class="action-btn secondary" bindtap="onCancelAuth">取消</button>
+        <button class="action-btn primary" bindtap="onConfirmAuth">保存</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 主题选择面板 -->
+  <view class="theme-sheet" hidden="{{!showThemePicker}}">
+    <view class="theme-sheet-mask" bindtap="onToggleThemePicker"></view>
+    <view class="theme-sheet-body">
+      <text class="theme-sheet-title">选择主题色</text>
+      <view class="theme-sheet-options">
+        <view
+          class="theme-option {{themeClass === '' ? 'active' : ''}}"
+          data-theme="" bindtap="onThemeSelect"
+        >
+          <view class="theme-option-circle" style="background:#FAE0E4"></view>
+          <text class="theme-option-label">樱花粉</text>
+        </view>
+        <view
+          class="theme-option {{themeClass === 'theme-gold' ? 'active' : ''}}"
+          data-theme="theme-gold" bindtap="onThemeSelect"
+        >
+          <view class="theme-option-circle" style="background:#F7D66E"></view>
+          <text class="theme-option-label">暖金</text>
+        </view>
+        <view
+          class="theme-option {{themeClass === 'theme-green' ? 'active' : ''}}"
+          data-theme="theme-green" bindtap="onThemeSelect"
+        >
+          <view class="theme-option-circle" style="background:#9AAB65"></view>
+          <text class="theme-option-label">橄榄绿</text>
+        </view>
+        <view
+          class="theme-option {{themeClass === 'theme-sand' ? 'active' : ''}}"
+          data-theme="theme-sand" bindtap="onThemeSelect"
+        >
+          <view class="theme-option-circle" style="background:#F8F3E7; border: 2rpx solid #EDE7DA"></view>
+          <text class="theme-option-label">暖沙</text>
+        </view>
       </view>
     </view>
   </view>

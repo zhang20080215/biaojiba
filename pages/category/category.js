@@ -9,6 +9,10 @@ Page({
     tempAvatar: '',
     tempNickname: '',
     activeTab: 'all',
+    themeClass: '',
+    showThemePicker: false,
+    statusBarHeight: 20,
+    headerPadTop: 0,
     // 广告相关
     showNativeAd: false,
     showBannerAd: false,
@@ -23,7 +27,6 @@ Page({
         description: '华语影迷的经典片单，记录你的观影旅程',
         image: 'https://img1.doubanio.com/view/photo/s_ratio_poster/public/p480747492.jpg',
         userCount: 0,
-        color: '#5b9bd5',
         tag: '电影',
         category: 'movie',
         url: '/pages/douban/list/list'
@@ -34,7 +37,6 @@ Page({
         description: '全球影迷票选，史上最高分250部电影',
         image: 'https://m.media-amazon.com/images/M/MV5BM2MyNjYxNmUtYTAwNi00MTYxLWJmNWYtYzZlODY3ZTk3OTFlXkEyXkFqcGdeQXVyNzkwMjQ5NzM@._V1_UX182_CR0,0,182,268_AL__QL50.jpg',
         userCount: 0,
-        color: '#e0a050',
         tag: '电影',
         category: 'movie',
         url: '/pages/imdb/list/list'
@@ -45,7 +47,6 @@ Page({
         description: '奥斯卡金像奖历年最佳，每年一部经典',
         image: 'https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2876555451.jpg',
         userCount: 0,
-        color: '#e0a050',
         tag: '电影',
         category: 'movie',
         url: '/pages/oscar/list/list'
@@ -56,10 +57,29 @@ Page({
         description: '全球票房最高的电影，见证影史商业传奇',
         image: 'https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2180085848.jpg',
         userCount: 0,
-        color: '#e8707a',
         tag: '电影',
         category: 'movie',
         url: '/pages/boxoffice/list/list'
+      },
+      {
+        id: 'chinese_movies',
+        title: '豆瓣高分华语电影 TOP100',
+        description: '最高分的华语电影，跨越大陆港台三地经典',
+        image: 'https://img1.doubanio.com/view/photo/s_ratio_poster/public/p1366828563.jpg',
+        userCount: 0,
+        tag: '电影',
+        category: 'movie',
+        url: '/pages/chinese/list/list'
+      },
+      {
+        id: 'annual_movies',
+        title: '2026 年度院线电影',
+        description: '2026年值得看的院线电影，记录你的年度观影',
+        image: 'https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2916675446.jpg',
+        userCount: 0,
+        tag: '电影',
+        category: 'movie',
+        url: '/pages/annual/list/list'
       },
       {
         id: 'child_growth',
@@ -67,7 +87,6 @@ Page({
         description: '依据国家标准，精准评估0~7岁宝宝发育状况',
         image: '',
         userCount: 0,
-        color: '#f0a050',
         tag: '育儿',
         category: 'parenting',
         url: '/pages/growth/input/input'
@@ -88,7 +107,20 @@ Page({
   },
 
   onLoad() {
-    wx.setNavigationBarTitle({ title: '标记吧——标记生活的仪式感' });
+    // 自定义导航：获取状态栏高度和胶囊按钮位置
+    const sysInfo = wx.getSystemInfoSync();
+    const menuBtn = wx.getMenuButtonBoundingClientRect();
+    // header paddingTop = 胶囊按钮顶部留白
+    const headerPadTop = menuBtn.top;
+    const savedTheme = wx.getStorageSync('appTheme') || '';
+    const app = getApp();
+    app.globalData.theme = savedTheme;
+    this.setData({
+      statusBarHeight: sysInfo.statusBarHeight,
+      headerPadTop,
+      themeClass: savedTheme
+    });
+
     this.checkLoginStatus();
     this.filterThemes('all');
     this.loadUserCounts();
@@ -111,6 +143,19 @@ Page({
     }));
     this.setData({ themes });
     this.filterThemes(this.data.activeTab);
+  },
+
+  // 主题切换
+  onToggleThemePicker() {
+    this.setData({ showThemePicker: !this.data.showThemePicker });
+  },
+
+  onThemeSelect(e) {
+    const theme = e.currentTarget.dataset.theme;
+    const app = getApp();
+    app.globalData.theme = theme;
+    wx.setStorageSync('appTheme', theme);
+    this.setData({ themeClass: theme, showThemePicker: false });
   },
 
   // 分类Tab切换
@@ -277,25 +322,6 @@ Page({
     });
   },
 
-  onThemeTap(e) {
-    if (this.data.loading) return;
-    const themeId = e.currentTarget.dataset.themeId;
-
-    if (themeId === 'douban_movies') {
-      wx.navigateTo({ url: '/pages/douban/list/list' });
-    } else if (themeId === 'imdb_movies') {
-      wx.navigateTo({ url: '/pages/imdb/list/list' });
-    } else if (themeId === 'oscar_movies') {
-      wx.navigateTo({ url: '/pages/oscar/list/list' });
-    } else if (themeId === 'boxoffice_movies') {
-      wx.navigateTo({ url: '/pages/boxoffice/list/list' });
-    } else if (themeId === 'child_growth') {
-      wx.navigateTo({ url: '/pages/growth/input/input' });
-    } else {
-      wx.showToast({ title: '该主题正在开发中', icon: 'none', duration: 2000 });
-    }
-  },
-
   async loadUserCounts() {
     const db = wx.cloud.database();
     const _ = db.command;
@@ -303,7 +329,9 @@ Page({
       { id: 'douban_movies', collection: 'movies' },
       { id: 'imdb_movies', collection: 'imdb_movies' },
       { id: 'oscar_movies', collection: 'oscar_movies' },
-      { id: 'boxoffice_movies', collection: 'boxoffice_movies' }
+      { id: 'boxoffice_movies', collection: 'boxoffice_movies' },
+      { id: 'chinese_movies', collection: 'chinese_movies' },
+      { id: 'annual_movies', collection: 'annual_movies' }
     ];
 
     const themes = [...this.data.themes];
@@ -325,6 +353,7 @@ Page({
     // 育儿主题：从 growth_records 集合统计独立用户数
     try {
       const growthRes = await db.collection('growth_records').aggregate()
+        .match({ openid: _.exists(true) })
         .group({ _id: '$openid' })
         .count('total')
         .end();
@@ -367,6 +396,7 @@ Page({
     const limit = 100;
     while (true) {
       const res = await db.collection(config.collection)
+        .where({ isTop250: _.neq(false) })
         .skip(offset).limit(limit).field({ _id: true }).get();
       movieIds.push(...res.data.map(m => m._id));
       if (res.data.length < limit) break;

@@ -1,0 +1,257 @@
+/*
+  Global theme tokens — 通用型暖白浅色主题
+  Source of truth: style.md v2.2.0
+  Usage: @import "./styles/theme.wxss"; in app.wxss
+*/
+
+page {
+  /* ---- 基础色板 ---- */
+  --bg-page: #FFFCF5;
+  --bg-section: #F8F3E7;
+  --bg-card: #FFFFFF;
+
+  --text-primary: #2D2D2B;
+  --text-secondary: #6F6F68;
+  --text-muted: #9C998F;
+
+  /* 默认主题：粉色 */
+  --brand-primary: #FAE0E4;
+  --brand-soft: #FFB2DD;
+
+  --success: #9AAB65;
+  --success-soft: #E1E6D1;
+
+  --info: #B6CAEB;
+  --info-soft: #EAF0F9;
+
+  --warning: #F7D66E;
+  --warning-soft: #FEEFBF;
+
+  --line-subtle: #EDE7DA;
+
+  /* ---- 字号层级 ---- */
+  --font-display: 48rpx;
+  --font-h1: 40rpx;
+  --font-h2: 32rpx;
+  --font-title: 30rpx;
+  --font-body: 26rpx;
+  --font-caption: 22rpx;
+  --font-mini: 20rpx;
+
+  /* ---- 间距 8pt ---- */
+  --space-1: 8rpx;
+  --space-2: 16rpx;
+  --space-3: 24rpx;
+  --space-4: 32rpx;
+  --space-5: 40rpx;
+  --space-6: 48rpx;
+
+  /* ---- 圆角 ---- */
+  --radius-xs: 8rpx;
+  --radius-sm: 12rpx;
+  --radius-md: 16rpx;
+  --radius-lg: 24rpx;
+  --radius-xl: 32rpx;
+  --radius-pill: 9999rpx;
+
+  /* ---- 阴影 ---- */
+  --shadow-card: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
+  --shadow-float: 0 6rpx 20rpx rgba(0, 0, 0, 0.10);
+  --shadow-cta: 0 6rpx 14rpx rgba(255, 178, 221, 0.28);
+}
+
+/* ---- 主题 A：暖金 ---- */
+page.theme-gold,
+.page-root.theme-gold {
+  --brand-primary: #F7D66E;
+  --brand-soft: #FEEFBF;
+  --shadow-cta: 0 6rpx 14rpx rgba(247, 214, 110, 0.28);
+}
+
+/* ---- 主题 B：橄榄绿 ---- */
+page.theme-green,
+.page-root.theme-green {
+  --brand-primary: #9AAB65;
+  --brand-soft: #9AAB65;
+  --shadow-cta: 0 6rpx 14rpx rgba(154, 171, 101, 0.28);
+}
+
+/* ---- 主题 C：暖沙 ---- */
+page.theme-sand,
+.page-root.theme-sand {
+  --brand-primary: #F8F3E7;
+  --brand-soft: #EDE7DA;
+  --shadow-cta: 0 6rpx 14rpx rgba(237, 231, 218, 0.28);
+}
+
+/* ---------- Global primitives ---------- */
+.page {
+  min-height: 100vh;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  box-sizing: border-box;
+}
+
+.surface {
+  background: var(--bg-section);
+  border-radius: var(--radius-lg);
+}
+
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+  box-shadow: var(--shadow-card);
+}
+
+.elevated {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-float);
+}
+
+/* ---------- Typography ---------- */
+.text-display {
+  font-size: var(--font-display);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+.section-title {
+  font-size: var(--font-h2);
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+.text-title {
+  font-size: var(--font-title);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.text-body {
+  font-size: var(--font-body);
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.text-caption {
+  font-size: var(--font-caption);
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.divider {
+  width: 100%;
+  height: 1rpx;
+  background: var(--line-subtle);
+}
+
+/* ---------- Buttons ---------- */
+.btn-primary {
+  height: 88rpx;
+  border-radius: var(--radius-pill);
+  background: var(--brand-primary);
+  color: var(--text-primary);
+  font-size: var(--font-body);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-cta);
+  transition: transform 120ms ease-out;
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-primary--disabled {
+  opacity: 0.45;
+}
+
+.btn-secondary {
+  height: 80rpx;
+  border-radius: var(--radius-pill);
+  background: var(--brand-soft);
+  color: var(--text-primary);
+  font-size: var(--font-body);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 120ms ease-out;
+}
+
+.btn-secondary:active {
+  transform: scale(0.98);
+}
+
+.btn-ghost {
+  height: 76rpx;
+  border-radius: var(--radius-pill);
+  border: 1rpx solid var(--line-subtle);
+  color: var(--text-primary);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---------- Chips / Tags ---------- */
+.chip {
+  min-height: 44rpx;
+  padding: 0 20rpx;
+  border-radius: var(--radius-pill);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-mini);
+  line-height: 1;
+}
+
+.chip--brand {
+  background: var(--brand-soft);
+  color: var(--text-primary);
+}
+
+.chip--success {
+  background: var(--success-soft);
+  color: #44522C;
+}
+
+.chip--info {
+  background: var(--info-soft);
+  color: #27405F;
+}
+
+.chip--warning {
+  background: var(--warning-soft);
+  color: #5E4A13;
+}
+
+/* ---------- Utility spacing ---------- */
+.mt-1 { margin-top: var(--space-1); }
+.mt-2 { margin-top: var(--space-2); }
+.mt-3 { margin-top: var(--space-3); }
+.mt-4 { margin-top: var(--space-4); }
+.mb-1 { margin-bottom: var(--space-1); }
+.mb-2 { margin-bottom: var(--space-2); }
+.mb-3 { margin-bottom: var(--space-3); }
+.mb-4 { margin-bottom: var(--space-4); }
+.gap-1 { gap: var(--space-1); }
+.gap-2 { gap: var(--space-2); }
+.gap-3 { gap: var(--space-3); }
+
+/* ---------- Motion baseline ---------- */
+.interactive {
+  transition: transform 120ms ease-out, opacity 120ms ease-out;
+}
+
+.interactive:active {
+  transform: scale(0.98);
+}

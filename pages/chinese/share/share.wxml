@@ -1,0 +1,55 @@
+<!-- 豆瓣高分华语电影 TOP100 海报生成页 -->
+<view class="container">
+  <view class="share-card {{shareType === 'poster' ? 'poster-wall' : ''}}">
+    <view class="card-title">豆瓣高分华语电影 TOP100 观影海报墙</view>
+    <view class="stats-container">
+      <view class="stat-item watched">
+        <text class="stat-label">已看</text>
+        <text class="stat-value">{{stats.watched}}</text>
+      </view>
+      <view class="stat-item wish">
+        <text class="stat-label">想看</text>
+        <text class="stat-value">{{stats.wish}}</text>
+      </view>
+      <view class="stat-item unwatched">
+        <text class="stat-label">未看</text>
+        <text class="stat-value">{{stats.unwatched}}</text>
+      </view>
+    </view>
+    <view class="poster-grid" wx:if="{{shareType === 'poster'}}">
+      <block wx:for="{{watchedMovies}}" wx:key="_id">
+        <view class="poster-item">
+          <image class="poster-image" src="{{item.cover}}" mode="aspectFill" lazy-load />
+        </view>
+      </block>
+      <view class="empty-tip" wx:if="{{watchedMovies.length === 0}}">暂无已观看电影</view>
+    </view>
+    <view class="movie-grid" wx:else>
+      <view class="movie-tags">
+        <block wx:for="{{allMovies}}" wx:key="_id">
+          <view class="movie-tag {{markStatusMap[item._id] || 'unwatched'}}">{{item.title}}</view>
+        </block>
+      </view>
+      <view class="empty-tip" wx:if="{{allMovies.length === 0}}">暂无电影数据</view>
+    </view>
+    <view class="watermark-text">搜索小程序：标记吧  免费制作同款图片</view>
+  </view>
+
+  <view class="save-btn-container">
+    <button class="save-btn" bindtap="saveImage" disabled="{{isGenerating}}" loading="{{isGenerating}}">
+      {{isGenerating ? '生成中...' : '保存图片到相册'}}
+    </button>
+  </view>
+
+  <!-- 广告位：Banner -->
+  <view class="ad-banner-container" wx:if="{{showBannerAd}}">
+    <ad unit-id="{{adUnitIds.share_banner}}" ad-type="banner" bindload="onBannerAdLoad" binderror="onBannerAdError"></ad>
+  </view>
+
+  <canvas type="2d" id="shareCanvas" style="width: {{canvasSize.width}}px; height: {{canvasSize.height}}px; position: fixed; left: -9999px; top: -9999px;"></canvas>
+
+  <view class="loading-overlay" wx:if="{{isGenerating}}">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">正在生成分享图...</text>
+  </view>
+</view>

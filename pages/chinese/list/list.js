@@ -25,17 +25,9 @@ Page({
         loadingImages: {},
         loading: false,
         showAuthModal: false,
-        customToast: '',
-        customToastVisible: false,
-        showSharePicker: false,
         tempAvatar: '',
         tempNickname: '',
-        themeClass: '',
-        statusBarHeight: 20,
-        headerPadTop: 0,
-        menuBtnHeight: 32,
-        stickyTop: 0,
-        // 广告相关
+        watchPercent: 0,
         showInfeedAd: false,
         adUnitIds: {
             movielist_infeed: adConfig.getAdUnitId('movielist_infeed') || '',
@@ -47,35 +39,18 @@ Page({
             wx.showToast({ title: '请升级基础库', icon: 'none' });
             return;
         }
-        // 自定义导航：获取状态栏高度和胶囊按钮位置
-        const sysInfo = wx.getSystemInfoSync();
-        const menuBtn = wx.getMenuButtonBoundingClientRect();
-        const headerPadTop = menuBtn.top;
-        const savedTheme = wx.getStorageSync('appTheme') || getApp().globalData.theme || '';
-        const stickyTop = menuBtn.bottom + 8;
-        this.setData({
-            statusBarHeight: sysInfo.statusBarHeight,
-            headerPadTop,
-            menuBtnHeight: menuBtn.height,
-            stickyTop,
-            themeClass: savedTheme
-        });
+        wx.setNavigationBarTitle({ title: '豆瓣高分华语电影 TOP100' });
         this.checkLoginStatus();
         this.loadAllMovies();
         this.initAds();
     },
 
-    // 下拉刷新 - 强制绕过缓存
     async onPullDownRefresh() {
         await this.loadAllMovies(true);
         wx.stopPullDownRefresh();
     },
 
     onShow() {
-        const currentTheme = getApp().globalData.theme || '';
-        if (this.data.themeClass !== currentTheme) {
-            this.setData({ themeClass: currentTheme });
-        }
         this.checkLoginStatus();
         setTimeout(() => {
             this.preloadVisibleImages();
@@ -101,18 +76,14 @@ Page({
             this.onGetUserProfile();
             return;
         }
-        this.setData({ showSharePicker: true });
-    },
-
-    onCloseSharePicker() {
-        this.setData({ showSharePicker: false });
-    },
-
-    onShareTypeSelect(e) {
-        const type = e.currentTarget.dataset.type;
-        this.setData({ showSharePicker: false });
-        adManager.showInterstitial('share_interstitial').then(function () {
-            wx.navigateTo({ url: `/pages/douban/share/share?type=${type}` });
+        wx.showActionSheet({
+            itemList: ['海报墙', '文字卡片'],
+            success: (res) => {
+                const type = res.tapIndex === 0 ? 'poster' : 'text';
+                adManager.showInterstitial('share_interstitial').then(function () {
+                    wx.navigateTo({ url: `/pages/chinese/share/share?type=${type}` });
+                });
+            }
         });
     },
 
@@ -199,17 +170,15 @@ Page({
         }
     },
 
-    // ─── 核心：使用聚合云函数 + 本地缓存加载数据 ───
     async loadAllMovies(forceRefresh = false) {
         wx.showNavigationBarLoading();
         try {
             const openid = this.data.userInfo ? this.data.userInfo._openid : null;
-            const { movies, marks } = await DataLoader.loadMoviesData('douban', openid, forceRefresh);
+            const { movies, marks } = await DataLoader.loadMoviesData('chinese', openid, forceRefresh);
 
             const allMovies = movies.map(m => ({
                 ...m,
                 _id: String(m._id),
-                // thumbCover：优先取 originalCover（原始 douban URL）转缩略图，cover 保留用于海报生成
                 thumbCover: imageCacheManager.getThumbnailUrl(m.originalCover || m.coverUrl || m.cover, 'list'),
                 imageLoaded: false,
                 imageError: false
@@ -225,6 +194,7 @@ Page({
                 unwatchedCount: stats.unwatched, allCount: allMovies.length,
                 allMovies, movies: allMovies
             }, () => {
+                this.updateWatchPercent();
                 this.updateFilteredMovies();
                 wx.hideNavigationBarLoading();
             });
@@ -236,18 +206,18 @@ Page({
         }
     },
 
-    // ─── 仅刷新标记（登录后调用，不重复拉取电影列表）───
     async loadUserMarks() {
         if (!this.data.userInfo || !this.data.userInfo._openid) return;
         wx.showNavigationBarLoading();
         try {
             const openid = this.data.userInfo._openid;
-            const { marks } = await DataLoader.loadMoviesData('douban', openid, false);
+            const { marks } = await DataLoader.loadMoviesData('chinese', openid, false);
             const { markStatusMap, markDateMap, watchedIds, wishIds, stats } = DataLoader.processMarks(marks, this.data.allMovies);
             this.setData({
                 markStatusMap, markDateMap, watchedIds, wishIds,
                 watchedCount: stats.watched, wishCount: stats.wish, unwatchedCount: stats.unwatched
             }, () => {
+                this.updateWatchPercent();
                 this.updateFilteredMovies();
                 wx.hideNavigationBarLoading();
             });
@@ -255,6 +225,12 @@ Page({
             console.error('刷新标记失败:', err);
             wx.hideNavigationBarLoading();
         }
+    },
+
+    updateWatchPercent() {
+        const { watchedCount, allCount } = this.data;
+        const watchPercent = allCount > 0 ? Math.round(watchedCount / allCount * 100) : 0;
+        this.setData({ watchPercent });
     },
 
     updateFilteredMovies() {
@@ -306,8 +282,8 @@ Page({
                     else unwatchedCount--;
                     if (type === 'watched') watchedCount++;
                     else if (type === 'wish') wishCount++;
-                    this.setData({ markStatusMap, markDateMap, watchedCount, wishCount, unwatchedCount }, this.updateFilteredMovies);
-                    this.showCustomToast(type === 'watched' ? '✓ 已标记为已看' : '✓ 已标记为想看');
+                    this.setData({ markStatusMap, markDateMap, watchedCount, wishCount, unwatchedCount }, () => { this.updateWatchPercent(); this.updateFilteredMovies(); });
+                    wx.showToast({ title: type === 'watched' ? '已更新为已看' : '已更新为想看' });
                 });
             } else {
                 db.collection('Marks').add({
@@ -321,19 +297,11 @@ Page({
                     if (type === 'watched') watchedCount++;
                     else if (type === 'wish') wishCount++;
                     unwatchedCount--;
-                    this.setData({ markStatusMap, markDateMap, watchedCount, wishCount, unwatchedCount }, this.updateFilteredMovies);
-                    this.showCustomToast(type === 'watched' ? '✓ 已标记为已看' : '✓ 已标记为想看');
+                    this.setData({ markStatusMap, markDateMap, watchedCount, wishCount, unwatchedCount }, () => { this.updateWatchPercent(); this.updateFilteredMovies(); });
+                    wx.showToast({ title: type === 'watched' ? '已看成功' : '想看成功' });
                 });
             }
         });
-    },
-
-    showCustomToast(msg) {
-        if (this._toastTimer) clearTimeout(this._toastTimer);
-        this.setData({ customToast: msg, customToastVisible: true });
-        this._toastTimer = setTimeout(() => {
-            this.setData({ customToastVisible: false });
-        }, 1500);
     },
 
     formatMarkDate(dateStr) {
@@ -392,14 +360,6 @@ Page({
         this.batchUpdateMarks(this.data.selectedMovieIds, 'wish');
     },
 
-    onBatchUnwatch() {
-        if (this.data.selectedMovieIds.length === 0) {
-            wx.showToast({ title: '请选择电影', icon: 'none' }); return;
-        }
-        this.batchUpdateMarks(this.data.selectedMovieIds, 'unwatched');
-    },
-
-    // ─── 批量标记：一次云函数调用代替 N*2 次直接 DB 操作 ───
     batchUpdateMarks(movieIds, status) {
         const openid = this.data.userInfo._openid;
         if (!openid) { wx.showToast({ title: '请先登录', icon: 'none' }); return; }
@@ -431,10 +391,8 @@ Page({
         if (movieId) {
             this.updateMovieImageStatus(movieId, { imageLoaded: true, imageError: false });
             this.addToImageCache(movieId, e.currentTarget.src);
-            // 后台静默预下载全尺寸图，供海报生成页复用（不 await，不阻塞 UI）
             const movie = this.data.allMovies.find(m => String(m._id) === String(movieId));
             if (movie) {
-                // 优先用云存储 cover，与海报绘制器一致（cover || coverUrl || originalCover）
                 const fullUrl = movie.cover || movie.coverUrl || movie.originalCover;
                 if (fullUrl && !fullUrl.startsWith('cloud://')) imageCacheManager.prefetchToLocal(fullUrl);
             }
@@ -478,12 +436,11 @@ Page({
 
     onShareAppMessage() {
         return {
-            title: '豆瓣电影TOP250 - 记录你的观影旅程',
-            path: '/pages/douban/list/list'
+            title: '豆瓣高分华语电影 TOP100 - 记录你的华语观影旅程',
+            path: '/pages/chinese/list/list'
         };
     },
 
-    // ========== 广告 ==========
     initAds() {
         if (this.data.adUnitIds.movielist_infeed) {
             this.setData({ showInfeedAd: true });

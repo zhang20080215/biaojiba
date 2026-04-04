@@ -1,0 +1,11 @@
+{
+  "name": "fetchChineseMovies",
+  "version": "1.0.0",
+  "description": "豆瓣高分华语电影TOP100数据导入",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "axios": "^1.6.0",
+    "cheerio": "1.0.0-rc.12"
+  }
+}
