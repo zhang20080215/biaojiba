@@ -33,7 +33,7 @@ Page({
       },
       {
         id: 'imdb_movies',
-        title: 'IMDb 电影 TOP250',
+        title: 'IMDB电影TOP250',
         description: '全球影迷票选，史上最高分250部电影',
         image: 'https://m.media-amazon.com/images/M/MV5BM2MyNjYxNmUtYTAwNi00MTYxLWJmNWYtYzZlODY3ZTk3OTFlXkEyXkFqcGdeQXVyNzkwMjQ5NzM@._V1_UX182_CR0,0,182,268_AL__QL50.jpg',
         userCount: 0,
@@ -108,7 +108,7 @@ Page({
 
   onLoad() {
     // 自定义导航：获取状态栏高度和胶囊按钮位置
-    const sysInfo = wx.getSystemInfoSync();
+    const windowInfo = wx.getWindowInfo();
     const menuBtn = wx.getMenuButtonBoundingClientRect();
     // header paddingTop = 胶囊按钮顶部留白
     const headerPadTop = menuBtn.top;
@@ -116,7 +116,7 @@ Page({
     const app = getApp();
     app.globalData.theme = savedTheme;
     this.setData({
-      statusBarHeight: sysInfo.statusBarHeight,
+      statusBarHeight: windowInfo.statusBarHeight || 20,
       headerPadTop,
       themeClass: savedTheme
     });

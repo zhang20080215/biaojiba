@@ -1,55 +1,109 @@
-<!-- IMDb 电影 TOP 250 海报生成页 -->
-<view class="container">
-  <view class="share-card {{shareType === 'poster' ? 'poster-wall' : ''}}">
-    <view class="card-title">IMDB电影TOP250观影海报墙</view>
-    <view class="stats-container">
-      <view class="stat-item watched">
-        <text class="stat-label">已看</text>
-        <text class="stat-value">{{stats.watched}}</text>
+<view class="page-root share-page {{themeClass}}">
+
+<view class="immersive-top" style="padding-top: {{headerPadTop}}px">
+  <view class="top-bar" style="height: {{menuBtnHeight}}px">
+    <view class="back-btn" style="width: {{menuBtnHeight}}px; height: {{menuBtnHeight}}px; line-height: {{menuBtnHeight}}px" bindtap="onBack">‹</view>
+    <text class="top-title">海报预览</text>
+    <view class="top-right"></view>
+  </view>
+
+  <view class="bg-panel">
+    <text class="bg-panel-label">背景</text>
+    <scroll-view class="theme-scroll" scroll-x enable-flex>
+      <view
+        wx:for="{{bgThemes}}"
+        wx:key="key"
+        class="theme-chip {{activeBgTheme === item.key ? 'active' : ''}}"
+        data-key="{{item.key}}"
+        bindtap="onBgThemeTap"
+      >
+        <view class="theme-dot" style="background: linear-gradient(135deg, {{item.start}}, {{item.end}})"></view>
+        <text class="theme-label">{{item.name}}</text>
+        <text wx:if="{{activeBgTheme === item.key}}" class="theme-check">✓</text>
       </view>
-      <view class="stat-item wish">
-        <text class="stat-label">想看</text>
-        <text class="stat-value">{{stats.wish}}</text>
+    </scroll-view>
+  </view>
+
+  <view class="bg-panel" wx:if="{{shareType !== 'poster'}}">
+    <text class="bg-panel-label">样式</text>
+    <view class="style-toggle">
+      <view class="style-chip {{textStyle === 'capsule' ? 'active' : ''}}" data-style="capsule" bindtap="onTextStyleTap">
+        <text class="style-chip-label">胶囊</text>
       </view>
-      <view class="stat-item unwatched">
-        <text class="stat-label">未看</text>
-        <text class="stat-value">{{stats.unwatched}}</text>
+      <view class="style-chip {{textStyle === 'list' ? 'active' : ''}}" data-style="list" bindtap="onTextStyleTap">
+        <text class="style-chip-label">列表</text>
       </view>
     </view>
-    <view class="poster-grid" wx:if="{{shareType === 'poster'}}">
+  </view>
+</view>
+
+<view class="content-wrap">
+  <view class="share-card {{shareType === 'poster' ? 'poster-wall' : ''}} {{shareType !== 'poster' && textStyle === 'list' ? 'text-list-card' : ''}}" style="background: linear-gradient(135deg, {{currentGradient.start}} 0%, {{currentGradient.end}} 100%); {{shareType === 'poster' ? posterCardStyle : ''}}">
+    <view class="card-head">
+      <text class="card-title">IMDB电影TOP250观影海报</text>
+    </view>
+
+    <view class="stats-container">
+      <view class="stat-item watched">
+        <text class="stat-inline">已看 {{stats.watched}}</text>
+      </view>
+      <view class="stat-item wish">
+        <text class="stat-inline">想看 {{stats.wish}}</text>
+      </view>
+      <view class="stat-item unwatched">
+        <text class="stat-inline">未看 {{stats.unwatched}}</text>
+      </view>
+    </view>
+
+    <view class="poster-grid" wx:if="{{shareType === 'poster'}}" style="{{posterGridStyle}}">
       <block wx:for="{{watchedMovies}}" wx:key="_id">
         <view class="poster-item">
           <image class="poster-image" src="{{item.cover}}" mode="aspectFill" lazy-load />
         </view>
       </block>
-      <view class="empty-tip" wx:if="{{watchedMovies.length === 0}}">暂无已观看电影</view>
+      <view class="empty-tip" wx:if="{{watchedMovies.length === 0}}">暂无已看电影</view>
     </view>
-    <view class="movie-grid" wx:else>
+
+    <view class="movie-grid" wx:if="{{shareType !== 'poster' && textStyle === 'capsule'}}">
       <view class="movie-tags">
         <block wx:for="{{allMovies}}" wx:key="_id">
-          <view class="movie-tag {{markStatusMap[item._id] || 'unwatched'}}">{{item.title}}</view>
+          <text class="movie-tag {{markStatusMap[item._id] || 'unwatched'}}">{{item.title}}</text>
         </block>
       </view>
       <view class="empty-tip" wx:if="{{allMovies.length === 0}}">暂无电影数据</view>
     </view>
-    <view class="watermark-text">搜索小程序：标记吧 免费制作同款图片</view>
-  </view>
 
-  <view class="save-btn-container">
-    <button class="save-btn" bindtap="saveImage" disabled="{{isGenerating}}" loading="{{isGenerating}}">
-      {{isGenerating ? '生成中...' : '保存图片到相册'}}
-    </button>
-  </view>
+    <view class="movie-grid" wx:if="{{shareType !== 'poster' && textStyle === 'list'}}">
+      <view class="movie-list-grid" style="grid-template-rows: repeat({{listGridRows}}, 1fr);">
+        <block wx:for="{{allMovies}}" wx:key="_id">
+          <view class="movie-list-item {{markStatusMap[item._id] || 'unwatched'}}">
+            <view class="movie-list-dot"></view>
+            <text class="movie-list-title">{{item.title}}</text>
+          </view>
+        </block>
+      </view>
+      <view class="empty-tip" wx:if="{{allMovies.length === 0}}">暂无电影数据</view>
+    </view>
 
-  <!-- 广告位：Banner -->
-  <view class="ad-banner-container" wx:if="{{showBannerAd}}">
-    <ad unit-id="{{adUnitIds.share_banner}}" ad-type="banner" bindload="onBannerAdLoad" binderror="onBannerAdError"></ad>
+    <view class="watermark-text">搜索小程序：标记吧，免费制作同款图片</view>
   </view>
+</view>
 
-  <canvas type="2d" id="shareCanvas" style="width: {{canvasSize.width}}px; height: {{canvasSize.height}}px; position: fixed; left: -9999px; top: -9999px;"></canvas>
+<view class="ad-banner-container" wx:if="{{showBannerAd}}">
+  <ad unit-id="{{adUnitIds.share_banner}}" ad-type="banner" bindload="onBannerAdLoad" binderror="onBannerAdError"></ad>
+</view>
 
-  <view class="loading-overlay" wx:if="{{isGenerating}}">
-    <view class="loading-spinner"></view>
-    <text class="loading-text">正在生成分享图...</text>
-  </view>
+<view class="save-btn-container">
+  <button class="save-btn" bindtap="saveImage" disabled="{{isGenerating}}">
+    {{isGenerating ? '生成中...' : '保存到相册'}}
+  </button>
+</view>
+
+<canvas type="2d" id="shareCanvas" style="width: {{canvasSize.width}}px; height: {{canvasSize.height}}px; position: fixed; left: -9999px; top: -9999px;"></canvas>
+
+<view class="loading-overlay" wx:if="{{isGenerating}}">
+  <view class="loading-spinner"></view>
+  <text class="loading-text">正在生成分享图...</text>
+</view>
+
 </view>

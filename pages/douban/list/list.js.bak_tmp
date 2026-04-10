@@ -1,4 +1,4 @@
-import DataLoader from '../../../utils/dataLoader';
+﻿import DataLoader from '../../../utils/dataLoader';
 import imageCacheManager from '../../../utils/imageCacheManager';
 var adConfig = require('../../../utils/adConfig');
 var adManager = require('../../../utils/adManager');
@@ -35,7 +35,7 @@ Page({
         headerPadTop: 0,
         menuBtnHeight: 32,
         stickyTop: 0,
-        // 广告相关
+        // 骞垮憡鐩稿叧
         showInfeedAd: false,
         adUnitIds: {
             movielist_infeed: adConfig.getAdUnitId('movielist_infeed') || '',
@@ -44,17 +44,17 @@ Page({
 
     onLoad() {
         if (!wx.cloud) {
-            wx.showToast({ title: '请升级基础库', icon: 'none' });
+            wx.showToast({ title: '璇峰崌绾у熀纭€搴?, icon: 'none' });
             return;
         }
-        // 自定义导航：获取状态栏高度和胶囊按钮位置
-        const windowInfo = wx.getWindowInfo();
+        // 鑷畾涔夊鑸細鑾峰彇鐘舵€佹爮楂樺害鍜岃兌鍥婃寜閽綅缃?
+        const sysInfo = wx.getSystemInfoSync();
         const menuBtn = wx.getMenuButtonBoundingClientRect();
         const headerPadTop = menuBtn.top;
         const savedTheme = wx.getStorageSync('appTheme') || getApp().globalData.theme || '';
         const stickyTop = menuBtn.bottom + 8;
         this.setData({
-            statusBarHeight: windowInfo.statusBarHeight || 20,
+            statusBarHeight: sysInfo.statusBarHeight,
             headerPadTop,
             menuBtnHeight: menuBtn.height,
             stickyTop,
@@ -65,7 +65,7 @@ Page({
         this.initAds();
     },
 
-    // 下拉刷新 - 强制绕过缓存
+    // 涓嬫媺鍒锋柊 - 寮哄埗缁曡繃缂撳瓨
     async onPullDownRefresh() {
         await this.loadAllMovies(true);
         wx.stopPullDownRefresh();
@@ -97,7 +97,7 @@ Page({
 
     onShareTap() {
         if (!this.data.userInfo) {
-            wx.showToast({ title: '请先完成登录', icon: 'none' });
+            wx.showToast({ title: '璇峰厛瀹屾垚鐧诲綍', icon: 'none' });
             this.onGetUserProfile();
             return;
         }
@@ -108,23 +108,11 @@ Page({
         this.setData({ showSharePicker: false });
     },
 
-    onSharePickerTouchMove() {},
-
     onShareTypeSelect(e) {
         const type = e.currentTarget.dataset.type;
-        if (this._navigatingToShare) return;
-        this._navigatingToShare = true;
-
-        this.setData({ showSharePicker: false }, () => {
-            // 先确保核心流程可用：关闭弹层后直接跳转分享页
-            wx.nextTick(() => {
-                wx.navigateTo({
-                    url: `/pages/douban/share/share?type=${type}`,
-                    complete: () => {
-                        this._navigatingToShare = false;
-                    }
-                });
-            });
+        this.setData({ showSharePicker: false });
+        adManager.showInterstitial('share_interstitial').then(function () {
+            wx.navigateTo({ url: `/pages/douban/share/share?type=${type}` });
         });
     },
 
@@ -137,7 +125,7 @@ Page({
     onGetUserProfile() {
         if (this.data.loading) return;
         this.setData({ loading: true });
-        wx.showLoading({ title: '准备登录...' });
+        wx.showLoading({ title: '鍑嗗鐧诲綍...' });
         wx.cloud.callFunction({
             name: 'getOpenid',
             success: ret => {
@@ -145,7 +133,7 @@ Page({
                 if (!_openid) {
                     wx.hideLoading();
                     this.setData({ loading: false });
-                    wx.showToast({ title: '获取openid失败', icon: 'none' });
+                    wx.showToast({ title: '鑾峰彇openid澶辫触', icon: 'none' });
                     return;
                 }
                 wx.hideLoading();
@@ -155,10 +143,10 @@ Page({
                 });
             },
             fail: err => {
-                console.error('获取openid失败:', err);
+                console.error('鑾峰彇openid澶辫触:', err);
                 wx.hideLoading();
                 this.setData({ loading: false });
-                wx.showToast({ title: '网络错误，请重试', icon: 'none' });
+                wx.showToast({ title: '缃戠粶閿欒锛岃閲嶈瘯', icon: 'none' });
             }
         });
     },
@@ -170,13 +158,13 @@ Page({
     async onConfirmAuth() {
         const { tempAvatar, tempNickname, openid } = this.data;
         if (!tempAvatar || tempAvatar === '/images/default-avatar.svg') {
-            wx.showToast({ title: '请选择头像', icon: 'none' }); return;
+            wx.showToast({ title: '璇烽€夋嫨澶村儚', icon: 'none' }); return;
         }
         if (!tempNickname || !tempNickname.trim()) {
-            wx.showToast({ title: '请输入昵称', icon: 'none' }); return;
+            wx.showToast({ title: '璇疯緭鍏ユ樀绉?, icon: 'none' }); return;
         }
 
-        wx.showLoading({ title: '保存中...', mask: true });
+        wx.showLoading({ title: '淇濆瓨涓?..', mask: true });
         try {
             let finalAvatarUrl = tempAvatar;
             if (tempAvatar.startsWith('wxfile://') || tempAvatar.startsWith('http://tmp/')) {
@@ -202,16 +190,16 @@ Page({
             wx.setStorageSync('userInfo', userInfo);
             this.setData({ userInfo, showAuthModal: false });
             wx.hideLoading();
-            wx.showToast({ title: '登录成功', icon: 'success' });
+            wx.showToast({ title: '鐧诲綍鎴愬姛', icon: 'success' });
             this.loadUserMarks();
         } catch (err) {
-            console.error('保存用户信息失败:', err);
+            console.error('淇濆瓨鐢ㄦ埛淇℃伅澶辫触:', err);
             wx.hideLoading();
-            wx.showToast({ title: '保存失败，请重试', icon: 'none' });
+            wx.showToast({ title: '淇濆瓨澶辫触锛岃閲嶈瘯', icon: 'none' });
         }
     },
 
-    // ─── 核心：使用聚合云函数 + 本地缓存加载数据 ───
+    // 鈹€鈹€鈹€ 鏍稿績锛氫娇鐢ㄨ仛鍚堜簯鍑芥暟 + 鏈湴缂撳瓨鍔犺浇鏁版嵁 鈹€鈹€鈹€
     async loadAllMovies(forceRefresh = false) {
         wx.showNavigationBarLoading();
         try {
@@ -221,7 +209,7 @@ Page({
             const allMovies = movies.map(m => ({
                 ...m,
                 _id: String(m._id),
-                // thumbCover：优先取 originalCover（原始 douban URL）转缩略图，cover 保留用于海报生成
+                // thumbCover锛氫紭鍏堝彇 originalCover锛堝師濮?douban URL锛夎浆缂╃暐鍥撅紝cover 淇濈暀鐢ㄤ簬娴锋姤鐢熸垚
                 thumbCover: imageCacheManager.getThumbnailUrl(m.originalCover || m.coverUrl || m.cover, 'list'),
                 imageLoaded: false,
                 imageError: false
@@ -241,14 +229,14 @@ Page({
                 wx.hideNavigationBarLoading();
             });
         } catch (err) {
-            console.error('加载电影/标记数据失败:', err);
+            console.error('鍔犺浇鐢靛奖/鏍囪鏁版嵁澶辫触:', err);
             this.setData({ allMovies: [], movies: [], allCount: 0 });
-            wx.showToast({ title: '暂无数据或加载失败', icon: 'none' });
+            wx.showToast({ title: '鏆傛棤鏁版嵁鎴栧姞杞藉け璐?, icon: 'none' });
             wx.hideNavigationBarLoading();
         }
     },
 
-    // ─── 仅刷新标记（登录后调用，不重复拉取电影列表）───
+    // 鈹€鈹€鈹€ 浠呭埛鏂版爣璁帮紙鐧诲綍鍚庤皟鐢紝涓嶉噸澶嶆媺鍙栫數褰卞垪琛級鈹€鈹€鈹€
     async loadUserMarks() {
         if (!this.data.userInfo || !this.data.userInfo._openid) return;
         wx.showNavigationBarLoading();
@@ -264,7 +252,7 @@ Page({
                 wx.hideNavigationBarLoading();
             });
         } catch (err) {
-            console.error('刷新标记失败:', err);
+            console.error('鍒锋柊鏍囪澶辫触:', err);
             wx.hideNavigationBarLoading();
         }
     },
@@ -285,63 +273,10 @@ Page({
         this.setData({ activeTab: idx, isBatchEditing: false, selectedMovieIds: [] }, this.updateFilteredMovies);
     },
 
-    recalculateMarkStats(markStatusMap) {
-        let watchedCount = 0;
-        let wishCount = 0;
-        const allCount = this.data.allMovies.length;
-
-        Object.keys(markStatusMap).forEach(movieId => {
-            const status = markStatusMap[movieId];
-            if (status === 'watched') watchedCount++;
-            else if (status === 'wish') wishCount++;
-        });
-
-        return {
-            watchedCount,
-            wishCount,
-            unwatchedCount: Math.max(0, allCount - watchedCount - wishCount),
-            watchedIds: Object.keys(markStatusMap).filter(movieId => markStatusMap[movieId] === 'watched'),
-            wishIds: Object.keys(markStatusMap).filter(movieId => markStatusMap[movieId] === 'wish')
-        };
-    },
-
-    applyBatchMarksLocally(movieIds, status) {
-        const markStatusMap = { ...this.data.markStatusMap };
-        const markDateMap = { ...this.data.markDateMap };
-        const now = this.formatMarkDate(new Date().toISOString());
-
-        movieIds.forEach(movieId => {
-            const normalizedMovieId = String(movieId);
-            if (status === 'unwatched') {
-                delete markStatusMap[normalizedMovieId];
-                delete markDateMap[normalizedMovieId];
-            } else {
-                markStatusMap[normalizedMovieId] = status;
-                markDateMap[normalizedMovieId] = now;
-            }
-        });
-
-        const { watchedCount, wishCount, unwatchedCount, watchedIds, wishIds } = this.recalculateMarkStats(markStatusMap);
-
-        this.setData({
-            markStatusMap,
-            markDateMap,
-            watchedIds,
-            wishIds,
-            watchedCount,
-            wishCount,
-            unwatchedCount,
-            isBatchEditing: false,
-            selectedMovieIds: []
-        }, () => {
-            this.updateFilteredMovies();
-        });
-    },
-
     onMarkTap(e) {
         if (!this.data.userInfo) {
             wx.showModal({
-                title: '提示', content: '请登录后再进行标记', confirmText: '去登录',
+                title: '鎻愮ず', content: '璇风櫥褰曞悗鍐嶈繘琛屾爣璁?, confirmText: '鍘荤櫥褰?,
                 success: (res) => { if (res.confirm) this.onGetUserProfile(); }
             });
             return;
@@ -351,7 +286,7 @@ Page({
         const type = e.currentTarget.dataset.type;
         const openid = this.data.userInfo._openid;
         if (!movieId || !type || !openid) {
-            wx.showToast({ title: '数据不完整', icon: 'none' }); return;
+            wx.showToast({ title: '鏁版嵁涓嶅畬鏁?, icon: 'none' }); return;
         }
         const db = wx.cloud.database();
         db.collection('Marks').where({ movieId, openid }).get().then(res => {
@@ -372,7 +307,7 @@ Page({
                     if (type === 'watched') watchedCount++;
                     else if (type === 'wish') wishCount++;
                     this.setData({ markStatusMap, markDateMap, watchedCount, wishCount, unwatchedCount }, this.updateFilteredMovies);
-                    this.showCustomToast(type === 'watched' ? '✓ 已标记为已看' : '✓ 已标记为想看');
+                    this.showCustomToast(type === 'watched' ? '鉁?宸叉爣璁颁负宸茬湅' : '鉁?宸叉爣璁颁负鎯崇湅');
                 });
             } else {
                 db.collection('Marks').add({
@@ -387,7 +322,7 @@ Page({
                     else if (type === 'wish') wishCount++;
                     unwatchedCount--;
                     this.setData({ markStatusMap, markDateMap, watchedCount, wishCount, unwatchedCount }, this.updateFilteredMovies);
-                    this.showCustomToast(type === 'watched' ? '✓ 已标记为已看' : '✓ 已标记为想看');
+                    this.showCustomToast(type === 'watched' ? '鉁?宸叉爣璁颁负宸茬湅' : '鉁?宸叉爣璁颁负鎯崇湅');
                 });
             }
         });
@@ -445,48 +380,48 @@ Page({
 
     onBatchWatch() {
         if (this.data.selectedMovieIds.length === 0) {
-            wx.showToast({ title: '请选择电影', icon: 'none' }); return;
+            wx.showToast({ title: '璇烽€夋嫨鐢靛奖', icon: 'none' }); return;
         }
         this.batchUpdateMarks(this.data.selectedMovieIds, 'watched');
     },
 
     onBatchWish() {
         if (this.data.selectedMovieIds.length === 0) {
-            wx.showToast({ title: '请选择电影', icon: 'none' }); return;
+            wx.showToast({ title: '璇烽€夋嫨鐢靛奖', icon: 'none' }); return;
         }
         this.batchUpdateMarks(this.data.selectedMovieIds, 'wish');
     },
 
     onBatchUnwatch() {
         if (this.data.selectedMovieIds.length === 0) {
-            wx.showToast({ title: '请选择电影', icon: 'none' }); return;
+            wx.showToast({ title: '璇烽€夋嫨鐢靛奖', icon: 'none' }); return;
         }
         this.batchUpdateMarks(this.data.selectedMovieIds, 'unwatched');
     },
 
-    // ─── 批量标记：一次云函数调用代替 N*2 次直接 DB 操作 ───
+    // 鈹€鈹€鈹€ 鎵归噺鏍囪锛氫竴娆′簯鍑芥暟璋冪敤浠ｆ浛 N*2 娆＄洿鎺?DB 鎿嶄綔 鈹€鈹€鈹€
     batchUpdateMarks(movieIds, status) {
         const openid = this.data.userInfo._openid;
-        if (!openid) { wx.showToast({ title: '请先登录', icon: 'none' }); return; }
+        if (!openid) { wx.showToast({ title: '璇峰厛鐧诲綍', icon: 'none' }); return; }
 
-        wx.showLoading({ title: '批量更新中...' });
+        wx.showLoading({ title: '鎵归噺鏇存柊涓?..' });
         wx.cloud.callFunction({
             name: 'batchUpdateMarks',
             data: { movieIds, status, openid },
             success: res => {
                 wx.hideLoading();
                 if (res.result && res.result.success) {
-                    this.applyBatchMarksLocally(movieIds, status);
-                    wx.showToast({ title: '批量标记成功', icon: 'success' });
-                    setTimeout(() => { this.loadUserMarks(); }, 300);
+                    wx.showToast({ title: '鎵归噺鏍囪鎴愬姛', icon: 'success' });
+                    this.setData({ isBatchEditing: false, selectedMovieIds: [] });
+                    setTimeout(() => { this.loadUserMarks(); }, 500);
                 } else {
-                    wx.showToast({ title: '部分标记失败', icon: 'none' });
+                    wx.showToast({ title: '閮ㄥ垎鏍囪澶辫触', icon: 'none' });
                 }
             },
             fail: err => {
                 wx.hideLoading();
-                console.error('批量标记云函数失败:', err);
-                wx.showToast({ title: '网络错误，请重试', icon: 'none' });
+                console.error('鎵归噺鏍囪浜戝嚱鏁板け璐?', err);
+                wx.showToast({ title: '缃戠粶閿欒锛岃閲嶈瘯', icon: 'none' });
             }
         });
     },
@@ -496,10 +431,10 @@ Page({
         if (movieId) {
             this.updateMovieImageStatus(movieId, { imageLoaded: true, imageError: false });
             this.addToImageCache(movieId, e.currentTarget.src);
-            // 后台静默预下载全尺寸图，供海报生成页复用（不 await，不阻塞 UI）
+            // 鍚庡彴闈欓粯棰勪笅杞藉叏灏哄鍥撅紝渚涙捣鎶ョ敓鎴愰〉澶嶇敤锛堜笉 await锛屼笉闃诲 UI锛?
             const movie = this.data.allMovies.find(m => String(m._id) === String(movieId));
             if (movie) {
-                // 优先用云存储 cover，与海报绘制器一致（cover || coverUrl || originalCover）
+                // 浼樺厛鐢ㄤ簯瀛樺偍 cover锛屼笌娴锋姤缁樺埗鍣ㄤ竴鑷达紙cover || coverUrl || originalCover锛?
                 const fullUrl = movie.cover || movie.coverUrl || movie.originalCover;
                 if (fullUrl && !fullUrl.startsWith('cloud://')) imageCacheManager.prefetchToLocal(fullUrl);
             }
@@ -543,12 +478,12 @@ Page({
 
     onShareAppMessage() {
         return {
-            title: '豆瓣电影TOP250 - 记录你的观影旅程',
+            title: '璞嗙摚鐢靛奖TOP250 - 璁板綍浣犵殑瑙傚奖鏃呯▼',
             path: '/pages/douban/list/list'
         };
     },
 
-    // ========== 广告 ==========
+    // ========== 骞垮憡 ==========
     initAds() {
         if (this.data.adUnitIds.movielist_infeed) {
             this.setData({ showInfeedAd: true });

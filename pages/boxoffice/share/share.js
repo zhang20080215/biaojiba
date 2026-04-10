@@ -18,6 +18,10 @@ Page({
         loadProgress: 0,
         isGenerating: false,
         showBannerAd: false,
+        statusBarHeight: 20,
+        headerPadTop: 0,
+        menuBtnHeight: 32,
+        themeClass: '',
         adUnitIds: {
             share_banner: adConfig.getAdUnitId('share_banner') || '',
         },
@@ -28,9 +32,18 @@ Page({
 
     async onLoad(options) {
         try {
-            wx.setNavigationBarTitle({ title: '全球电影票房榜海报' });
             const shareType = options.type || 'wall';
-            this.setData({ shareType });
+            const windowInfo = wx.getWindowInfo();
+            const menuBtn = wx.getMenuButtonBoundingClientRect();
+            const themeClass = wx.getStorageSync('appTheme') || '';
+
+            this.setData({
+                shareType,
+                statusBarHeight: windowInfo.statusBarHeight || 20,
+                headerPadTop: menuBtn.top,
+                menuBtnHeight: menuBtn.height,
+                themeClass
+            });
             await this.loadUserInfo();
             await this.loadData();
             this.initAds();
@@ -38,6 +51,21 @@ Page({
             console.error('页面加载失败:', err);
             wx.showModal({ title: '加载失败', content: err.message || '请重试', showCancel: false });
         }
+    },
+
+    onShow() {
+        const themeClass = wx.getStorageSync('appTheme') || '';
+        if (themeClass !== this.data.themeClass) {
+            this.setData({ themeClass });
+        }
+    },
+
+    onBack() {
+        wx.navigateBack({
+            fail: () => {
+                wx.reLaunch({ url: '/pages/boxoffice/list/list' });
+            }
+        });
     },
 
     async onReady() {
@@ -306,9 +334,9 @@ Page({
                 ctx.drawImage(imgObj, sx, sy, sw, sh, x, y, w, h);
             } catch (e) { /* keep bg */ }
         } else {
-            ctx.fillStyle = '#ede8e5';
+            ctx.fillStyle = '#F2F0EA';
             ctx.fillRect(x, y, w, h);
-            ctx.fillStyle = 'rgba(192, 98, 90, 0.4)';
+            ctx.fillStyle = 'rgba(156, 153, 143, 0.5)';
             ctx.font = '20px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -317,18 +345,18 @@ Page({
 
         if (status === 'watched') {
             const overlay = ctx.createLinearGradient(x, y, x, y + h);
-            overlay.addColorStop(0, 'rgba(76, 175, 80, 0.03)');
-            overlay.addColorStop(1, 'rgba(76, 175, 80, 0.10)');
+            overlay.addColorStop(0, 'rgba(154, 171, 101, 0.03)');
+            overlay.addColorStop(1, 'rgba(154, 171, 101, 0.12)');
             ctx.fillStyle = overlay;
             ctx.fillRect(x, y, w, h);
         } else if (status === 'wish') {
             const overlay = ctx.createLinearGradient(x, y, x, y + h);
-            overlay.addColorStop(0, 'rgba(255, 165, 2, 0.03)');
-            overlay.addColorStop(1, 'rgba(255, 165, 2, 0.08)');
+            overlay.addColorStop(0, 'rgba(212, 168, 40, 0.03)');
+            overlay.addColorStop(1, 'rgba(212, 168, 40, 0.10)');
             ctx.fillStyle = overlay;
             ctx.fillRect(x, y, w, h);
         } else {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.50)';
+            ctx.fillStyle = 'rgba(45, 45, 43, 0.50)';
             ctx.fillRect(x, y, w, h);
         }
 
@@ -364,14 +392,14 @@ Page({
 
         if (status === 'watched') {
             ctx.save();
-            ctx.strokeStyle = 'rgba(76, 175, 80, 0.4)';
+            ctx.strokeStyle = 'rgba(154, 171, 101, 0.45)';
             ctx.lineWidth = 1.5;
             this.canvasHelper.drawRoundRectPath(x, y, w, h, radius);
             ctx.stroke();
             ctx.restore();
         } else if (status === 'wish') {
             ctx.save();
-            ctx.strokeStyle = 'rgba(255, 165, 2, 0.35)';
+            ctx.strokeStyle = 'rgba(212, 168, 40, 0.38)';
             ctx.lineWidth = 1;
             this.canvasHelper.drawRoundRectPath(x, y, w, h, radius);
             ctx.stroke();
@@ -467,19 +495,19 @@ Page({
         const { width, height } = this.data.canvasSize;
 
         const gradient = ctx.createLinearGradient(0, 0, width, height);
-        gradient.addColorStop(0, '#f5f3f1');
-        gradient.addColorStop(0.5, '#f5f2eb');
-        gradient.addColorStop(1, '#f5f1f3');
+        gradient.addColorStop(0, '#F8F3E7');
+        gradient.addColorStop(0.5, '#EEF3E5');
+        gradient.addColorStop(1, '#FAECE7');
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, width, height);
 
-        // 顶部暖光晕
+        // 顶部柔和漫反射
         ctx.save();
         const spotRadius = width * 0.6;
         const spotGrad = ctx.createRadialGradient(width / 2, 0, 0, width / 2, 0, spotRadius);
-        spotGrad.addColorStop(0, 'rgba(192, 98, 90, 0.05)');
-        spotGrad.addColorStop(0.5, 'rgba(196, 152, 96, 0.03)');
-        spotGrad.addColorStop(1, 'rgba(192, 98, 90, 0)');
+        spotGrad.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
+        spotGrad.addColorStop(0.55, 'rgba(210, 241, 254, 0.14)');
+        spotGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
         ctx.fillStyle = spotGrad;
         ctx.fillRect(0, 0, width, spotRadius);
         ctx.restore();
@@ -491,11 +519,11 @@ Page({
 
     drawCoralLine(ctx, y, width) {
         const grad = ctx.createLinearGradient(0, 0, width, 0);
-        grad.addColorStop(0, 'rgba(192, 98, 90, 0)');
-        grad.addColorStop(0.25, 'rgba(192, 98, 90, 0.15)');
-        grad.addColorStop(0.5, 'rgba(196, 152, 96, 0.3)');
-        grad.addColorStop(0.75, 'rgba(192, 98, 90, 0.15)');
-        grad.addColorStop(1, 'rgba(192, 98, 90, 0)');
+        grad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+        grad.addColorStop(0.25, 'rgba(156, 153, 143, 0.18)');
+        grad.addColorStop(0.5, 'rgba(182, 202, 235, 0.45)');
+        grad.addColorStop(0.75, 'rgba(156, 153, 143, 0.18)');
+        grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
         ctx.fillStyle = grad;
         ctx.fillRect(0, y, width, 4);
     },
@@ -518,25 +546,25 @@ Page({
         ctx.fillText(iconText, headerStartX, startY - 6);
 
         // 主标题
-        ctx.fillStyle = '#c0625a';
+        ctx.fillStyle = '#2D2D2B';
         ctx.font = '800 44px sans-serif';
         ctx.textAlign = 'center';
         const titleCenterX = headerStartX + iconWidth + iconGap + titleWidth / 2;
         ctx.fillText(titleText, titleCenterX, startY);
 
         // 副标题
-        ctx.fillStyle = 'rgba(192, 98, 90, 0.35)';
+        ctx.fillStyle = 'rgba(156, 153, 143, 0.8)';
         ctx.font = '400 20px sans-serif';
         ctx.fillText('Worldwide Box Office · Top 100', width / 2, startY + 34);
 
         // 分割线
         const lineY = startY + 50;
         const lineGrad = ctx.createLinearGradient(width * 0.15, 0, width * 0.85, 0);
-        lineGrad.addColorStop(0, 'rgba(192, 98, 90, 0)');
-        lineGrad.addColorStop(0.3, 'rgba(192, 98, 90, 0.2)');
-        lineGrad.addColorStop(0.5, 'rgba(196, 152, 96, 0.35)');
-        lineGrad.addColorStop(0.7, 'rgba(192, 98, 90, 0.2)');
-        lineGrad.addColorStop(1, 'rgba(192, 98, 90, 0)');
+        lineGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+        lineGrad.addColorStop(0.3, 'rgba(156, 153, 143, 0.22)');
+        lineGrad.addColorStop(0.5, 'rgba(182, 202, 235, 0.5)');
+        lineGrad.addColorStop(0.7, 'rgba(156, 153, 143, 0.22)');
+        lineGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
         ctx.fillStyle = lineGrad;
         ctx.fillRect(width * 0.1, lineY, width * 0.8, 2);
     },
@@ -544,9 +572,9 @@ Page({
     drawStats(ctx, startX, startY, maxWidth, showIcon) {
         const { stats } = this.data;
         const statItems = [
-            { label: '已看', value: stats.watched, color: '#4CAF50', iconFill: 'rgba(76, 175, 80, 0.25)', iconStroke: 'rgba(76, 175, 80, 0.5)', badge: '✓', badgeBg: 'rgba(76, 175, 80, 0.9)' },
-            { label: '想看', value: stats.wish, color: '#FFA502', iconFill: 'rgba(255, 165, 2, 0.25)', iconStroke: 'rgba(255, 165, 2, 0.5)', badge: '♡', badgeBg: 'rgba(255, 165, 2, 0.9)' },
-            { label: '未看', value: stats.unwatched, color: '#9E9E9E', iconFill: 'rgba(0, 0, 0, 0.08)', iconStroke: 'rgba(120, 120, 120, 0.3)', badge: null, badgeBg: null }
+            { label: '已看', value: stats.watched, color: '#9AAB65', iconFill: 'rgba(154, 171, 101, 0.18)', iconStroke: 'rgba(154, 171, 101, 0.36)', badge: '✓', badgeBg: 'rgba(154, 171, 101, 0.95)' },
+            { label: '想看', value: stats.wish, color: '#D4A828', iconFill: 'rgba(212, 168, 40, 0.16)', iconStroke: 'rgba(212, 168, 40, 0.34)', badge: '♡', badgeBg: 'rgba(212, 168, 40, 0.95)' },
+            { label: '未看', value: stats.unwatched, color: '#9C998F', iconFill: 'rgba(156, 153, 143, 0.12)', iconStroke: 'rgba(156, 153, 143, 0.28)', badge: null, badgeBg: null }
         ];
 
         const itemWidth = showIcon ? 180 : 160;
@@ -561,9 +589,9 @@ Page({
 
             const gradient = ctx.createLinearGradient(itemX, itemY, itemX + itemWidth, itemY + itemHeight);
             const bgColors = {
-                '已看': ['rgba(76, 175, 80, 0.15)', 'rgba(76, 175, 80, 0.06)'],
-                '想看': ['rgba(255, 165, 2, 0.15)', 'rgba(255, 165, 2, 0.06)'],
-                '未看': ['rgba(158, 158, 158, 0.12)', 'rgba(158, 158, 158, 0.05)']
+                '已看': ['rgba(225, 230, 209, 0.9)', 'rgba(225, 230, 209, 0.55)'],
+                '想看': ['rgba(254, 239, 191, 0.92)', 'rgba(254, 239, 191, 0.56)'],
+                '未看': ['rgba(242, 240, 234, 0.9)', 'rgba(242, 240, 234, 0.55)']
             };
             gradient.addColorStop(0, bgColors[item.label][0]);
             gradient.addColorStop(1, bgColors[item.label][1]);
@@ -661,9 +689,9 @@ Page({
         ctx.save();
         this.canvasHelper.drawRoundRectPath(x, y, w, h, radius);
         const styles = {
-            watched: { bg: ['rgba(76, 175, 80, 0.18)', 'rgba(76, 175, 80, 0.06)'], stroke: 'rgba(76, 175, 80, 0.3)' },
-            wish: { bg: ['rgba(255, 165, 2, 0.18)', 'rgba(255, 165, 2, 0.06)'], stroke: 'rgba(255, 165, 2, 0.35)' },
-            unwatched: { bg: ['rgba(158, 158, 158, 0.12)', 'rgba(158, 158, 158, 0.04)'], stroke: 'rgba(158, 158, 158, 0.18)' }
+            watched: { bg: ['rgba(225, 230, 209, 0.92)', 'rgba(225, 230, 209, 0.56)'], stroke: 'rgba(154, 171, 101, 0.32)' },
+            wish: { bg: ['rgba(254, 239, 191, 0.92)', 'rgba(254, 239, 191, 0.56)'], stroke: 'rgba(212, 168, 40, 0.32)' },
+            unwatched: { bg: ['rgba(242, 240, 234, 0.92)', 'rgba(242, 240, 234, 0.56)'], stroke: 'rgba(156, 153, 143, 0.18)' }
         };
         const style = styles[status] || styles.unwatched;
         const grad = ctx.createLinearGradient(x, y, x, y + h);
@@ -682,14 +710,14 @@ Page({
         ctx.font = '400 14px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        const rankColors = { watched: 'rgba(76, 175, 80, 0.55)', wish: 'rgba(255, 165, 2, 0.55)', unwatched: 'rgba(120, 120, 120, 0.7)' };
+        const rankColors = { watched: 'rgba(154, 171, 101, 0.72)', wish: 'rgba(212, 168, 40, 0.72)', unwatched: 'rgba(156, 153, 143, 0.88)' };
         ctx.fillStyle = rankColors[status] || rankColors.unwatched;
         ctx.fillText(rankText, x + w / 2, y + h * 0.3);
         ctx.restore();
 
         // 电影名（下半部分）
         ctx.save();
-        const titleColors = { watched: '#4CAF50', wish: '#FFA502', unwatched: '#888888' };
+        const titleColors = { watched: '#7B9A3C', wish: '#C4862D', unwatched: '#7F7A70' };
         ctx.fillStyle = titleColors[status] || titleColors.unwatched;
         ctx.font = status === 'wish' ? '600 16px sans-serif' : '500 16px sans-serif';
         ctx.textAlign = 'center';
@@ -706,7 +734,7 @@ Page({
 
         if (status === 'watched') {
             const textWidth = ctx.measureText(title).width;
-            ctx.strokeStyle = 'rgba(76, 175, 80, 0.5)';
+            ctx.strokeStyle = 'rgba(123, 154, 60, 0.45)';
             ctx.lineWidth = 1.5;
             ctx.beginPath();
             ctx.moveTo(x + (w - textWidth) / 2, y + h * 0.65);
@@ -728,8 +756,8 @@ Page({
         ctx.font = '400 22px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillStyle = 'rgba(80, 80, 80, 0.7)';
-        ctx.fillText('搜索小程序：标记吧  免费制作同款图片', width / 2, footerY);
+        ctx.fillStyle = 'rgba(156, 153, 143, 0.92)';
+        ctx.fillText('搜索小程序：标记吧，免费制作同款图片', width / 2, footerY);
         ctx.restore();
 
         return footerY + 30;

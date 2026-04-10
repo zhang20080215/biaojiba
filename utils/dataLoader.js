@@ -126,8 +126,10 @@ function processMarks(marks, movies) {
     let mark = _markObjectMap[movie._id] || normalizedMap[cleanMovieId] || markTitleMap[movie.title];
 
     if (mark) {
-      markStatusMap[movie._id] = mark.status;
-      if (mark.marked_at) {
+      if (mark.status === 'watched' || mark.status === 'wish') {
+        markStatusMap[movie._id] = mark.status;
+      }
+      if (mark.marked_at && (mark.status === 'watched' || mark.status === 'wish')) {
         let dateValue = mark.marked_at;
         if (typeof dateValue === 'object') {
           dateValue = dateValue.toISOString ? dateValue.toISOString() : new Date(dateValue).toISOString();
@@ -148,6 +150,8 @@ function processMarks(marks, movies) {
       } else if (mark.status === 'wish') {
         stats.wish++;
         wishIds.push(movie._id);
+      } else {
+        stats.unwatched++;
       }
     } else {
       stats.unwatched++;

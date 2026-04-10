@@ -1,82 +1,391 @@
-/* pages/share/share.wxss */
-
-/* ==================== 容器样式 ==================== */
-.container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.share-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
-  padding: 20rpx;
-  padding-bottom: 140rpx;
+  position: relative;
+  background: #FFFCF5;
   box-sizing: border-box;
-  overflow: auto;
+  padding-bottom: calc(208rpx + env(safe-area-inset-bottom));
 }
 
-/* ==================== Canvas 画布样式 ==================== */
-.share-canvas {
-  background: #fff;
-  border-radius: 20rpx;
-  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.12);
-  transform: scale(0.3);
-  transform-origin: top center;
-  margin-bottom: 40rpx;
-  border: 2rpx solid rgba(0, 0, 0, 0.05);
+.immersive-top {
+  padding-left: var(--space-3);
+  padding-right: var(--space-3);
+  padding-bottom: var(--space-2);
 }
 
-/* ==================== 操作按钮区域 ==================== */
-.actions {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 18rpx 38rpx;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.08);
-  z-index: 100;
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-.save-btn {
-  width: 100%;
-  height: 88rpx;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
-  border-radius: 44rpx;
-  font-size: 32rpx;
-  font-weight: 600;
-  border: none;
-  box-shadow: 0 8rpx 24rpx rgba(102, 126, 234, 0.4);
-  transition: all 0.3s ease;
+.back-btn {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.75);
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 38rpx;
+  font-weight: 700;
 }
 
-.save-btn:active {
-  transform: translateY(2rpx);
-  box-shadow: 0 4rpx 16rpx rgba(102, 126, 234, 0.3);
+.top-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-shadow: 0 1rpx 2rpx rgba(255, 255, 255, 0.4);
+}
+
+.top-right {
+  width: 56rpx;
+  height: 56rpx;
+}
+
+.theme-scroll {
+  flex: 0 1 auto;
+  white-space: nowrap;
+  padding-bottom: 4rpx;
+}
+
+.bg-panel {
+  margin-top: var(--space-2);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 18rpx 20rpx;
+  border-radius: var(--radius-xl);
+  background: #F8F3E7;
+  backdrop-filter: blur(10px);
+  border: 1rpx solid rgba(237, 231, 218, 0.92);
+  box-shadow: 0 4rpx 14rpx rgba(45, 45, 43, 0.05);
+}
+
+.bg-panel-label {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-right: var(--space-2);
+  flex: 0 0 auto;
+}
+
+.theme-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 54rpx;
+  padding: 0 18rpx;
+  margin-right: 12rpx;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.82);
+  border: 2rpx solid transparent;
+  transition: transform 120ms ease-out, box-shadow 120ms ease-out, border-color 120ms ease-out;
+}
+
+.theme-chip.active {
+  background: #ffffff;
+  box-shadow: 0 6rpx 18rpx rgba(45, 45, 43, 0.08);
+  border-color: rgba(182, 202, 235, 0.95);
+  transform: translateY(-1rpx);
+}
+
+.theme-dot {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+  margin-right: 10rpx;
+  border: 1rpx solid rgba(0, 0, 0, 0.08);
+}
+
+.theme-label {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.theme-check {
+  margin-left: 10rpx;
+  font-size: 20rpx;
+  font-weight: 700;
+  color: #6A89B6;
+  line-height: 1;
+}
+
+.content-wrap {
+  padding: 0 var(--space-3);
+}
+
+.share-card {
+  background: linear-gradient(135deg, #FDECEC 0%, #D2F1FE 100%);
+  border-radius: var(--radius-xl);
+  padding: 18rpx 24rpx 18rpx;
+  box-shadow: var(--shadow-card);
+  border: 1rpx solid rgba(255, 255, 255, 0.72);
+}
+
+.share-card.poster-wall {
+  display: flex;
+  flex-direction: column;
+}
+
+.share-card.text-list-card {
+  aspect-ratio: 1242 / 1660;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12rpx;
+}
+
+.card-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: center;
+  line-height: 1.25;
+}
+
+.stats-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-bottom: 12rpx;
+  justify-content: center;
+}
+
+.stat-item {
+  border-radius: var(--radius-pill);
+  padding: 8rpx 16rpx;
+  display: inline-flex;
+  align-items: center;
+  border: 1rpx solid transparent;
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.stat-item.watched {
+  border-color: rgba(154, 171, 101, 0.2);
+}
+
+.stat-item.watched .stat-inline {
+  color: #9AAB65;
+}
+
+.stat-item.wish {
+  border-color: rgba(212, 168, 40, 0.2);
+}
+
+.stat-item.wish .stat-inline {
+  color: #D4A828;
+}
+
+.stat-item.unwatched {
+  border-color: rgba(156, 153, 143, 0.2);
+}
+
+.stat-item.unwatched .stat-inline {
+  color: #9C998F;
+}
+
+.stat-inline {
+  font-size: 22rpx;
+  font-weight: 500;
+}
+
+.poster-grid {
+  display: grid;
+  flex: 1;
+  align-content: start;
+}
+
+.poster-item {
+  aspect-ratio: 2 / 3;
+  border-radius: 6rpx;
+  overflow: hidden;
+  background: rgba(248, 243, 231, 0.9);
+}
+
+.poster-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.style-toggle {
+  display: flex;
+  gap: 12rpx;
+}
+
+.style-chip {
+  display: flex;
+  align-items: center;
+  height: 54rpx;
+  padding: 0 20rpx;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.82);
+  border: 2rpx solid transparent;
+  transition: transform 120ms ease-out, box-shadow 120ms ease-out, border-color 120ms ease-out;
+}
+
+.style-chip.active {
+  background: #ffffff;
+  box-shadow: 0 6rpx 18rpx rgba(45, 45, 43, 0.08);
+  border-color: rgba(182, 202, 235, 0.95);
+  transform: translateY(-1rpx);
+}
+
+.style-chip-label {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.movie-grid {
+  padding: 0;
+  flex: 1;
+}
+
+.movie-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+}
+
+.movie-list-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  grid-auto-flow: column;
+  gap: 0;
+  flex: 1;
+  align-content: start;
+}
+
+.movie-list-item {
+  display: flex;
+  align-items: center;
+  padding: 3rpx 0;
+  overflow: hidden;
+}
+
+.movie-list-dot {
+  width: 12rpx;
+  height: 12rpx;
+  min-width: 12rpx;
+  border-radius: 50%;
+  margin-right: 6rpx;
+}
+
+.movie-list-item.watched .movie-list-dot {
+  background: #9AAB65;
+}
+
+.movie-list-item.wish .movie-list-dot {
+  background: #D4A828;
+}
+
+.movie-list-item.unwatched .movie-list-dot {
+  background: #9C998F;
+}
+
+.movie-list-title {
+  font-size: 16rpx;
+  font-weight: 500;
+  color: rgba(45, 45, 43, 0.82);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+}
+
+.movie-list-item.watched .movie-list-title {
+  text-decoration: line-through;
+  text-decoration-color: rgba(45, 45, 43, 0.55);
+}
+
+.movie-tag {
+  max-width: 100%;
+  padding: 8rpx 14rpx;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-mini);
+  border: 1rpx solid transparent;
+  line-height: 1.35;
+}
+
+.movie-tag.watched {
+  background: var(--success-soft);
+  color: var(--success);
+  border-color: rgba(154, 171, 101, 0.25);
+  text-decoration: line-through;
+  text-decoration-color: rgba(154, 171, 101, 0.7);
+}
+
+.movie-tag.wish {
+  background: var(--warning-soft);
+  color: #D4A828;
+  border-color: rgba(212, 168, 40, 0.25);
+}
+
+.movie-tag.unwatched {
+  background: var(--bg-section);
+  color: var(--text-muted);
+  border-color: var(--line-subtle);
+}
+
+.empty-tip {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--font-caption);
+  padding: var(--space-4) 0;
+}
+
+.watermark-text {
+  margin-top: 18rpx;
+  text-align: center;
+  font-size: var(--font-mini);
+  font-weight: 600;
+  color: rgba(45, 45, 43, 0.72);
+}
+
+.save-btn-container {
+  position: fixed;
+  left: var(--space-3);
+  right: var(--space-3);
+  bottom: calc(18rpx + env(safe-area-inset-bottom));
+  z-index: 20;
+}
+
+.save-btn {
+  height: 88rpx;
+  border-radius: var(--radius-pill);
+  background: var(--brand-primary);
+  color: var(--text-primary);
+  font-size: var(--font-body);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-cta);
+}
+
+.save-btn::after {
+  border: none;
 }
 
 .save-btn[disabled] {
-  background: linear-gradient(135deg, #ccc 0%, #999 100%);
-  box-shadow: none;
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
-/* ==================== 广告 ==================== */
 .ad-banner-container {
-  margin: 20rpx 24rpx 0;
+  margin: var(--space-3) var(--space-3) 0;
 }
 
-/* ==================== 加载状态 ==================== */
 .loading-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.34);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -84,255 +393,22 @@
   z-index: 999;
 }
 
-.loading-text {
-  color: #fff;
-  font-size: 28rpx;
-  margin-top: 20rpx;
-}
-
-/* ==================== 分享卡片样式（如果需要预览） ==================== */
-.share-card {
-  background: linear-gradient(135deg, #fdecec 0%, #d2f1fe 100%);
-  border-radius: 24rpx;
-  padding: 40rpx 30rpx 18rpx 30rpx;
-  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.08);
-  margin-bottom: 20rpx;
-  position: relative;
-  overflow: hidden;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-/* ==================== 个人信息栏 ==================== */
-.profile-bar {
-  display: flex;
-  align-items: center;
-  margin-bottom: 24rpx;
-}
-
-.avatar {
-  width: 90rpx;
-  height: 90rpx;
+.loading-spinner {
+  width: 60rpx;
+  height: 60rpx;
   border-radius: 50%;
-  background: #eee;
-  margin-right: 20rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+  border: 6rpx solid rgba(255, 255, 255, 0.35);
+  border-top-color: #FFFFFF;
+  animation: spin 0.8s linear infinite;
 }
 
-.nickname {
-  font-size: 36rpx;
-  color: #2c3e50;
-  font-weight: bold;
+.loading-text {
+  margin-top: var(--space-2);
+  color: #FFFFFF;
+  font-size: var(--font-caption);
 }
 
-/* ==================== 卡片标题 ==================== */
-.card-title {
-  font-size: 44rpx;
-  font-weight: 600;
-  color: #2c3e50;
-  text-align: center;
-  margin-bottom: 36rpx;
-  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.05);
-  letter-spacing: 1rpx;
-}
-
-/* ==================== 统计数据 ==================== */
-.stats-container {
-  display: flex;
-  gap: 16rpx;
-  margin-bottom: 40rpx;
-  justify-content: center;
-}
-
-.stat-item {
-  padding: 12rpx 20rpx;
-  border-radius: 12rpx;
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
-  border: 1rpx solid rgba(255, 255, 255, 0.8);
-}
-
-.stat-item.watched {
-  background: linear-gradient(135deg, rgba(76, 175, 80, 0.12) 0%, rgba(76, 175, 80, 0.08) 100%);
-  border-color: rgba(76, 175, 80, 0.2);
-}
-
-.stat-item.wish {
-  background: linear-gradient(135deg, rgba(255, 193, 7, 0.12) 0%, rgba(255, 193, 7, 0.08) 100%);
-  border-color: rgba(255, 193, 7, 0.2);
-}
-
-.stat-item.unwatched {
-  background: linear-gradient(135deg, rgba(158, 158, 158, 0.12) 0%, rgba(158, 158, 158, 0.08) 100%);
-  border-color: rgba(158, 158, 158, 0.2);
-}
-
-.stat-label {
-  font-size: 22rpx;
-  font-weight: 500;
-}
-
-.stat-value {
-  font-size: 26rpx;
-  font-weight: 600;
-}
-
-.stat-item.watched .stat-label,
-.stat-item.watched .stat-value {
-  color: #4CAF50;
-}
-
-.stat-item.wish .stat-label,
-.stat-item.wish .stat-value {
-  color: #FF8F00;
-}
-
-.stat-item.unwatched .stat-label,
-.stat-item.unwatched .stat-value {
-  color: #9E9E9E;
-}
-
-/* ==================== 电影标签网格 ==================== */
-.movie-grid {
-  flex-wrap: wrap;
-  margin-bottom: 40rpx;
-  position: relative;
-  padding: 20rpx;
-  border-radius: 16rpx;
-}
-
-/* ==================== 电影标签 ==================== */
-.movie-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12rpx;
-  margin-bottom: 20rpx;
-}
-
-.movie-tag {
-  padding: 8rpx 16rpx;
-  border-radius: 16rpx;
-  font-size: 22rpx;
-  font-weight: 500;
-  text-align: center;
-  box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.08);
-  border: 1rpx solid rgba(255, 255, 255, 0.6);
-  transition: all 0.2s ease;
-}
-
-.movie-tag.watched {
-  background: linear-gradient(135deg, rgba(76, 175, 80, 0.15) 0%, rgba(76, 175, 80, 0.08) 100%);
-  color: #4CAF50;
-  border-color: rgba(76, 175, 80, 0.3);
-  text-decoration: line-through;
-  text-decoration-thickness: 2rpx;
-}
-
-.movie-tag.wish {
-  background: linear-gradient(135deg, rgba(255, 193, 7, 0.2) 0%, rgba(255, 193, 7, 0.12) 100%);
-  color: #FF8F00;
-  border-color: rgba(255, 193, 7, 0.4);
-  font-weight: 600;
-}
-
-.movie-tag.unwatched {
-  background: linear-gradient(135deg, rgba(158, 158, 158, 0.12) 0%, rgba(158, 158, 158, 0.06) 100%);
-  color: #9E9E9E;
-  border-color: rgba(158, 158, 158, 0.3);
-}
-
-/* ==================== 海报墙样式 ==================== */
-.poster-wall {
-  padding: 40rpx 20rpx 18rpx 20rpx;
-}
-
-.poster-grid {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 10rpx;
-  margin-bottom: 40rpx;
-}
-
-.poster-item {
-  position: relative;
-  border-radius: 12rpx;
-  overflow: hidden;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
-  aspect-ratio: 2/3;
-}
-
-.poster-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.poster-title {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 8rpx;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
-  color: white;
-  font-size: 20rpx;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* ==================== 提示信息 ==================== */
-.empty-tip {
-  text-align: center;
-  color: #999;
-  font-size: 24rpx;
-  padding: 40rpx 20rpx;
-}
-
-.more-tip {
-  text-align: center;
-  color: #666;
-  font-size: 20rpx;
-  padding: 20rpx;
-  background: rgba(0, 0, 0, 0.03);
-  border-radius: 12rpx;
-  margin-top: 10rpx;
-}
-
-/* ==================== 卡片底部 ==================== */
-.card-footer {
-  text-align: center;
-  font-size: 22rpx;
-  color: #999;
-  padding: 16rpx 10rpx;
-  margin-top: 20rpx;
-  opacity: 0.8;
-}
-
-/* ==================== 响应式适配 ==================== */
-@media screen and (max-width: 375px) {
-  .card-title {
-    font-size: 40rpx;
-  }
-  
-  .stat-item {
-    padding: 10rpx 16rpx;
-  }
-  
-  .movie-tag {
-    font-size: 20rpx;
-    padding: 6rpx 12rpx;
-  }
-}
-
-/* ==================== 预览水印 ==================== */
-.watermark-text {
-  text-align: center;
-  font-size: 22rpx;
-  color: rgba(100, 100, 100, 0.6);
-  padding: 6rpx 10rpx 10rpx;
-  letter-spacing: 1rpx;
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }

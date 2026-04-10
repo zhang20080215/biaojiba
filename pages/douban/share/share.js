@@ -1,11 +1,19 @@
-// pages/douban/share/share.js - 豆瓣海报生成页
+// pages/douban/share/share.js
 const CanvasHelper = require('../../../utils/canvasHelper.js');
 const DataLoader = require('../../../utils/dataLoader.js');
 const DoubanLoader = require('../../../utils/doubanLoader.js');
-const DoubanPosterDrawer = require('../../../utils/doubanPosterDrawer.js');
 var adConfig = require('../../../utils/adConfig');
 
-const TITLE = '豆瓣电影 TOP 250 观影海报墙';
+const TITLE = '豆瓣电影TOP250观影海报';
+const FOOTER_TEXT = '搜索小程序：标记吧，免费制作同款图片';
+const FIXED_CANVAS_WIDTH = 1242;
+const FIXED_CANVAS_HEIGHT = 1660;
+const MAX_POSTER_CANVAS_HEIGHT = 4200;
+const CARD_INNER_PADDING = 56;
+const CARD_TITLE_Y = 86;
+const CARD_STATS_Y = 138;
+const CARD_CONTENT_TOP = 210;
+const CARD_BOTTOM_RESERVE = 80;
 
 Page({
     data: {
@@ -15,23 +23,60 @@ Page({
         markStatusMap: {},
         stats: { watched: 0, wish: 0, unwatched: 0 },
         shareType: 'text',
-        canvasSize: { width: 1242, height: 1660 },
-        loadProgress: 0,
+        textStyle: 'capsule',
+        listGridRows: 50,
+        canvasSize: { width: FIXED_CANVAS_WIDTH, height: FIXED_CANVAS_HEIGHT },
         isGenerating: false,
         showBannerAd: false,
-        adUnitIds: {
-            share_banner: adConfig.getAdUnitId('share_banner') || '',
+        statusBarHeight: 20,
+        headerPadTop: 0,
+        menuBtnHeight: 32,
+        themeClass: '',
+        activeBgTheme: 'pinkBlue',
+        bgThemes: [
+            { key: 'pinkBlue', name: '粉蓝', start: '#FDECEC', end: '#D2F1FE' },
+            { key: 'goldSand', name: '暖金', start: '#FEEFBF', end: '#F8F3E7' },
+            { key: 'greenMist', name: '青雾', start: '#E1E6D1', end: '#EAF0F9' }
+        ],
+        currentGradient: { start: '#FDECEC', end: '#D2F1FE' },
+        posterGridStyle: 'grid-template-columns: repeat(12, 1fr); gap: 6rpx;',
+        posterCardStyle: `aspect-ratio: ${FIXED_CANVAS_WIDTH} / ${FIXED_CANVAS_HEIGHT};`,
+        uiText: {
+            back: '‹',
+            pageTitle: '海报预览',
+            background: '背景',
+            themeCheck: '✓',
+            cardTitle: '豆瓣电影TOP250观影海报',
+            watched: '已看',
+            wish: '想看',
+            unwatched: '未看',
+            emptyPoster: '暂无已看电影',
+            emptyMovie: '暂无电影数据',
+            watermark: '搜索小程序：标记吧，免费制作同款图片',
+            saving: '生成中...',
+            saveButton: '保存图片到相册',
+            loadingShare: '正在生成分享图...'
         },
+        adUnitIds: {
+            share_banner: adConfig.getAdUnitId('share_banner') || ''
+        }
     },
 
     canvasHelper: null,
-    posterDrawer: null,
 
     async onLoad(options) {
         try {
-            wx.setNavigationBarTitle({ title: '豆瓣电影 TOP 250 海报' });
-            const shareType = options.type || 'text';
-            this.setData({ shareType });
+            wx.setNavigationBarTitle({ title: '海报预览' });
+            const windowInfo = wx.getWindowInfo();
+            const menuBtn = wx.getMenuButtonBoundingClientRect();
+            const themeClass = wx.getStorageSync('appTheme') || '';
+            this.setData({
+                shareType: options.type || 'text',
+                statusBarHeight: windowInfo.statusBarHeight || 20,
+                headerPadTop: menuBtn.top,
+                menuBtnHeight: menuBtn.height,
+                themeClass
+            });
             await this.loadUserInfo();
             await this.loadData();
             this.initAds();
@@ -39,6 +84,29 @@ Page({
             console.error('页面加载失败:', err);
             wx.showModal({ title: '加载失败', content: err.message || '请重试', showCancel: false });
         }
+    },
+
+    onBack() {
+        wx.navigateBack({
+            fail: () => {
+                wx.reLaunch({ url: '/pages/douban/list/list' });
+            }
+        });
+    },
+
+    onBgThemeTap(e) {
+        const key = e.currentTarget.dataset.key;
+        const theme = this.data.bgThemes.find(item => item.key === key);
+        if (!theme) return;
+        this.setData({
+            activeBgTheme: theme.key,
+            currentGradient: { start: theme.start, end: theme.end }
+        });
+    },
+
+    onTextStyleTap(e) {
+        const style = e.currentTarget.dataset.style;
+        if (style) this.setData({ textStyle: style });
     },
 
     async onReady() {
@@ -70,41 +138,46 @@ Page({
             const query = wx.createSelectorQuery().in(this);
             query.select('#shareCanvas').fields({ node: true, size: true }).exec(res => {
                 if (!res || !res[0] || !res[0].node) {
-                    setTimeout(() => {
-                        const retryQuery = wx.createSelectorQuery().in(this);
-                        retryQuery.select('#shareCanvas').fields({ node: true, size: true }).exec(retryRes => {
-                            if (!retryRes || !retryRes[0] || !retryRes[0].node) {
-                                reject(new Error('Canvas节点获取失败')); return;
-                            }
-                            this._setupCanvas(retryRes[0].node, resolve, reject);
-                        });
-                    }, 300);
+                    reject(new Error('Canvas节点获取失败'));
                     return;
                 }
-                this._setupCanvas(res[0].node, resolve, reject);
+                this.setupCanvas(res[0].node);
+                resolve();
             });
         });
     },
 
-    _setupCanvas(canvasNode, resolve, reject) {
-        try {
-            const canvas = canvasNode;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) { reject(new Error('无法获取Canvas 2D上下文')); return; }
-
-            const sysInfo = wx.getWindowInfo();
-            const dpr = this.data.canvasSize.width > 750 ? 1 : sysInfo.pixelRatio || 1;
-            const { width, height } = this.data.canvasSize;
-            canvas.width = width * dpr;
-            canvas.height = height * dpr;
+    setupCanvas(canvasNode) {
+        const canvas = canvasNode;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('无法获取Canvas 2D上下文');
+        const { width, height } = this.data.canvasSize;
+        const windowInfo = wx.getWindowInfo();
+        const dpr = width > 750 ? 1 : (windowInfo.pixelRatio || 1);
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        if (ctx.setTransform) {
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        } else {
             ctx.scale(dpr, dpr);
-
-            this.canvasHelper = new CanvasHelper(canvas, ctx, this.data.canvasSize);
-            this.posterDrawer = new DoubanPosterDrawer(this.canvasHelper);
-            resolve();
-        } catch (err) {
-            reject(new Error('Canvas设置失败: ' + err.message));
         }
+        this.canvasHelper = new CanvasHelper(canvas, ctx, { width, height });
+    },
+
+    resizeCanvas(width, height) {
+        const canvas = this.canvasHelper.canvas;
+        const ctx = this.canvasHelper.ctx;
+        const windowInfo = wx.getWindowInfo();
+        const dpr = width > 750 ? 1 : (windowInfo.pixelRatio || 1);
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        if (ctx.setTransform) {
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        } else {
+            ctx.scale(dpr, dpr);
+        }
+        this.canvasHelper.canvasSize = { width, height };
+        this.setData({ canvasSize: { width, height } });
     },
 
     async loadData() {
@@ -112,14 +185,15 @@ Page({
             wx.showLoading({ title: '加载数据中...' });
             const db = wx.cloud.database();
             const openid = this.data.userInfo && this.data.userInfo._openid ? this.data.userInfo._openid : '';
-
             const [allMovies, allMarks] = await Promise.all([
                 DoubanLoader.loadMovies(db),
                 openid ? DataLoader.loadMarks(db, openid) : Promise.resolve([])
             ]);
-
             const { markStatusMap, stats, watchedMovies } = DataLoader.processMarks(allMarks, allMovies);
-            this.setData({ allMovies, markStatusMap, stats, watchedMovies });
+            const listGridRows = Math.max(1, Math.ceil(allMovies.length / 5));
+            this.setData({ allMovies, markStatusMap, stats, watchedMovies, listGridRows }, () => {
+                this.updatePosterPreviewLayout();
+            });
             wx.hideLoading();
         } catch (err) {
             console.error('加载数据失败:', err);
@@ -129,9 +203,75 @@ Page({
         }
     },
 
+    getPosterLayoutConfig(totalInput) {
+        const total = Math.max(0, totalInput == null ? this.data.watchedMovies.length : totalInput);
+        const effectiveTotal = Math.max(1, total);
+        const contentWidth = FIXED_CANVAS_WIDTH - CARD_INNER_PADDING * 2;
+        const maxCols = Math.min(14, effectiveTotal);
+        const buildLayout = (cols) => {
+            const rows = Math.ceil(effectiveTotal / cols);
+            const gapX = cols >= 14 ? 4 : cols >= 12 ? 5 : cols >= 9 ? 6 : 8;
+            const gapY = rows >= 18 ? 4 : rows >= 12 ? 6 : 8;
+            const posterWidth = Math.floor((contentWidth - gapX * (cols - 1)) / cols);
+            const posterHeight = Math.floor(posterWidth * 1.5);
+            const gridHeight = rows * posterHeight + Math.max(0, rows - 1) * gapY;
+            const canvasHeight = Math.max(FIXED_CANVAS_HEIGHT, CARD_CONTENT_TOP + gridHeight + CARD_BOTTOM_RESERVE);
+            return { cols, rows, gapX, gapY, posterWidth, posterHeight, gridHeight, canvasHeight };
+        };
+        const layouts = [];
+
+        for (let cols = 1; cols <= maxCols; cols++) {
+            layouts.push(buildLayout(cols));
+        }
+
+        const withinBaseHeight = layouts.filter(layout => layout.canvasHeight <= FIXED_CANVAS_HEIGHT);
+        let chosen;
+
+        if (withinBaseHeight.length) {
+            chosen = withinBaseHeight.sort((a, b) => {
+                if (b.canvasHeight !== a.canvasHeight) return b.canvasHeight - a.canvasHeight;
+                if (b.posterWidth !== a.posterWidth) return b.posterWidth - a.posterWidth;
+                return a.cols - b.cols;
+            })[0];
+        } else {
+            chosen = layouts.sort((a, b) => {
+                if (a.canvasHeight !== b.canvasHeight) return a.canvasHeight - b.canvasHeight;
+                if (b.posterWidth !== a.posterWidth) return b.posterWidth - a.posterWidth;
+                return a.cols - b.cols;
+            })[0];
+        }
+
+        if (chosen.canvasHeight > FIXED_CANVAS_HEIGHT && chosen.cols < maxCols) {
+            const denserLayout = buildLayout(maxCols);
+            if (denserLayout.canvasHeight < chosen.canvasHeight) {
+                chosen = denserLayout;
+            }
+        }
+
+        if (chosen.canvasHeight > MAX_POSTER_CANVAS_HEIGHT) {
+            chosen = { ...chosen, canvasHeight: MAX_POSTER_CANVAS_HEIGHT };
+        }
+
+        return chosen;
+    },
+
+    updatePosterPreviewLayout() {
+        const layout = this.getPosterLayoutConfig();
+        this.setData({
+            posterGridStyle: `grid-template-columns: repeat(${layout.cols}, 1fr); gap: ${Math.max(4, layout.gapX)}rpx;`,
+            posterCardStyle: `aspect-ratio: ${FIXED_CANVAS_WIDTH} / ${layout.canvasHeight};`
+        });
+    },
+
     async saveImage() {
-        if (this.data.isGenerating) { wx.showToast({ title: '正在生成中...', icon: 'none' }); return; }
-        if (!this.canvasHelper) { wx.showToast({ title: 'Canvas未初始化', icon: 'none' }); return; }
+        if (this.data.isGenerating) {
+            wx.showToast({ title: '正在生成中...', icon: 'none' });
+            return;
+        }
+        if (!this.canvasHelper) {
+            wx.showToast({ title: 'Canvas未初始化', icon: 'none' });
+            return;
+        }
 
         try {
             this.setData({ isGenerating: true });
@@ -141,14 +281,73 @@ Page({
             wx.showToast({ title: '保存成功', icon: 'success' });
         } catch (err) {
             console.error('保存图片失败:', err);
-            wx.showModal({ title: '保存失败', content: err.message || '图片生成失败,请重试', showCancel: false });
+            wx.showModal({ title: '保存失败', content: err.message || '图片生成失败，请重试', showCancel: false });
         } finally {
             this.setData({ isGenerating: false });
             wx.hideLoading();
         }
     },
 
+    estimateCapsuleHeight() {
+        const fontSize = 20;
+        const pillH = 38;
+        const pillPadX = 16;
+        const gapX = 10;
+        const gapY = 6;
+        const maxWidth = FIXED_CANVAS_WIDTH - CARD_INNER_PADDING * 2;
+        const movies = this.data.allMovies;
+        if (!movies.length) return FIXED_CANVAS_HEIGHT;
+
+        // 用 canvas ctx 真实测量文字宽度
+        const ctx = this.canvasHelper && this.canvasHelper.ctx;
+        let measure;
+        if (ctx) {
+            ctx.save();
+            ctx.font = `600 ${fontSize}px sans-serif`;
+            measure = (text) => ctx.measureText(text).width;
+        } else {
+            // 中文为主，按全角字符近似
+            measure = (text) => text.length * fontSize * 1.0;
+        }
+
+        let curX = 0;
+        let curY = 0;
+        let bottom = pillH;
+
+        movies.forEach(movie => {
+            const textW = measure(movie.title);
+            const pillW = textW + pillPadX * 2;
+            if (curX + pillW > maxWidth && curX > 0) {
+                curX = 0;
+                curY += pillH + gapY;
+            }
+            curX += pillW + gapX;
+            bottom = curY + pillH;
+        });
+
+        if (ctx) ctx.restore();
+
+        return CARD_CONTENT_TOP + bottom + CARD_BOTTOM_RESERVE;
+    },
+
     async startDrawing() {
+        let nextCanvasSize;
+        if (this.data.shareType === 'poster') {
+            nextCanvasSize = { width: FIXED_CANVAS_WIDTH, height: this.getPosterLayoutConfig().canvasHeight };
+        } else if (this.data.textStyle === 'capsule') {
+            const estimatedH = this.estimateCapsuleHeight();
+            nextCanvasSize = { width: FIXED_CANVAS_WIDTH, height: Math.max(FIXED_CANVAS_HEIGHT, estimatedH) };
+        } else {
+            nextCanvasSize = { width: FIXED_CANVAS_WIDTH, height: FIXED_CANVAS_HEIGHT };
+        }
+
+        if (
+            this.data.canvasSize.width !== nextCanvasSize.width ||
+            this.data.canvasSize.height !== nextCanvasSize.height
+        ) {
+            this.resizeCanvas(nextCanvasSize.width, nextCanvasSize.height);
+        }
+
         this.canvasHelper.clear();
         if (this.data.shareType === 'poster') {
             await this.drawPosterWall();
@@ -157,274 +356,412 @@ Page({
         }
     },
 
-    async drawPosterWall() {
+    getPalette() {
+        const { currentGradient } = this.data;
+        return {
+            cardStart: currentGradient.start,
+            cardEnd: currentGradient.end,
+            textPrimary: '#2D2D2B',
+            textMuted: '#9C998F',
+            statBg: 'rgba(255, 255, 255, 0.42)',
+            watched: '#9AAB65',
+            wish: '#D4A828',
+            unwatched: '#9C998F',
+            watchedBg: 'rgba(225, 230, 209, 0.84)',
+            wishBg: 'rgba(254, 239, 191, 0.86)',
+            unwatchedBg: 'rgba(242, 240, 234, 0.84)',
+            panelBg: 'rgba(248, 243, 231, 0.84)',
+            panelStroke: 'rgba(255, 255, 255, 0.58)',
+            divider: 'rgba(255, 255, 255, 0.55)'
+        };
+    },
+
+    getScale() {
+        return this.data.canvasSize.width / FIXED_CANVAS_WIDTH;
+    },
+
+    getCardLayout() {
         const { width, height } = this.data.canvasSize;
-        const padding = 60;
-        const colsPerRow = 12;
-        const gap = 12;
-        const availableWidth = width - padding * 2;
-        const posterWidth = Math.floor((availableWidth - gap * (colsPerRow - 1)) / colsPerRow);
-        const posterHeight = Math.floor(posterWidth * 1.4);
+        const scale = this.getScale();
+        const innerPadding = Math.round(CARD_INNER_PADDING * scale);
+        return {
+            cardX: 0,
+            cardY: 0,
+            cardWidth: width,
+            cardHeight: height,
+            innerPadding,
+            contentX: innerPadding,
+            contentWidth: width - innerPadding * 2,
+            titleY: Math.round(CARD_TITLE_Y * scale),
+            statsY: Math.round(CARD_STATS_Y * scale),
+            contentY: Math.round(CARD_CONTENT_TOP * scale),
+            footerY: height - Math.round(44 * scale)
+        };
+    },
 
-        const startY = 120;
-        const posterAreaStartY = startY + 160;
-        const actualMoviesCount = this.data.watchedMovies.length;
-        const actualRows = Math.ceil(actualMoviesCount / colsPerRow);
-        const neededHeight = posterAreaStartY + actualRows * (posterHeight + gap) + padding + 40;
+    drawCard() {
+        const ctx = this.canvasHelper.ctx;
+        const palette = this.getPalette();
+        const layout = this.getCardLayout();
+        const gradient = ctx.createLinearGradient(0, 0, layout.cardWidth, layout.cardHeight);
+        gradient.addColorStop(0, palette.cardStart);
+        gradient.addColorStop(1, palette.cardEnd);
 
-        if (neededHeight > height) {
-            const newHeight = Math.min(neededHeight + 100, 5000);
-            const sysInfo = wx.getWindowInfo();
-            const dpr = this.data.canvasSize.width > 750 ? 1 : sysInfo.pixelRatio || 1;
-            const canvas = this.canvasHelper.canvas;
-            const ctx = this.canvasHelper.ctx;
-            canvas.height = newHeight * dpr;
-            ctx.scale(dpr, dpr);
-            this.canvasHelper.canvasSize = { width, height: newHeight };
-            this.setData({ canvasSize: { width, height: newHeight } });
+        ctx.save();
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, layout.cardWidth, layout.cardHeight);
+        ctx.restore();
+
+        return layout;
+    },
+
+    drawCardHeader(card) {
+        const ctx = this.canvasHelper.ctx;
+        const palette = this.getPalette();
+        const scale = this.getScale();
+        ctx.save();
+        ctx.fillStyle = palette.textPrimary;
+        ctx.font = `700 ${Math.round(40 * scale)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(TITLE, card.cardX + card.cardWidth / 2, card.titleY);
+        ctx.restore();
+        this.drawStats(card);
+    },
+
+    drawStats(card) {
+        const ctx = this.canvasHelper.ctx;
+        const palette = this.getPalette();
+        const scale = this.getScale();
+        const items = [
+            { text: `已看 ${this.data.stats.watched}`, color: palette.watched },
+            { text: `想看 ${this.data.stats.wish}`, color: palette.wish },
+            { text: `未看 ${this.data.stats.unwatched}`, color: palette.unwatched }
+        ];
+        const gap = Math.round(16 * scale);
+        const pillHeight = Math.round(46 * scale);
+
+        ctx.save();
+        ctx.font = `500 ${Math.round(24 * scale)}px sans-serif`;
+        const widths = items.map(item => Math.ceil(ctx.measureText(item.text).width + Math.round(36 * scale)));
+        const totalWidth = widths.reduce((sum, width) => sum + width, 0) + gap * (widths.length - 1);
+        let currentX = card.cardX + (card.cardWidth - totalWidth) / 2;
+
+        items.forEach((item, index) => {
+            const width = widths[index];
+            ctx.fillStyle = palette.statBg;
+            this.canvasHelper.drawRoundRectPath(currentX, card.statsY, width, pillHeight, Math.round(23 * scale));
+            ctx.fill();
+            ctx.strokeStyle = palette.divider;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.fillStyle = item.color;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(item.text, currentX + width / 2, card.statsY + pillHeight / 2 + 1);
+            currentX += width + gap;
+        });
+        ctx.restore();
+    },
+
+    getPosterMetrics(card) {
+        const layout = this.getPosterLayoutConfig();
+        const usedWidth = layout.cols * layout.posterWidth + Math.max(0, layout.cols - 1) * layout.gapX;
+        const startX = card.contentX + Math.floor((card.contentWidth - usedWidth) / 2);
+        return {
+            ...layout,
+            startX,
+            startY: card.contentY
+        };
+    },
+
+    async drawPosterWall() {
+        const card = this.drawCard();
+        this.drawCardHeader(card);
+        const posterMetrics = this.getPosterMetrics(card);
+        const movies = this.data.watchedMovies;
+        const total = movies.length;
+        const batchSize = posterMetrics.cols;
+
+        for (let i = 0; i < movies.length; i += batchSize) {
+            const batch = movies.slice(i, i + batchSize);
+            await Promise.all(batch.map((movie, index) => {
+                const globalIndex = i + index;
+                const row = Math.floor(globalIndex / posterMetrics.cols);
+                const col = globalIndex % posterMetrics.cols;
+                const x = posterMetrics.startX + col * (posterMetrics.posterWidth + posterMetrics.gapX);
+                const y = posterMetrics.startY + row * (posterMetrics.posterHeight + posterMetrics.gapY);
+                return this.drawPosterItem(movie, x, y, posterMetrics.posterWidth, posterMetrics.posterHeight);
+            }));
+
+            if (total > 0) {
+                const progress = Math.floor(((i + batch.length) / total) * 100);
+                wx.showLoading({ title: `生成中 ${progress}%`, mask: true });
+            }
         }
 
-        this.drawCardBackground();
+        if (!movies.length) {
+            const ctx = this.canvasHelper.ctx;
+            const palette = this.getPalette();
+            ctx.save();
+            ctx.fillStyle = palette.textMuted;
+            ctx.font = '26px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('暂无已看电影', card.cardX + card.cardWidth / 2, posterMetrics.startY + 80);
+            ctx.restore();
+        }
 
+        this.drawFooter(card);
+    },
+
+    async drawPosterItem(movie, x, y, width, height) {
         const ctx = this.canvasHelper.ctx;
-        ctx.fillStyle = '#2c3e50';
-        ctx.font = '600 36px sans-serif';
+        try {
+            let imageUrl = movie.cover || movie.coverUrl || movie.originalCover;
+            if (!imageUrl) throw new Error('missing cover');
+            if (imageUrl.startsWith('cloud://')) {
+                imageUrl = await this.canvasHelper.getCloudTempUrl(imageUrl);
+            }
+            const image = await this.canvasHelper.loadImage(imageUrl);
+            ctx.save();
+            this.canvasHelper.drawRoundRectPath(x, y, width, height, 8);
+            ctx.clip();
+            ctx.drawImage(image, x, y, width, height);
+            ctx.restore();
+        } catch (err) {
+            this.drawPosterPlaceholder(x, y, width, height);
+        }
+    },
+
+    drawPosterPlaceholder(x, y, width, height) {
+        const ctx = this.canvasHelper.ctx;
+        const palette = this.getPalette();
+        ctx.save();
+        ctx.fillStyle = palette.panelBg;
+        this.canvasHelper.drawRoundRectPath(x, y, width, height, 8);
+        ctx.fill();
+        ctx.fillStyle = palette.textMuted;
+        ctx.font = '18px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(TITLE, width / 2, startY);
-        this.drawStats(ctx, padding, startY + 60, width - padding * 2);
+        ctx.textBaseline = 'middle';
+        ctx.fillText('封面', x + width / 2, y + height / 2);
+        ctx.restore();
+    },
 
-        const updateProgress = (progress) => {
-            wx.showLoading({ title: `生成中${progress}%`, mask: true });
-        };
+    buildTagLayout(card) {
+        const ctx = this.canvasHelper.ctx;
+        const scale = this.getScale();
+        const panelX = card.contentX;
+        const panelY = card.contentY;
+        const panelWidth = card.contentWidth;
+        const panelHeight = card.footerY - panelY - Math.round(34 * scale);
+        const columns = 5;
+        const rows = Math.max(1, Math.ceil(this.data.allMovies.length / columns));
+        const paddingTop = Math.round(10 * scale);
+        const gapX = Math.round(18 * scale);
+        const cellWidth = (panelWidth - gapX * (columns - 1)) / columns;
+        const rowHeight = (panelHeight - paddingTop * 2) / rows;
+        const fontSize = Math.max(10, Math.min(Math.round(16 * scale), Math.floor(rowHeight - 6 * scale)));
+        const dotSize = Math.max(6, Math.round(fontSize * 0.42));
+        const textLeftGap = Math.max(8, Math.round(8 * scale));
+        ctx.save();
+        ctx.font = `500 ${fontSize}px sans-serif`;
 
-        await this.posterDrawer.drawPosterWall(this.data.watchedMovies, this.data.canvasSize, updateProgress);
+        const items = this.data.allMovies.map((movie, index) => {
+            const column = Math.floor(index / rows);
+            const row = index % rows;
+            return {
+                x: panelX + column * (cellWidth + gapX),
+                y: panelY + paddingTop + row * rowHeight,
+                width: cellWidth,
+                height: rowHeight,
+                fontSize,
+                dotSize,
+                textLeftGap,
+                title: movie.title,
+                status: this.data.markStatusMap[movie._id] || 'unwatched'
+            };
+        });
+        ctx.restore();
 
-        // 固定在 canvas 最底部绘制水印，不随内容高度浮动
-        this.drawFooter(null);
+        return { items, panelY, panelHeight };
     },
 
     async drawTextCard() {
-        this.drawCardBackground();
-        const changed = await this.drawMovieList(false);
-        if (changed) {
-            this.drawCardBackground();
-            await this.drawMovieList(true);
+        const card = this.drawCard();
+        this.drawCardHeader(card);
+        if (this.data.textStyle === 'capsule') {
+            this.drawCapsuleLayout(card);
+        } else {
+            const layout = this.buildTagLayout(card);
+            this.drawTextMatrix(layout);
         }
+        this.drawFooter(card);
     },
 
-    drawCardBackground() {
+    drawCapsuleLayout(card) {
         const ctx = this.canvasHelper.ctx;
-        const { width, height } = this.data.canvasSize;
-        const gradient = ctx.createLinearGradient(0, 0, width, height);
-        gradient.addColorStop(0, '#fdecec');
-        gradient.addColorStop(1, '#d2f1fe');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, width, height);
-    },
+        const palette = this.getPalette();
+        const scale = this.getScale();
+        const movies = this.data.allMovies;
+        if (!movies.length) {
+            ctx.save();
+            ctx.fillStyle = palette.textMuted;
+            ctx.font = '24px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('暂无电影数据', card.cardWidth / 2, card.contentY + 80);
+            ctx.restore();
+            return;
+        }
 
-    async drawMovieList(skipAdjust = false) {
-        const ctx = this.canvasHelper.ctx;
-        const { width } = this.data.canvasSize;
-        const padding = 60;
-        const startY = 120;
-        const maxWidth = width - padding * 2;
+        const fontSize = Math.round(20 * scale);
+        const pillH = Math.round(38 * scale);
+        const pillPadX = Math.round(16 * scale);
+        const gapX = Math.round(10 * scale);
+        const gapY = Math.round(6 * scale);
+        const startX = card.contentX;
+        const maxWidth = card.contentWidth;
+        let curX = startX;
+        let curY = card.contentY;
 
-        ctx.fillStyle = '#2c3e50';
-        ctx.font = '600 36px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(TITLE, width / 2, startY);
+        const bgMap = { watched: palette.watchedBg, wish: palette.wishBg, unwatched: palette.unwatchedBg };
+        const colorMap = {
+            watched: '#6F8244',
+            wish: '#A07F12',
+            unwatched: '#6F6F68'
+        };
+        const borderMap = {
+            watched: 'rgba(154, 171, 101, 0.35)',
+            wish: 'rgba(212, 168, 40, 0.35)',
+            unwatched: 'rgba(156, 153, 143, 0.28)'
+        };
 
-        this.drawStats(ctx, padding, startY + 60, maxWidth);
-        const lastMovieY = this.drawMovieTags(ctx, padding, startY + 160, maxWidth);
-        const actualHeight = this.drawFooter(lastMovieY);
+        ctx.save();
+        ctx.font = `600 ${fontSize}px sans-serif`;
 
-        if (!skipAdjust) return false; // 文字卡片固定 1242x1660，不调整高度
-        return false;
-    },
+        movies.forEach(movie => {
+            const status = this.data.markStatusMap[movie._id] || 'unwatched';
+            const textW = ctx.measureText(movie.title).width;
+            const pillW = textW + pillPadX * 2;
 
-    drawStats(ctx, startX, startY, maxWidth) {
-        const { stats } = this.data;
-        const statItems = [
-            { label: '已看', value: stats.watched, color: '#4CAF50' },
-            { label: '想看', value: stats.wish, color: '#FF8F00' },
-            { label: '未看', value: stats.unwatched, color: '#9E9E9E' }
-        ];
+            if (curX + pillW > startX + maxWidth && curX > startX) {
+                curX = startX;
+                curY += pillH + gapY;
+            }
 
-        const itemWidth = 160;
-        const itemHeight = 50;
-        const gap = 30;
-        const totalWidth = statItems.length * itemWidth + (statItems.length - 1) * gap;
-        const startXCentered = startX + (maxWidth - totalWidth) / 2;
-
-        statItems.forEach((item, index) => {
-            const itemX = startXCentered + index * (itemWidth + gap);
-            const itemY = startY;
-
-            const gradient = ctx.createLinearGradient(itemX, itemY, itemX + itemWidth, itemY + itemHeight);
-            const colors = {
-                '已看': ['rgba(76, 175, 80, 0.12)', 'rgba(76, 175, 80, 0.08)'],
-                '想看': ['rgba(255, 193, 7, 0.12)', 'rgba(255, 193, 7, 0.08)'],
-                '未看': ['rgba(158, 158, 158, 0.12)', 'rgba(158, 158, 158, 0.08)']
-            };
-            gradient.addColorStop(0, colors[item.label][0]);
-            gradient.addColorStop(1, colors[item.label][1]);
-            ctx.fillStyle = gradient;
-            this.canvasHelper.drawRoundRectPath(itemX, itemY, itemWidth, itemHeight, 12);
+            // pill background
+            ctx.fillStyle = bgMap[status];
+            this.canvasHelper.drawRoundRectPath(curX, curY, pillW, pillH, Math.round(pillH / 2));
             ctx.fill();
 
-            ctx.strokeStyle = item.color + '33';
+            // pill border
+            ctx.strokeStyle = borderMap[status];
             ctx.lineWidth = 1;
-            this.canvasHelper.drawRoundRectPath(itemX, itemY, itemWidth, itemHeight, 12);
             ctx.stroke();
 
-            ctx.fillStyle = item.color;
-            ctx.font = '500 18px sans-serif';
+            // text
+            ctx.fillStyle = colorMap[status];
             ctx.textAlign = 'left';
-            const labelText = item.label;
-            const valueText = item.value.toString();
-            const labelWidth = ctx.measureText(labelText).width;
-            const totalTextWidth = labelWidth + ctx.measureText(valueText).width + 10;
-            const textStartX = itemX + (itemWidth - totalTextWidth) / 2;
-            ctx.fillText(labelText, textStartX, itemY + 32);
-            ctx.font = '600 20px sans-serif';
-            ctx.fillText(valueText, textStartX + labelWidth + 10, itemY + 32);
+            ctx.textBaseline = 'middle';
+            const textY = curY + pillH / 2 + 1;
+            const textX = curX + pillPadX;
+            ctx.fillText(movie.title, textX, textY);
+
+            // strikethrough for watched
+            if (status === 'watched') {
+                ctx.strokeStyle = 'rgba(111, 130, 68, 0.75)';
+                ctx.lineWidth = Math.max(1, Math.round(1.5 * scale));
+                ctx.beginPath();
+                ctx.moveTo(textX, textY);
+                ctx.lineTo(textX + textW, textY);
+                ctx.stroke();
+            }
+
+            curX += pillW + gapX;
+        });
+        ctx.restore();
+    },
+
+    drawTextMatrix(layout) {
+        const ctx = this.canvasHelper.ctx;
+        const palette = this.getPalette();
+        if (!layout.items.length) {
+            ctx.save();
+            ctx.fillStyle = palette.textMuted;
+            ctx.font = '24px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('暂无电影数据', this.data.canvasSize.width / 2, layout.panelY + layout.panelHeight / 2);
+            ctx.restore();
+            return;
+        }
+
+        layout.items.forEach((item) => {
+            this.drawMovieText(item);
         });
     },
 
-    drawMovieTags(ctx, startX, startY, maxWidth) {
-        const movies = this.data.allMovies;
-        const moviesPerRow = 14;
-        const tagHeight = 30;
-        const tagSpacing = 8;
-        const rowSpacing = 14;
-        const minTagWidth = 70;
-        const contentPadding = 20;
-        const contentMaxWidth = maxWidth - contentPadding * 2;
-        const { height } = this.data.canvasSize;
-        const footerHeight = 80;
-        const availableHeight = height - startY - footerHeight - 60;
-        const maxRows = Math.floor(availableHeight / (tagHeight + rowSpacing));
-        const maxMovies = maxRows * moviesPerRow;
+    drawMovieText(item) {
+        const ctx = this.canvasHelper.ctx;
+        const palette = this.getPalette();
+        const dotColor = {
+            watched: palette.watched,
+            wish: palette.wish,
+            unwatched: palette.unwatched
+        }[item.status] || palette.unwatched;
+        const titleColor = 'rgba(45, 45, 43, 0.82)';
+        const textX = item.x + item.dotSize + item.textLeftGap;
+        const centerY = item.y + item.height / 2;
+        const maxTextWidth = item.width - item.dotSize - item.textLeftGap - 4;
 
-        let currentX = startX + contentPadding;
-        let currentY = startY;
-        let moviesInCurrentRow = 0;
-        let moviesDrawn = 0;
-
-        for (let i = 0; i < movies.length && moviesDrawn < maxMovies; i++) {
-            const movie = movies[i];
-            const status = this.data.markStatusMap[movie._id] || 'unwatched';
-
-            ctx.font = '500 18px sans-serif';
-            const textWidth = ctx.measureText(movie.title).width;
-            const tagWidth = Math.max(minTagWidth, textWidth + 20);
-
-            if (moviesInCurrentRow >= moviesPerRow || currentX + tagWidth > startX + contentPadding + contentMaxWidth) {
-                currentX = startX + contentPadding;
-                currentY += tagHeight + rowSpacing;
-                moviesInCurrentRow = 0;
-                if (currentY + tagHeight > height - footerHeight) break;
-            }
-
-            this.drawMovieTag(ctx, currentX, currentY, tagWidth, tagHeight, movie.title, status);
-            currentX += tagWidth + tagSpacing;
-            moviesInCurrentRow++;
-            moviesDrawn++;
-        }
-
-        if (moviesDrawn < movies.length) {
-            const remainingCount = movies.length - moviesDrawn;
-            ctx.fillStyle = '#999';
-            ctx.font = '18px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText(`还有${remainingCount}部电影...`, startX + contentMaxWidth / 2, currentY + tagHeight + 20);
-        }
-        return currentY + tagHeight;
-    },
-
-    drawMovieTag(ctx, x, y, width, height, title, status) {
-        this.drawMovieTagBackground(ctx, x, y, width, height, status);
-        this.drawMovieTagText(ctx, x, y, width, height, title, status);
-    },
-
-    drawMovieTagBackground(ctx, x, y, width, height, status) {
         ctx.save();
-        this.canvasHelper.drawRoundRectPath(x, y, width, height, height / 2);
-        const styles = {
-            watched: { gradient: ['rgba(76, 175, 80, 0.15)', 'rgba(76, 175, 80, 0.08)'], stroke: 'rgba(76, 175, 80, 0.3)' },
-            wish: { gradient: ['rgba(255, 193, 7, 0.2)', 'rgba(255, 193, 7, 0.12)'], stroke: 'rgba(255, 193, 7, 0.4)' },
-            unwatched: { gradient: ['rgba(158, 158, 158, 0.12)', 'rgba(158, 158, 158, 0.06)'], stroke: 'rgba(158, 158, 158, 0.3)' }
-        };
-        const style = styles[status] || styles.unwatched;
-        const gradient = ctx.createLinearGradient(x, y, x + width, y + height);
-        gradient.addColorStop(0, style.gradient[0]);
-        gradient.addColorStop(1, style.gradient[1]);
-        ctx.fillStyle = gradient;
+        // dot
+        ctx.fillStyle = dotColor;
+        ctx.beginPath();
+        ctx.arc(item.x + item.dotSize / 2, centerY, item.dotSize / 2, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = style.stroke;
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        ctx.restore();
-    },
 
-    drawMovieTagText(ctx, x, y, width, height, title, status) {
-        ctx.save();
-        ctx.font = '500 18px sans-serif';
-        ctx.textAlign = 'center';
+        // title text in dark color (matches preview)
+        ctx.fillStyle = titleColor;
+        ctx.font = `500 ${item.fontSize}px sans-serif`;
+        ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        const colors = { watched: '#4CAF50', wish: '#FF8F00', unwatched: '#9E9E9E' };
-        ctx.fillStyle = colors[status] || colors.unwatched;
-        if (status === 'wish') ctx.font = '600 18px sans-serif';
-        ctx.fillText(title, x + width / 2, y + height / 2);
-        if (status === 'watched') {
-            ctx.strokeStyle = '#4CAF50';
-            ctx.lineWidth = 2;
-            const textY = y + height / 2;
-            const textWidth = ctx.measureText(title).width;
+        const textWidth = ctx.measureText(item.title).width;
+        const renderedWidth = Math.min(textWidth, maxTextWidth);
+
+        if (textWidth > maxTextWidth) {
+            const scaleX = maxTextWidth / textWidth;
+            ctx.save();
+            ctx.translate(textX, centerY);
+            ctx.scale(scaleX, 1);
+            ctx.fillText(item.title, 0, 0);
+            ctx.restore();
+        } else {
+            ctx.fillText(item.title, textX, centerY);
+        }
+
+        // strikethrough for watched
+        if (item.status === 'watched') {
+            ctx.strokeStyle = 'rgba(45, 45, 43, 0.55)';
+            ctx.lineWidth = Math.max(1, Math.round(item.fontSize * 0.08));
             ctx.beginPath();
-            ctx.moveTo(x + (width - textWidth) / 2, textY);
-            ctx.lineTo(x + (width + textWidth) / 2, textY);
+            ctx.moveTo(textX, centerY);
+            ctx.lineTo(textX + renderedWidth, centerY);
             ctx.stroke();
         }
         ctx.restore();
     },
 
-    drawFooter(lastMovieY) {
+    drawFooter(card) {
         const ctx = this.canvasHelper.ctx;
-        const { width, height } = this.data.canvasSize;
-
-        // 固定在 canvas 底部，确保导出图片时水印不被裁切
-        const footerY = lastMovieY
-            ? Math.min(lastMovieY + 40, height - 40)
-            : height - 40;
-
+        const palette = this.getPalette();
+        const scale = this.getScale();
         ctx.save();
-        ctx.font = '400 22px sans-serif';
+        ctx.fillStyle = 'rgba(45, 45, 43, 0.72)';
+        ctx.font = `600 ${Math.round(20 * scale)}px sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillStyle = 'rgba(80, 80, 80, 0.85)';
-        ctx.fillText('搜索小程序：标记吧  免费制作同款图片', width / 2, footerY);
+        ctx.fillText(FOOTER_TEXT, card.cardX + card.cardWidth / 2, card.footerY);
         ctx.restore();
-
-        return footerY + 30;
-    },
-
-    adjustCanvasHeight(actualHeight) {
-        const canvas = this.canvasHelper.canvas;
-        const ctx = this.canvasHelper.ctx;
-        const { width } = this.data.canvasSize;
-        const newHeight = Math.min(actualHeight + 50, 2500);
-        if (newHeight !== this.data.canvasSize.height) {
-            const sysInfo = wx.getWindowInfo();
-            const dpr = width > 750 ? 1 : sysInfo.pixelRatio || 1;
-            canvas.width = width * dpr;
-            canvas.height = newHeight * dpr;
-            ctx.scale(dpr, dpr);
-            this.canvasHelper.canvasSize = { width, height: newHeight };
-            this.setData({ canvasSize: { width, height: newHeight } });
-            return true;
-        }
-        return false;
     },
 
     async exportAndSaveImage() {
@@ -432,82 +769,89 @@ Page({
         const { canvasSize } = this.data;
         if (!canvas) throw new Error('Canvas未初始化');
 
-        try {
-            await this.requestSavePermission();
-            const sysInfo = wx.getWindowInfo();
-            const dpr = canvasSize.width > 750 ? 1 : sysInfo.pixelRatio || 1;
-            const tempFilePath = await new Promise((resolve, reject) => {
-                setTimeout(() => {
-                    wx.canvasToTempFilePath({
-                        canvas, x: 0, y: 0,
-                        width: canvasSize.width, height: canvasSize.height,
-                        destWidth: canvasSize.width * dpr, destHeight: canvasSize.height * dpr,
-                        fileType: 'jpg', quality: 0.9,
-                        success: (res) => resolve(res.tempFilePath),
-                        fail: (err) => reject(new Error('生成图片失败: ' + (err.errMsg || '未知错误')))
-                    }, this);
-                }, 500);
-            });
+        await this.requestSavePermission();
+        const windowInfo = wx.getWindowInfo();
+        const dpr = canvasSize.width > 750 ? 1 : (windowInfo.pixelRatio || 1);
+        const tempFilePath = await new Promise((resolve, reject) => {
+            setTimeout(() => {
+                wx.canvasToTempFilePath({
+                    canvas,
+                    x: 0,
+                    y: 0,
+                    width: canvasSize.width,
+                    height: canvasSize.height,
+                    destWidth: canvasSize.width * dpr,
+                    destHeight: canvasSize.height * dpr,
+                    fileType: 'jpg',
+                    quality: 0.92,
+                    success: res => resolve(res.tempFilePath),
+                    fail: err => reject(new Error('生成图片失败: ' + (err.errMsg || '未知错误')))
+                }, this);
+            }, 300);
+        });
 
-            await new Promise((resolve, reject) => {
-                wx.saveImageToPhotosAlbum({
-                    filePath: tempFilePath,
-                    success: () => resolve(),
-                    fail: (err) => {
-                        if (err.errMsg && err.errMsg.includes('auth deny')) reject(new Error('需要授权保存图片到相册'));
-                        else reject(new Error('保存失败: ' + (err.errMsg || '未知错误')));
+        await new Promise((resolve, reject) => {
+            wx.saveImageToPhotosAlbum({
+                filePath: tempFilePath,
+                success: resolve,
+                fail: (err) => {
+                    if (err.errMsg && err.errMsg.includes('auth deny')) {
+                        reject(new Error('需要授权保存图片到相册'));
+                    } else {
+                        reject(new Error('保存失败: ' + (err.errMsg || '未知错误')));
                     }
-                });
+                }
             });
-        } catch (err) {
-            console.error('导出保存流程失败:', err);
-            throw err;
-        }
+        });
     },
 
     async requestSavePermission() {
-        try {
-            const authSetting = await new Promise((resolve, reject) => {
-                wx.getSetting({ success: (res) => resolve(res.authSetting), fail: reject });
-            });
-            if (authSetting['scope.writePhotosAlbum']) return true;
-            await new Promise((resolve, reject) => {
-                wx.authorize({
-                    scope: 'scope.writePhotosAlbum', success: resolve,
-                    fail: (err) => {
-                        if (err.errMsg && err.errMsg.includes('auth deny')) {
-                            wx.showModal({
-                                title: '需要授权', content: '请在设置中允许访问相册', confirmText: '去设置',
-                                success: (res) => { if (res.confirm) wx.openSetting(); }
-                            });
-                            reject(new Error('用户拒绝授权'));
-                        } else { reject(err); }
+        const authSetting = await new Promise((resolve, reject) => {
+            wx.getSetting({ success: res => resolve(res.authSetting), fail: reject });
+        });
+        if (authSetting['scope.writePhotosAlbum']) return true;
+
+        await new Promise((resolve, reject) => {
+            wx.authorize({
+                scope: 'scope.writePhotosAlbum',
+                success: resolve,
+                fail: (err) => {
+                    if (err.errMsg && err.errMsg.includes('auth deny')) {
+                        wx.showModal({
+                            title: '需要授权',
+                            content: '请在设置中允许访问相册',
+                            confirmText: '去设置',
+                            success: (res) => {
+                                if (res.confirm) wx.openSetting();
+                            }
+                        });
+                        reject(new Error('用户拒绝授权'));
+                    } else {
+                        reject(err);
                     }
-                });
+                }
             });
-            return true;
-        } catch (err) {
-            console.error('请求权限失败:', err);
-            throw err;
-        }
+        });
+        return true;
     },
 
-    // ========== 广告 ==========
     initAds() {
         if (this.data.adUnitIds.share_banner) {
             this.setData({ showBannerAd: true });
         }
     },
+
     onBannerAdLoad() {
         this.setData({ showBannerAd: true });
     },
+
     onBannerAdError() {
         this.setData({ showBannerAd: false });
     },
 
     onShareAppMessage() {
         return {
-            title: '我的豆瓣电影 TOP 250 观影海报',
+            title: '我的豆瓣电影TOP250观影海报',
             path: '/pages/douban/list/list'
         };
     },

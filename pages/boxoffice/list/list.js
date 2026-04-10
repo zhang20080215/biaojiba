@@ -1,7 +1,6 @@
 import DataLoader from '../../../utils/dataLoader';
 import imageCacheManager from '../../../utils/imageCacheManager';
 var adConfig = require('../../../utils/adConfig');
-var adManager = require('../../../utils/adManager');
 
 Page({
     data: {
@@ -25,13 +24,20 @@ Page({
         loadingImages: {},
         loading: false,
         showAuthModal: false,
+        customToast: '',
+        customToastVisible: false,
+        showSharePicker: false,
         tempAvatar: '',
         tempNickname: '',
-        showShareModal: false,
+        themeClass: '',
+        statusBarHeight: 20,
+        headerPadTop: 0,
+        menuBtnHeight: 32,
+        stickyTop: 0,
         showInfeedAd: false,
         adUnitIds: {
-            movielist_infeed: adConfig.getAdUnitId('movielist_infeed') || '',
-        },
+            movielist_infeed: adConfig.getAdUnitId('movielist_infeed') || ''
+        }
     },
 
     onLoad() {
@@ -39,7 +45,21 @@ Page({
             wx.showToast({ title: '请升级基础库', icon: 'none' });
             return;
         }
-        wx.setNavigationBarTitle({ title: '全球电影票房榜' });
+
+        const windowInfo = wx.getWindowInfo();
+        const menuBtn = wx.getMenuButtonBoundingClientRect();
+        const headerPadTop = menuBtn.top;
+        const savedTheme = wx.getStorageSync('appTheme') || getApp().globalData.theme || '';
+        const stickyTop = menuBtn.bottom + 8;
+
+        this.setData({
+            statusBarHeight: windowInfo.statusBarHeight || 20,
+            headerPadTop,
+            menuBtnHeight: menuBtn.height,
+            stickyTop,
+            themeClass: savedTheme
+        });
+
         this.checkLoginStatus();
         this.loadAllMovies();
         this.initAds();
@@ -51,10 +71,18 @@ Page({
     },
 
     onShow() {
+        const currentTheme = getApp().globalData.theme || '';
+        if (this.data.themeClass !== currentTheme) {
+            this.setData({ themeClass: currentTheme });
+        }
         this.checkLoginStatus();
         setTimeout(() => {
             this.preloadVisibleImages();
         }, 500);
+    },
+
+    onUnload() {
+        if (this._toastTimer) clearTimeout(this._toastTimer);
     },
 
     onBackHome() {
@@ -76,25 +104,30 @@ Page({
             this.onGetUserProfile();
             return;
         }
-        this.setData({ showShareModal: true });
+        this.setData({ showSharePicker: true });
     },
 
-    onShareSelect(e) {
+    onCloseSharePicker() {
+        this.setData({ showSharePicker: false });
+    },
+
+    onSharePickerTouchMove() {},
+
+    onShareTypeSelect(e) {
         const type = e.currentTarget.dataset.type;
-        this.setData({ showShareModal: false });
-        adManager.showInterstitial('share_interstitial').then(function () {
-            wx.navigateTo({ url: `/pages/boxoffice/share/share?type=${type}` });
+        if (this._navigatingToShare) return;
+        this._navigatingToShare = true;
+
+        this.setData({ showSharePicker: false }, () => {
+            wx.nextTick(() => {
+                wx.navigateTo({
+                    url: `/pages/boxoffice/share/share?type=${type}`,
+                    complete: () => {
+                        this._navigatingToShare = false;
+                    }
+                });
+            });
         });
-    },
-
-    onCloseShareModal() {
-        this.setData({ showShareModal: false });
-    },
-
-    onHeaderLoginClick() {
-        if (!this.data.userInfo) {
-            this.onGetUserProfile();
-        }
     },
 
     onGetUserProfile() {
@@ -108,17 +141,20 @@ Page({
                 if (!_openid) {
                     wx.hideLoading();
                     this.setData({ loading: false });
-                    wx.showToast({ title: '获取openid失败', icon: 'none' });
+                    wx.showToast({ title: '获取 openid 失败', icon: 'none' });
                     return;
                 }
                 wx.hideLoading();
                 this.setData({
-                    loading: false, openid: _openid,
-                    showAuthModal: true, tempAvatar: '', tempNickname: ''
+                    loading: false,
+                    openid: _openid,
+                    showAuthModal: true,
+                    tempAvatar: '',
+                    tempNickname: ''
                 });
             },
             fail: err => {
-                console.error('获取openid失败:', err);
+                console.error('获取 openid 失败:', err);
                 wx.hideLoading();
                 this.setData({ loading: false });
                 wx.showToast({ title: '网络错误，请重试', icon: 'none' });
@@ -126,17 +162,27 @@ Page({
         });
     },
 
-    onCancelAuth() { this.setData({ showAuthModal: false }); },
-    onChooseAvatar(e) { this.setData({ tempAvatar: e.detail.avatarUrl }); },
-    onNicknameInput(e) { this.setData({ tempNickname: e.detail.value }); },
+    onCancelAuth() {
+        this.setData({ showAuthModal: false });
+    },
+
+    onChooseAvatar(e) {
+        this.setData({ tempAvatar: e.detail.avatarUrl });
+    },
+
+    onNicknameInput(e) {
+        this.setData({ tempNickname: e.detail.value });
+    },
 
     async onConfirmAuth() {
         const { tempAvatar, tempNickname, openid } = this.data;
         if (!tempAvatar || tempAvatar === '/images/default-avatar.svg') {
-            wx.showToast({ title: '请选择头像', icon: 'none' }); return;
+            wx.showToast({ title: '请选择头像', icon: 'none' });
+            return;
         }
         if (!tempNickname || !tempNickname.trim()) {
-            wx.showToast({ title: '请输入昵称', icon: 'none' }); return;
+            wx.showToast({ title: '请输入昵称', icon: 'none' });
+            return;
         }
 
         wx.showLoading({ title: '保存中...', mask: true });
@@ -154,11 +200,21 @@ Page({
             const userRes = await db.collection('users').where({ openid }).get();
             if (userRes.data.length === 0) {
                 await db.collection('users').add({
-                    data: { openid, nickname: userInfo.nickName, avatarUrl: userInfo.avatarUrl, created_at: new Date(), updated_at: new Date() }
+                    data: {
+                        openid,
+                        nickname: userInfo.nickName,
+                        avatarUrl: userInfo.avatarUrl,
+                        created_at: new Date(),
+                        updated_at: new Date()
+                    }
                 });
             } else {
                 await db.collection('users').doc(userRes.data[0]._id).update({
-                    data: { nickname: userInfo.nickName, avatarUrl: userInfo.avatarUrl, updated_at: new Date() }
+                    data: {
+                        nickname: userInfo.nickName,
+                        avatarUrl: userInfo.avatarUrl,
+                        updated_at: new Date()
+                    }
                 });
             }
 
@@ -174,35 +230,74 @@ Page({
         }
     },
 
+    normalizeText(value, separator = ' / ') {
+        if (Array.isArray(value)) {
+            return value.filter(Boolean).join(separator);
+        }
+        if (value === undefined || value === null) return '';
+        return String(value).trim();
+    },
+
+    formatBoxOffice(value) {
+        if (value === undefined || value === null || value === '') return '';
+        const amount = Number(value);
+        if (Number.isNaN(amount) || amount <= 0) return String(value);
+
+        if (amount >= 100000000) {
+            return `$${(amount / 100000000).toFixed(amount >= 1000000000 ? 1 : 2)}亿`;
+        }
+        if (amount >= 10000) {
+            return `$${(amount / 10000).toFixed(amount >= 10000000 ? 0 : 1)}万`;
+        }
+        return `$${amount}`;
+    },
+
+    buildBoxofficeMovieViewModel(movie) {
+        const countryText = this.normalizeText(movie.country);
+        const directorText = this.normalizeText(movie.director || movie.directors);
+
+        return {
+            ...movie,
+            _id: String(movie._id),
+            thumbCover: imageCacheManager.getThumbnailUrl(movie.cover || movie.coverUrl || movie.originalCover, 'list'),
+            imageLoaded: false,
+            imageError: false,
+            yearText: movie.year ? String(movie.year) : '',
+            countryText,
+            directorText: directorText ? `导演：${directorText}` : '',
+            boxOfficeText: movie.boxOfficeText || this.formatBoxOffice(movie.boxOffice),
+            ratingText: movie.rating === 0 || movie.rating ? String(movie.rating) : ''
+        };
+    },
+
     async loadAllMovies(forceRefresh = false) {
         wx.showNavigationBarLoading();
         try {
             const openid = this.data.userInfo ? this.data.userInfo._openid : null;
             const { movies, marks } = await DataLoader.loadMoviesData('boxoffice', openid, forceRefresh);
 
-            // 检测缓存数据是否缺少封面（首条有cover字段说明数据完整）
             if (!forceRefresh && movies.length > 0 && !movies[0].cover) {
                 DataLoader.invalidateMovieCache('boxoffice');
                 return this.loadAllMovies(true);
             }
 
-            const allMovies = movies.map(m => ({
-                ...m,
-                _id: String(m._id),
-                thumbCover: imageCacheManager.getThumbnailUrl(m.cover || m.coverUrl || m.originalCover, 'list'),
-                imageLoaded: false,
-                imageError: false
-            }));
+            const allMovies = movies.map(movie => this.buildBoxofficeMovieViewModel(movie));
             this.data.allMovies = allMovies;
             this.data.allCount = allMovies.length;
 
             const { markStatusMap, markDateMap, watchedIds, wishIds, stats } = DataLoader.processMarks(marks, allMovies);
 
             this.setData({
-                markStatusMap, markDateMap, watchedIds, wishIds,
-                watchedCount: stats.watched, wishCount: stats.wish,
-                unwatchedCount: stats.unwatched, allCount: allMovies.length,
-                allMovies, movies: allMovies
+                markStatusMap,
+                markDateMap,
+                watchedIds,
+                wishIds,
+                watchedCount: stats.watched,
+                wishCount: stats.wish,
+                unwatchedCount: stats.unwatched,
+                allCount: allMovies.length,
+                allMovies,
+                movies: allMovies
             }, () => {
                 this.updateFilteredMovies();
                 wx.hideNavigationBarLoading();
@@ -223,8 +318,13 @@ Page({
             const { marks } = await DataLoader.loadMoviesData('boxoffice', openid, false);
             const { markStatusMap, markDateMap, watchedIds, wishIds, stats } = DataLoader.processMarks(marks, this.data.allMovies);
             this.setData({
-                markStatusMap, markDateMap, watchedIds, wishIds,
-                watchedCount: stats.watched, wishCount: stats.wish, unwatchedCount: stats.unwatched
+                markStatusMap,
+                markDateMap,
+                watchedIds,
+                wishIds,
+                watchedCount: stats.watched,
+                wishCount: stats.wish,
+                unwatchedCount: stats.unwatched
             }, () => {
                 this.updateFilteredMovies();
                 wx.hideNavigationBarLoading();
@@ -239,10 +339,15 @@ Page({
         const { allMovies, markStatusMap, activeTab } = this.data;
         let movies = [];
         if (activeTab === 0) movies = allMovies;
-        else if (activeTab === 1) movies = allMovies.filter(m => markStatusMap[m._id] === 'watched');
-        else if (activeTab === 2) movies = allMovies.filter(m => markStatusMap[m._id] === 'wish');
-        else if (activeTab === 3) movies = allMovies.filter(m => !markStatusMap[m._id]);
-        movies = movies.map(movie => ({ ...movie, checked: this.data.selectedMovieIds.includes(String(movie._id)) }));
+        else if (activeTab === 1) movies = allMovies.filter(movie => markStatusMap[movie._id] === 'watched');
+        else if (activeTab === 2) movies = allMovies.filter(movie => markStatusMap[movie._id] === 'wish');
+        else if (activeTab === 3) movies = allMovies.filter(movie => !markStatusMap[movie._id]);
+
+        movies = movies.map(movie => ({
+            ...movie,
+            checked: this.data.selectedMovieIds.includes(String(movie._id))
+        }));
+
         this.setData({ movies });
     },
 
@@ -251,11 +356,68 @@ Page({
         this.setData({ activeTab: idx, isBatchEditing: false, selectedMovieIds: [] }, this.updateFilteredMovies);
     },
 
+    recalculateMarkStats(markStatusMap) {
+        let watchedCount = 0;
+        let wishCount = 0;
+        const allCount = this.data.allMovies.length;
+
+        Object.keys(markStatusMap).forEach(movieId => {
+            const status = markStatusMap[movieId];
+            if (status === 'watched') watchedCount++;
+            else if (status === 'wish') wishCount++;
+        });
+
+        return {
+            watchedCount,
+            wishCount,
+            unwatchedCount: Math.max(0, allCount - watchedCount - wishCount),
+            watchedIds: Object.keys(markStatusMap).filter(movieId => markStatusMap[movieId] === 'watched'),
+            wishIds: Object.keys(markStatusMap).filter(movieId => markStatusMap[movieId] === 'wish')
+        };
+    },
+
+    applyBatchMarksLocally(movieIds, status) {
+        const markStatusMap = { ...this.data.markStatusMap };
+        const markDateMap = { ...this.data.markDateMap };
+        const now = this.formatMarkDate(new Date().toISOString());
+
+        movieIds.forEach(movieId => {
+            const normalizedMovieId = String(movieId);
+            if (status === 'unwatched') {
+                delete markStatusMap[normalizedMovieId];
+                delete markDateMap[normalizedMovieId];
+            } else {
+                markStatusMap[normalizedMovieId] = status;
+                markDateMap[normalizedMovieId] = now;
+            }
+        });
+
+        const { watchedCount, wishCount, unwatchedCount, watchedIds, wishIds } = this.recalculateMarkStats(markStatusMap);
+
+        this.setData({
+            markStatusMap,
+            markDateMap,
+            watchedIds,
+            wishIds,
+            watchedCount,
+            wishCount,
+            unwatchedCount,
+            isBatchEditing: false,
+            selectedMovieIds: []
+        }, () => {
+            this.updateFilteredMovies();
+        });
+    },
+
     onMarkTap(e) {
         if (!this.data.userInfo) {
             wx.showModal({
-                title: '提示', content: '请登录后再进行标记', confirmText: '去登录',
-                success: (res) => { if (res.confirm) this.onGetUserProfile(); }
+                title: '提示',
+                content: '请登录后再进行标记',
+                confirmText: '去登录',
+                success: res => {
+                    if (res.confirm) this.onGetUserProfile();
+                }
             });
             return;
         }
@@ -264,8 +426,10 @@ Page({
         const type = e.currentTarget.dataset.type;
         const openid = this.data.userInfo._openid;
         if (!movieId || !type || !openid) {
-            wx.showToast({ title: '数据不完整', icon: 'none' }); return;
+            wx.showToast({ title: '数据不完整', icon: 'none' });
+            return;
         }
+
         const db = wx.cloud.database();
         db.collection('Marks').where({ movieId, openid }).get().then(res => {
             const now = new Date().toISOString();
@@ -278,14 +442,17 @@ Page({
                     const oldStatus = markStatusMap[movieId];
                     markStatusMap[movieId] = type;
                     markDateMap[movieId] = this.formatMarkDate(now);
+
                     let { watchedCount, wishCount, unwatchedCount } = this.data;
                     if (oldStatus === 'watched') watchedCount--;
                     else if (oldStatus === 'wish') wishCount--;
                     else unwatchedCount--;
+
                     if (type === 'watched') watchedCount++;
                     else if (type === 'wish') wishCount++;
+
                     this.setData({ markStatusMap, markDateMap, watchedCount, wishCount, unwatchedCount }, this.updateFilteredMovies);
-                    wx.showToast({ title: type === 'watched' ? '已更新为已看' : '已更新为想看' });
+                    this.showCustomToast(type === 'watched' ? '已标记为已看' : '已标记为想看');
                 });
             } else {
                 db.collection('Marks').add({
@@ -295,28 +462,43 @@ Page({
                     const markDateMap = { ...this.data.markDateMap };
                     markStatusMap[movieId] = type;
                     markDateMap[movieId] = this.formatMarkDate(now);
+
                     let { watchedCount, wishCount, unwatchedCount } = this.data;
                     if (type === 'watched') watchedCount++;
                     else if (type === 'wish') wishCount++;
                     unwatchedCount--;
+
                     this.setData({ markStatusMap, markDateMap, watchedCount, wishCount, unwatchedCount }, this.updateFilteredMovies);
-                    wx.showToast({ title: type === 'watched' ? '已看成功' : '想看成功' });
+                    this.showCustomToast(type === 'watched' ? '已标记为已看' : '已标记为想看');
                 });
             }
         });
+    },
+
+    showCustomToast(msg) {
+        if (this._toastTimer) clearTimeout(this._toastTimer);
+        this.setData({ customToast: msg, customToastVisible: true });
+        this._toastTimer = setTimeout(() => {
+            this.setData({ customToastVisible: false });
+        }, 1500);
     },
 
     formatMarkDate(dateStr) {
         if (!dateStr) return '';
         try {
             const d = new Date(dateStr);
-            if (isNaN(d.getTime())) return '';
+            if (Number.isNaN(d.getTime())) return '';
             return `${d.getMonth() + 1}/${d.getDate()}`;
-        } catch (e) { return ''; }
+        } catch (e) {
+            return '';
+        }
     },
 
     onStartBatchEdit() {
-        if (!this.data.userInfo) { this.onGetUserProfile(); return; }
+        if (!this.data.userInfo) {
+            this.onGetUserProfile();
+            return;
+        }
         this.setData({ isBatchEditing: true, selectedMovieIds: [] });
         this.updateFilteredMovies();
     },
@@ -350,21 +532,34 @@ Page({
 
     onBatchWatch() {
         if (this.data.selectedMovieIds.length === 0) {
-            wx.showToast({ title: '请选择电影', icon: 'none' }); return;
+            wx.showToast({ title: '请选择电影', icon: 'none' });
+            return;
         }
         this.batchUpdateMarks(this.data.selectedMovieIds, 'watched');
     },
 
     onBatchWish() {
         if (this.data.selectedMovieIds.length === 0) {
-            wx.showToast({ title: '请选择电影', icon: 'none' }); return;
+            wx.showToast({ title: '请选择电影', icon: 'none' });
+            return;
         }
         this.batchUpdateMarks(this.data.selectedMovieIds, 'wish');
     },
 
+    onBatchUnwatch() {
+        if (this.data.selectedMovieIds.length === 0) {
+            wx.showToast({ title: '请选择电影', icon: 'none' });
+            return;
+        }
+        this.batchUpdateMarks(this.data.selectedMovieIds, 'unwatched');
+    },
+
     batchUpdateMarks(movieIds, status) {
-        const openid = this.data.userInfo._openid;
-        if (!openid) { wx.showToast({ title: '请先登录', icon: 'none' }); return; }
+        const openid = this.data.userInfo && this.data.userInfo._openid;
+        if (!openid) {
+            wx.showToast({ title: '请先登录', icon: 'none' });
+            return;
+        }
 
         wx.showLoading({ title: '批量更新中...' });
         wx.cloud.callFunction({
@@ -373,9 +568,8 @@ Page({
             success: res => {
                 wx.hideLoading();
                 if (res.result && res.result.success) {
-                    wx.showToast({ title: '批量标记成功', icon: 'success' });
-                    this.setData({ isBatchEditing: false, selectedMovieIds: [] });
-                    setTimeout(() => { this.loadUserMarks(); }, 500);
+                    this.applyBatchMarksLocally(movieIds, status);
+                    this.showCustomToast(status === 'unwatched' ? '已批量标记为未看' : '批量标记成功');
                 } else {
                     wx.showToast({ title: '部分标记失败', icon: 'none' });
                 }
@@ -405,8 +599,8 @@ Page({
     },
 
     updateMovieImageStatus(movieId, status) {
-        const movies = this.data.movies.map(m => String(m._id) === String(movieId) ? { ...m, ...status } : m);
-        const allMovies = this.data.allMovies.map(m => String(m._id) === String(movieId) ? { ...m, ...status } : m);
+        const movies = this.data.movies.map(movie => String(movie._id) === String(movieId) ? { ...movie, ...status } : movie);
+        const allMovies = this.data.allMovies.map(movie => String(movie._id) === String(movieId) ? { ...movie, ...status } : movie);
         this.setData({ movies, allMovies });
     },
 
@@ -417,8 +611,7 @@ Page({
     },
 
     tryFallbackImage(movieId) {
-        // 找到原始电影数据，尝试 cloud:// 转临时URL
-        const movie = this.data.allMovies.find(m => String(m._id) === String(movieId));
+        const movie = this.data.allMovies.find(item => String(item._id) === String(movieId));
         const cloudUrl = movie && (movie.cover || movie.coverUrl);
         if (cloudUrl && cloudUrl.startsWith('cloud://')) {
             if (!this._fallbackAttempted) this._fallbackAttempted = {};
@@ -429,7 +622,7 @@ Page({
             this._fallbackAttempted[movieId] = true;
             wx.cloud.getTempFileURL({
                 fileList: [cloudUrl],
-                success: (res) => {
+                success: res => {
                     const fileItem = res.fileList && res.fileList[0];
                     if (fileItem && fileItem.tempFileURL) {
                         this.updateMovieImage(movieId, fileItem.tempFileURL);
@@ -447,8 +640,8 @@ Page({
     },
 
     updateMovieImage(movieId, imageUrl) {
-        const movies = this.data.movies.map(m => String(m._id) === String(movieId) ? { ...m, cover: imageUrl } : m);
-        const allMovies = this.data.allMovies.map(m => String(m._id) === String(movieId) ? { ...m, cover: imageUrl } : m);
+        const movies = this.data.movies.map(movie => String(movie._id) === String(movieId) ? { ...movie, cover: imageUrl } : movie);
+        const allMovies = this.data.allMovies.map(movie => String(movie._id) === String(movieId) ? { ...movie, cover: imageUrl } : movie);
         this.setData({ movies, allMovies });
     },
 
@@ -459,13 +652,14 @@ Page({
         };
     },
 
-    // ========== 广告 ==========
     initAds() {
         if (this.data.adUnitIds.movielist_infeed) {
             this.setData({ showInfeedAd: true });
         }
     },
+
     onInfeedAdLoad() {},
+
     onInfeedAdError() {
         this.setData({ showInfeedAd: false });
     },
@@ -475,22 +669,25 @@ Page({
         visibleMovies.forEach(movie => {
             if (!movie.imageLoaded && !movie.imageError && !this.data.loadingImages[movie._id]) {
                 this.data.loadingImages[movie._id] = true;
-                const img = this.data.movies.find(m => m._id === movie._id);
-                if (img && img.cover) {
-                    // cloud:// 文件 ID 不能用 wx.getImageInfo 预检，<image> 组件可直接渲染
-                    if (img.cover.startsWith('cloud://')) {
+                const currentMovie = this.data.movies.find(item => item._id === movie._id);
+                if (currentMovie && currentMovie.cover) {
+                    if (currentMovie.cover.startsWith('cloud://')) {
                         this.updateMovieImageStatus(movie._id, { imageLoaded: true });
                         delete this.data.loadingImages[movie._id];
                         return;
                     }
                     wx.getImageInfo({
-                        src: img.cover,
-                        success: () => { this.updateMovieImageStatus(movie._id, { imageLoaded: true }); },
+                        src: currentMovie.cover,
+                        success: () => {
+                            this.updateMovieImageStatus(movie._id, { imageLoaded: true });
+                        },
                         fail: () => {
                             this.updateMovieImageStatus(movie._id, { imageError: true });
                             this.tryFallbackImage(movie._id);
                         },
-                        complete: () => { delete this.data.loadingImages[movie._id]; }
+                        complete: () => {
+                            delete this.data.loadingImages[movie._id];
+                        }
                     });
                 }
             }
