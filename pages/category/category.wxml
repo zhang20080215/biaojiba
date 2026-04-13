@@ -31,8 +31,8 @@
     </view>
   </view>
 
-  <!-- 分类筛选（横滑 chip 样式） -->
-  <scroll-view class="filter-scroll" scroll-x enable-flex>
+  <!-- 分类筛选 -->
+  <view class="filter-bar">
     <view
       class="filter-chip {{activeTab === 'all' ? 'active' : ''}}"
       data-tab="all" bindtap="onTabTap"
@@ -54,7 +54,7 @@
       <view class="chip-dot" wx:if="{{activeTab === 'parenting'}}"></view>
       <text>育儿</text>
     </view>
-  </scroll-view>
+  </view>
 
   <!-- 主题卡片网格（两列） -->
   <view class="card-grid">
@@ -89,7 +89,10 @@
         <text class="card-title">{{item.title}}</text>
         <text class="card-desc">{{item.description}}</text>
         <view class="card-meta">
-          <text wx:if="{{item.userCount > 0}}" class="meta-count">{{item.userCountText}}人参与</text>
+          <view wx:if="{{item.userCount > 0}}" class="meta-count">
+            <text class="meta-count-number">{{item.userCountText}}</text>
+            <text class="meta-count-label">人参与</text>
+          </view>
           <view class="meta-arrow">
             <text>›</text>
           </view>

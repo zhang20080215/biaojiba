@@ -11,12 +11,16 @@ Page({
         movies: [],
         markStatusMap: {},
         markDateMap: {},
+        markRecordIdMap: {},
         watchedIds: [],
         wishIds: [],
         watchedCount: 0,
         wishCount: 0,
         unwatchedCount: 0,
         allCount: 0,
+        watchedProgressPercent: 0,
+        watchedProgressText: '0%',
+        watchedProgressWidth: '0%',
         activeTab: 0,
         currentFilter: 'all',
         isBatchEditing: false,
@@ -48,16 +52,12 @@ Page({
             return;
         }
         // 自定义导航：获取状态栏高度和胶囊按钮位置
-        const windowInfo = wx.getWindowInfo();
-        const menuBtn = wx.getMenuButtonBoundingClientRect();
-        const headerPadTop = menuBtn.top;
         const savedTheme = wx.getStorageSync('appTheme') || getApp().globalData.theme || '';
-        const stickyTop = menuBtn.bottom + 8;
         this.setData({
-            statusBarHeight: windowInfo.statusBarHeight || 20,
-            headerPadTop,
-            menuBtnHeight: menuBtn.height,
-            stickyTop,
+            statusBarHeight: 0,
+            headerPadTop: 0,
+            menuBtnHeight: 0,
+            stickyTop: 0,
             themeClass: savedTheme
         });
         this.checkLoginStatus();
@@ -82,21 +82,60 @@ Page({
         }, 500);
     },
 
+    onUnload() {
+        if (this._toastTimer) clearTimeout(this._toastTimer);
+    },
+
     onBackHome() {
         wx.reLaunch({ url: '/pages/category/category' });
     },
 
-    checkLoginStatus() {
+    getStoredUserInfo() {
         const userInfo = wx.getStorageSync('userInfo');
+        if (!userInfo) return null;
+        const openid = userInfo._openid || userInfo.openid || '';
+        return openid ? { ...userInfo, _openid: openid, openid } : userInfo;
+    },
+
+    getActiveOpenid() {
+        const currentUserInfo = this.data.userInfo || {};
+        return currentUserInfo._openid || currentUserInfo.openid || this.data.openid || ((this.getStoredUserInfo() || {})._openid) || '';
+    },
+
+    hasLogin() {
+        return !!this.getActiveOpenid();
+    },
+
+    buildWatchedProgress(watchedCount = 0, allCount = 0) {
+        const safeWatchedCount = Math.max(0, Number(watchedCount) || 0);
+        const safeAllCount = Math.max(0, Number(allCount) || 0);
+        const watchedProgressPercent = safeAllCount > 0
+            ? Math.min(100, Math.round((safeWatchedCount / safeAllCount) * 100))
+            : 0;
+
+        return {
+            watchedProgressPercent,
+            watchedProgressText: `${watchedProgressPercent}%`,
+            watchedProgressWidth: `${watchedProgressPercent}%`
+        };
+    },
+
+    refreshMoviesAfterMarkChange() {
+        if (this.data.activeTab === 0) return;
+        this.updateFilteredMovies();
+    },
+
+    checkLoginStatus() {
+        const userInfo = this.getStoredUserInfo();
         if (userInfo) {
-            this.setData({ userInfo, openid: userInfo._openid });
+            this.setData({ userInfo, openid: userInfo._openid || '' });
         } else {
             this.setData({ userInfo: null, openid: '' });
         }
     },
 
     onShareTap() {
-        if (!this.data.userInfo) {
+        if (!this.hasLogin()) {
             wx.showToast({ title: '请先完成登录', icon: 'none' });
             this.onGetUserProfile();
             return;
@@ -215,7 +254,7 @@ Page({
     async loadAllMovies(forceRefresh = false) {
         wx.showNavigationBarLoading();
         try {
-            const openid = this.data.userInfo ? this.data.userInfo._openid : null;
+            const openid = this.getActiveOpenid() || null;
             const { movies, marks } = await DataLoader.loadMoviesData('douban', openid, forceRefresh);
 
             const allMovies = movies.map(m => ({
@@ -229,12 +268,13 @@ Page({
             this.data.allMovies = allMovies;
             this.data.allCount = allMovies.length;
 
-            const { markStatusMap, markDateMap, watchedIds, wishIds, stats } = DataLoader.processMarks(marks, allMovies);
+            const { markStatusMap, markDateMap, markRecordIdMap, watchedIds, wishIds, stats } = DataLoader.processMarks(marks, allMovies);
 
             this.setData({
-                markStatusMap, markDateMap, watchedIds, wishIds,
+                markStatusMap, markDateMap, markRecordIdMap, watchedIds, wishIds,
                 watchedCount: stats.watched, wishCount: stats.wish,
                 unwatchedCount: stats.unwatched, allCount: allMovies.length,
+                ...this.buildWatchedProgress(stats.watched, allMovies.length),
                 allMovies, movies: allMovies
             }, () => {
                 this.updateFilteredMovies();
@@ -242,7 +282,18 @@ Page({
             });
         } catch (err) {
             console.error('加载电影/标记数据失败:', err);
-            this.setData({ allMovies: [], movies: [], allCount: 0 });
+            this.setData({
+                allMovies: [],
+                movies: [],
+                markStatusMap: {},
+                markDateMap: {},
+                markRecordIdMap: {},
+                watchedCount: 0,
+                wishCount: 0,
+                unwatchedCount: 0,
+                allCount: 0,
+                ...this.buildWatchedProgress(0, 0)
+            });
             wx.showToast({ title: '暂无数据或加载失败', icon: 'none' });
             wx.hideNavigationBarLoading();
         }
@@ -250,15 +301,16 @@ Page({
 
     // ─── 仅刷新标记（登录后调用，不重复拉取电影列表）───
     async loadUserMarks() {
-        if (!this.data.userInfo || !this.data.userInfo._openid) return;
+        const openid = this.getActiveOpenid();
+        if (!openid) return;
         wx.showNavigationBarLoading();
         try {
-            const openid = this.data.userInfo._openid;
             const { marks } = await DataLoader.loadMoviesData('douban', openid, false);
-            const { markStatusMap, markDateMap, watchedIds, wishIds, stats } = DataLoader.processMarks(marks, this.data.allMovies);
+            const { markStatusMap, markDateMap, markRecordIdMap, watchedIds, wishIds, stats } = DataLoader.processMarks(marks, this.data.allMovies);
             this.setData({
-                markStatusMap, markDateMap, watchedIds, wishIds,
-                watchedCount: stats.watched, wishCount: stats.wish, unwatchedCount: stats.unwatched
+                markStatusMap, markDateMap, markRecordIdMap, watchedIds, wishIds,
+                watchedCount: stats.watched, wishCount: stats.wish, unwatchedCount: stats.unwatched,
+                ...this.buildWatchedProgress(stats.watched, this.data.allMovies.length)
             }, () => {
                 this.updateFilteredMovies();
                 wx.hideNavigationBarLoading();
@@ -331,6 +383,7 @@ Page({
             watchedCount,
             wishCount,
             unwatchedCount,
+            ...this.buildWatchedProgress(watchedCount, this.data.allMovies.length),
             isBatchEditing: false,
             selectedMovieIds: []
         }, () => {
@@ -338,8 +391,84 @@ Page({
         });
     },
 
+    applySingleMarkLocally(movieId, status, markedAt, recordId) {
+        const markStatusMap = { ...this.data.markStatusMap };
+        const markDateMap = { ...this.data.markDateMap };
+        const markRecordIdMap = { ...this.data.markRecordIdMap };
+        const oldStatus = markStatusMap[movieId];
+
+        markStatusMap[movieId] = status;
+        markDateMap[movieId] = this.formatMarkDate(markedAt);
+        if (recordId) {
+            markRecordIdMap[movieId] = recordId;
+        }
+
+        let { watchedCount, wishCount, unwatchedCount } = this.data;
+        if (oldStatus === 'watched') watchedCount--;
+        else if (oldStatus === 'wish') wishCount--;
+        else unwatchedCount--;
+
+        if (status === 'watched') watchedCount++;
+        else if (status === 'wish') wishCount++;
+
+        const nextData = {
+            markStatusMap,
+            markDateMap,
+            markRecordIdMap,
+            watchedCount,
+            wishCount,
+            unwatchedCount,
+            ...this.buildWatchedProgress(watchedCount, this.data.allMovies.length)
+        };
+
+        if (this.data.activeTab === 0) {
+            this.setData(nextData);
+            return;
+        }
+
+        this.setData(nextData, () => {
+            this.refreshMoviesAfterMarkChange();
+        });
+    },
+
+    restoreSingleMarkLocally(movieId, snapshot) {
+        const markStatusMap = { ...this.data.markStatusMap };
+        const markDateMap = { ...this.data.markDateMap };
+        const markRecordIdMap = { ...this.data.markRecordIdMap };
+
+        if (snapshot.status) markStatusMap[movieId] = snapshot.status;
+        else delete markStatusMap[movieId];
+
+        if (snapshot.date) markDateMap[movieId] = snapshot.date;
+        else delete markDateMap[movieId];
+
+        if (snapshot.recordId) markRecordIdMap[movieId] = snapshot.recordId;
+        else delete markRecordIdMap[movieId];
+
+        const { watchedCount, wishCount, unwatchedCount } = this.recalculateMarkStats(markStatusMap);
+        const nextData = {
+            markStatusMap,
+            markDateMap,
+            markRecordIdMap,
+            watchedCount,
+            wishCount,
+            unwatchedCount,
+            ...this.buildWatchedProgress(watchedCount, this.data.allMovies.length)
+        };
+
+        if (this.data.activeTab === 0) {
+            this.setData(nextData);
+            return;
+        }
+
+        this.setData(nextData, () => {
+            this.refreshMoviesAfterMarkChange();
+        });
+    },
+
     onMarkTap(e) {
-        if (!this.data.userInfo) {
+        const openid = this.getActiveOpenid();
+        if (!openid) {
             wx.showModal({
                 title: '提示', content: '请登录后再进行标记', confirmText: '去登录',
                 success: (res) => { if (res.confirm) this.onGetUserProfile(); }
@@ -349,10 +478,49 @@ Page({
 
         const movieId = String(e.currentTarget.dataset.id);
         const type = e.currentTarget.dataset.type;
-        const openid = this.data.userInfo._openid;
+        const runOptimisticMark = () => {
+            if (!this._pendingMarkMap) this._pendingMarkMap = {};
+            if (this._pendingMarkMap[movieId]) return;
+
+            const snapshot = {
+                status: this.data.markStatusMap[movieId] || '',
+                date: this.data.markDateMap[movieId] || '',
+                recordId: this.data.markRecordIdMap[movieId] || ''
+            };
+            const now = new Date().toISOString();
+            const db = wx.cloud.database();
+            const existingRecordId = this.data.markRecordIdMap[movieId];
+
+            this._pendingMarkMap[movieId] = true;
+            this.applySingleMarkLocally(movieId, type, now, existingRecordId);
+            this.showCustomToast(type === 'watched' ? '✓ 已标记为已看' : '✓ 已标记为想看');
+
+            const persistMark = existingRecordId
+                ? db.collection('Marks').doc(existingRecordId).update({
+                    data: { status: type, marked_at: now }
+                })
+                : db.collection('Marks').add({
+                    data: { movieId, openid, status: type, marked_at: now }
+                });
+
+            persistMark.then(res => {
+                if (!existingRecordId && res && res._id) {
+                    const markRecordIdMap = { ...this.data.markRecordIdMap, [movieId]: res._id };
+                    this.setData({ markRecordIdMap });
+                }
+            }).catch(err => {
+                console.error('标记失败:', err);
+                this.restoreSingleMarkLocally(movieId, snapshot);
+                wx.showToast({ title: '标记失败，请重试', icon: 'none' });
+            }).finally(() => {
+                delete this._pendingMarkMap[movieId];
+            });
+        };
         if (!movieId || !type || !openid) {
             wx.showToast({ title: '数据不完整', icon: 'none' }); return;
         }
+        runOptimisticMark();
+        return;
         const db = wx.cloud.database();
         db.collection('Marks').where({ movieId, openid }).get().then(res => {
             const now = new Date().toISOString();
@@ -371,7 +539,14 @@ Page({
                     else unwatchedCount--;
                     if (type === 'watched') watchedCount++;
                     else if (type === 'wish') wishCount++;
-                    this.setData({ markStatusMap, markDateMap, watchedCount, wishCount, unwatchedCount }, this.updateFilteredMovies);
+                    this.setData({
+                        markStatusMap,
+                        markDateMap,
+                        watchedCount,
+                        wishCount,
+                        unwatchedCount,
+                        ...this.buildWatchedProgress(watchedCount, this.data.allMovies.length)
+                    }, this.updateFilteredMovies);
                     this.showCustomToast(type === 'watched' ? '✓ 已标记为已看' : '✓ 已标记为想看');
                 });
             } else {
@@ -386,7 +561,14 @@ Page({
                     if (type === 'watched') watchedCount++;
                     else if (type === 'wish') wishCount++;
                     unwatchedCount--;
-                    this.setData({ markStatusMap, markDateMap, watchedCount, wishCount, unwatchedCount }, this.updateFilteredMovies);
+                    this.setData({
+                        markStatusMap,
+                        markDateMap,
+                        watchedCount,
+                        wishCount,
+                        unwatchedCount,
+                        ...this.buildWatchedProgress(watchedCount, this.data.allMovies.length)
+                    }, this.updateFilteredMovies);
                     this.showCustomToast(type === 'watched' ? '✓ 已标记为已看' : '✓ 已标记为想看');
                 });
             }
@@ -411,7 +593,7 @@ Page({
     },
 
     onStartBatchEdit() {
-        if (!this.data.userInfo) { this.onGetUserProfile(); return; }
+        if (!this.hasLogin()) { this.onGetUserProfile(); return; }
         this.setData({ isBatchEditing: true, selectedMovieIds: [] });
         this.updateFilteredMovies();
     },
@@ -466,7 +648,7 @@ Page({
 
     // ─── 批量标记：一次云函数调用代替 N*2 次直接 DB 操作 ───
     batchUpdateMarks(movieIds, status) {
-        const openid = this.data.userInfo._openid;
+        const openid = this.getActiveOpenid();
         if (!openid) { wx.showToast({ title: '请先登录', icon: 'none' }); return; }
 
         wx.showLoading({ title: '批量更新中...' });

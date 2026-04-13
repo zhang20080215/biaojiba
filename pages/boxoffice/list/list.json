@@ -1,5 +1,7 @@
 {
   "backgroundColor": "#FFFFFF",
   "backgroundTextStyle": "light",
-  "navigationStyle": "custom"
+  "navigationBarTitleText": "全球电影票房榜",
+  "navigationBarBackgroundColor": "#FFFFFF",
+  "navigationBarTextStyle": "black"
 }

@@ -14,6 +14,9 @@ Page({
         markStatusMap: {},
         stats: { watched: 0, wish: 0, unwatched: 0 },
         shareType: 'wall',
+        textStyle: 'grid',
+        listGridRows: 25,
+        textListColumns: [],
         canvasSize: { width: 1242, height: 1660 },
         loadProgress: 0,
         isGenerating: false,
@@ -22,6 +25,14 @@ Page({
         headerPadTop: 0,
         menuBtnHeight: 32,
         themeClass: '',
+        activeBgTheme: 'pinkBlue',
+        bgThemes: [
+            { key: 'warmSand', name: '暖杏', start: '#F8F3E7', end: '#FAECE7' },
+            { key: 'pinkBlue', name: '粉蓝', start: '#FDECEC', end: '#D2F1FE' },
+            { key: 'greenMist', name: '青雾', start: '#E1E6D1', end: '#EAF0F9' }
+        ],
+        currentGradient: { start: '#FDECEC', end: '#D2F1FE' },
+        textCardBgStyle: 'background: linear-gradient(135deg, #FDECEC 0%, #D2F1FE 100%);',
         adUnitIds: {
             share_banner: adConfig.getAdUnitId('share_banner') || '',
         },
@@ -30,19 +41,33 @@ Page({
     canvasHelper: null,
     posterDrawer: null,
 
+    getDoubanBgThemes() {
+        return [
+            { key: 'pinkBlue', name: '\u7c89\u84dd', start: '#FDECEC', end: '#D2F1FE' },
+            { key: 'goldSand', name: '\u6696\u91d1', start: '#FEEFBF', end: '#F8F3E7' },
+            { key: 'greenMist', name: '\u9752\u96fe', start: '#E1E6D1', end: '#EAF0F9' }
+        ];
+    },
+
     async onLoad(options) {
         try {
             const shareType = options.type || 'wall';
             const windowInfo = wx.getWindowInfo();
             const menuBtn = wx.getMenuButtonBoundingClientRect();
             const themeClass = wx.getStorageSync('appTheme') || '';
+            const bgThemes = this.getDoubanBgThemes();
+            const defaultTheme = bgThemes[0];
 
             this.setData({
                 shareType,
                 statusBarHeight: windowInfo.statusBarHeight || 20,
                 headerPadTop: menuBtn.top,
                 menuBtnHeight: menuBtn.height,
-                themeClass
+                themeClass,
+                bgThemes,
+                activeBgTheme: defaultTheme.key,
+                currentGradient: { start: defaultTheme.start, end: defaultTheme.end },
+                textCardBgStyle: `background: linear-gradient(135deg, ${defaultTheme.start} 0%, ${defaultTheme.end} 100%);`
             });
             await this.loadUserInfo();
             await this.loadData();
@@ -68,6 +93,24 @@ Page({
         });
     },
 
+    onTextStyleTap(e) {
+        const style = e.currentTarget.dataset.style;
+        if (style) {
+            this.setData({ textStyle: style });
+        }
+    },
+
+    onBgThemeTap(e) {
+        const key = e.currentTarget.dataset.key;
+        const theme = this.data.bgThemes.find(item => item.key === key);
+        if (!theme) return;
+        this.setData({
+            activeBgTheme: theme.key,
+            currentGradient: { start: theme.start, end: theme.end },
+            textCardBgStyle: `background: linear-gradient(135deg, ${theme.start} 0%, ${theme.end} 100%);`
+        });
+    },
+
     async onReady() {
         try {
             await new Promise(resolve => setTimeout(resolve, 300));
@@ -75,6 +118,13 @@ Page({
         } catch (err) {
             console.error('Canvas初始化失败:', err);
             wx.showModal({ title: 'Canvas初始化失败', content: err.message || '无法初始化画布，请重试', showCancel: false });
+        }
+    },
+
+    onHide() {
+        wx.hideLoading();
+        if (this.data.isGenerating) {
+            this.setData({ isGenerating: false });
         }
     },
 
@@ -124,7 +174,11 @@ Page({
             const { width, height } = this.data.canvasSize;
             canvas.width = width * dpr;
             canvas.height = height * dpr;
-            ctx.scale(dpr, dpr);
+            if (ctx.setTransform) {
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            } else {
+                ctx.scale(dpr, dpr);
+            }
 
             this.canvasHelper = new CanvasHelper(canvas, ctx, this.data.canvasSize);
             this.posterDrawer = new BoxofficePosterDrawer(this.canvasHelper);
@@ -134,13 +188,114 @@ Page({
         }
     },
 
+    // 每次保存前重新获取 canvas 节点，防止 setData 导致节点引用失效
+    ensureCanvas() {
+        return new Promise((resolve, reject) => {
+            const query = wx.createSelectorQuery().in(this);
+            query.select('#shareCanvas').fields({ node: true, size: true }).exec(res => {
+                if (!res || !res[0] || !res[0].node) {
+                    reject(new Error('Canvas节点获取失败'));
+                    return;
+                }
+                const canvas = res[0].node;
+                const ctx = canvas.getContext('2d');
+                const { width, height } = this.data.canvasSize;
+                const dpr = width > 750 ? 1 : (wx.getWindowInfo().pixelRatio || 1);
+                canvas.width = width * dpr;
+                canvas.height = height * dpr;
+                if (ctx.setTransform) {
+                    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                } else {
+                    ctx.scale(dpr, dpr);
+                }
+                if (this.canvasHelper) {
+                    this.canvasHelper.canvas = canvas;
+                    this.canvasHelper.ctx = ctx;
+                    this.canvasHelper.canvasSize = { width, height };
+                } else {
+                    this.canvasHelper = new CanvasHelper(canvas, ctx, { width, height });
+                    this.posterDrawer = new BoxofficePosterDrawer(this.canvasHelper);
+                }
+                resolve();
+            });
+        });
+    },
+
+    // 统一的画布尺寸调整：同时重设 width/height 并重置变换
+    resizeCanvas(width, height) {
+        const canvas = this.canvasHelper.canvas;
+        const ctx = this.canvasHelper.ctx;
+        const sysInfo = wx.getWindowInfo();
+        const dpr = width > 750 ? 1 : sysInfo.pixelRatio || 1;
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        if (ctx.setTransform) {
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        } else {
+            ctx.scale(dpr, dpr);
+        }
+        this.canvasHelper.canvasSize = { width, height };
+        this.setData({ canvasSize: { width, height } });
+    },
+
+    // 提前计算各模式需要的画布高度，避免边画边 resize
+    computeCanvasHeight() {
+        const baseWidth = 1242;
+        const baseHeight = 1660;
+        if (this.data.shareType === 'wall') {
+            const cols = 10;
+            const padding = 24;
+            const colGap = 3;
+            const rowGap = 3;
+            const gridStartY = 230;
+            const footerHeight = 75;
+            const availableW = baseWidth - padding * 2;
+            const movies = this.data.allMovies || [];
+            const rows = Math.max(1, Math.ceil(movies.length / cols));
+            const posterW = Math.floor((availableW - (cols - 1) * colGap) / cols);
+            const posterH = Math.floor(posterW * 1.5);
+            const needed = gridStartY + rows * posterH + (rows - 1) * rowGap + footerHeight + 20;
+            return Math.max(baseHeight, needed);
+        }
+        if (this.data.shareType === 'poster') {
+            const padding = 40;
+            const colsPerRow = 10;
+            const gap = 8;
+            const startY = 120;
+            const posterAreaStartY = startY + 160;
+            const movies = this.data.watchedMovies || [];
+            const actualRows = Math.max(1, Math.ceil(movies.length / colsPerRow));
+            const availableWidth = baseWidth - padding * 2;
+            const posterWidth = Math.floor((availableWidth - gap * (colsPerRow - 1)) / colsPerRow);
+            const posterHeight = Math.floor(posterWidth * 1.4);
+            const needed = posterAreaStartY + actualRows * (posterHeight + gap) + padding + 40;
+            return Math.min(Math.max(baseHeight, needed + 100), 5000);
+        }
+        // 文字列表模式：根据行数动态计算高度，保证每行足够大
+        if (this.data.shareType === 'text' && this.data.textStyle === 'list') {
+            const listCols = 4;
+            const movies = this.data.allMovies || [];
+            const listRows = Math.max(1, Math.ceil(movies.length / listCols));
+            const listCellH = 52;
+            const listRowGap = 2;
+            const listHeaderH = 28;
+            const gridStartY = 225;
+            const footerH = 75;
+            const needed = gridStartY + listHeaderH + listRows * listCellH + (listRows - 1) * listRowGap + footerH;
+            return Math.max(baseHeight, needed);
+        }
+        return baseHeight;
+    },
+
     async loadData() {
         try {
             wx.showLoading({ title: '加载数据中...' });
             const openid = this.data.userInfo && this.data.userInfo._openid ? this.data.userInfo._openid : '';
             const { movies, marks } = await DataLoader.loadMoviesData('boxoffice', openid, false);
             const { markStatusMap, stats, watchedMovies } = DataLoader.processMarks(marks, movies);
-            this.setData({ allMovies: movies, markStatusMap, stats, watchedMovies });
+            const listGridRows = Math.max(1, Math.ceil(movies.length / 4));
+            const textListColumns = this.buildTextListColumns(movies, listGridRows);
+            this.setData({ allMovies: movies, markStatusMap, stats, watchedMovies, listGridRows, textListColumns });
             wx.hideLoading();
         } catch (err) {
             console.error('加载数据失败:', err);
@@ -170,6 +325,16 @@ Page({
     },
 
     async startDrawing() {
+        await this.ensureCanvas();
+        const targetWidth = 1242;
+        const targetHeight = this.computeCanvasHeight();
+        if (
+            this.data.canvasSize.width !== targetWidth ||
+            this.data.canvasSize.height !== targetHeight
+        ) {
+            this.resizeCanvas(targetWidth, targetHeight);
+            await new Promise(resolve => setTimeout(resolve, 50));
+        }
         this.canvasHelper.clear();
         if (this.data.shareType === 'wall') {
             await this.drawMovieWall();
@@ -185,12 +350,12 @@ Page({
     // ════════════════════════════════════════
     async drawMovieWall() {
         const ctx = this.canvasHelper.ctx;
-        let { width, height } = this.data.canvasSize;
+        const { width, height } = this.data.canvasSize;
 
         const cols = 10;
-        const padding = 30;
-        const colGap = 5;
-        const rowGap = 5;
+        const padding = 24;
+        const colGap = 3;
+        const rowGap = 3;
         const headerTitleY = 80;
         const statsY = 160;
         const gridStartY = 230;
@@ -198,23 +363,10 @@ Page({
         const availableW = width - padding * 2;
 
         const movies = this.data.allMovies;
-        const rows = Math.ceil(movies.length / cols);
+        const rows = Math.max(1, Math.ceil(movies.length / cols));
         const posterW = Math.floor((availableW - (cols - 1) * colGap) / cols);
         const posterH = Math.floor(posterW * 1.5); // 保持 2:3 海报比例
 
-        // 动态扩展画布高度
-        const neededHeight = gridStartY + rows * posterH + (rows - 1) * rowGap + footerHeight + 20;
-        if (neededHeight > height) {
-            const newHeight = neededHeight;
-            const sysInfo = wx.getWindowInfo();
-            const dpr = width > 750 ? 1 : sysInfo.pixelRatio || 1;
-            const canvas = this.canvasHelper.canvas;
-            canvas.height = newHeight * dpr;
-            this.canvasHelper.ctx.scale(dpr, dpr);
-            this.canvasHelper.canvasSize = { width, height: newHeight };
-            this.setData({ canvasSize: { width, height: newHeight } });
-            height = newHeight;
-        }
         const gridEndY = gridStartY + rows * posterH + (rows - 1) * rowGap;
 
         this.drawCardBackground();
@@ -428,9 +580,9 @@ Page({
     async drawPosterWall() {
         const ctx = this.canvasHelper.ctx;
         const { width, height } = this.data.canvasSize;
-        const padding = 60;
-        const colsPerRow = 12;
-        const gap = 12;
+        const padding = 40;
+        const colsPerRow = 10;
+        const gap = 8;
         const availableWidth = width - padding * 2;
         const posterWidth = Math.floor((availableWidth - gap * (colsPerRow - 1)) / colsPerRow);
         const posterHeight = Math.floor(posterWidth * 1.4);
@@ -438,24 +590,12 @@ Page({
         const startY = 120;
         const posterAreaStartY = startY + 160;
         const actualMoviesCount = this.data.watchedMovies.length;
-        const actualRows = Math.ceil(actualMoviesCount / colsPerRow);
-        const neededHeight = posterAreaStartY + actualRows * (posterHeight + gap) + padding + 40;
-
-        if (neededHeight > height) {
-            const newHeight = Math.min(neededHeight + 100, 5000);
-            const sysInfo = wx.getWindowInfo();
-            const dpr = this.data.canvasSize.width > 750 ? 1 : sysInfo.pixelRatio || 1;
-            const canvas = this.canvasHelper.canvas;
-            const ctx2 = this.canvasHelper.ctx;
-            canvas.height = newHeight * dpr;
-            ctx2.scale(dpr, dpr);
-            this.canvasHelper.canvasSize = { width, height: newHeight };
-            this.setData({ canvasSize: { width, height: newHeight } });
-        }
+        const actualRows = Math.max(1, Math.ceil(actualMoviesCount / colsPerRow));
 
         this.drawCardBackground();
         this.drawCanvasHeader(ctx, width, startY);
         this.drawStats(ctx, padding, startY + 60, width - padding * 2);
+        this.drawContentPanel(24, posterAreaStartY - 18, width - 48, Math.max(220, actualRows * (posterHeight + gap) - gap + 36));
 
         const updateProgress = (progress) => {
             wx.showLoading({ title: `生成中${progress}%`, mask: true });
@@ -482,7 +622,11 @@ Page({
         this.drawCardBackground();
         this.drawCanvasHeader(ctx, width, headerTitleY);
         this.drawStats(ctx, padding + 20, statsY, width - (padding + 20) * 2);
-        this.drawMovieGrid(ctx, padding, gridStartY, width - padding * 2, gridEndY - gridStartY);
+        if (this.data.textStyle === 'list') {
+            this.drawMovieList(ctx, padding, gridStartY, width - padding * 2, gridEndY - gridStartY);
+        } else {
+            this.drawMovieGrid(ctx, padding, gridStartY, width - padding * 2, gridEndY - gridStartY);
+        }
         this.drawFooter(gridEndY);
     },
 
@@ -490,14 +634,32 @@ Page({
     //  公共绘制组件
     // ════════════════════════════════════════
 
+    drawContentPanel(x, y, width, height) {
+        const ctx = this.canvasHelper.ctx;
+        ctx.save();
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.38)';
+        this.canvasHelper.drawRoundRectPath(x, y, width, height, 24);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.58)';
+        ctx.lineWidth = 1;
+        this.canvasHelper.drawRoundRectPath(x, y, width, height, 24);
+        ctx.stroke();
+        ctx.restore();
+    },
+
     drawCardBackground() {
         const ctx = this.canvasHelper.ctx;
         const { width, height } = this.data.canvasSize;
 
         const gradient = ctx.createLinearGradient(0, 0, width, height);
-        gradient.addColorStop(0, '#F8F3E7');
-        gradient.addColorStop(0.5, '#EEF3E5');
-        gradient.addColorStop(1, '#FAECE7');
+        if (this.data.shareType === 'text') {
+            gradient.addColorStop(0, this.data.currentGradient.start);
+            gradient.addColorStop(1, this.data.currentGradient.end);
+        } else {
+            gradient.addColorStop(0, '#F8F3E7');
+            gradient.addColorStop(0.5, '#EEF3E5');
+            gradient.addColorStop(1, '#FAECE7');
+        }
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, width, height);
 
@@ -662,12 +824,12 @@ Page({
         const movies = this.data.allMovies;
         const cols = 5;
         const rows = 20;
-        const colGap = 10;
-        const gap = 10;
+        const colGap = 6;
+        const rowGap = 4;
 
         const cellW = Math.floor((availW - (cols - 1) * colGap) / cols);
-        const cellH = Math.floor((availH - (rows - 1) * gap) / rows);
-        const totalH = rows * cellH + (rows - 1) * gap;
+        const cellH = Math.floor((availH - (rows - 1) * rowGap) / rows);
+        const totalH = rows * cellH + (rows - 1) * rowGap;
         const totalW = cols * cellW + (cols - 1) * colGap;
         const offsetX = startX + (availW - totalW) / 2;
         const offsetY = startY + (availH - totalH) / 2;
@@ -677,13 +839,167 @@ Page({
             const row = Math.floor(i / cols);
             const col = i % cols;
             const x = offsetX + col * (cellW + colGap);
-            const y = offsetY + row * (cellH + gap);
+            const y = offsetY + row * (cellH + rowGap);
             const status = this.data.markStatusMap[movie._id] || 'unwatched';
             this._drawTextCell(ctx, x, y, cellW, cellH, movie, status);
         }
     },
 
-    _drawTextCell(ctx, x, y, w, h, movie, status) {
+    buildTextListColumns(movies, rowsPerColumn) {
+        const columns = [];
+        const totalColumns = 4;
+        for (let columnIndex = 0; columnIndex < totalColumns; columnIndex++) {
+            const startIndex = columnIndex * rowsPerColumn;
+            const endIndex = Math.min(startIndex + rowsPerColumn, movies.length);
+            columns.push({
+                key: `col-${columnIndex}`,
+                header: endIndex > startIndex ? `TOP${startIndex + 1}~${endIndex}` : '',
+                movies: movies.slice(startIndex, endIndex)
+            });
+        }
+        return columns;
+    },
+
+    drawMovieList(ctx, startX, startY, availW, availH) {
+        const movies = this.data.allMovies;
+        const cols = 4;
+        const rows = Math.max(1, Math.ceil(movies.length / cols));
+        const colGap = 14;
+        const rowGap = 2;
+        const headerHeight = 28;
+        const cellW = Math.floor((availW - (cols - 1) * colGap) / cols);
+        const cellH = Math.floor((availH - headerHeight - (rows - 1) * rowGap) / rows);
+
+        for (let col = 0; col < cols; col++) {
+            const startRank = col * rows + 1;
+            const endRank = Math.min((col + 1) * rows, movies.length);
+            if (startRank > movies.length) continue;
+            const headerX = startX + col * (cellW + colGap);
+            this.drawTextListHeader(ctx, headerX, startY, `TOP${startRank}~${endRank}`);
+        }
+
+        for (let i = 0; i < movies.length; i++) {
+            const movie = movies[i];
+            const col = Math.floor(i / rows);
+            const row = i % rows;
+            const x = startX + col * (cellW + colGap);
+            const y = startY + headerHeight + row * (cellH + rowGap);
+            const status = this.data.markStatusMap[movie._id] || 'unwatched';
+            this.drawMovieListItem(ctx, x, y, cellW, cellH, movie, status);
+        }
+    },
+
+    drawTextListHeader(ctx, x, y, text) {
+        ctx.save();
+        const lineX = x + 6;
+        ctx.strokeStyle = 'rgba(156, 153, 143, 0.65)';
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(lineX, y + 3);
+        ctx.lineTo(lineX, y + 19);
+        ctx.stroke();
+
+        ctx.font = '700 19px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = 'rgba(45, 45, 43, 0.75)';
+        ctx.fillText(text, x + 16, y + 12);
+        ctx.restore();
+    },
+
+    legacyDrawMovieListItem(ctx, x, y, w, h, movie, status) {
+        const dotColorMap = {
+            watched: '#9AAB65',
+            wish: '#D4A828',
+            unwatched: '#9C998F'
+        };
+        const titleColorMap = {
+            watched: 'rgba(45, 45, 43, 0.72)',
+            wish: 'rgba(45, 45, 43, 0.82)',
+            unwatched: 'rgba(111, 111, 104, 0.88)'
+        };
+        const dotSize = Math.max(6, Math.floor(h * 0.22));
+        const textX = x + dotSize + 12;
+        const centerY = y + h / 2;
+        const maxTextWidth = w - dotSize - 18;
+        let title = movie.title;
+
+        ctx.save();
+        ctx.fillStyle = dotColorMap[status] || dotColorMap.unwatched;
+        ctx.beginPath();
+        ctx.arc(x + dotSize / 2 + 8, centerY, dotSize / 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.font = '500 15px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        if (ctx.measureText(title).width > maxTextWidth) {
+            while (title.length > 1 && ctx.measureText(title + '…').width > maxTextWidth) {
+                title = title.slice(0, -1);
+            }
+            title += '…';
+        }
+        ctx.fillStyle = titleColorMap[status] || titleColorMap.unwatched;
+        ctx.fillText(title, textX, centerY);
+
+        if (status === 'watched') {
+            const textWidth = Math.min(ctx.measureText(title).width, maxTextWidth);
+            ctx.strokeStyle = 'rgba(123, 154, 60, 0.55)';
+            ctx.lineWidth = 1.4;
+            ctx.beginPath();
+            ctx.moveTo(textX, centerY);
+            ctx.lineTo(textX + textWidth, centerY);
+            ctx.stroke();
+        }
+        ctx.restore();
+    },
+
+    drawMovieListItem(ctx, x, y, w, h, movie, status) {
+        const dotColor = { watched: '#9AAB65', wish: '#D4A828', unwatched: '#9C998F' };
+        const titleColor = {
+            watched: 'rgba(45, 45, 43, 0.78)',
+            wish: 'rgba(45, 45, 43, 0.85)',
+            unwatched: 'rgba(90, 88, 82, 0.82)'
+        };
+        const dotR = 4;
+        const dotCenterX = x + 6;
+        const textX = x + 18;
+        const centerY = y + h / 2;
+        const maxTextWidth = w - 22;
+        let title = movie.title;
+
+        ctx.save();
+        ctx.fillStyle = dotColor[status] || dotColor.unwatched;
+        ctx.beginPath();
+        ctx.arc(dotCenterX, centerY, dotR, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.font = '500 24px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        if (ctx.measureText(title).width > maxTextWidth) {
+            while (title.length > 1 && ctx.measureText(title + '…').width > maxTextWidth) {
+                title = title.slice(0, -1);
+            }
+            title += '…';
+        }
+        ctx.fillStyle = titleColor[status] || titleColor.unwatched;
+        ctx.fillText(title, textX, centerY);
+
+        if (status === 'watched') {
+            const textWidth = Math.min(ctx.measureText(title).width, maxTextWidth);
+            ctx.strokeStyle = 'rgba(123, 154, 60, 0.5)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(textX, centerY);
+            ctx.lineTo(textX + textWidth, centerY);
+            ctx.stroke();
+        }
+        ctx.restore();
+    },
+
+    legacyDrawTextCell(ctx, x, y, w, h, movie, status) {
         const radius = 10;
 
         ctx.save();
@@ -744,19 +1060,91 @@ Page({
         ctx.restore();
     },
 
+    _drawTextCell(ctx, x, y, w, h, movie, status) {
+        const rankText = movie.rank ? `${movie.rank}` : '';
+        const statusTheme = {
+            watched: {
+                rank: 'rgba(154, 171, 101, 0.6)',
+                title: '#6B8A2E',
+                boxFill: 'rgba(225, 230, 209, 0.85)',
+                boxStroke: 'rgba(154, 171, 101, 0.25)'
+            },
+            wish: {
+                rank: 'rgba(212, 168, 40, 0.6)',
+                title: '#B8842A',
+                boxFill: 'rgba(254, 239, 191, 0.85)',
+                boxStroke: 'rgba(212, 168, 40, 0.25)'
+            },
+            unwatched: {
+                rank: 'rgba(156, 153, 143, 0.55)',
+                title: '#7F7A70',
+                boxFill: 'rgba(242, 240, 234, 0.85)',
+                boxStroke: 'rgba(156, 153, 143, 0.15)'
+            }
+        };
+        const theme = statusTheme[status] || statusTheme.unwatched;
+
+        ctx.save();
+        // 背景圆角卡片
+        const boxInset = 2;
+        const boxX = x + boxInset;
+        const boxW = w - boxInset * 2;
+        const boxH = h - 2;
+        const boxY = y + 1;
+        ctx.fillStyle = theme.boxFill;
+        this.canvasHelper.drawRoundRectPath(boxX, boxY, boxW, boxH, 10);
+        ctx.fill();
+        ctx.strokeStyle = theme.boxStroke;
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+
+        // 排名（左上小字）
+        ctx.fillStyle = theme.rank;
+        ctx.font = '500 13px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(rankText, x + w / 2, y + h * 0.28);
+
+        // 电影名（居中主体）
+        let title = movie.title;
+        ctx.font = '600 17px sans-serif';
+        const maxTitleW = boxW - 12;
+        if (ctx.measureText(title).width > maxTitleW) {
+            while (title.length > 1 && ctx.measureText(title + '…').width > maxTitleW) {
+                title = title.slice(0, -1);
+            }
+            title += '…';
+        }
+        const titleWidth = Math.min(ctx.measureText(title).width, maxTitleW);
+        const titleY = y + h * 0.65;
+        ctx.fillStyle = theme.title;
+        ctx.fillText(title, x + w / 2, titleY);
+
+        // 已看划线
+        if (status === 'watched') {
+            ctx.strokeStyle = 'rgba(107, 138, 46, 0.4)';
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.moveTo(x + (w - titleWidth) / 2, titleY);
+            ctx.lineTo(x + (w + titleWidth) / 2, titleY);
+            ctx.stroke();
+        }
+        ctx.restore();
+    },
+
     drawFooter(lastMovieY) {
         const ctx = this.canvasHelper.ctx;
         const { width, height } = this.data.canvasSize;
 
         const footerY = lastMovieY
-            ? Math.min(lastMovieY + 40, height - 40)
-            : height - 40;
+            ? Math.min(lastMovieY + 40, height - 44)
+            : height - 44;
 
         ctx.save();
-        ctx.font = '400 22px sans-serif';
+        ctx.fillStyle = 'rgba(45, 45, 43, 0.72)';
+        ctx.font = '600 20px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillStyle = 'rgba(156, 153, 143, 0.92)';
         ctx.fillText('搜索小程序：标记吧，免费制作同款图片', width / 2, footerY);
         ctx.restore();
 
@@ -768,37 +1156,38 @@ Page({
         const { canvasSize } = this.data;
         if (!canvas) throw new Error('Canvas未初始化');
 
-        try {
-            await this.requestSavePermission();
-            const sysInfo = wx.getWindowInfo();
-            const dpr = canvasSize.width > 750 ? 1 : sysInfo.pixelRatio || 1;
-            const tempFilePath = await new Promise((resolve, reject) => {
-                setTimeout(() => {
-                    wx.canvasToTempFilePath({
-                        canvas, x: 0, y: 0,
-                        width: canvasSize.width, height: canvasSize.height,
-                        destWidth: canvasSize.width * dpr, destHeight: canvasSize.height * dpr,
-                        fileType: 'jpg', quality: 0.9,
-                        success: (res) => resolve(res.tempFilePath),
-                        fail: (err) => reject(new Error('生成图片失败: ' + (err.errMsg || '未知错误')))
-                    }, this);
-                }, 500);
-            });
+        await this.requestSavePermission();
+        const dpr = canvasSize.width > 750 ? 1 : (wx.getWindowInfo().pixelRatio || 1);
+        const tempFilePath = await new Promise((resolve, reject) => {
+            setTimeout(() => {
+                wx.canvasToTempFilePath({
+                    canvas,
+                    x: 0, y: 0,
+                    width: canvasSize.width,
+                    height: canvasSize.height,
+                    destWidth: canvasSize.width * dpr,
+                    destHeight: canvasSize.height * dpr,
+                    fileType: 'jpg',
+                    quality: 0.92,
+                    success: res => resolve(res.tempFilePath),
+                    fail: err => reject(new Error('生成图片失败: ' + (err.errMsg || '未知错误')))
+                }, this);
+            }, 300);
+        });
 
-            await new Promise((resolve, reject) => {
-                wx.saveImageToPhotosAlbum({
-                    filePath: tempFilePath,
-                    success: () => resolve(),
-                    fail: (err) => {
-                        if (err.errMsg && err.errMsg.includes('auth deny')) reject(new Error('需要授权保存图片到相册'));
-                        else reject(new Error('保存失败: ' + (err.errMsg || '未知错误')));
+        await new Promise((resolve, reject) => {
+            wx.saveImageToPhotosAlbum({
+                filePath: tempFilePath,
+                success: resolve,
+                fail: (err) => {
+                    if (err.errMsg && err.errMsg.includes('auth deny')) {
+                        reject(new Error('需要授权保存图片到相册'));
+                    } else {
+                        reject(new Error('保存失败: ' + (err.errMsg || '未知错误')));
                     }
-                });
+                }
             });
-        } catch (err) {
-            console.error('导出保存流程失败:', err);
-            throw err;
-        }
+        });
     },
 
     async requestSavePermission() {
@@ -849,6 +1238,10 @@ Page({
     },
 
     onUnload() {
+        wx.hideLoading();
+        if (this.data.isGenerating) {
+            this.setData({ isGenerating: false });
+        }
         if (this.canvasHelper) this.canvasHelper.clearCache();
     }
 });

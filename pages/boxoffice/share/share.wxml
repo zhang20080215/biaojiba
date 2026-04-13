@@ -6,11 +6,40 @@
       <text class="top-title">海报预览</text>
       <view class="top-right"></view>
     </view>
+
+    <view class="bg-panel" wx:if="{{shareType === 'text'}}">
+      <text class="bg-panel-label">背景</text>
+      <scroll-view class="theme-scroll" scroll-x enable-flex>
+        <view
+          wx:for="{{bgThemes}}"
+          wx:key="key"
+          class="theme-chip {{activeBgTheme === item.key ? 'active' : ''}}"
+          data-key="{{item.key}}"
+          bindtap="onBgThemeTap"
+        >
+          <view class="theme-dot" style="background: linear-gradient(135deg, {{item.start}}, {{item.end}})"></view>
+          <text class="theme-label">{{item.name}}</text>
+          <text wx:if="{{activeBgTheme === item.key}}" class="theme-check">✓</text>
+        </view>
+      </scroll-view>
+    </view>
+
+    <view class="bg-panel" wx:if="{{shareType === 'text'}}">
+      <text class="bg-panel-label">样式</text>
+      <view class="style-toggle">
+        <view class="style-chip {{textStyle === 'grid' ? 'active' : ''}}" data-style="grid" bindtap="onTextStyleTap">
+          <text class="style-chip-label">网格</text>
+        </view>
+        <view class="style-chip {{textStyle === 'list' ? 'active' : ''}}" data-style="list" bindtap="onTextStyleTap">
+          <text class="style-chip-label">列表</text>
+        </view>
+      </view>
+    </view>
   </view>
 
   <view class="content-wrap">
     <view class="container">
-      <view class="share-card {{shareType === 'poster' ? 'poster-wall' : ''}} {{shareType === 'wall' ? 'wall-mode' : ''}}">
+      <view class="share-card {{shareType === 'poster' ? 'poster-wall' : ''}} {{shareType === 'wall' ? 'wall-mode' : ''}}" style="{{shareType === 'text' ? textCardBgStyle : ''}}">
         <view class="card-header">
           <text class="card-header-icon">🎬</text>
           <view class="card-title-group">
@@ -39,35 +68,59 @@
           </view>
         </view>
 
-        <view class="wall-grid" wx:if="{{shareType === 'wall'}}">
-          <block wx:for="{{allMovies}}" wx:key="_id">
-            <view class="wall-item {{markStatusMap[item._id] || 'unwatched'}}">
-              <image class="wall-poster" src="{{item.thumbCover || item.cover}}" mode="aspectFill" lazy-load />
-              <view class="wall-overlay {{markStatusMap[item._id] || 'unwatched'}}"></view>
-              <view class="wall-status-icon" wx:if="{{markStatusMap[item._id] === 'watched'}}">✓</view>
-              <view class="wall-status-icon wish-icon" wx:elif="{{markStatusMap[item._id] === 'wish'}}">♡</view>
-              <text class="wall-title">{{item.title}}</text>
-            </view>
-          </block>
+        <view class="content-panel wall-panel" wx:if="{{shareType === 'wall'}}">
+          <view class="wall-grid">
+            <block wx:for="{{allMovies}}" wx:key="_id">
+              <view class="wall-item {{markStatusMap[item._id] || 'unwatched'}}">
+                <image class="wall-poster" src="{{item.thumbCover || item.cover}}" mode="aspectFill" lazy-load />
+                <view class="wall-overlay {{markStatusMap[item._id] || 'unwatched'}}"></view>
+                <view class="wall-status-icon" wx:if="{{markStatusMap[item._id] === 'watched'}}">✓</view>
+                <view class="wall-status-icon wish-icon" wx:elif="{{markStatusMap[item._id] === 'wish'}}">♡</view>
+                <text class="wall-title">{{item.title}}</text>
+              </view>
+            </block>
+          </view>
           <view class="empty-tip" wx:if="{{allMovies.length === 0}}">暂无电影数据</view>
         </view>
 
-        <view class="poster-grid" wx:elif="{{shareType === 'poster'}}">
-          <block wx:for="{{watchedMovies}}" wx:key="_id">
-            <view class="poster-item">
-              <image class="poster-image" src="{{item.cover}}" mode="aspectFill" lazy-load />
-            </view>
-          </block>
+        <view class="content-panel poster-panel" wx:elif="{{shareType === 'poster'}}">
+          <view class="poster-grid">
+            <block wx:for="{{watchedMovies}}" wx:key="_id">
+              <view class="poster-item">
+                <image class="poster-image" src="{{item.cover}}" mode="aspectFill" lazy-load />
+              </view>
+            </block>
+          </view>
           <view class="empty-tip" wx:if="{{watchedMovies.length === 0}}">暂无已观看电影</view>
         </view>
 
-        <view class="text-grid" wx:else>
-          <block wx:for="{{allMovies}}" wx:key="_id">
-            <view class="text-cell {{markStatusMap[item._id] || 'unwatched'}}">
-              <text class="text-cell-rank">No.{{item.rank}}</text>
-              <text class="text-cell-title">{{item.title}}</text>
-            </view>
-          </block>
+        <view class="content-panel text-panel plain-panel" wx:else>
+          <view class="text-grid" wx:if="{{textStyle === 'grid'}}">
+            <block wx:for="{{allMovies}}" wx:key="_id">
+              <view class="text-cell {{markStatusMap[item._id] || 'unwatched'}}">
+                <view class="text-cell-box">
+                  <text class="text-cell-rank">{{item.rank}}</text>
+                  <text class="text-cell-title">{{item.title}}</text>
+                </view>
+              </view>
+            </block>
+          </view>
+          <view class="text-list-columns" wx:else>
+            <block wx:for="{{textListColumns}}" wx:key="key" wx:for-item="column">
+              <view class="text-list-column">
+                <view wx:if="{{column.header}}" class="text-list-header">
+                  <view class="text-list-header-line"></view>
+                  <text class="text-list-header-text">{{column.header}}</text>
+                </view>
+                <block wx:for="{{column.movies}}" wx:key="_id" wx:for-item="movie">
+                  <view class="text-list-item {{markStatusMap[movie._id] || 'unwatched'}}">
+                    <view class="text-list-dot"></view>
+                    <text class="text-list-title">{{movie.title}}</text>
+                  </view>
+                </block>
+              </view>
+            </block>
+          </view>
           <view class="empty-tip" wx:if="{{allMovies.length === 0}}">暂无电影数据</view>
         </view>
 

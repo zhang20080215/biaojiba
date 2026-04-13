@@ -96,6 +96,7 @@ function processMarks(marks, movies) {
   const watchedMovies = [];
   const markDateMap = {};
   const markStatusMap = {};
+  const markRecordIdMap = {};
   const watchedIds = [];
   const wishIds = [];
 
@@ -126,6 +127,9 @@ function processMarks(marks, movies) {
     let mark = _markObjectMap[movie._id] || normalizedMap[cleanMovieId] || markTitleMap[movie.title];
 
     if (mark) {
+      if (mark._id) {
+        markRecordIdMap[movie._id] = mark._id;
+      }
       if (mark.status === 'watched' || mark.status === 'wish') {
         markStatusMap[movie._id] = mark.status;
       }
@@ -158,7 +162,7 @@ function processMarks(marks, movies) {
     }
   });
 
-  return { markStatusMap, markDateMap, watchedIds, wishIds, stats, watchedMovies };
+  return { markStatusMap, markDateMap, markRecordIdMap, watchedIds, wishIds, stats, watchedMovies };
 }
 
 // ─────────────────────────────────────────────

@@ -14,8 +14,8 @@ BoxofficePosterDrawer.prototype.getTitle = function () {
 BoxofficePosterDrawer.prototype.drawPosterWall = async function (movies, canvasSize, updateProgress) {
     const { width, height } = canvasSize;
     const padding = 40;
-    const colsPerRow = 12;
-    const gap = 12;
+    const colsPerRow = 10;
+    const gap = 8;
 
     const availableWidth = width - padding * 2;
     const posterWidth = Math.floor((availableWidth - gap * (colsPerRow - 1)) / colsPerRow);
@@ -53,8 +53,9 @@ BoxofficePosterDrawer.prototype.drawPosterWall = async function (movies, canvasS
 BoxofficePosterDrawer.prototype.drawSinglePoster = async function (movie, x, y, width, height) {
     const ctx = this.ctx;
 
+    const radius = 8;
     ctx.save();
-    this.helper.drawRoundRectPath(x, y, width, height, 12);
+    this.helper.drawRoundRectPath(x, y, width, height, radius);
     ctx.clip();
     ctx.fillStyle = '#f0f0f0';
     ctx.fillRect(x, y, width, height);
@@ -73,14 +74,13 @@ BoxofficePosterDrawer.prototype.drawSinglePoster = async function (movie, x, y, 
         const imagePath = await this.helper.loadImage(imageUrl);
 
         ctx.save();
-        this.helper.drawRoundRectPath(x, y, width, height, 12);
+        this.helper.drawRoundRectPath(x, y, width, height, radius);
         ctx.clip();
         ctx.drawImage(imagePath, x, y, width, height);
 
-        // 低饱和暖色半透明边框
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.06)';
-        ctx.lineWidth = 2;
-        this.helper.drawRoundRectPath(x, y, width, height, 12);
+        ctx.lineWidth = 1.5;
+        this.helper.drawRoundRectPath(x, y, width, height, radius);
         ctx.stroke();
         ctx.restore();
 

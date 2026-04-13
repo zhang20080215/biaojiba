@@ -13,7 +13,6 @@
   position: relative;
   overflow: hidden;
   background: var(--brand-primary);
-  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
   padding-bottom: var(--space-6);
 }
 
@@ -51,7 +50,7 @@
 .header {
   position: relative;
   z-index: 1;
-  padding: 0 var(--space-4) 0;
+  padding: var(--space-4) var(--space-4) 0;
 }
 
 .header-left {
@@ -59,12 +58,7 @@
   flex-direction: column;
 }
 
-.header-top {
-  display: flex;
-  align-items: center;
-}
-
-/* 返回按钮 — 尺寸通过 inline style 与胶囊按钮一致 */
+/* 返回按钮 - 尺寸通过 inline style 与胶囊按钮一致 */
 .back-btn {
   border-radius: 50%;
   background: var(--bg-card);
@@ -93,7 +87,7 @@
   color: #FFFFFF;
   line-height: 1.15;
   letter-spacing: 2rpx;
-  margin-top: var(--space-4);
+  margin-top: 0;
   text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
 }
 
@@ -103,6 +97,44 @@
   margin-top: var(--space-2);
   margin-bottom: var(--space-2);
   line-height: 1.4;
+}
+
+.hero-progress {
+  margin-top: var(--space-3);
+}
+
+.hero-progress-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.hero-progress-label {
+  font-size: var(--font-caption);
+  color: rgba(255, 255, 255, 0.82);
+  letter-spacing: 1rpx;
+}
+
+.hero-progress-percent {
+  font-size: 44rpx;
+  line-height: 1;
+  font-weight: 800;
+  color: #FFFFFF;
+}
+
+.hero-progress-bar {
+  height: 16rpx;
+  margin-top: var(--space-2);
+  background: rgba(255, 255, 255, 0.26);
+  border-radius: 999rpx;
+  overflow: hidden;
+}
+
+.hero-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.78) 0%, #FFFFFF 100%);
+  border-radius: 999rpx;
 }
 
 /* 用户卡片（登录前 & 登录后共用，与 category 一致） */
@@ -175,10 +207,13 @@
 .tabs-bar {
   display: flex;
   background: var(--bg-card);
-  margin: var(--space-4) var(--space-3) 0;
-  border-radius: var(--radius-lg);
-  padding: 6rpx;
-  box-shadow: var(--shadow-card);
+  margin: 0;
+  width: 100%;
+  border-radius: 0;
+  padding: 12rpx var(--space-3);
+  box-shadow: none;
+  box-sizing: border-box;
+  border-bottom: 1rpx solid var(--line-subtle);
 }
 
 .tab {
@@ -200,22 +235,26 @@
 }
 
 /* ========== 吸顶操作栏 ========== */
-.sticky-action-container {
+.sticky-top-group {
   position: sticky;
+  top: 0;
   z-index: 100;
-  padding: var(--space-3) var(--space-3) var(--space-2);
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.sticky-action-container {
+  padding: 10rpx var(--space-3) var(--space-2);
+  background: var(--bg-card);
+  border-bottom: 1rpx solid var(--line-subtle);
 }
 
 .middle-action-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: var(--bg-card);
-  border-radius: var(--radius-lg);
-  padding: 6rpx;
-  box-shadow: var(--shadow-card);
+  padding: 0;
 }
 
 .batch-options {

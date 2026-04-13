@@ -2,42 +2,50 @@
 <view class="page-root {{themeClass}}">
 
   <!-- Hero 区（与 category 保持一致） -->
-  <view class="hero-section" style="padding-top: {{headerPadTop}}px">
+  <view class="hero-section">
     <view class="header">
       <view class="header-left">
-        <view class="header-top" style="height: {{menuBtnHeight}}px">
-          <view class="back-btn" style="width: {{menuBtnHeight}}px; height: {{menuBtnHeight}}px; line-height: {{menuBtnHeight}}px" bindtap="onBackHome">‹</view>
-        </view>
         <text class="app-name">豆瓣电影TOP250</text>
         <text class="app-slogan">标记你看过的经典，生成专属观影海报</text>
+        <view class="hero-progress">
+          <view class="hero-progress-head">
+            <text class="hero-progress-label">已看进度</text>
+            <text class="hero-progress-percent">{{watchedProgressText}}</text>
+          </view>
+          <view class="hero-progress-bar">
+            <view class="hero-progress-fill" style="width: {{watchedProgressWidth}};"></view>
+          </view>
+        </view>
       </view>
     </view>
   </view>
 
   <!-- 统计 Tab 栏 -->
-  <view class="tabs-bar">
-    <view class="tab {{activeTab === 0 ? 'active' : ''}}" data-idx="0" bindtap="onTabChange">全部({{allCount}})</view>
-    <view class="tab {{activeTab === 1 ? 'active' : ''}}" data-idx="1" bindtap="onTabChange">已看({{watchedCount}})</view>
-    <view class="tab {{activeTab === 2 ? 'active' : ''}}" data-idx="2" bindtap="onTabChange">想看({{wishCount}})</view>
-    <view class="tab {{activeTab === 3 ? 'active' : ''}}" data-idx="3" bindtap="onTabChange">未看({{unwatchedCount}})</view>
-  </view>
+  <view class="sticky-top-group">
+    <view class="tabs-bar">
+      <view class="tab {{activeTab === 0 ? 'active' : ''}}" data-idx="0" bindtap="onTabChange">全部({{allCount}})</view>
+      <view class="tab {{activeTab === 1 ? 'active' : ''}}" data-idx="1" bindtap="onTabChange">已看({{watchedCount}})</view>
+      <view class="tab {{activeTab === 2 ? 'active' : ''}}" data-idx="2" bindtap="onTabChange">想看({{wishCount}})</view>
+      <view class="tab {{activeTab === 3 ? 'active' : ''}}" data-idx="3" bindtap="onTabChange">未看({{unwatchedCount}})</view>
+    </view>
 
-  <!-- 操作区域（吸顶） -->
-  <view class="sticky-action-container" style="top: {{stickyTop}}px">
-    <view class="middle-action-section">
-      <view wx:if="{{userInfo}}" class="batch-options">
-        <block wx:if="{{!isBatchEditing}}">
-          <view class="icon-btn batch-icon" bindtap="onStartBatchEdit">批量标记</view>
-        </block>
-        <block wx:elif="{{isBatchEditing}}">
-          <view class="icon-btn action-watched" bindtap="onBatchWatch">批量已看</view>
-          <view class="icon-btn action-wish" bindtap="onBatchWish">批量想看</view>
-          <view class="icon-btn action-unwatched" bindtap="onBatchUnwatch">批量未看</view>
-          <view class="icon-btn action-cancel" bindtap="onCancelBatchEdit">取消</view>
-        </block>
-      </view>
-      <view class="generate-card-wrapper" bindtap="onShareTap" wx:if="{{!isBatchEditing}}">
-        <view class="generate-card-btn">生成观影海报</view>
+    <!-- 操作区域（吸顶） -->
+    <view class="sticky-action-container">
+      <view class="middle-action-section">
+        <view wx:if="{{userInfo}}" class="batch-options">
+          <block wx:if="{{!isBatchEditing}}">
+            <view class="icon-btn batch-icon" bindtap="onStartBatchEdit">批量标记</view>
+          </block>
+          <block wx:elif="{{isBatchEditing}}">
+            <view class="icon-btn action-watched" bindtap="onBatchWatch">批量已看</view>
+            <view class="icon-btn action-wish" bindtap="onBatchWish">批量想看</view>
+            <view class="icon-btn action-unwatched" bindtap="onBatchUnwatch">批量未看</view>
+            <view class="icon-btn action-cancel" bindtap="onCancelBatchEdit">取消</view>
+          </block>
+        </view>
+        <view class="generate-card-wrapper" bindtap="onShareTap" wx:if="{{!isBatchEditing}}">
+          <view class="generate-card-btn">生成观影海报</view>
+        </view>
       </view>
     </view>
   </view>

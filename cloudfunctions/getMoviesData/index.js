@@ -55,6 +55,8 @@ exports.main = async (event, context) => {
             collectionName = 'chinese_movies';
         } else if (theme === 'annual') {
             collectionName = 'annual_movies';
+            orderByField = 'updateTime';
+            orderDirection = 'desc';
         }
 
         const _ = db.command;
@@ -65,12 +67,24 @@ exports.main = async (event, context) => {
             .where({ isTop250: _.neq(false) })
             .orderBy(orderByField, orderDirection);
 
-        const [movies, marks] = await Promise.all([
+        const [moviesRaw, marks] = await Promise.all([
             readAll(collectionName, moviesQuery),
             openid
                 ? readAll('Marks', db.collection('Marks').where({ openid }))
                 : Promise.resolve([])
         ]);
+
+        let movies = moviesRaw;
+        if (theme === 'annual') {
+            movies = [...moviesRaw].sort((a, b) => {
+                const dateA = a.releaseDate ? String(a.releaseDate).slice(0, 10).replace(/\./g, '-').replace(/\//g, '-') : '';
+                const dateB = b.releaseDate ? String(b.releaseDate).slice(0, 10).replace(/\./g, '-').replace(/\//g, '-') : '';
+                if (dateA && dateB && dateA !== dateB) return dateA.localeCompare(dateB);
+                if (dateA && !dateB) return -1;
+                if (!dateA && dateB) return 1;
+                return String(a.title || '').localeCompare(String(b.title || ''));
+            });
+        }
 
         return { success: true, movies, marks };
     } catch (err) {

@@ -70,17 +70,33 @@ Page({
         wx.reLaunch({ url: '/pages/category/category' });
     },
 
-    checkLoginStatus() {
+    getStoredUserInfo() {
         const userInfo = wx.getStorageSync('userInfo');
+        if (!userInfo) return null;
+        const openid = userInfo._openid || userInfo.openid || '';
+        return openid ? { ...userInfo, _openid: openid, openid } : userInfo;
+    },
+
+    getActiveOpenid() {
+        const currentUserInfo = this.data.userInfo || {};
+        return currentUserInfo._openid || currentUserInfo.openid || this.data.openid || ((this.getStoredUserInfo() || {})._openid) || '';
+    },
+
+    hasLogin() {
+        return !!this.getActiveOpenid();
+    },
+
+    checkLoginStatus() {
+        const userInfo = this.getStoredUserInfo();
         if (userInfo) {
-            this.setData({ userInfo, openid: userInfo._openid });
+            this.setData({ userInfo, openid: userInfo._openid || '' });
         } else {
             this.setData({ userInfo: null, openid: '' });
         }
     },
 
     onShareTap() {
-        if (!this.data.userInfo) {
+        if (!this.hasLogin()) {
             wx.showToast({ title: '请先完成登录', icon: 'none' });
             this.onGetUserProfile();
             return;
@@ -187,7 +203,7 @@ Page({
     async loadAllMovies(forceRefresh = false) {
         wx.showNavigationBarLoading();
         try {
-            const openid = this.data.userInfo ? this.data.userInfo._openid : null;
+            const openid = this.getActiveOpenid() || null;
             const { movies, marks } = await DataLoader.loadMoviesData('oscar', openid, forceRefresh);
 
             const allMovies = movies.map(m => ({
@@ -222,10 +238,11 @@ Page({
 
     // ─── 仅刷新标记（登录后调用，不重复拉取电影列表）───
     async loadUserMarks() {
-        if (!this.data.userInfo || !this.data.userInfo._openid) return;
+        const openid = this.getActiveOpenid();
+        if (!openid) return;
         wx.showNavigationBarLoading();
         try {
-            const { marks } = await DataLoader.loadMoviesData('oscar', this.data.userInfo._openid, false);
+            const { marks } = await DataLoader.loadMoviesData('oscar', openid, false);
             const { markStatusMap, markDateMap, watchedIds, wishIds, stats } = DataLoader.processMarks(marks, this.data.allMovies);
             this.setData({
                 markStatusMap, markDateMap, watchedIds, wishIds,
@@ -257,7 +274,8 @@ Page({
     },
 
     onMarkTap(e) {
-        if (!this.data.userInfo) {
+        const openid = this.getActiveOpenid();
+        if (!openid) {
             wx.showModal({
                 title: '提示', content: '请登录后再进行标记', confirmText: '去登录',
                 success: (res) => { if (res.confirm) this.onGetUserProfile(); }
@@ -267,7 +285,6 @@ Page({
 
         const movieId = String(e.currentTarget.dataset.id);
         const type = e.currentTarget.dataset.type;
-        const openid = this.data.userInfo._openid;
         if (!movieId || !type || !openid) {
             wx.showToast({ title: '数据不完整', icon: 'none' }); return;
         }
@@ -321,7 +338,7 @@ Page({
     },
 
     onStartBatchEdit() {
-        if (!this.data.userInfo) { this.onGetUserProfile(); return; }
+        if (!this.hasLogin()) { this.onGetUserProfile(); return; }
         this.setData({ isBatchEditing: true, selectedMovieIds: [] });
         this.updateFilteredMovies();
     },
@@ -369,7 +386,7 @@ Page({
 
     // ─── 批量标记：一次云函数调用代替 N*2 次直接 DB 操作 ───
     batchUpdateMarks(movieIds, status) {
-        const openid = this.data.userInfo._openid;
+        const openid = this.getActiveOpenid();
         if (!openid) { wx.showToast({ title: '请先登录', icon: 'none' }); return; }
 
         wx.showLoading({ title: '批量更新中...' });

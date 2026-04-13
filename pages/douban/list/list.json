@@ -1,5 +1,7 @@
 {
   "backgroundColor": "#FFFFFF",
   "backgroundTextStyle": "light",
-  "navigationStyle": "custom"
+  "navigationBarTitleText": "豆瓣电影TOP250",
+  "navigationBarBackgroundColor": "#FFFFFF",
+  "navigationBarTextStyle": "black"
 }

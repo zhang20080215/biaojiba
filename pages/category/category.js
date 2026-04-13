@@ -61,26 +61,26 @@ Page({
         category: 'movie',
         url: '/pages/boxoffice/list/list'
       },
-      {
-        id: 'chinese_movies',
-        title: '豆瓣高分华语电影 TOP100',
-        description: '最高分的华语电影，跨越大陆港台三地经典',
-        image: 'https://img1.doubanio.com/view/photo/s_ratio_poster/public/p1366828563.jpg',
-        userCount: 0,
-        tag: '电影',
-        category: 'movie',
-        url: '/pages/chinese/list/list'
-      },
-      {
-        id: 'annual_movies',
-        title: '2026 年度院线电影',
-        description: '2026年值得看的院线电影，记录你的年度观影',
-        image: 'https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2916675446.jpg',
-        userCount: 0,
-        tag: '电影',
-        category: 'movie',
-        url: '/pages/annual/list/list'
-      },
+      // {
+      //   id: 'chinese_movies',
+      //   title: '豆瓣高分华语电影 TOP100',
+      //   description: '最高分的华语电影，跨越大陆港台三地经典',
+      //   image: 'https://img1.doubanio.com/view/photo/s_ratio_poster/public/p1366828563.jpg',
+      //   userCount: 0,
+      //   tag: '电影',
+      //   category: 'movie',
+      //   url: '/pages/chinese/list/list'
+      // },
+      // {
+      //   id: 'annual_movies',
+      //   title: '2026 年度院线电影',
+      //   description: '2026年值得看的院线电影，记录你的年度观影',
+      //   image: 'https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2916675446.jpg',
+      //   userCount: 0,
+      //   tag: '电影',
+      //   category: 'movie',
+      //   url: '/pages/annual/list/list'
+      // },
       {
         id: 'child_growth',
         title: '儿童生长发育评估',
@@ -112,7 +112,7 @@ Page({
     const menuBtn = wx.getMenuButtonBoundingClientRect();
     // header paddingTop = 胶囊按钮顶部留白
     const headerPadTop = menuBtn.top;
-    const savedTheme = wx.getStorageSync('appTheme') || '';
+    const savedTheme = wx.getStorageSync('appTheme') || 'theme-green';
     const app = getApp();
     app.globalData.theme = savedTheme;
     this.setData({
