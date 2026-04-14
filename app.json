@@ -12,10 +12,6 @@
     "pages/oscar/share/share",
     "pages/boxoffice/list/list",
     "pages/boxoffice/share/share",
-    "pages/chinese/list/list",
-    "pages/chinese/share/share",
-    "pages/annual/list/list",
-    "pages/annual/share/share",
     "pages/growth/input/input",
     "pages/growth/result/result"
   ],

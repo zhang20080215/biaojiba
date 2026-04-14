@@ -13,7 +13,7 @@ Page({
     showThemePicker: false,
     statusBarHeight: 20,
     headerPadTop: 0,
-    // 广告相关
+    // 骞垮憡鐩稿叧
     showNativeAd: false,
     showBannerAd: false,
     adUnitIds: {
@@ -33,8 +33,8 @@ Page({
       },
       {
         id: 'imdb_movies',
-        title: 'IMDB电影TOP250',
-        description: '全球影迷票选，史上最高分250部电影',
+        title: 'IMDB电影 TOP250',
+        description: '全球影迷票选，影史高分 250 部电影',
         image: 'https://m.media-amazon.com/images/M/MV5BM2MyNjYxNmUtYTAwNi00MTYxLWJmNWYtYzZlODY3ZTk3OTFlXkEyXkFqcGdeQXVyNzkwMjQ5NzM@._V1_UX182_CR0,0,182,268_AL__QL50.jpg',
         userCount: 0,
         tag: '电影',
@@ -62,55 +62,34 @@ Page({
         url: '/pages/boxoffice/list/list'
       },
       // {
-      //   id: 'chinese_movies',
-      //   title: '豆瓣高分华语电影 TOP100',
-      //   description: '最高分的华语电影，跨越大陆港台三地经典',
-      //   image: 'https://img1.doubanio.com/view/photo/s_ratio_poster/public/p1366828563.jpg',
+      //   id: 'chinese_awards',
+      //   title: '华语电影最高荣誉殿堂',
+      //   description: '金马、金像、金鸡、百花四大奖项历年最佳影片',
+      //   image: 'https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2557573348.jpg',
       //   userCount: 0,
       //   tag: '电影',
       //   category: 'movie',
-      //   url: '/pages/chinese/list/list'
-      // },
-      // {
-      //   id: 'annual_movies',
-      //   title: '2026 年度院线电影',
-      //   description: '2026年值得看的院线电影，记录你的年度观影',
-      //   image: 'https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2916675446.jpg',
-      //   userCount: 0,
-      //   tag: '电影',
-      //   category: 'movie',
-      //   url: '/pages/annual/list/list'
+      //   url: '/pages/chinese-awards/list/list'
       // },
       {
         id: 'child_growth',
         title: '儿童生长发育评估',
-        description: '依据国家标准，精准评估0~7岁宝宝发育状况',
+        description: '依据国家标准，精准评估 0~7 岁宝宝发育状况',
         image: '',
         userCount: 0,
         tag: '育儿',
         category: 'parenting',
         url: '/pages/growth/input/input'
       }
-      // {
-      //   id: 'fitness',
-      //   title: '健身打卡',
-      //   description: '记录每次训练，生成专属打卡海报',
-      //   image: '',
-      //   userCount: 0,
-      //   color: '#4A7FD4',
-      //   tag: '健身',
-      //   category: 'fitness',
-      //   url: '/pages/fitness/input/input'
-      // }
     ],
     filteredThemes: []
   },
 
   onLoad() {
-    // 自定义导航：获取状态栏高度和胶囊按钮位置
+    // 鑷畾涔夊鑸細鑾峰彇鐘舵€佹爮楂樺害鍜岃兌鍥婃寜閽綅缃?
     const windowInfo = wx.getWindowInfo();
     const menuBtn = wx.getMenuButtonBoundingClientRect();
-    // header paddingTop = 胶囊按钮顶部留白
+    // header paddingTop = 鑳跺泭鎸夐挳椤堕儴鐣欑櫧
     const headerPadTop = menuBtn.top;
     const savedTheme = wx.getStorageSync('appTheme') || 'theme-green';
     const app = getApp();
@@ -129,14 +108,14 @@ Page({
 
   onShareAppMessage() {
     return {
-      title: '标记吧——标记生活的仪式感，分享专属记录',
+      title: '标记吧，标记生活的仪式感，分享专属记录',
       path: '/pages/category/category'
     };
   },
 
   onShow() {
     this.checkLoginStatus();
-    // 格式化用户数量并过滤
+    // 鏍煎紡鍖栫敤鎴锋暟閲忓苟杩囨护
     const themes = this.data.themes.map(theme => ({
       ...theme,
       userCountText: this.formatUserCount(theme.userCount)
@@ -145,7 +124,7 @@ Page({
     this.filterThemes(this.data.activeTab);
   },
 
-  // 主题切换
+  // 涓婚鍒囨崲
   onToggleThemePicker() {
     this.setData({ showThemePicker: !this.data.showThemePicker });
   },
@@ -158,7 +137,7 @@ Page({
     this.setData({ themeClass: theme, showThemePicker: false });
   },
 
-  // 分类Tab切换
+  // 鍒嗙被Tab鍒囨崲
   onTabTap(e) {
     const tab = e.currentTarget.dataset.tab;
     this.setData({ activeTab: tab });
@@ -173,7 +152,7 @@ Page({
     } else {
       filtered = themes.filter(t => t.category === tab);
     }
-    // 确保 userCountText 存在
+    // 纭繚 userCountText 瀛樺湪
     filtered = filtered.map(t => ({
       ...t,
       userCountText: t.userCountText || this.formatUserCount(t.userCount)
@@ -181,7 +160,7 @@ Page({
     this.setData({ filteredThemes: filtered });
   },
 
-  // 检查登录状态
+  // 妫€鏌ョ櫥褰曠姸鎬?
   checkLoginStatus() {
     const userInfo = wx.getStorageSync('userInfo');
     if (userInfo) {
@@ -192,7 +171,7 @@ Page({
     }
   },
 
-  // 开始登录
+  // 寮€濮嬬櫥褰?
   onGetUserProfile() {
     if (this.data.loading) return;
     this.setData({ loading: true });
@@ -205,7 +184,7 @@ Page({
         if (!_openid) {
           wx.hideLoading();
           this.setData({ loading: false });
-          wx.showToast({ title: '获取openid失败', icon: 'none' });
+          wx.showToast({ title: '获取 openid 失败', icon: 'none' });
           return;
         }
         wx.hideLoading();
@@ -218,7 +197,7 @@ Page({
         });
       },
       fail: err => {
-        console.error('获取openid失败:', err);
+        console.error('获取 openid 失败:', err);
         wx.hideLoading();
         this.setData({ loading: false });
         wx.showToast({ title: '网络错误，请重试', icon: 'none' });
@@ -250,7 +229,7 @@ Page({
       return;
     }
 
-    wx.showLoading({ title: '保存中...', mask: true });
+    wx.showLoading({ title: '淇濆瓨涓?..', mask: true });
     try {
       let finalAvatarUrl = tempAvatar;
       if (tempAvatar.startsWith('wxfile://') || tempAvatar.startsWith('http://tmp/')) {
@@ -325,18 +304,16 @@ Page({
   async loadUserCounts() {
     const db = wx.cloud.database();
     const _ = db.command;
-    const themeConfigs = [
-      { id: 'douban_movies', collection: 'movies' },
-      { id: 'imdb_movies', collection: 'imdb_movies' },
-      { id: 'oscar_movies', collection: 'oscar_movies' },
-      { id: 'boxoffice_movies', collection: 'boxoffice_movies' },
-      { id: 'chinese_movies', collection: 'chinese_movies' },
-      { id: 'annual_movies', collection: 'annual_movies' }
-    ];
+      const themeConfigs = [
+        { id: 'douban_movies', collection: 'movies', topFiltered: true },
+        { id: 'imdb_movies', collection: 'imdb_movies', topFiltered: true },
+        { id: 'oscar_movies', collection: 'oscar_movies', topFiltered: false },
+        { id: 'boxoffice_movies', collection: 'boxoffice_movies', topFiltered: true }
+      ];
 
     const themes = [...this.data.themes];
 
-    // 并行统计每个主题的独立用户数
+    // 骞惰缁熻姣忎釜涓婚鐨勭嫭绔嬬敤鎴锋暟
     const results = await Promise.allSettled(
       themeConfigs.map(config => this._countThemeUsers(db, _, config))
     );
@@ -350,7 +327,7 @@ Page({
       themes[themeIdx].userCountText = this.formatUserCount(displayCount);
     });
 
-    // 育儿主题：从 growth_records 集合统计独立用户数
+    // 鑲插効涓婚锛氫粠 growth_records 闆嗗悎缁熻鐙珛鐢ㄦ埛鏁?
     try {
       const growthRes = await db.collection('growth_records').aggregate()
         .match({ openid: _.exists(true) })
@@ -365,38 +342,23 @@ Page({
         themes[idx].userCountText = this.formatUserCount(displayCount);
       }
     } catch (e) {
-      console.error('加载育儿统计失败:', e);
+      console.error('鍔犺浇鑲插効缁熻澶辫触:', e);
     }
 
-    // 健身主题：从 fitness_records 集合统计独立用户数（暂未上线）
-    // try {
-    //   const fitnessRes = await db.collection('fitness_records').aggregate()
-    //     .group({ _id: '$openid' })
-    //     .count('total')
-    //     .end();
-    //   const fitnessUsers = fitnessRes.list.length > 0 ? fitnessRes.list[0].total : 0;
-    //   const fitIdx = themes.findIndex(t => t.id === 'fitness');
-    //   if (fitIdx !== -1) {
-    //     const displayCount = fitnessUsers + 100;
-    //     themes[fitIdx].userCount = displayCount;
-    //     themes[fitIdx].userCountText = this.formatUserCount(displayCount);
-    //   }
-    // } catch (e) {
-    //   console.error('加载健身统计失败:', e);
-    // }
 
     this.setData({ themes });
     this.filterThemes(this.data.activeTab);
   },
 
   async _countThemeUsers(db, _, config) {
-    // 1. 获取该主题所有电影 ID
+    // 1. 鑾峰彇璇ヤ富棰樻墍鏈夌數褰?ID
     const movieIds = [];
     let offset = 0;
     const limit = 100;
     while (true) {
+      const whereCondition = config.topFiltered ? { isTop250: _.neq(false) } : {};
       const res = await db.collection(config.collection)
-        .where({ isTop250: _.neq(false) })
+        .where(whereCondition)
         .skip(offset).limit(limit).field({ _id: true }).get();
       movieIds.push(...res.data.map(m => m._id));
       if (res.data.length < limit) break;
@@ -404,7 +366,7 @@ Page({
     }
     if (movieIds.length === 0) return 0;
 
-    // 2. 聚合统计独立用户数
+    // 2. 鑱氬悎缁熻鐙珛鐢ㄦ埛鏁?
     try {
       const res = await db.collection('Marks').aggregate()
         .match({ movieId: _.in(movieIds) })
@@ -413,7 +375,7 @@ Page({
         .end();
       return res.list.length > 0 ? res.list[0].total : 0;
     } catch (e) {
-      // 降级：计算标记总数 / 平均每人标记数
+      // 闄嶇骇锛氳绠楁爣璁版€绘暟 / 骞冲潎姣忎汉鏍囪鏁?
       let markCount = 0;
       const chunkSize = 100;
       for (let i = 0; i < movieIds.length; i += chunkSize) {
@@ -427,7 +389,7 @@ Page({
   },
 
   formatUserCount(count) {
-    // 向下取整到最近的100步长
+    // 鍚戜笅鍙栨暣鍒版渶杩戠殑100姝ラ暱
     const stepped = Math.floor(count / 100) * 100;
     if (stepped >= 1000) {
       const k = stepped / 1000;
@@ -436,14 +398,14 @@ Page({
     return stepped + '+';
   },
 
-  // ========== 广告 ==========
+  // ========== 骞垮憡 ==========
   initAds() {
     var ids = this.data.adUnitIds;
-    // 优先展示原生广告，有 unitId 才尝试
+    // 浼樺厛灞曠ず鍘熺敓骞垮憡锛屾湁 unitId 鎵嶅皾璇?
     if (ids.category_native) {
       this.setData({ showNativeAd: true });
     }
-    // Banner 作为兜底，原生广告失败时显示
+    // Banner 浣滀负鍏滃簳锛屽師鐢熷箍鍛婂け璐ユ椂鏄剧ず
     if (ids.category_banner && !ids.category_native) {
       this.setData({ showBannerAd: true });
     }
@@ -454,7 +416,7 @@ Page({
   },
   onNativeAdError() {
     this.setData({ showNativeAd: false });
-    // 原生广告失败，降级为 Banner
+    // 鍘熺敓骞垮憡澶辫触锛岄檷绾т负 Banner
     if (this.data.adUnitIds.category_banner) {
       this.setData({ showBannerAd: true });
     }
@@ -466,3 +428,6 @@ Page({
     this.setData({ showBannerAd: false });
   },
 });
+
+
+

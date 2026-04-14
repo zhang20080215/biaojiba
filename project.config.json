@@ -35,7 +35,24 @@
   "cloudfunctionTemplateRoot": "cloudfunctionTemplate/",
   "simulatorPluginLibVersion": {},
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      { "type": "folder", "value": "douban_spyder" },
+      { "type": "folder", "value": "pages/chinese" },
+      { "type": "folder", "value": "pages/annual" },
+      { "type": "folder", "value": "pages/growth/share" },
+      { "type": "folder", "value": "pages/admin" },
+      { "type": "folder", "value": "db" },
+      { "type": "folder", "value": "doc" },
+      { "type": "folder", "value": "pages/chinese-awards" },
+      { "type": "folder", "value": "cloudfunctions/fetchAwardMovies" },
+      { "type": "file", "value": "utils/doubanPosterDrawer.js" },
+      { "type": "file", "value": "utils/imdbPosterDrawer.js" },
+      { "type": "file", "value": "utils/fitnessTypes.js" },
+      { "type": "file", "value": "test_imdb.js" },
+      { "type": "file", "value": "view_excel.py" },
+      { "type": "file", "value": "coupon_creation.html" },
+      { "type": "suffix", "value": ".DS_Store" }
+    ],
     "include": []
   },
   "editorSetting": {}

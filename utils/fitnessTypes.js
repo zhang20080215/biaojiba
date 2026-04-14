@@ -1,5 +1,6 @@
 /**
  * 健身训练类型配置
+ * [不打包] 当前未使用，已通过 project.config.json packOptions 排除打包
  */
 
 const categories = [

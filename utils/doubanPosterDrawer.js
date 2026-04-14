@@ -1,4 +1,5 @@
 // utils/doubanPosterDrawer.js - 豆瓣海报绘制器
+// [不打包] 当前未使用，已通过 project.config.json packOptions 排除打包
 
 const TITLE = '豆瓣电影 TOP 250 观影海报墙';
 

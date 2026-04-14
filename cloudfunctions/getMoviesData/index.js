@@ -1,14 +1,14 @@
 // cloudfunctions/getMoviesData/index.js
-// 聚合云函数：一次性加载电影列表 + 用户标记，减少客户端 API 调用次数
+// 鑱氬悎浜戝嚱鏁帮細涓€娆℃€у姞杞界數褰卞垪琛?+ 鐢ㄦ埛鏍囪锛屽噺灏戝鎴风 API 璋冪敤娆℃暟
 
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
 const db = cloud.database();
-const MAX_LIMIT = 100; // 云函数端单次最多读 1000，100 条一批足够快
+const MAX_LIMIT = 100; // 浜戝嚱鏁扮鍗曟鏈€澶氳 1000锛?00 鏉′竴鎵硅冻澶熷揩
 
 /**
- * 分批读取集合数据（云函数端无 20 条限制，但建议批量到 100 以内）
+ * 鍒嗘壒璇诲彇闆嗗悎鏁版嵁锛堜簯鍑芥暟绔棤 20 鏉￠檺鍒讹紝浣嗗缓璁壒閲忓埌 100 浠ュ唴锛?
  */
 async function readAll(collectionName, query) {
     const countRes = await query.count();
@@ -29,10 +29,10 @@ async function readAll(collectionName, query) {
 exports.main = async (event, context) => {
     const { theme, openid, marksOnly } = event;
     // theme: 'douban' | 'imdb'
-    // marksOnly: 只返回标记，跳过电影列表查询（缓存命中后的轻量刷新）
+    // marksOnly: 鍙繑鍥炴爣璁帮紝璺宠繃鐢靛奖鍒楄〃鏌ヨ锛堢紦瀛樺懡涓悗鐨勮交閲忓埛鏂帮級
 
     try {
-        // 仅刷新标记，不重新拉取电影列表
+        // 浠呭埛鏂版爣璁帮紝涓嶉噸鏂版媺鍙栫數褰卞垪琛?
         if (marksOnly) {
             const marks = openid
                 ? await readAll('Marks', db.collection('Marks').where({ openid }))
@@ -43,12 +43,13 @@ exports.main = async (event, context) => {
         let collectionName = 'movies';
         let orderByField = 'rank';
         let orderDirection = 'asc';
+        let whereCondition = {};
 
         if (theme === 'imdb') {
             collectionName = 'imdb_movies';
         } else if (theme === 'oscar') {
             collectionName = 'oscar_movies';
-            orderDirection = 'desc'; // 奥斯卡由最新往旧排序，比如 96届, 95届...
+            orderDirection = 'desc'; // 濂ユ柉鍗＄敱鏈€鏂板線鏃ф帓搴忥紝姣斿 96灞? 95灞?..
         } else if (theme === 'boxoffice') {
             collectionName = 'boxoffice_movies';
         } else if (theme === 'chinese') {
@@ -57,14 +58,22 @@ exports.main = async (event, context) => {
             collectionName = 'annual_movies';
             orderByField = 'updateTime';
             orderDirection = 'desc';
+        } else if (theme === 'chinese_awards') {
+            collectionName = 'chinese_award_movies';
+            orderByField = 'awardYear';
+            orderDirection = 'desc';
         }
 
         const _ = db.command;
+        const topListCollections = new Set(['movies', 'imdb_movies', 'boxoffice_movies', 'chinese_movies']);
+        if (topListCollections.has(collectionName)) {
+            whereCondition = { isTop250: _.neq(false) };
+        }
 
-        // 并发查询：电影列表 + 用户标记（如果有 openid）
+        // 骞跺彂鏌ヨ锛氱數褰卞垪琛?+ 鐢ㄦ埛鏍囪锛堝鏋滄湁 openid锛?
         const moviesQuery = db
             .collection(collectionName)
-            .where({ isTop250: _.neq(false) })
+            .where(whereCondition)
             .orderBy(orderByField, orderDirection);
 
         const [moviesRaw, marks] = await Promise.all([
@@ -84,11 +93,33 @@ exports.main = async (event, context) => {
                 if (!dateA && dateB) return 1;
                 return String(a.title || '').localeCompare(String(b.title || ''));
             });
+        } else if (theme === 'chinese_awards') {
+            const awardOrder = {
+                jinma: 0,
+                jinxiang: 1,
+                jinji: 2,
+                baihua: 3
+            };
+
+            movies = [...moviesRaw].sort((a, b) => {
+                const yearDiff = Number(b.awardYear || 0) - Number(a.awardYear || 0);
+                if (yearDiff !== 0) return yearDiff;
+
+                const ceremonyA = Number(String(a.awardCeremony || '').replace(/\D/g, '')) || 0;
+                const ceremonyB = Number(String(b.awardCeremony || '').replace(/\D/g, '')) || 0;
+                if (ceremonyB !== ceremonyA) return ceremonyB - ceremonyA;
+
+                const awardDiff = (awardOrder[String(a.awardKey || '').toLowerCase()] ?? 99) - (awardOrder[String(b.awardKey || '').toLowerCase()] ?? 99);
+                if (awardDiff !== 0) return awardDiff;
+
+                return String(a.title || '').localeCompare(String(b.title || ''));
+            });
         }
 
         return { success: true, movies, marks };
     } catch (err) {
-        console.error('getMoviesData 失败:', err);
+        console.error('getMoviesData 澶辫触:', err);
         return { success: false, error: err.message, movies: [], marks: [] };
     }
 };
+
