@@ -1,8 +1,9 @@
 /* douban list — design system v2.2.0 */
 
-/* 填充导航栏底边与 hero-section 之间的 1px 系统底色缝隙 */
+/* 填充导航栏底边与 hero-section 之间的 1px 系统底色缝隙
+   使用白色而非 brand-primary，避免滚动后彩色背景在 sticky tabs 上方渗出 */
 page {
-  background-color: var(--brand-primary);
+  background-color: #FFFFFF;
 }
 
 /* ========== 页面根 ========== */

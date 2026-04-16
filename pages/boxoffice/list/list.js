@@ -52,6 +52,7 @@ Page({
         this.checkLoginStatus();
         this.loadAllMovies();
         this.initAds();
+        this.setNavBarColor(savedTheme);
     },
 
     async onPullDownRefresh() {
@@ -65,6 +66,18 @@ Page({
             this.setData({ themeClass: currentTheme });
         }
         this.checkLoginStatus();
+        this.setNavBarColor(currentTheme);
+    },
+
+    // 将导航栏背景色与 hero 配色对齐，消除 hairline 对比度
+    setNavBarColor(theme) {
+        const colorMap = {
+            'theme-gold':  { bg: '#F7D66E', fg: '#000000' },
+            'theme-green': { bg: '#9AAB65', fg: '#ffffff' },
+            'theme-sand':  { bg: '#F8F3E7', fg: '#000000' },
+        };
+        const c = colorMap[theme] || { bg: '#FAE0E4', fg: '#000000' };
+        wx.setNavigationBarColor({ frontColor: c.fg, backgroundColor: c.bg, animation: { duration: 0 } });
     },
 
     onUnload() {
