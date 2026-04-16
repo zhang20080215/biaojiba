@@ -6,14 +6,14 @@ page {
 }
 
 /* ===== 沉浸式顶部 Header ===== */
+/* 性能优化：去除 backdrop-filter。固定层上的高斯模糊在滚动时反复触发合成层重算，是卡顿率主因之一；改成不透明渐变背景。 */
 .immersive-header {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 200;
-  background: linear-gradient(180deg, #0a0a0a 0%, rgba(13, 13, 13, 0.96) 100%);
-  backdrop-filter: blur(20px);
+  background: linear-gradient(180deg, #0a0a0a 0%, #0d0d0d 100%);
 }
 
 /* 导航栏：与胶囊按钮同行，只放标题 */
@@ -120,12 +120,12 @@ page {
 }
 
 /* ===== 吸顶操作栏 ===== */
+/* 性能优化：去除 backdrop-filter（吸顶滚动时的高斯模糊开销极大）。改用不透明背景色。 */
 .sticky-action-container {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(13, 13, 13, 0.92);
-  backdrop-filter: blur(10px);
+  background: #0d0d0d;
   padding: 14rpx 0 0;
 }
 

@@ -58,7 +58,7 @@
     <view class="movie-row" bindtap="{{isBatchEditing ? 'onMovieCheck' : ''}}" data-movie-id="{{item._id}}">
       <checkbox wx:if="{{isBatchEditing}}" class="batch-checkbox" value="{{item._id}}" checked="{{item.checked}}" catchtap="onMovieCheck" data-movie-id="{{item._id}}" />
       <view class="movie-content {{isBatchEditing ? 'batch-editing' : ''}}">
-        <image class="movie-thumb" src="{{item.thumbCover || item.cover}}" lazy-load="true" mode="aspectFill" binderror="onImageError" bindload="onImageLoad" data-movie-id="{{item._id}}" show-menu-by-longpress="false" />
+        <image class="movie-thumb" src="{{item.thumbCover || item.cover}}" lazy-load="true" mode="aspectFill" binderror="onImageError" data-movie-id="{{item._id}}" show-menu-by-longpress="false" />
         <view class="movie-info">
           <view class="movie-title">{{item.title}}</view>
           <view class="movie-meta">
@@ -76,8 +76,8 @@
           </block>
           <block wx:else>
             <view class="mark-buttons">
-              <button class="mark-btn" data-id="{{item._id}}" data-type="watched" catchtap="onMarkTap">已看</button>
-              <button class="mark-btn mark-btn-wish" data-id="{{item._id}}" data-type="wish" catchtap="onMarkTap">想看</button>
+              <view class="mark-btn" data-id="{{item._id}}" data-type="watched" catchtap="onMarkTap">已看</view>
+              <view class="mark-btn mark-btn-wish" data-id="{{item._id}}" data-type="wish" catchtap="onMarkTap">想看</view>
             </view>
           </block>
         </block>
