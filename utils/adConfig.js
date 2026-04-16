@@ -29,11 +29,11 @@ const adConfig = {
   },
 
   frequency: {
-    interstitialCooldownMs: 120000,
-    maxInterstitialsPerSession: 3,
+    interstitialCooldownMs: 60000,
+    maxInterstitialsPerSession: 5,
   },
 
-  infeedPositions: [10, 50],
+  infeedPositions: [5, 25],
 }
 
 // ── 远程配置缓存 key ──

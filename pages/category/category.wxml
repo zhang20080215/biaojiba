@@ -56,11 +56,14 @@
     </view>
   </view>
 
-  <!-- 主题卡片网格（两列） -->
+  <!-- 主题卡片网格（两列）：前两张 → 广告 → 剩余，确保广告在首屏可见 -->
   <view class="card-grid">
+    <!-- 第一行（前2张） -->
     <navigator
       wx:for="{{filteredThemes}}"
+      wx:for-index="idx"
       wx:key="id"
+      wx:if="{{idx < 2}}"
       class="theme-card"
       url="{{item.url}}"
       hover-class="none"
@@ -101,12 +104,59 @@
     </navigator>
   </view>
 
-  <!-- 广告 -->
+  <!-- 广告：夹在第一行（2张）和剩余卡片之间，首屏可见，大幅提升曝光率 -->
   <view class="ad-zone" wx:if="{{showNativeAd}}">
     <ad-custom unit-id="{{adUnitIds.category_native}}" bindload="onNativeAdLoad" binderror="onNativeAdError"></ad-custom>
   </view>
   <view class="ad-zone" wx:if="{{showBannerAd}}">
     <ad unit-id="{{adUnitIds.category_banner}}" ad-type="banner" bindload="onBannerAdLoad" binderror="onBannerAdError"></ad>
+  </view>
+
+  <!-- 剩余卡片（第3张起） -->
+  <view class="card-grid">
+    <navigator
+      wx:for="{{filteredThemes}}"
+      wx:for-index="idx"
+      wx:key="id"
+      wx:if="{{idx >= 2}}"
+      class="theme-card"
+      url="{{item.url}}"
+      hover-class="none"
+    >
+      <!-- 封面 -->
+      <view class="card-cover">
+        <image wx:if="{{item.image}}" class="cover-img" src="{{item.image}}" mode="aspectFill"></image>
+        <view wx:elif="{{item.id === 'child_growth'}}" class="cover-placeholder growth">
+          <view class="ruler-icon"></view>
+          <text class="placeholder-text">成长评估</text>
+        </view>
+        <view class="cover-mask"></view>
+        <view class="tag-badge">
+          <text>{{item.tag}}</text>
+        </view>
+        <image
+          wx:if="{{item.id === 'oscar_movies'}}"
+          class="oscar-icon"
+          src="/images/oscar-icon.svg"
+          mode="aspectFit"
+        ></image>
+      </view>
+
+      <!-- 信息区 -->
+      <view class="card-body">
+        <text class="card-title">{{item.title}}</text>
+        <text class="card-desc">{{item.description}}</text>
+        <view class="card-meta">
+          <view wx:if="{{item.userCount > 0}}" class="meta-count">
+            <text class="meta-count-number">{{item.userCountText}}</text>
+            <text class="meta-count-label">人参与</text>
+          </view>
+          <view class="meta-arrow">
+            <text>›</text>
+          </view>
+        </view>
+      </view>
+    </navigator>
   </view>
 
   <!-- 授权弹窗 -->
