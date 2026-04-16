@@ -1,6 +1,7 @@
 import DataLoader from '../../../utils/dataLoader';
 import imageCacheManager from '../../../utils/imageCacheManager';
 var adConfig = require('../../../utils/adConfig');
+var adManager = require('../../../utils/adManager');
 
 Page({
     data: {
@@ -145,11 +146,13 @@ Page({
 
         this.setData({ showSharePicker: false }, () => {
             wx.nextTick(() => {
-                wx.navigateTo({
-                    url: `/pages/boxoffice/share/share?type=${type}`,
-                    complete: () => {
-                        this._navigatingToShare = false;
-                    }
+                adManager.showInterstitial('share_interstitial').then(() => {
+                    wx.navigateTo({
+                        url: `/pages/boxoffice/share/share?type=${type}`,
+                        complete: () => {
+                            this._navigatingToShare = false;
+                        }
+                    });
                 });
             });
         });

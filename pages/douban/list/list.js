@@ -163,13 +163,14 @@ Page({
         this._navigatingToShare = true;
 
         this.setData({ showSharePicker: false }, () => {
-            // 先确保核心流程可用：关闭弹层后直接跳转分享页
             wx.nextTick(() => {
-                wx.navigateTo({
-                    url: `/pages/douban/share/share?type=${type}`,
-                    complete: () => {
-                        this._navigatingToShare = false;
-                    }
+                adManager.showInterstitial('share_interstitial').then(() => {
+                    wx.navigateTo({
+                        url: `/pages/douban/share/share?type=${type}`,
+                        complete: () => {
+                            this._navigatingToShare = false;
+                        }
+                    });
                 });
             });
         });
