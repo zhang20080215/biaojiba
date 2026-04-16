@@ -1,9 +1,9 @@
 /* douban list — design system v2.2.0 */
 
-/* 填充导航栏底边与 hero-section 之间的 1px 系统底色缝隙
-   使用白色而非 brand-primary，避免滚动后彩色背景在 sticky tabs 上方渗出 */
+/* 填充导航栏底边与 hero-section 之间的 1px 渲染缝隙
+   page / hero / setNavigationBarColor 三者统一为 brand-primary，消除色差 */
 page {
-  background-color: #FFFFFF;
+  background-color: var(--brand-primary);
 }
 
 /* ========== 页面根 ========== */
