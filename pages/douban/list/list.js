@@ -25,8 +25,6 @@ Page({
         currentFilter: 'all',
         isBatchEditing: false,
         selectedMovieIds: [],
-        imageCache: {},
-        loadingImages: {},
         loading: false,
         showAuthModal: false,
         customToast: '',
@@ -77,9 +75,6 @@ Page({
             this.setData({ themeClass: currentTheme });
         }
         this.checkLoginStatus();
-        setTimeout(() => {
-            this.preloadVisibleImages();
-        }, 500);
     },
 
     onUnload() {
@@ -261,9 +256,7 @@ Page({
                 ...m,
                 _id: String(m._id),
                 // thumbCover：优先取 originalCover（原始 douban URL）转缩略图，cover 保留用于海报生成
-                thumbCover: imageCacheManager.getThumbnailUrl(m.originalCover || m.coverUrl || m.cover, 'list'),
-                imageLoaded: false,
-                imageError: false
+                thumbCover: imageCacheManager.getThumbnailUrl(m.originalCover || m.coverUrl || m.cover, 'list')
             }));
             this.data.allMovies = allMovies;
             this.data.allCount = allMovies.length;
@@ -520,59 +513,6 @@ Page({
             wx.showToast({ title: '数据不完整', icon: 'none' }); return;
         }
         runOptimisticMark();
-        return;
-        const db = wx.cloud.database();
-        db.collection('Marks').where({ movieId, openid }).get().then(res => {
-            const now = new Date().toISOString();
-            if (res.data.length > 0) {
-                db.collection('Marks').doc(res.data[0]._id).update({
-                    data: { status: type, marked_at: now }
-                }).then(() => {
-                    const markStatusMap = { ...this.data.markStatusMap };
-                    const markDateMap = { ...this.data.markDateMap };
-                    const oldStatus = markStatusMap[movieId];
-                    markStatusMap[movieId] = type;
-                    markDateMap[movieId] = this.formatMarkDate(now);
-                    let { watchedCount, wishCount, unwatchedCount } = this.data;
-                    if (oldStatus === 'watched') watchedCount--;
-                    else if (oldStatus === 'wish') wishCount--;
-                    else unwatchedCount--;
-                    if (type === 'watched') watchedCount++;
-                    else if (type === 'wish') wishCount++;
-                    this.setData({
-                        markStatusMap,
-                        markDateMap,
-                        watchedCount,
-                        wishCount,
-                        unwatchedCount,
-                        ...this.buildWatchedProgress(watchedCount, this.data.allMovies.length)
-                    }, this.updateFilteredMovies);
-                    this.showCustomToast(type === 'watched' ? '✓ 已标记为已看' : '✓ 已标记为想看');
-                });
-            } else {
-                db.collection('Marks').add({
-                    data: { movieId, openid, status: type, marked_at: now }
-                }).then(() => {
-                    const markStatusMap = { ...this.data.markStatusMap };
-                    const markDateMap = { ...this.data.markDateMap };
-                    markStatusMap[movieId] = type;
-                    markDateMap[movieId] = this.formatMarkDate(now);
-                    let { watchedCount, wishCount, unwatchedCount } = this.data;
-                    if (type === 'watched') watchedCount++;
-                    else if (type === 'wish') wishCount++;
-                    unwatchedCount--;
-                    this.setData({
-                        markStatusMap,
-                        markDateMap,
-                        watchedCount,
-                        wishCount,
-                        unwatchedCount,
-                        ...this.buildWatchedProgress(watchedCount, this.data.allMovies.length)
-                    }, this.updateFilteredMovies);
-                    this.showCustomToast(type === 'watched' ? '✓ 已标记为已看' : '✓ 已标记为想看');
-                });
-            }
-        });
     },
 
     showCustomToast(msg) {
@@ -673,39 +613,11 @@ Page({
         });
     },
 
-    onImageLoad(e) {
-        const movieId = e.currentTarget.dataset.movieId;
-        if (movieId) {
-            this.updateMovieImageStatus(movieId, { imageLoaded: true, imageError: false });
-            this.addToImageCache(movieId, e.currentTarget.src);
-            // 后台静默预下载全尺寸图，供海报生成页复用（不 await，不阻塞 UI）
-            const movie = this.data.allMovies.find(m => String(m._id) === String(movieId));
-            if (movie) {
-                // 优先用云存储 cover，与海报绘制器一致（cover || coverUrl || originalCover）
-                const fullUrl = movie.cover || movie.coverUrl || movie.originalCover;
-                if (fullUrl && !fullUrl.startsWith('cloud://')) imageCacheManager.prefetchToLocal(fullUrl);
-            }
-        }
-    },
-
     onImageError(e) {
         const movieId = e.currentTarget.dataset.movieId;
         if (movieId) {
-            this.updateMovieImageStatus(movieId, { imageLoaded: false, imageError: true });
             this.tryFallbackImage(movieId);
         }
-    },
-
-    updateMovieImageStatus(movieId, status) {
-        const movies = this.data.movies.map(m => String(m._id) === String(movieId) ? { ...m, ...status } : m);
-        const allMovies = this.data.allMovies.map(m => String(m._id) === String(movieId) ? { ...m, ...status } : m);
-        this.setData({ movies, allMovies });
-    },
-
-    addToImageCache(movieId, imageUrl) {
-        const imageCache = { ...this.data.imageCache };
-        imageCache[movieId] = imageUrl;
-        this.setData({ imageCache });
     },
 
     tryFallbackImage(movieId) {
@@ -717,10 +629,21 @@ Page({
         }
     },
 
+    // 只对命中的下标做定点 setData，避免把 250 条电影数组整体回传给视图层
     updateMovieImage(movieId, imageUrl) {
-        const movies = this.data.movies.map(m => String(m._id) === String(movieId) ? { ...m, cover: imageUrl } : m);
-        const allMovies = this.data.allMovies.map(m => String(m._id) === String(movieId) ? { ...m, cover: imageUrl } : m);
-        this.setData({ movies, allMovies });
+        const targetId = String(movieId);
+        const updates = {};
+        const mIdx = this.data.movies.findIndex(m => String(m._id) === targetId);
+        if (mIdx >= 0) {
+            updates[`movies[${mIdx}].cover`] = imageUrl;
+            updates[`movies[${mIdx}].thumbCover`] = imageUrl;
+        }
+        const aIdx = this.data.allMovies.findIndex(m => String(m._id) === targetId);
+        if (aIdx >= 0) {
+            updates[`allMovies[${aIdx}].cover`] = imageUrl;
+            updates[`allMovies[${aIdx}].thumbCover`] = imageUrl;
+        }
+        if (Object.keys(updates).length) this.setData(updates);
     },
 
     onShareAppMessage() {
@@ -739,31 +662,5 @@ Page({
     onInfeedAdLoad() {},
     onInfeedAdError() {
         this.setData({ showInfeedAd: false });
-    },
-
-    preloadVisibleImages() {
-        const visibleMovies = this.data.movies.slice(0, 20);
-        visibleMovies.forEach(movie => {
-            if (!movie.imageLoaded && !movie.imageError && !this.data.loadingImages[movie._id]) {
-                this.data.loadingImages[movie._id] = true;
-                const img = this.data.movies.find(m => m._id === movie._id);
-                if (img && img.cover) {
-                    if (img.cover.startsWith('cloud://')) {
-                        this.updateMovieImageStatus(movie._id, { imageLoaded: true });
-                        delete this.data.loadingImages[movie._id];
-                        return;
-                    }
-                    wx.getImageInfo({
-                        src: img.cover,
-                        success: () => { this.updateMovieImageStatus(movie._id, { imageLoaded: true }); },
-                        fail: () => {
-                            this.updateMovieImageStatus(movie._id, { imageError: true });
-                            this.tryFallbackImage(movie._id);
-                        },
-                        complete: () => { delete this.data.loadingImages[movie._id]; }
-                    });
-                }
-            }
-        });
     }
 });

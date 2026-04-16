@@ -23,8 +23,6 @@ Page({
         currentFilter: 'all',
         isBatchEditing: false,
         selectedMovieIds: [],
-        imageCache: {},
-        loadingImages: {},
         loading: false,
         showAuthModal: false,
         customToast: '',
@@ -67,9 +65,6 @@ Page({
             this.setData({ themeClass: currentTheme });
         }
         this.checkLoginStatus();
-        setTimeout(() => {
-            this.preloadVisibleImages();
-        }, 500);
     },
 
     buildWatchedProgress(watchedCount = 0, allCount = 0) {
@@ -274,8 +269,6 @@ Page({
             ...movie,
             _id: String(movie._id),
             thumbCover: imageCacheManager.getThumbnailUrl(movie.cover || movie.coverUrl || movie.originalCover, 'list'),
-            imageLoaded: false,
-            imageError: false,
             yearText: movie.year ? String(movie.year) : '',
             extraMetaPrimary: [directorText, genreText].filter(Boolean).join(' · '),
             extraMetaSecondary: [countryText || languageText, runtimeText].filter(Boolean).join(' · '),
@@ -617,37 +610,11 @@ Page({
         });
     },
 
-    onImageLoad(e) {
-        const movieId = e.currentTarget.dataset.movieId;
-        if (movieId) {
-            this.updateMovieImageStatus(movieId, { imageLoaded: true, imageError: false });
-            this.addToImageCache(movieId, e.currentTarget.src);
-            const movie = this.data.allMovies.find(m => String(m._id) === String(movieId));
-            if (movie) {
-                const fullUrl = movie.cover || movie.coverUrl || movie.originalCover;
-                if (fullUrl && !fullUrl.startsWith('cloud://')) imageCacheManager.prefetchToLocal(fullUrl);
-            }
-        }
-    },
-
     onImageError(e) {
         const movieId = e.currentTarget.dataset.movieId;
         if (movieId) {
-            this.updateMovieImageStatus(movieId, { imageLoaded: false, imageError: true });
             this.tryFallbackImage(movieId);
         }
-    },
-
-    updateMovieImageStatus(movieId, status) {
-        const movies = this.data.movies.map(movie => String(movie._id) === String(movieId) ? { ...movie, ...status } : movie);
-        const allMovies = this.data.allMovies.map(movie => String(movie._id) === String(movieId) ? { ...movie, ...status } : movie);
-        this.setData({ movies, allMovies });
-    },
-
-    addToImageCache(movieId, imageUrl) {
-        const imageCache = { ...this.data.imageCache };
-        imageCache[movieId] = imageUrl;
-        this.setData({ imageCache });
     },
 
     tryFallbackImage(movieId) {
@@ -659,10 +626,21 @@ Page({
         }
     },
 
+    // 只对命中的下标做定点 setData，避免把 250 条电影数组整体回传给视图层
     updateMovieImage(movieId, imageUrl) {
-        const movies = this.data.movies.map(movie => String(movie._id) === String(movieId) ? { ...movie, cover: imageUrl } : movie);
-        const allMovies = this.data.allMovies.map(movie => String(movie._id) === String(movieId) ? { ...movie, cover: imageUrl } : movie);
-        this.setData({ movies, allMovies });
+        const targetId = String(movieId);
+        const updates = {};
+        const mIdx = this.data.movies.findIndex(m => String(m._id) === targetId);
+        if (mIdx >= 0) {
+            updates[`movies[${mIdx}].cover`] = imageUrl;
+            updates[`movies[${mIdx}].thumbCover`] = imageUrl;
+        }
+        const aIdx = this.data.allMovies.findIndex(m => String(m._id) === targetId);
+        if (aIdx >= 0) {
+            updates[`allMovies[${aIdx}].cover`] = imageUrl;
+            updates[`allMovies[${aIdx}].thumbCover`] = imageUrl;
+        }
+        if (Object.keys(updates).length) this.setData(updates);
     },
 
     onShareAppMessage() {
@@ -682,35 +660,5 @@ Page({
 
     onInfeedAdError() {
         this.setData({ showInfeedAd: false });
-    },
-
-    preloadVisibleImages() {
-        const visibleMovies = this.data.movies.slice(0, 20);
-        visibleMovies.forEach(movie => {
-            if (!movie.imageLoaded && !movie.imageError && !this.data.loadingImages[movie._id]) {
-                this.data.loadingImages[movie._id] = true;
-                const img = this.data.movies.find(m => m._id === movie._id);
-                if (img && img.cover) {
-                    if (img.cover.startsWith('cloud://')) {
-                        this.updateMovieImageStatus(movie._id, { imageLoaded: true });
-                        delete this.data.loadingImages[movie._id];
-                        return;
-                    }
-                    wx.getImageInfo({
-                        src: img.cover,
-                        success: () => {
-                            this.updateMovieImageStatus(movie._id, { imageLoaded: true });
-                        },
-                        fail: () => {
-                            this.updateMovieImageStatus(movie._id, { imageError: true });
-                            this.tryFallbackImage(movie._id);
-                        },
-                        complete: () => {
-                            delete this.data.loadingImages[movie._id];
-                        }
-                    });
-                }
-            }
-        });
     }
 });

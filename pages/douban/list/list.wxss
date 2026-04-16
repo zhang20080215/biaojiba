@@ -235,13 +235,12 @@
 }
 
 /* ========== 吸顶操作栏 ========== */
+/* 性能优化：去除 backdrop-filter。吸顶元素滚动时的高斯模糊会触发合成层重算，是卡顿率/LCP 恶化的关键来源。改用不透明背景以保留遮挡效果。 */
 .sticky-top-group {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: #ffffff;
 }
 
 .sticky-action-container {
