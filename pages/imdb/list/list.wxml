@@ -48,7 +48,7 @@
 
   <view class="movie-list">
     <block wx:for="{{movies}}" wx:key="_id">
-      <view wx:if="{{showInfeedAd && (index === 10 || index === 50)}}" class="ad-infeed-container">
+      <view wx:if="{{showInfeedAd && (index === 5 || index === 25)}}" class="ad-infeed-container">
         <ad-custom unit-id="{{adUnitIds.movielist_infeed}}" bindload="onInfeedAdLoad" binderror="onInfeedAdError"></ad-custom>
       </view>
       <view class="movie-row" bindtap="{{isBatchEditing ? 'onMovieCheck' : ''}}" data-movie-id="{{item._id}}">
