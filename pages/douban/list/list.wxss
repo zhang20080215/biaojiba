@@ -1,5 +1,10 @@
 /* douban list — design system v2.2.0 */
 
+/* 填充导航栏底边与 hero-section 之间的 1px 系统底色缝隙 */
+page {
+  background-color: var(--brand-primary);
+}
+
 /* ========== 页面根 ========== */
 .page-root {
   min-height: 100vh;
