@@ -7,6 +7,7 @@ Page({
     data: {
         userInfo: null,
         openid: '',
+        pendingOpenid: '',
         allMovies: [],
         movies: [],
         markStatusMap: {},
@@ -136,7 +137,7 @@ Page({
     checkLoginStatus() {
         const userInfo = this.getStoredUserInfo();
         if (userInfo) {
-            this.setData({ userInfo, openid: userInfo._openid || '' });
+            this.setData({ userInfo, openid: userInfo._openid || '', pendingOpenid: '' });
         } else {
             this.setData({ userInfo: null, openid: '' });
         }
@@ -198,7 +199,7 @@ Page({
                 }
                 wx.hideLoading();
                 this.setData({
-                    loading: false, openid: _openid,
+                    loading: false, pendingOpenid: _openid,
                     showAuthModal: true, tempAvatar: '', tempNickname: ''
                 });
             },
@@ -211,12 +212,16 @@ Page({
         });
     },
 
-    onCancelAuth() { this.setData({ showAuthModal: false }); },
+    onCancelAuth() { this.setData({ showAuthModal: false, pendingOpenid: '' }); },
     onChooseAvatar(e) { this.setData({ tempAvatar: e.detail.avatarUrl }); },
     onNicknameInput(e) { this.setData({ tempNickname: e.detail.value }); },
 
     async onConfirmAuth() {
-        const { tempAvatar, tempNickname, openid } = this.data;
+        const { tempAvatar, tempNickname } = this.data;
+        const openid = this.data.pendingOpenid || this.data.openid;
+        if (!openid) {
+            wx.showToast({ title: '璇峰厛瀹屾垚鐧诲綍', icon: 'none' }); return;
+        }
         if (!tempAvatar || tempAvatar === '/images/default-avatar.svg') {
             wx.showToast({ title: '请选择头像', icon: 'none' }); return;
         }
@@ -248,7 +253,7 @@ Page({
             }
 
             wx.setStorageSync('userInfo', userInfo);
-            this.setData({ userInfo, showAuthModal: false });
+            this.setData({ userInfo, openid, pendingOpenid: '', showAuthModal: false });
             wx.hideLoading();
             wx.showToast({ title: '登录成功', icon: 'success' });
             this.loadUserMarks();

@@ -19,6 +19,8 @@ Page({
 
   data: {
     userInfo: null,
+    openid: '',
+    pendingOpenid: '',
     showAuthModal: false,
     tempAvatar: '',
     tempNickname: '',
@@ -41,7 +43,10 @@ Page({
   checkLoginStatus() {
     const userInfo = wx.getStorageSync('userInfo');
     if (userInfo) {
-      this.setData({ userInfo });
+      const openid = userInfo._openid || userInfo.openid || '';
+      this.setData({ userInfo: { ...userInfo, _openid: openid, openid }, openid, pendingOpenid: '' });
+    } else {
+      this.setData({ userInfo: null, openid: '' });
     }
   },
 
@@ -169,7 +174,7 @@ Page({
           return;
         }
         this.setData({
-          openid: _openid,
+          pendingOpenid: _openid,
           showAuthModal: true,
           tempAvatar: '',
           tempNickname: ''
@@ -182,7 +187,7 @@ Page({
   },
 
   onCancelAuth() {
-    this.setData({ showAuthModal: false });
+    this.setData({ showAuthModal: false, pendingOpenid: '' });
   },
 
   onChooseAvatar(e) {
@@ -194,7 +199,12 @@ Page({
   },
 
   async onConfirmAuth() {
-    const { tempAvatar, tempNickname, openid } = this.data;
+    const { tempAvatar, tempNickname } = this.data;
+    const openid = this.data.pendingOpenid || this.data.openid;
+    if (!openid) {
+      wx.showToast({ title: '请先完成登录', icon: 'none' });
+      return;
+    }
     if (!tempAvatar || tempAvatar === '/images/default-avatar.svg') {
       wx.showToast({ title: '请选择头像', icon: 'none' });
       return;
@@ -228,7 +238,7 @@ Page({
       }
 
       wx.setStorageSync('userInfo', userInfo);
-      this.setData({ userInfo, showAuthModal: false });
+      this.setData({ userInfo, openid, pendingOpenid: '', showAuthModal: false });
       wx.hideLoading();
       wx.showToast({ title: '登录成功', icon: 'success' });
     } catch (err) {
