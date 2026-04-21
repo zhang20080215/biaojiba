@@ -155,7 +155,7 @@ Page({
         const { tempAvatar, tempNickname } = this.data;
         const openid = this.data.pendingOpenid || this.data.openid;
         if (!openid) {
-            wx.showToast({ title: '璇峰厛瀹屾垚鐧诲綍', icon: 'none' }); return;
+            wx.showToast({ title: '请先完成登录', icon: 'none' }); return;
         }
         if (!tempAvatar || tempAvatar === '/images/default-avatar.svg') {
             wx.showToast({ title: '请选择头像', icon: 'none' }); return;
