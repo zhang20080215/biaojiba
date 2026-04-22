@@ -456,10 +456,11 @@ page {
 
 .movie-rating {
   font-size: 28rpx;
-  color: var(--cinnabar);
-  font-weight: 700;
+  color: var(--cinnabar-light);
+  font-weight: 500;
   letter-spacing: 0.5px;
   font-variant-numeric: tabular-nums;
+  opacity: 0.85;
 }
 
 /* ===== 标记状态 ===== */

@@ -1,2 +1,19 @@
 /* 全局主题变量 + 工具类 */
 @import "./styles/theme.wxss";
+
+/* 保存按钮内的主/副文案（激励广告灰度命中时显示副文案） */
+.save-btn-main {
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: 1.2;
+}
+.save-btn-sub {
+  display: block;
+  font-size: 22rpx;
+  font-weight: 400;
+  opacity: 0.9;
+  margin-top: 6rpx;
+  line-height: 1.2;
+  letter-spacing: 0;
+  white-space: nowrap;
+}

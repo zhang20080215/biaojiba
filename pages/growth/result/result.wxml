@@ -127,7 +127,8 @@
       <text>重新评估</text>
     </view>
     <view class="action-btn primary" bindtap="onSavePoster">
-      <text>{{isGenerating ? '生成中...' : '保存海报'}}</text>
+      <text class="save-btn-main">{{isGenerating ? '生成中...' : '保存海报'}}</text>
+      <text class="save-btn-sub" wx:if="{{!isGenerating && needRewardedAd}}">需观看广告后保存</text>
     </view>
   </view>
 

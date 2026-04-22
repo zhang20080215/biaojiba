@@ -496,8 +496,9 @@ page {
 .rating-chip-value {
   margin-top: 6rpx;
   font-size: 26rpx;
-  font-weight: 700;
-  color: #22312a;
+  font-weight: 500;
+  color: #476453;
+  opacity: 0.85;
 }
 
 .movie-footer {

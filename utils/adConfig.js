@@ -24,8 +24,17 @@ const adConfig = {
     movielist_infeed: { unitId: 'adunit-72684185bc7251e5', type: 'native', enabled: true },
     share_interstitial: { unitId: 'adunit-76c494953122488c', type: 'interstitial', enabled: true },
     share_banner: { unitId: 'adunit-d9b45d20a77f545e', type: 'banner', enabled: true },
+    save_image_rewarded: { unitId: 'adunit-16f5506ef74be138', type: 'rewarded', enabled: true },
     growth_result_native: { unitId: 'adunit-a0fdcfcd4703f705', type: 'native', enabled: true },
     growth_result_interstitial: { unitId: 'adunit-6028748f3e257f56', type: 'interstitial', enabled: true },
+  },
+
+  grayRollout: {
+    save_image_rewarded: 20,
+  },
+
+  grayForceIn: {
+    save_image_rewarded: ['ozCMC7vB3JQinqbeqyXzY_7TwSMo'],
   },
 
   frequency: {
@@ -106,6 +115,28 @@ function _applyRemoteConfig(remote) {
       adConfig.frequency.maxInterstitialsPerSession = remote.frequency.maxInterstitialsPerSession
     }
   }
+
+  if (remote.grayRollout) {
+    var grayKeys = Object.keys(remote.grayRollout)
+    for (var j = 0; j < grayKeys.length; j++) {
+      var rolloutName = grayKeys[j]
+      var percentage = remote.grayRollout[rolloutName]
+      if (typeof percentage === 'number' && !isNaN(percentage)) {
+        adConfig.grayRollout[rolloutName] = Math.max(0, Math.min(100, percentage))
+      }
+    }
+  }
+
+  if (remote.grayForceIn) {
+    var forceKeys = Object.keys(remote.grayForceIn)
+    for (var k = 0; k < forceKeys.length; k++) {
+      var forceName = forceKeys[k]
+      var list = remote.grayForceIn[forceName]
+      if (Array.isArray(list)) {
+        adConfig.grayForceIn[forceName] = list.slice()
+      }
+    }
+  }
 }
 
 /**
@@ -126,9 +157,24 @@ function getAdUnitId(placementName) {
   return placement ? placement.unitId : null
 }
 
+function getGrayPercentage(name) {
+  var percentage = adConfig.grayRollout && adConfig.grayRollout[name]
+  if (typeof percentage !== 'number' || isNaN(percentage)) return 0
+  return Math.max(0, Math.min(100, percentage))
+}
+
+function isForcedIntoGray(name, openid) {
+  if (!openid) return false
+  var list = adConfig.grayForceIn && adConfig.grayForceIn[name]
+  if (!Array.isArray(list)) return false
+  return list.indexOf(openid) !== -1
+}
+
 module.exports = {
   adConfig,
   getPlacement,
   getAdUnitId,
+  getGrayPercentage,
+  isForcedIntoGray,
   fetchRemoteConfig,
 }

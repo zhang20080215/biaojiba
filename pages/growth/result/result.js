@@ -2,6 +2,7 @@ const { evaluate, formatAge } = require('../../../utils/growthCalculator.js');
 const GrowthPosterDrawer = require('../../../utils/growthPosterDrawer.js');
 var adConfig = require('../../../utils/adConfig');
 var adManager = require('../../../utils/adManager');
+const rewardedSaveGate = require('../../../utils/rewardedSaveGate.js');
 
 Page({
   data: {
@@ -14,6 +15,7 @@ Page({
     genderIcon: '',
     showRange: false,
     isGenerating: false,
+    needRewardedAd: false,
     showNativeAd: false,
     adUnitIds: {
       growth_result_native: adConfig.getAdUnitId('growth_result_native') || '',
@@ -69,6 +71,7 @@ Page({
       ageText: formatAge(input.ageMonths)
     });
     this.initAds();
+    rewardedSaveGate.refreshHint(this);
   },
 
   onToggleRange() {
@@ -83,8 +86,15 @@ Page({
       return;
     }
 
-    // 保存前展示插屏广告
-    await adManager.showInterstitial('growth_result_interstitial');
+    // 灰度命中：必须看完激励广告才能保存；否则走原有插屏广告
+    const app = getApp();
+    const openid = (app && app.globalData && app.globalData.openid) || '';
+    if (rewardedSaveGate.isGated(openid)) {
+      const hasGrant = await rewardedSaveGate.ensureGrant(this);
+      if (!hasGrant) return;
+    } else {
+      await adManager.showInterstitial('growth_result_interstitial');
+    }
 
     try {
       this.setData({ isGenerating: true });
@@ -124,8 +134,10 @@ Page({
 
       // 保存到相册
       await wx.saveImageToPhotosAlbum({ filePath: res.tempFilePath });
+      wx.hideLoading();
       wx.showToast({ title: '已保存到相册', icon: 'success' });
     } catch (err) {
+      wx.hideLoading();
       console.error('保存失败:', err);
       if (err.errMsg && err.errMsg.includes('auth deny')) {
         wx.showModal({
@@ -141,7 +153,6 @@ Page({
       }
     } finally {
       this.setData({ isGenerating: false });
-      wx.hideLoading();
     }
   },
 
