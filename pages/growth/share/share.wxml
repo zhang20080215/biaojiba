@@ -7,7 +7,8 @@
 
   <view class="save-btn-container">
     <button class="save-btn" bindtap="saveImage" disabled="{{isGenerating}}" loading="{{isGenerating}}">
-      {{isGenerating ? '生成中...' : '保存海报到相册'}}
+      <text class="save-btn-main">{{isGenerating ? '生成中...' : '保存海报到相册'}}</text>
+      <text class="save-btn-sub" wx:if="{{!isGenerating && needRewardedAd}}">需观看广告后保存</text>
     </button>
   </view>
 </view>

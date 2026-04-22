@@ -3,6 +3,7 @@ const CanvasHelper = require('../../../utils/canvasHelper.js');
 const DataLoader = require('../../../utils/dataLoader.js');
 const OscarPosterDrawer = require('../../../utils/oscarPosterDrawer.js');
 var adConfig = require('../../../utils/adConfig');
+const rewardedSaveGate = require('../../../utils/rewardedSaveGate.js');
 
 Page({
     data: {
@@ -15,6 +16,7 @@ Page({
         canvasSize: { width: 1242, height: 1660 },
         loadProgress: 0,
         isGenerating: false,
+        needRewardedAd: false,
         showBannerAd: false,
         adUnitIds: {
             share_banner: adConfig.getAdUnitId('share_banner') || '',
@@ -32,6 +34,7 @@ Page({
             await this.loadUserInfo();
             await this.loadData();
             this.initAds();
+            rewardedSaveGate.refreshHint(this);
         } catch (err) {
             console.error('页面加载失败:', err);
             wx.showModal({ title: '加载失败', content: err.message || '请重试', showCancel: false });
@@ -124,18 +127,22 @@ Page({
         if (this.data.isGenerating) { wx.showToast({ title: '正在生成中...', icon: 'none' }); return; }
         if (!this.canvasHelper) { wx.showToast({ title: 'Canvas未初始化', icon: 'none' }); return; }
 
+        const hasGrant = await rewardedSaveGate.ensureGrant(this);
+        if (!hasGrant) return;
+
         try {
             this.setData({ isGenerating: true });
             wx.showLoading({ title: '生成图片中...', mask: true });
             await this.startDrawing();
             await this.exportAndSaveImage();
+            wx.hideLoading();
             wx.showToast({ title: '保存成功', icon: 'success' });
         } catch (err) {
+            wx.hideLoading();
             console.error('保存图片失败:', err);
             wx.showModal({ title: '保存失败', content: err.message || '图片生成失败,请重试', showCancel: false });
         } finally {
             this.setData({ isGenerating: false });
-            wx.hideLoading();
         }
     },
 

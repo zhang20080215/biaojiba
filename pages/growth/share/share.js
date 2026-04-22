@@ -1,11 +1,13 @@
 const { evaluate, formatAge } = require('../../../utils/growthCalculator.js');
 const GrowthPosterDrawer = require('../../../utils/growthPosterDrawer.js');
+const rewardedSaveGate = require('../../../utils/rewardedSaveGate.js');
 
 Page({
   data: {
     canvasWidth: 750,
     canvasHeight: 1200,
-    isGenerating: false
+    isGenerating: false,
+    needRewardedAd: false
   },
 
   canvas: null,
@@ -34,6 +36,7 @@ Page({
       .filter(k => this.results[k]).length;
     const canvasHeight = 240 + 110 + (indicatorCount * 152) + 80;
     this.setData({ canvasHeight });
+    rewardedSaveGate.refreshHint(this);
   },
 
   async onReady() {
@@ -68,6 +71,9 @@ Page({
       return;
     }
 
+    const hasGrant = await rewardedSaveGate.ensureGrant(this);
+    if (!hasGrant) return;
+
     try {
       this.setData({ isGenerating: true });
       wx.showLoading({ title: '生成图片中...', mask: true });
@@ -86,8 +92,10 @@ Page({
 
       // 保存到相册
       await wx.saveImageToPhotosAlbum({ filePath: res.tempFilePath });
+      wx.hideLoading();
       wx.showToast({ title: '已保存到相册', icon: 'success' });
     } catch (err) {
+      wx.hideLoading();
       console.error('保存失败:', err);
       if (err.errMsg && err.errMsg.includes('auth deny')) {
         wx.showModal({
@@ -103,7 +111,6 @@ Page({
       }
     } finally {
       this.setData({ isGenerating: false });
-      wx.hideLoading();
     }
   }
 });
