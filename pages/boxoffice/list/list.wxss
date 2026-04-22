@@ -45,8 +45,8 @@
 .movie-country-chip {
   font-size: var(--font-mini);
   font-weight: 600;
-  color: rgba(123, 154, 60, 0.9);
-  background: rgba(225, 230, 209, 0.72);
+  color: var(--text-primary);
+  background: var(--brand-soft);
   padding: 4rpx var(--space-2);
   border-radius: var(--radius-pill);
 }

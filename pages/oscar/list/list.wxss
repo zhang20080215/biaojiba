@@ -327,8 +327,9 @@ page {
   font-size: 13px;
   color: #e5c05c;
   margin: 2rpx 0 0 0;
-  font-weight: 500;
+  font-weight: 400;
   letter-spacing: 0.4px;
+  opacity: 0.8;
 }
 
 /* ===== 标记状态 ===== */

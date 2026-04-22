@@ -419,8 +419,9 @@ page {
 
 .meta-tag.rating {
   background: var(--brand-primary-soft);
-  color: var(--brand-primary-dark);
-  font-weight: 600;
+  color: var(--brand-primary);
+  font-weight: 500;
+  opacity: 0.85;
 }
 
 .movie-director,
