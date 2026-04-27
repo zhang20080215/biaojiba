@@ -1,0 +1,88 @@
+<!-- pages/doubanBooks/list/list.wxml — 豆瓣读书 TOP250 列表（骨架阶段） -->
+<view class="page">
+  <view class="hero">
+    <view class="hero-back" bindtap="onBackHome">
+      <text class="hero-back-icon">‹</text>
+    </view>
+    <view class="hero-title">豆瓣读书 TOP250</view>
+    <view class="hero-slogan">书海拾贝，记录你的阅读旅程</view>
+    <view class="hero-progress">
+      <view class="hero-progress-bar">
+        <view class="hero-progress-fill" style="width: {{readProgressWidth}}"></view>
+      </view>
+      <view class="hero-progress-text">已读 {{readCount}} / {{allCount}} · {{readProgressText}}</view>
+    </view>
+  </view>
+
+  <view class="sticky-bar">
+    <view class="tabs">
+      <view class="tab {{activeTab === 0 ? 'tab-active' : ''}}" data-index="0" bindtap="onTabChange">
+        <text class="tab-label">全部</text>
+        <text class="tab-count">{{allCount}}</text>
+      </view>
+      <view class="tab {{activeTab === 1 ? 'tab-active' : ''}}" data-index="1" bindtap="onTabChange">
+        <text class="tab-label">已读</text>
+        <text class="tab-count">{{readCount}}</text>
+      </view>
+      <view class="tab {{activeTab === 2 ? 'tab-active' : ''}}" data-index="2" bindtap="onTabChange">
+        <text class="tab-label">想读</text>
+        <text class="tab-count">{{wishCount}}</text>
+      </view>
+      <view class="tab {{activeTab === 3 ? 'tab-active' : ''}}" data-index="3" bindtap="onTabChange">
+        <text class="tab-label">未读</text>
+        <text class="tab-count">{{unreadCount}}</text>
+      </view>
+    </view>
+    <view class="action-bar">
+      <view class="action-btn action-btn-primary" bindtap="onSharePoster">生成海报</view>
+    </view>
+  </view>
+
+  <view class="book-list">
+    <block wx:for="{{books}}" wx:key="_id">
+      <view class="book-card">
+        <view class="book-cover">
+          <image wx:if="{{item.cover}}" src="{{item.cover}}" mode="aspectFill" />
+          <view wx:else class="book-cover-placeholder">封面</view>
+          <view class="book-rank">No.{{item.rank}}</view>
+        </view>
+        <view class="book-info">
+          <view class="book-title">{{item.title}}</view>
+          <view class="book-author">{{item.author}}</view>
+          <view class="book-meta">
+            <text class="book-rating" wx:if="{{item.rating}}">{{item.rating}}</text>
+            <text class="book-publisher" wx:if="{{item.publisher}}">{{item.publisher}}</text>
+          </view>
+          <view class="book-actions">
+            <view
+              class="book-action {{markStatusMap[item._id] === 'read' ? 'book-action-read' : ''}}"
+              data-book-id="{{item._id}}"
+              data-status="read"
+              bindtap="onMarkBook"
+            >
+              <text wx:if="{{markStatusMap[item._id] === 'read'}}">已读 · {{markDateMap[item._id]}}</text>
+              <text wx:else>读过</text>
+            </view>
+            <view
+              class="book-action {{markStatusMap[item._id] === 'wish' ? 'book-action-wish' : ''}}"
+              data-book-id="{{item._id}}"
+              data-status="wish"
+              bindtap="onMarkBook"
+            >
+              <text wx:if="{{markStatusMap[item._id] === 'wish'}}">想读 · {{markDateMap[item._id]}}</text>
+              <text wx:else>想读</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <view wx:if="{{!loading && books.length === 0}}" class="empty">
+      <text>暂无内容</text>
+    </view>
+  </view>
+
+  <view class="custom-toast {{customToastVisible ? 'custom-toast-visible' : ''}}">
+    <text>{{customToast}}</text>
+  </view>
+</view>

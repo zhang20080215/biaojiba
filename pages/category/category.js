@@ -62,6 +62,16 @@ Page({
         category: 'movie',
         url: '/pages/boxoffice/list/list'
       },
+      {
+        id: 'douban_books',
+        title: '豆瓣读书 TOP250',
+        description: '华语读者的经典书单，记录你的阅读旅程',
+        image: '/images/cover-douban-books.jpg',
+        userCount: 0,
+        tag: '读书',
+        category: 'reading',
+        url: '/pages/doubanBooks/list/list'
+      },
       // {
       //   id: 'chinese_awards',
       //   title: '华语电影最高荣誉殿堂',

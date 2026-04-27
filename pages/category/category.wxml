@@ -48,6 +48,13 @@
       <text>电影</text>
     </view>
     <view
+      class="filter-chip {{activeTab === 'reading' ? 'active' : ''}}"
+      data-tab="reading" bindtap="onTabTap"
+    >
+      <view class="chip-dot" wx:if="{{activeTab === 'reading'}}"></view>
+      <text>读书</text>
+    </view>
+    <view
       class="filter-chip {{activeTab === 'parenting' ? 'active' : ''}}"
       data-tab="parenting" bindtap="onTabTap"
     >
