@@ -42,7 +42,7 @@
     <block wx:for="{{books}}" wx:key="_id">
       <view class="book-card">
         <view class="book-cover">
-          <image wx:if="{{item.cover}}" src="{{item.cover}}" mode="aspectFill" />
+          <image wx:if="{{item.thumbCover || item.cover}}" src="{{item.thumbCover || item.cover}}" mode="aspectFill" lazy-load="true" />
           <view wx:else class="book-cover-placeholder">封面</view>
           <view class="book-rank">No.{{item.rank}}</view>
         </view>

@@ -7,6 +7,7 @@
 // - 广告/批量编辑/授权弹窗：暂未接入
 
 const { loadBooks } = require('../../../utils/doubanBooksLoader');
+const imageCacheManager = require('../../../utils/imageCacheManager');
 
 const STORAGE_KEY = 'doubanBooks_marks';
 
@@ -73,7 +74,11 @@ Page({
     async loadAllBooks() {
         this.setData({ loading: true });
         try {
-            const books = await loadBooks();
+            const rawBooks = await loadBooks();
+            const books = rawBooks.map((b) => ({
+                ...b,
+                thumbCover: imageCacheManager.getThumbnailUrl(b.originalCover || b.coverUrl || b.cover, 'list')
+            }));
             const markStatusMap = readMarksFromStorage();
             const markDateMap = {};
             Object.keys(markStatusMap).forEach((bookId) => {

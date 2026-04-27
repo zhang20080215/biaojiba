@@ -62,10 +62,12 @@ exports.main = async (event, context) => {
             collectionName = 'chinese_award_movies';
             orderByField = 'awardYear';
             orderDirection = 'desc';
+        } else if (theme === 'douban_books') {
+            collectionName = 'douban_books';
         }
 
         const _ = db.command;
-        const topListCollections = new Set(['movies', 'imdb_movies', 'boxoffice_movies', 'chinese_movies']);
+        const topListCollections = new Set(['movies', 'imdb_movies', 'boxoffice_movies', 'chinese_movies', 'douban_books']);
         if (topListCollections.has(collectionName)) {
             whereCondition = { isTop250: _.neq(false) };
         }

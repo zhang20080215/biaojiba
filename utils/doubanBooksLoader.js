@@ -1,8 +1,8 @@
-// utils/doubanBooksLoader.js — 豆瓣读书 TOP250 数据加载（骨架阶段）
+// utils/doubanBooksLoader.js — 豆瓣读书 TOP250 数据加载
 //
-// 当前阶段：返回硬编码 seed 数据，用于跑通页面交互。
-// 待办：等爬虫云函数 fetchDoubanBooks 落地后，改为从云数据库
-// 集合 `douban_books` 读取，结构对齐 doubanLoader.loadMovies。
+// 优先调云函数 getMoviesData（theme: douban_books）；
+// 集合为空 / 调用失败时 fallback 到内置 seed，保证页面在 fetchDoubanBooks
+// 部署前也能跑通交互。
 
 const SEED_BOOKS = [
     { _id: 'db_book_001', rank: 1,  title: '红楼梦',           author: '曹雪芹',                  rating: 9.6, cover: '', publisher: '人民文学出版社' },
@@ -29,17 +29,37 @@ const SEED_BOOKS = [
 ];
 
 function normalizeBook(book) {
+    const cover = book.cover || book.coverUrl || book.originalCover || '';
     return {
         ...book,
         _id: String(book._id),
-        cover: book.cover || '',
-        thumbCover: book.cover || '',
-        originalCover: book.cover || ''
+        cover,
+        thumbCover: book.thumbCover || cover,
+        originalCover: book.originalCover || cover
     };
 }
 
-// 与 doubanLoader.loadMovies(db) 函数签名保持一致，便于后续无缝替换为云数据库读取
-async function loadBooks(/* db */) {
+async function loadFromCloud() {
+    if (typeof wx === 'undefined' || !wx.cloud) return null;
+    try {
+        const res = await wx.cloud.callFunction({
+            name: 'getMoviesData',
+            data: { theme: 'douban_books' }
+        });
+        const result = res && res.result;
+        if (!result || !result.success) return null;
+        const books = Array.isArray(result.movies) ? result.movies : [];
+        if (books.length === 0) return null;
+        return books.map(normalizeBook);
+    } catch (e) {
+        console.warn('[doubanBooksLoader] 云函数调用失败，使用 seed 兜底:', e);
+        return null;
+    }
+}
+
+async function loadBooks() {
+    const cloudBooks = await loadFromCloud();
+    if (cloudBooks && cloudBooks.length > 0) return cloudBooks;
     return SEED_BOOKS.map(normalizeBook);
 }
 
