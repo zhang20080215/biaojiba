@@ -23,6 +23,17 @@ Page({
     },
     themes: [
       {
+        id: 'douban_books',
+        title: '豆瓣读书 TOP250',
+        description: '华语读者的经典书单，记录你的阅读旅程',
+        image: '/images/cover-douban-books.jpg',
+        userCount: 0,
+        tag: '读书',
+        category: 'reading',
+        isNew: true,
+        url: '/pages/doubanBooks/list/list'
+      },
+      {
         id: 'douban_movies',
         title: '豆瓣电影 TOP250',
         description: '华语影迷的经典片单，记录你的观影旅程',
@@ -61,16 +72,6 @@ Page({
         tag: '电影',
         category: 'movie',
         url: '/pages/boxoffice/list/list'
-      },
-      {
-        id: 'douban_books',
-        title: '豆瓣读书 TOP250',
-        description: '华语读者的经典书单，记录你的阅读旅程',
-        image: '/images/cover-douban-books.jpg',
-        userCount: 0,
-        tag: '读书',
-        category: 'reading',
-        url: '/pages/doubanBooks/list/list'
       },
       // {
       //   id: 'chinese_awards',

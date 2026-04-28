@@ -86,6 +86,9 @@
         <view class="tag-badge">
           <text>{{item.tag}}</text>
         </view>
+        <view wx:if="{{item.isNew}}" class="new-badge">
+          <text>NEW</text>
+        </view>
         <image
           wx:if="{{item.id === 'oscar_movies'}}"
           class="oscar-icon"
@@ -140,6 +143,9 @@
         <view class="cover-mask"></view>
         <view class="tag-badge">
           <text>{{item.tag}}</text>
+        </view>
+        <view wx:if="{{item.isNew}}" class="new-badge">
+          <text>NEW</text>
         </view>
         <image
           wx:if="{{item.id === 'oscar_movies'}}"
