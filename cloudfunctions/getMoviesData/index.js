@@ -31,11 +31,13 @@ exports.main = async (event, context) => {
     // theme: 'douban' | 'imdb'
     // marksOnly: 鍙繑鍥炴爣璁帮紝璺宠繃鐢靛奖鍒楄〃鏌ヨ锛堢紦瀛樺懡涓悗鐨勮交閲忓埛鏂帮級
 
+    // 按 theme 选择标记集合：douban_books 走 BookMarks，其它走 Marks
+    const marksCollectionName = theme === 'douban_books' ? 'BookMarks' : 'Marks';
+
     try {
-        // 浠呭埛鏂版爣璁帮紝涓嶉噸鏂版媺鍙栫數褰卞垪琛?
         if (marksOnly) {
             const marks = openid
-                ? await readAll('Marks', db.collection('Marks').where({ openid }))
+                ? await readAll(marksCollectionName, db.collection(marksCollectionName).where({ openid }))
                 : [];
             return { success: true, movies: [], marks };
         }
@@ -81,7 +83,7 @@ exports.main = async (event, context) => {
         const [moviesRaw, marks] = await Promise.all([
             readAll(collectionName, moviesQuery),
             openid
-                ? readAll('Marks', db.collection('Marks').where({ openid }))
+                ? readAll(marksCollectionName, db.collection(marksCollectionName).where({ openid }))
                 : Promise.resolve([])
         ]);
 

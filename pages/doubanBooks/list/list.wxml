@@ -1,88 +1,154 @@
-<!-- pages/doubanBooks/list/list.wxml — 豆瓣读书 TOP250 列表（骨架阶段） -->
-<view class="page">
-  <view class="hero">
-    <view class="hero-back" bindtap="onBackHome">
-      <text class="hero-back-icon">‹</text>
-    </view>
-    <view class="hero-title">豆瓣读书 TOP250</view>
-    <view class="hero-slogan">书海拾贝，记录你的阅读旅程</view>
-    <view class="hero-progress">
-      <view class="hero-progress-bar">
-        <view class="hero-progress-fill" style="width: {{readProgressWidth}}"></view>
-      </view>
-      <view class="hero-progress-text">已读 {{readCount}} / {{allCount}} · {{readProgressText}}</view>
-    </view>
-  </view>
+<!-- 豆瓣读书 TOP 250 列表页 -->
+<view class="page-root {{themeClass}}">
 
-  <view class="sticky-bar">
-    <view class="tabs">
-      <view class="tab {{activeTab === 0 ? 'tab-active' : ''}}" data-index="0" bindtap="onTabChange">
-        <text class="tab-label">全部</text>
-        <text class="tab-count">{{allCount}}</text>
-      </view>
-      <view class="tab {{activeTab === 1 ? 'tab-active' : ''}}" data-index="1" bindtap="onTabChange">
-        <text class="tab-label">已读</text>
-        <text class="tab-count">{{readCount}}</text>
-      </view>
-      <view class="tab {{activeTab === 2 ? 'tab-active' : ''}}" data-index="2" bindtap="onTabChange">
-        <text class="tab-label">想读</text>
-        <text class="tab-count">{{wishCount}}</text>
-      </view>
-      <view class="tab {{activeTab === 3 ? 'tab-active' : ''}}" data-index="3" bindtap="onTabChange">
-        <text class="tab-label">未读</text>
-        <text class="tab-count">{{unreadCount}}</text>
-      </view>
-    </view>
-    <view class="action-bar">
-      <view class="action-btn action-btn-primary" bindtap="onSharePoster">生成海报</view>
-    </view>
-  </view>
-
-  <view class="book-list">
-    <block wx:for="{{books}}" wx:key="_id">
-      <view class="book-card">
-        <view class="book-cover">
-          <image wx:if="{{item.thumbCover || item.cover}}" src="{{item.thumbCover || item.cover}}" mode="aspectFill" lazy-load="true" />
-          <view wx:else class="book-cover-placeholder">封面</view>
-          <view class="book-rank">No.{{item.rank}}</view>
-        </view>
-        <view class="book-info">
-          <view class="book-title">{{item.title}}</view>
-          <view class="book-author">{{item.author}}</view>
-          <view class="book-meta">
-            <text class="book-rating" wx:if="{{item.rating}}">{{item.rating}}</text>
-            <text class="book-publisher" wx:if="{{item.publisher}}">{{item.publisher}}</text>
+  <!-- Hero 区（与 category 保持一致） -->
+  <view class="hero-section">
+    <view class="header">
+      <view class="header-left">
+        <text class="app-name">豆瓣读书TOP250</text>
+        <text class="app-slogan">标记你读过的经典，生成专属阅读海报</text>
+        <view class="hero-progress">
+          <view class="hero-progress-head">
+            <text class="hero-progress-label">已读进度</text>
+            <text class="hero-progress-percent">{{readProgressText}}</text>
           </view>
-          <view class="book-actions">
-            <view
-              class="book-action {{markStatusMap[item._id] === 'read' ? 'book-action-read' : ''}}"
-              data-book-id="{{item._id}}"
-              data-status="read"
-              bindtap="onMarkBook"
-            >
-              <text wx:if="{{markStatusMap[item._id] === 'read'}}">已读 · {{markDateMap[item._id]}}</text>
-              <text wx:else>读过</text>
+          <view class="hero-progress-bar">
+            <view class="hero-progress-fill" style="width: {{readProgressWidth}};"></view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 统计 Tab 栏 -->
+  <view class="sticky-top-group">
+    <view class="tabs-bar">
+      <view class="tab {{activeTab === 0 ? 'active' : ''}}" data-idx="0" bindtap="onTabChange">全部({{allCount}})</view>
+      <view class="tab {{activeTab === 1 ? 'active' : ''}}" data-idx="1" bindtap="onTabChange">已读({{readCount}})</view>
+      <view class="tab {{activeTab === 2 ? 'active' : ''}}" data-idx="2" bindtap="onTabChange">想读({{wishCount}})</view>
+      <view class="tab {{activeTab === 3 ? 'active' : ''}}" data-idx="3" bindtap="onTabChange">未读({{unreadCount}})</view>
+    </view>
+
+    <!-- 操作区域（吸顶） -->
+    <view class="sticky-action-container">
+      <view class="middle-action-section">
+        <view wx:if="{{userInfo}}" class="batch-options">
+          <block wx:if="{{!isBatchEditing}}">
+            <view class="icon-btn batch-icon" bindtap="onStartBatchEdit">批量标记</view>
+          </block>
+          <block wx:elif="{{isBatchEditing}}">
+            <view class="icon-btn action-watched" bindtap="onBatchRead">批量已读</view>
+            <view class="icon-btn action-wish" bindtap="onBatchWish">批量想读</view>
+            <view class="icon-btn action-unwatched" bindtap="onBatchUnread">批量未读</view>
+            <view class="icon-btn action-cancel" bindtap="onCancelBatchEdit">取消</view>
+          </block>
+        </view>
+        <view class="generate-card-wrapper" bindtap="onShareTap" wx:if="{{!isBatchEditing}}">
+          <view class="generate-card-btn">生成阅读海报</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 图书列表区 -->
+  <view class="movie-list">
+    <block wx:for="{{books}}" wx:key="_id">
+      <view wx:if="{{showInfeedAd && (index === 5 || index === 25)}}" class="ad-infeed-container">
+        <ad-custom unit-id="{{adUnitIds.movielist_infeed}}" bindload="onInfeedAdLoad" binderror="onInfeedAdError"></ad-custom>
+      </view>
+      <view class="movie-row" bindtap="{{isBatchEditing ? 'onBookCheck' : ''}}" data-book-id="{{item._id}}">
+        <view wx:if="{{isBatchEditing}}" class="batch-checkbox-wrap">
+          <checkbox class="batch-checkbox" value="{{item._id}}" checked="{{item.checked}}" catchtap="onBookCheck" data-book-id="{{item._id}}" />
+        </view>
+        <view class="movie-content {{isBatchEditing ? 'batch-editing' : ''}}">
+          <image class="movie-thumb" src="{{item.thumbCover || item.cover}}" lazy-load="true" mode="aspectFill" binderror="onImageError" data-book-id="{{item._id}}" show-menu-by-longpress="false" />
+          <view class="movie-info">
+            <view class="movie-title">{{item.rank}}. {{item.title}}</view>
+            <view class="movie-meta-row">
+              <text class="movie-rating-star">豆瓣 {{item.rating}}</text>
+              <text class="movie-author" wx:if="{{item.author}}">{{item.author}}</text>
             </view>
-            <view
-              class="book-action {{markStatusMap[item._id] === 'wish' ? 'book-action-wish' : ''}}"
-              data-book-id="{{item._id}}"
-              data-status="wish"
-              bindtap="onMarkBook"
-            >
-              <text wx:if="{{markStatusMap[item._id] === 'wish'}}">想读 · {{markDateMap[item._id]}}</text>
-              <text wx:else>想读</text>
-            </view>
+          </view>
+          <view class="movie-action" wx:if="{{!isBatchEditing}}">
+            <block wx:if="{{markStatusMap[item._id] === 'read'}}">
+              <view class="mark-tag watched">{{markDateMap[item._id]}}已读</view>
+            </block>
+            <block wx:elif="{{markStatusMap[item._id] === 'wish'}}">
+              <view class="mark-tag wish">{{markDateMap[item._id]}}想读</view>
+            </block>
+            <block wx:else>
+              <view class="mark-btn mark-btn-wish" data-id="{{item._id}}" data-type="wish" catchtap="onMarkTap">想读</view>
+              <view class="mark-btn" data-id="{{item._id}}" data-type="read" catchtap="onMarkTap">读过</view>
+            </block>
           </view>
         </view>
       </view>
     </block>
+  </view>
 
-    <view wx:if="{{!loading && books.length === 0}}" class="empty">
-      <text>暂无内容</text>
+  <view class="custom-toast {{customToastVisible ? 'show' : ''}}">
+    <text class="custom-toast-text">{{customToast}}</text>
+  </view>
+
+  <!-- 海报类型选择弹窗 -->
+  <view wx:if="{{showSharePicker}}" class="share-picker show" catchtouchmove="onSharePickerTouchMove">
+    <view class="share-picker-mask" bindtap="onCloseSharePicker"></view>
+    <view class="share-picker-panel">
+      <view class="share-picker-header">
+        <text class="share-picker-title">选择海报样式</text>
+        <view class="share-picker-close" bindtap="onCloseSharePicker">×</view>
+      </view>
+      <view class="share-picker-options">
+        <view class="share-option" bindtap="onShareTypeSelect" data-type="poster">
+          <view class="share-option-icon">
+            <image class="share-option-icon-img" src="/images/icon-share-poster.svg" mode="aspectFit"></image>
+          </view>
+          <view class="share-option-info">
+            <text class="share-option-name">海报墙</text>
+            <text class="share-option-desc">已读图书封面拼成海报墙</text>
+          </view>
+          <text class="share-option-arrow">›</text>
+        </view>
+        <view class="share-option" bindtap="onShareTypeSelect" data-type="text">
+          <view class="share-option-icon">
+            <image class="share-option-icon-img" src="/images/icon-share-text.svg" mode="aspectFit"></image>
+          </view>
+          <view class="share-option-info">
+            <text class="share-option-name">文字卡片</text>
+            <text class="share-option-desc">全部图书标记状态一览</text>
+          </view>
+          <text class="share-option-arrow">›</text>
+        </view>
+      </view>
     </view>
   </view>
 
-  <view class="custom-toast {{customToastVisible ? 'custom-toast-visible' : ''}}">
-    <text>{{customToast}}</text>
+  <!-- 个人信息授权弹窗 -->
+  <view class="auth-modal" hidden="{{!showAuthModal}}">
+    <view class="auth-mask" bindtap="onCancelAuth"></view>
+    <view class="auth-content">
+      <view class="auth-title">完善个人资料</view>
+      <view class="auth-subtitle">请提供头像和昵称以获取更好的体验</view>
+      <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+        <image class="temp-avatar" src="{{tempAvatar || '/images/default-avatar.svg'}}" mode="aspectFill"></image>
+        <view class="avatar-edit-tip">点击修改头像</view>
+      </button>
+      <view class="nickname-input-group">
+        <text class="input-label">昵称</text>
+        <input
+          type="nickname"
+          class="nickname-input"
+          placeholder="请输入昵称"
+          bindinput="onNicknameInput"
+          bindblur="onNicknameInput"
+          value="{{tempNickname}}"
+        />
+      </view>
+      <view class="auth-actions">
+        <button class="auth-btn cancel" bindtap="onCancelAuth">暂不登录</button>
+        <button class="auth-btn confirm" bindtap="onConfirmAuth">保存并登录</button>
+      </view>
+    </view>
   </view>
+
 </view>
