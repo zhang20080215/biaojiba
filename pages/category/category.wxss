@@ -341,6 +341,23 @@
   z-index: 2;
 }
 
+/* NEW 角标 — 放右上角，与左上角 tag-badge 对称 */
+.new-badge {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  background: linear-gradient(135deg, #FF5A5F 0%, #FF8A5F 100%);
+  border-radius: var(--radius-pill);
+  padding: 6rpx 16rpx;
+  font-size: var(--font-mini);
+  color: #FFFFFF;
+  font-weight: 700;
+  letter-spacing: 1rpx;
+  line-height: 1.2;
+  box-shadow: 0 4rpx 10rpx rgba(255, 90, 95, 0.35);
+  z-index: 2;
+}
+
 /* 奥斯卡 badge */
 .oscar-icon {
   position: absolute;

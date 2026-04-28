@@ -166,6 +166,67 @@ function processMarks(marks, movies) {
 }
 
 // ─────────────────────────────────────────────
+// 豆瓣读书 TOP250 标记处理（独立于电影线，字段为 bookId / read / wish）
+// ─────────────────────────────────────────────
+
+function processBookMarks(marks, books) {
+  const _markObjectMap = {};
+  const stats = { read: 0, wish: 0, unread: 0 };
+  const readBooks = [];
+  const markDateMap = {};
+  const markStatusMap = {};
+  const markRecordIdMap = {};
+  const readIds = [];
+  const wishIds = [];
+
+  marks.forEach(item => {
+    const bid = String(item.bookId);
+    if (!_markObjectMap[bid] || new Date(item.marked_at) > new Date(_markObjectMap[bid].marked_at)) {
+      _markObjectMap[bid] = item;
+    }
+  });
+
+  books.forEach(book => {
+    const mark = _markObjectMap[book._id];
+
+    if (mark) {
+      if (mark._id) markRecordIdMap[book._id] = mark._id;
+      if (mark.status === 'read' || mark.status === 'wish') {
+        markStatusMap[book._id] = mark.status;
+      }
+      if (mark.marked_at && (mark.status === 'read' || mark.status === 'wish')) {
+        let dateValue = mark.marked_at;
+        if (typeof dateValue === 'object') {
+          dateValue = dateValue.toISOString ? dateValue.toISOString() : new Date(dateValue).toISOString();
+        } else if (typeof dateValue !== 'string') {
+          dateValue = new Date(dateValue).toISOString();
+        }
+        try {
+          const d = new Date(dateValue);
+          markDateMap[book._id] = `${d.getMonth() + 1}/${d.getDate()}`;
+        } catch (e) {
+          markDateMap[book._id] = '';
+        }
+      }
+      if (mark.status === 'read') {
+        stats.read++;
+        readIds.push(book._id);
+        readBooks.push(book);
+      } else if (mark.status === 'wish') {
+        stats.wish++;
+        wishIds.push(book._id);
+      } else {
+        stats.unread++;
+      }
+    } else {
+      stats.unread++;
+    }
+  });
+
+  return { markStatusMap, markDateMap, markRecordIdMap, readIds, wishIds, stats, readBooks };
+}
+
+// ─────────────────────────────────────────────
 // 保留旧版接口（兼容 share 页等未改动的页面）
 // ─────────────────────────────────────────────
 
@@ -204,6 +265,7 @@ module.exports = {
   loadMoviesData,
   invalidateMovieCache,
   processMarks,
+  processBookMarks,
   // 旧接口（保留兼容）
   loadCollection,
   loadMarks,

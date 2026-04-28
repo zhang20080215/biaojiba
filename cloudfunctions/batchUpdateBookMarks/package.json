@@ -1,0 +1,9 @@
+{
+    "name": "batchupdatebookmarks",
+    "version": "1.0.0",
+    "description": "豆瓣读书 TOP250 批量更新标记",
+    "main": "index.js",
+    "dependencies": {
+        "wx-server-sdk": "~2.6.3"
+    }
+}

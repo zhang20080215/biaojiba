@@ -12,6 +12,8 @@
     "pages/oscar/share/share",
     "pages/boxoffice/list/list",
     "pages/boxoffice/share/share",
+    "pages/doubanBooks/list/list",
+    "pages/doubanBooks/share/share",
     "pages/growth/input/input",
     "pages/growth/result/result"
   ],
