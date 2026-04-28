@@ -359,6 +359,9 @@ page {
   display: flex;
   align-items: center;
   transition: transform 300ms;
+  /* 书名常常比电影名长，必须显式 min-width:0 才能让内部 .movie-info 真正
+     收缩，否则 .mark-btn 会被推出可视区。书线专属补丁，不动 douban 电影线。 */
+  min-width: 0;
 }
 
 .movie-content.batch-editing {
