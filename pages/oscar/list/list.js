@@ -29,7 +29,7 @@ Page({
         showShareModal: false,
         tempAvatar: '',
         tempNickname: '',
-        showInfeedAd: false,
+        infeedSlots: {},
         adUnitIds: {
             movielist_infeed: adConfig.getAdUnitId('movielist_infeed') || '',
         },
@@ -451,12 +451,16 @@ Page({
 
     // ========== 广告 ==========
     initAds() {
-        if (this.data.adUnitIds.movielist_infeed) {
-            this.setData({ showInfeedAd: true });
+        if (!this.data.adUnitIds.movielist_infeed) return;
+        var slots = {};
+        for (var pos = 5; pos <= 25; pos += 20) {
+            slots[pos] = true;
         }
+        this.setData({ infeedSlots: slots });
     },
     onInfeedAdLoad() {},
-    onInfeedAdError() {
-        this.setData({ showInfeedAd: false });
+    onInfeedAdError(e) {
+        var pos = e.currentTarget.dataset.position;
+        if (pos !== undefined) this.setData({ ['infeedSlots.' + pos]: false });
     }
 });

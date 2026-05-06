@@ -98,8 +98,8 @@
     </view>
 
     <block wx:for="{{movies}}" wx:key="_id">
-      <view wx:if="{{showInfeedAd && (index === 6 || index === 18)}}" class="ad-infeed-container">
-        <ad-custom unit-id="{{adUnitIds.movielist_infeed}}" bindload="onInfeedAdLoad" binderror="onInfeedAdError"></ad-custom>
+      <view wx:if="{{infeedSlots[index]}}" class="ad-infeed-container">
+        <ad-custom unit-id="{{adUnitIds.movielist_infeed}}" data-position="{{index}}" bindload="onInfeedAdLoad" binderror="onInfeedAdError"></ad-custom>
       </view>
 
       <view class="movie-card">

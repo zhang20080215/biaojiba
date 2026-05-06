@@ -88,8 +88,8 @@
   <view class="movie-list">
     <block wx:if="{{movies.length}}">
       <block wx:for="{{movies}}" wx:key="_id">
-        <view wx:if="{{showInfeedAd && (index === 10 || index === 50)}}" class="ad-infeed-container">
-          <ad-custom unit-id="{{adUnitIds.movielist_infeed}}" bindload="onInfeedAdLoad" binderror="onInfeedAdError"></ad-custom>
+        <view wx:if="{{infeedSlots[index]}}" class="ad-infeed-container">
+          <ad-custom unit-id="{{adUnitIds.movielist_infeed}}" data-position="{{index}}" bindload="onInfeedAdLoad" binderror="onInfeedAdError"></ad-custom>
         </view>
         <view class="movie-row {{markStatusMap[item._id] === 'watched' ? 'is-watched' : ''}}" bindtap="{{isBatchEditing ? 'onMovieCheck' : ''}}" data-movie-id="{{item._id}}">
           <view wx:if="{{isBatchEditing}}" class="batch-checkbox-wrap">
