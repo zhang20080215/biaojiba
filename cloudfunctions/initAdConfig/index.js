@@ -10,7 +10,7 @@ const CONFIG_DATA = {
   enabled: true,
   placements: {
     category_native:            { enabled: true },
-    category_banner:            { enabled: true },
+    category_banner:            { enabled: false }, // 已被智能接入 Banner (pages/category/category-1) 完全替代
     movielist_infeed:           { enabled: true },
     share_interstitial:         { enabled: false },  // 与云端当前状态保持一致
     share_banner:               { enabled: true },

@@ -16,10 +16,8 @@ Page({
     headerPadTop: 0,
     // 骞垮憡鐩稿叧
     showNativeAd: false,
-    showBannerAd: false,
     adUnitIds: {
       category_native: adConfig.getAdUnitId('category_native') || '',
-      category_banner: adConfig.getAdUnitId('category_banner') || '',
     },
     themes: [
       {
@@ -423,32 +421,14 @@ Page({
 
   // ========== 骞垮憡 ==========
   initAds() {
-    var ids = this.data.adUnitIds;
-    // 浼樺厛灞曠ず鍘熺敓骞垮憡锛屾湁 unitId 鎵嶅皾璇?
-    if (ids.category_native) {
+    if (this.data.adUnitIds.category_native) {
       this.setData({ showNativeAd: true });
-    }
-    // Banner 浣滀负鍏滃簳锛屽師鐢熷箍鍛婂け璐ユ椂鏄剧ず
-    if (ids.category_banner && !ids.category_native) {
-      this.setData({ showBannerAd: true });
     }
   },
 
-  onNativeAdLoad() {
-    this.setData({ showNativeAd: true });
-  },
+  onNativeAdLoad() {},
   onNativeAdError() {
     this.setData({ showNativeAd: false });
-    // 鍘熺敓骞垮憡澶辫触锛岄檷绾т负 Banner
-    if (this.data.adUnitIds.category_banner) {
-      this.setData({ showBannerAd: true });
-    }
-  },
-  onBannerAdLoad() {
-    this.setData({ showBannerAd: true });
-  },
-  onBannerAdError() {
-    this.setData({ showBannerAd: false });
   },
 });
 

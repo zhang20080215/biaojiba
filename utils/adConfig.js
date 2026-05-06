@@ -20,7 +20,7 @@ const adConfig = {
 
   placements: {
     category_native: { unitId: 'adunit-0210c68397d60f88', type: 'native', enabled: true },
-    category_banner: { unitId: 'adunit-991294f7567bd2b8', type: 'banner', enabled: true },
+    category_banner: { unitId: 'adunit-991294f7567bd2b8', type: 'banner', enabled: false },
     movielist_infeed: { unitId: 'adunit-72684185bc7251e5', type: 'native', enabled: true },
     share_interstitial: { unitId: 'adunit-76c494953122488c', type: 'interstitial', enabled: true },
     share_banner: { unitId: 'adunit-d9b45d20a77f545e', type: 'banner', enabled: true },

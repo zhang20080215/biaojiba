@@ -118,9 +118,6 @@
   <view class="ad-zone" wx:if="{{showNativeAd}}">
     <ad-custom unit-id="{{adUnitIds.category_native}}" bindload="onNativeAdLoad" binderror="onNativeAdError"></ad-custom>
   </view>
-  <view class="ad-zone" wx:if="{{showBannerAd}}">
-    <ad unit-id="{{adUnitIds.category_banner}}" ad-type="banner" bindload="onBannerAdLoad" binderror="onBannerAdError"></ad>
-  </view>
 
   <!-- 剩余卡片（第3张起） -->
   <view class="card-grid">
