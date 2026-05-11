@@ -1,17 +1,17 @@
-// pages/doubanBooks/share/share.js
-// 完全镜像 pages/douban/share/share.js，差异：
-//   - 数据源 douban_books 集合，状态 read/wish/unread，字段 readBooks/allBooks
-//   - 不再用 DoubanLoader.loadMovies，直接用 DataLoader.loadMoviesData('douban_books')
+// pages/weread/share/share.js
+// 镜像 pages/doubanBooks/share/share.js，差异：
+//   - 数据源 weread_books 集合（state read/wish/unread，字段同 doubanBooks）
+//   - DataLoader.loadMoviesData('weread_books')
 
 const CanvasHelper = require('../../../utils/canvasHelper.js');
 const DataLoader = require('../../../utils/dataLoader.js');
 var adConfig = require('../../../utils/adConfig');
 const rewardedSaveGate = require('../../../utils/rewardedSaveGate.js');
 
-const TITLE = '豆瓣读书TOP250阅读海报';
+const TITLE = '微信读书总榜TOP200阅读海报';
 
 // 简化标题：去掉所有括号及其内容，保留《》〈〉书名号。仅用于海报展示。
-// 例：「百年孤独（精装）」→「百年孤独」、「围城【插图本】」→「围城」
+// 例：「三体全集（全三册）」→「三体全集」、「围城【插图本】」→「围城」
 function simplifyTitle(title) {
     if (!title) return '';
     return String(title)
@@ -65,7 +65,7 @@ Page({
             pageTitle: '海报预览',
             background: '背景',
             themeCheck: '✓',
-            cardTitle: '豆瓣读书TOP250阅读海报',
+            cardTitle: '微信读书总榜TOP200阅读海报',
             read: '已读',
             wish: '想读',
             unread: '未读',
@@ -109,7 +109,7 @@ Page({
     onBack() {
         wx.navigateBack({
             fail: () => {
-                wx.reLaunch({ url: '/pages/doubanBooks/list/list' });
+                wx.reLaunch({ url: '/pages/weread/list/list' });
             }
         });
     },
@@ -205,7 +205,7 @@ Page({
             wx.showLoading({ title: '加载数据中...' });
             const userInfo = this.data.userInfo || {};
             const openid = userInfo._openid || userInfo.openid || '';
-            const { movies: rawBooks, marks } = await DataLoader.loadMoviesData('douban_books', openid || null, false);
+            const { movies: rawBooks, marks } = await DataLoader.loadMoviesData('weread_books', openid || null, false);
             const allBooks = (rawBooks || []).map(b => ({
                 ...b,
                 _id: String(b._id),
@@ -869,8 +869,8 @@ Page({
 
     onShareAppMessage() {
         return {
-            title: '我的豆瓣读书TOP250阅读海报',
-            path: '/pages/doubanBooks/list/list'
+            title: '我的微信读书TOP200阅读海报',
+            path: '/pages/weread/list/list'
         };
     },
 

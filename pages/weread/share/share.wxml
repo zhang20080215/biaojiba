@@ -1,4 +1,4 @@
-<!-- 豆瓣读书 TOP 250 海报生成页 -->
+<!-- 微信读书 TOP 200 海报生成页 -->
 <view class="page-root share-page {{themeClass}}">
 
 <!-- 沉浸式顶部 -->
@@ -45,7 +45,7 @@
 <view class="content-wrap">
   <view class="share-card {{shareType === 'poster' ? 'poster-wall' : ''}} {{shareType !== 'poster' && textStyle === 'list' ? 'text-list-card' : ''}}" style="background: linear-gradient(135deg, {{currentGradient.start}} 0%, {{currentGradient.end}} 100%); {{shareType === 'poster' ? posterCardStyle : ''}}">
     <view class="card-head">
-      <text class="card-title">豆瓣读书TOP250阅读海报</text>
+      <text class="card-title">微信读书总榜TOP200阅读海报</text>
     </view>
 
     <!-- 统计数据（保留电影主题 CSS class，仅替换文案/字段） -->

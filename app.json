@@ -14,6 +14,8 @@
     "pages/boxoffice/share/share",
     "pages/doubanBooks/list/list",
     "pages/doubanBooks/share/share",
+    "pages/weread/list/list",
+    "pages/weread/share/share",
     "pages/growth/input/input",
     "pages/growth/result/result"
   ],

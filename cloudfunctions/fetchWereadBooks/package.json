@@ -1,0 +1,10 @@
+{
+  "name": "fetchWereadBooks",
+  "version": "0.1.0",
+  "description": "微信读书 TOP200 数据写入云函数（接收外部爬虫数据）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "axios": "^1.6.0"
+  }
+}

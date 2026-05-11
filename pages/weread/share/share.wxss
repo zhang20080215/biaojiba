@@ -1,4 +1,12 @@
-/* pages/douban/share/share.wxss */
+/* pages/weread/share/share.wxss — 镜像 doubanBooks/share，覆盖品牌色为微信读书绿 */
+
+/* 微信读书品牌色：不随全局 app 主题切换 */
+.page-root,
+.page-root.theme-gold,
+.page-root.theme-green,
+.page-root.theme-sand {
+  --brand-primary: #3B9F4D;
+}
 
 .share-page {
   min-height: 100vh;

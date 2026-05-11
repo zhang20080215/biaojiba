@@ -21,6 +21,18 @@ Page({
     },
     themes: [
       {
+        id: 'weread_books',
+        title: '微信读书 TOP200 总榜',
+        description: '微信读书全平台热榜，记录你的阅读旅程',
+        image: '/images/cover-weread-santi.png',
+        imageMode: 'center',  // 不拉伸，按原图大小居中显示
+        userCount: 0,
+        tag: '读书',
+        category: 'reading',
+        isNew: true,
+        url: '/pages/weread/list/list'
+      },
+      {
         id: 'douban_books',
         title: '豆瓣读书 TOP250',
         description: '华语读者的经典书单，记录你的阅读旅程',
@@ -28,7 +40,6 @@ Page({
         userCount: 0,
         tag: '读书',
         category: 'reading',
-        isNew: true,
         url: '/pages/doubanBooks/list/list'
       },
       {
@@ -329,7 +340,10 @@ Page({
         { id: 'douban_movies', collection: 'movies', topFiltered: true },
         { id: 'imdb_movies', collection: 'imdb_movies', topFiltered: true },
         { id: 'oscar_movies', collection: 'oscar_movies', topFiltered: false },
-        { id: 'boxoffice_movies', collection: 'boxoffice_movies', topFiltered: true }
+        { id: 'boxoffice_movies', collection: 'boxoffice_movies', topFiltered: true },
+        // 书线：marks 集合是 BookMarks，主键是 bookId，按 source 字段区分豆瓣/微信读书
+        { id: 'douban_books', collection: 'douban_books', topFiltered: true, marksCollection: 'BookMarks', idField: 'bookId', source: 'douban' },
+        { id: 'weread_books', collection: 'weread_books', topFiltered: true, marksCollection: 'BookMarks', idField: 'bookId', source: 'weread' }
       ];
 
     const themes = [...this.data.themes];
@@ -372,6 +386,18 @@ Page({
   },
 
   async _countThemeUsers(db, _, config) {
+    const marksCollection = config.marksCollection || 'Marks';
+    const idField = config.idField || 'movieId';
+    const buildMatch = (ids) => {
+      const m = { [idField]: _.in(ids) };
+      if (config.source === 'weread') {
+        m.source = 'weread';
+      } else if (config.source === 'douban') {
+        // 兼容老 BookMarks 记录无 source 字段（视为 douban）
+        m.source = _.or([_.eq('douban'), _.exists(false)]);
+      }
+      return m;
+    };
     // 1. 鑾峰彇璇ヤ富棰樻墍鏈夌數褰?ID
     const movieIds = [];
     let offset = 0;
@@ -389,8 +415,8 @@ Page({
 
     // 2. 鑱氬悎缁熻鐙珛鐢ㄦ埛鏁?
     try {
-      const res = await db.collection('Marks').aggregate()
-        .match({ movieId: _.in(movieIds) })
+      const res = await db.collection(marksCollection).aggregate()
+        .match(buildMatch(movieIds))
         .group({ _id: '$openid' })
         .count('total')
         .end();
@@ -401,8 +427,8 @@ Page({
       const chunkSize = 100;
       for (let i = 0; i < movieIds.length; i += chunkSize) {
         const chunk = movieIds.slice(i, i + chunkSize);
-        const { total } = await db.collection('Marks')
-          .where({ movieId: _.in(chunk) }).count();
+        const { total } = await db.collection(marksCollection)
+          .where(buildMatch(chunk)).count();
         markCount += total;
       }
       return Math.ceil(markCount / 3);

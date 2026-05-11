@@ -31,13 +31,28 @@ exports.main = async (event, context) => {
     // theme: 'douban' | 'imdb'
     // marksOnly: 鍙繑鍥炴爣璁帮紝璺宠繃鐢靛奖鍒楄〃鏌ヨ锛堢紦瀛樺懡涓悗鐨勮交閲忓埛鏂帮級
 
-    // 按 theme 选择标记集合：douban_books 走 BookMarks，其它走 Marks
-    const marksCollectionName = theme === 'douban_books' ? 'BookMarks' : 'Marks';
+    // 按 theme 选择标记集合：douban_books / weread_books 走 BookMarks（用 source 字段区分），其它走 Marks
+    const isBookTheme = theme === 'douban_books' || theme === 'weread_books';
+    const marksCollectionName = isBookTheme ? 'BookMarks' : 'Marks';
+
+    // 图书主题需按 source 过滤标记：
+    //   weread → 仅 source='weread' 的记录
+    //   douban → source='douban' 或无 source 字段（老记录兼容）
+    const _ = db.command;
+    const buildMarksWhere = (baseWhere) => {
+        if (theme === 'weread_books') {
+            return { ...baseWhere, source: 'weread' };
+        }
+        if (theme === 'douban_books') {
+            return { ...baseWhere, source: _.or([_.eq('douban'), _.exists(false)]) };
+        }
+        return baseWhere;
+    };
 
     try {
         if (marksOnly) {
             const marks = openid
-                ? await readAll(marksCollectionName, db.collection(marksCollectionName).where({ openid }))
+                ? await readAll(marksCollectionName, db.collection(marksCollectionName).where(buildMarksWhere({ openid })))
                 : [];
             return { success: true, movies: [], marks };
         }
@@ -66,10 +81,11 @@ exports.main = async (event, context) => {
             orderDirection = 'desc';
         } else if (theme === 'douban_books') {
             collectionName = 'douban_books';
+        } else if (theme === 'weread_books') {
+            collectionName = 'weread_books';
         }
 
-        const _ = db.command;
-        const topListCollections = new Set(['movies', 'imdb_movies', 'boxoffice_movies', 'chinese_movies', 'douban_books']);
+        const topListCollections = new Set(['movies', 'imdb_movies', 'boxoffice_movies', 'chinese_movies', 'douban_books', 'weread_books']);
         if (topListCollections.has(collectionName)) {
             whereCondition = { isTop250: _.neq(false) };
         }
@@ -83,7 +99,7 @@ exports.main = async (event, context) => {
         const [moviesRaw, marks] = await Promise.all([
             readAll(collectionName, moviesQuery),
             openid
-                ? readAll(marksCollectionName, db.collection(marksCollectionName).where({ openid }))
+                ? readAll(marksCollectionName, db.collection(marksCollectionName).where(buildMarksWhere({ openid })))
                 : Promise.resolve([])
         ]);
 
