@@ -3,7 +3,10 @@
     <text>点击下方按钮生成并保存海报</text>
   </view>
 
-  <canvas type="2d" id="growthCanvas" style="width: {{canvasWidth}}px; height: {{canvasHeight}}px; position: fixed; left: -9999px; top: -9999px;"></canvas>
+  <!-- Canvas 必须在视口内才能保证 Canvas 2D 像素及时提交（-9999px 离屏会导致部分机型导出空白） -->
+  <view style="position: fixed; left: 0; top: 0; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none;">
+    <canvas type="2d" id="growthCanvas" style="width: {{canvasWidth}}px; height: {{canvasHeight}}px;"></canvas>
+  </view>
 
   <view class="save-btn-container">
     <button class="save-btn" bindtap="saveImage" disabled="{{isGenerating}}" loading="{{isGenerating}}">

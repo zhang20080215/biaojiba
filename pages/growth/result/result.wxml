@@ -118,8 +118,10 @@
     <ad-custom unit-id="{{adUnitIds.growth_result_native}}" bindload="onNativeAdLoad" binderror="onNativeAdError"></ad-custom>
   </view>
 
-  <!-- 离屏 Canvas -->
-  <canvas type="2d" id="posterCanvas" style="width:1242px;height:1660px;position:fixed;left:-9999px;top:-9999px;"></canvas>
+  <!-- Canvas 必须在视口内才能保证 Canvas 2D 像素及时提交（-9999px 离屏会导致部分机型导出空白） -->
+  <view style="position: fixed; left: 0; top: 0; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none;">
+    <canvas type="2d" id="posterCanvas" style="width:1242px;height:1660px;"></canvas>
+  </view>
 
   <!-- 操作按钮 -->
   <view class="actions">

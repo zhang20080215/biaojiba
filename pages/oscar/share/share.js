@@ -817,17 +817,20 @@ Page({
             await this.requestSavePermission();
             const sysInfo = wx.getWindowInfo();
             const dpr = canvasSize.width > 750 ? 1 : sysInfo.pixelRatio || 1;
+            // 等两帧让 Canvas 2D 把 drawing commands 提交到 bitmap —— 离屏 canvas 上
+            // 同步绘制结束后 setTimeout 不可靠（部分机型 500ms 不够，导出空白）
+            await new Promise(resolve => {
+                canvas.requestAnimationFrame(() => canvas.requestAnimationFrame(resolve));
+            });
             const tempFilePath = await new Promise((resolve, reject) => {
-                setTimeout(() => {
-                    wx.canvasToTempFilePath({
-                        canvas, x: 0, y: 0,
-                        width: canvasSize.width, height: canvasSize.height,
-                        destWidth: canvasSize.width * dpr, destHeight: canvasSize.height * dpr,
-                        fileType: 'jpg', quality: 0.9,
-                        success: (res) => resolve(res.tempFilePath),
-                        fail: (err) => reject(new Error('生成图片失败: ' + (err.errMsg || '未知错误')))
-                    }, this);
-                }, 500);
+                wx.canvasToTempFilePath({
+                    canvas, x: 0, y: 0,
+                    width: canvasSize.width, height: canvasSize.height,
+                    destWidth: canvasSize.width * dpr, destHeight: canvasSize.height * dpr,
+                    fileType: 'jpg', quality: 0.9,
+                    success: (res) => resolve(res.tempFilePath),
+                    fail: (err) => reject(new Error('生成图片失败: ' + (err.errMsg || '未知错误')))
+                }, this);
             });
 
             await new Promise((resolve, reject) => {

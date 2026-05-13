@@ -122,8 +122,11 @@ Page({
       const ageText = formatAge(input.ageMonths);
       drawer.draw(input, results, ageText);
 
-      // 等待渲染完成
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // 等两帧让 Canvas 2D 把 drawing commands 提交到 bitmap —— 离屏 canvas 上
+      // 同步绘制结束后 setTimeout 不可靠（部分机型 300ms 不够，导出空白）
+      await new Promise(resolve => {
+        canvas.requestAnimationFrame(() => canvas.requestAnimationFrame(resolve));
+      });
 
       // 导出图片
       const res = await wx.canvasToTempFilePath({

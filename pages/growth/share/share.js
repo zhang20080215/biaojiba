@@ -82,8 +82,11 @@ Page({
       const drawer = new GrowthPosterDrawer(this.canvas, this.ctx, this.data.canvasWidth, this.data.canvasHeight);
       drawer.draw(this.input, this.results, this.ageText);
 
-      // 导出图片
-      await new Promise(resolve => setTimeout(resolve, 200));
+      // 等两帧让 Canvas 2D 把 drawing commands 提交到 bitmap —— 离屏 canvas 上
+      // 同步绘制结束后 setTimeout 不可靠（部分机型 200ms 不够，导出空白）
+      await new Promise(resolve => {
+        this.canvas.requestAnimationFrame(() => this.canvas.requestAnimationFrame(resolve));
+      });
       const res = await wx.canvasToTempFilePath({
         canvas: this.canvas,
         fileType: 'png',

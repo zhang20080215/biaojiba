@@ -47,7 +47,10 @@
     <ad unit-id="{{adUnitIds.share_banner}}" ad-type="banner" bindload="onBannerAdLoad" binderror="onBannerAdError"></ad>
   </view>
 
-  <canvas type="2d" id="shareCanvas" style="width: {{canvasSize.width}}px; height: {{canvasSize.height}}px; position: fixed; left: -9999px; top: -9999px;"></canvas>
+  <!-- Canvas 必须在视口内才能保证 Canvas 2D 像素及时提交（-9999px 离屏会导致部分机型导出空白） -->
+  <view style="position: fixed; left: 0; top: 0; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none;">
+    <canvas type="2d" id="shareCanvas" style="width: {{canvasSize.width}}px; height: {{canvasSize.height}}px;"></canvas>
+  </view>
 
   <view class="loading-overlay" wx:if="{{isGenerating}}">
     <view class="loading-spinner"></view>
