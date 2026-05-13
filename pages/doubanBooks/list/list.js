@@ -541,6 +541,12 @@ Page({
         }, 1500);
     },
 
+    onCopyTitle(e) {
+        const title = e.currentTarget.dataset.title;
+        if (!title) return;
+        wx.setClipboardData({ data: title });
+    },
+
     formatMarkDate(dateStr) {
         if (!dateStr) return '';
         try {
