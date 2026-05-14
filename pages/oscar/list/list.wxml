@@ -60,27 +60,32 @@
       <view class="movie-content {{isBatchEditing ? 'batch-editing' : ''}}">
         <image class="movie-thumb" src="{{item.thumbCover || item.cover}}" lazy-load="true" mode="aspectFill" binderror="onImageError" data-movie-id="{{item._id}}" show-menu-by-longpress="false" />
         <view class="movie-info">
-          <view class="movie-title">{{item.title}}</view>
+          <view class="movie-title">
+            <text class="movie-title-text">{{item.title}}</text>
+            <view class="movie-title-copy" catchtap="onCopyTitle" data-title="{{item.title}}" hover-class="movie-title-copy-hover" hover-stay-time="120">
+              <image class="movie-title-copy-icon" src="/images/icon-copy.svg" mode="aspectFit" />
+            </view>
+          </view>
           <view class="movie-meta">
             <text class="movie-year">{{item.year}}年</text>
             <text class="movie-ceremony">第{{item.rank}}届</text>
+            <view class="movie-action" wx:if="{{!isBatchEditing}}">
+              <block wx:if="{{markStatusMap[item._id] === 'watched'}}">
+                <view class="mark-status"><text class="mark-text watched">{{markDateMap[item._id]}}已看</text></view>
+              </block>
+              <block wx:elif="{{markStatusMap[item._id] === 'wish'}}">
+                <view class="mark-status"><text class="mark-text wish">{{markDateMap[item._id]}}想看</text></view>
+              </block>
+              <block wx:else>
+                <view class="mark-buttons">
+                  <view class="mark-btn" data-id="{{item._id}}" data-type="watched" catchtap="onMarkTap">已看</view>
+                  <view class="mark-btn mark-btn-wish" data-id="{{item._id}}" data-type="wish" catchtap="onMarkTap">想看</view>
+                </view>
+              </block>
+            </view>
           </view>
           <view class="movie-rating">豆瓣 {{item.rating}}</view>
         </view>
-        <block wx:if="{{!isBatchEditing}}">
-          <block wx:if="{{markStatusMap[item._id] === 'watched'}}">
-            <view class="mark-status"><text class="mark-text watched">{{markDateMap[item._id]}}已看</text></view>
-          </block>
-          <block wx:elif="{{markStatusMap[item._id] === 'wish'}}">
-            <view class="mark-status"><text class="mark-text wish">{{markDateMap[item._id]}}想看</text></view>
-          </block>
-          <block wx:else>
-            <view class="mark-buttons">
-              <view class="mark-btn" data-id="{{item._id}}" data-type="watched" catchtap="onMarkTap">已看</view>
-              <view class="mark-btn mark-btn-wish" data-id="{{item._id}}" data-type="wish" catchtap="onMarkTap">想看</view>
-            </view>
-          </block>
-        </block>
       </view>
     </view>
   </block>

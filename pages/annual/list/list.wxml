@@ -112,7 +112,12 @@
 
           <view class="movie-body">
             <view class="movie-title-row">
-              <text class="movie-title">{{item.title}}</text>
+              <view class="movie-title-line">
+                <text class="movie-title">{{item.title}}</text>
+                <view class="movie-title-copy" catchtap="onCopyTitle" data-title="{{item.title}}" hover-class="movie-title-copy-hover" hover-stay-time="120">
+                  <image class="movie-title-copy-icon" src="/images/icon-copy.svg" mode="aspectFit" />
+                </view>
+              </view>
               <text wx:if="{{item.subtitleText}}" class="movie-subtitle">{{item.subtitleText}}</text>
             </view>
 

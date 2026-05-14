@@ -290,14 +290,43 @@ page {
 }
 
 .movie-title {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  margin: 0 0 6rpx 0;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.movie-title-text {
   font-size: 14px;
   color: #f0f0f0;
   font-weight: 700;
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
-  margin: 0 0 6rpx 0;
-  max-width: 100%;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.movie-title-copy {
+  flex: 0 0 auto;
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8rpx;
+}
+
+.movie-title-copy-hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.movie-title-copy-icon {
+  width: 28rpx;
+  height: 28rpx;
+  opacity: 0.65;
 }
 
 .movie-meta {
@@ -305,6 +334,19 @@ page {
   align-items: center;
   gap: 12rpx;
   margin-bottom: 4rpx;
+}
+
+/* 标记 action 放到 meta 行尾（标题独占第一行，对齐 weread 布局） */
+.movie-meta .movie-action {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
+/* 行内子项不再单独抓 margin-left:auto（已由父 .movie-action 推到右） */
+.movie-meta .movie-action .mark-status,
+.movie-meta .movie-action .mark-buttons {
+  margin-left: 0;
 }
 
 .movie-year {

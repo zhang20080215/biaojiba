@@ -422,16 +422,43 @@ page {
 }
 
 .movie-title {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  margin: 0 0 var(--space-2) 0;
+  width: 100%;
+  min-width: 0;
+}
+
+.movie-title-text {
   font-size: var(--font-title);
   color: var(--text-primary);
   font-weight: 700;
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
-  margin: 0 0 var(--space-2) 0;
-  /* 占满 .movie-info 整行宽度，过长用省略号截断（不再被右侧 action 抢空间） */
-  width: 100%;
-  display: block;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.movie-title-copy {
+  flex: 0 0 auto;
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8rpx;
+}
+
+.movie-title-copy-hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.movie-title-copy-icon {
+  width: 28rpx;
+  height: 28rpx;
+  opacity: 0.75;
 }
 
 /* 评分 + 标记/按钮同行（action 已下沉到第二行） */

@@ -411,22 +411,55 @@ page {
 }
 
 .movie-title {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  margin: 0 0 var(--space-2) 0;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.movie-title-text {
   font-size: var(--font-title);
   color: var(--text-primary);
   font-weight: 700;
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
-  margin: 0 0 var(--space-2) 0;
-  max-width: 100%;
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
-/* 评分 + 标记标签同行 */
+.movie-title-copy {
+  flex: 0 0 auto;
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8rpx;
+}
+
+.movie-title-copy-hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.movie-title-copy-icon {
+  width: 28rpx;
+  height: 28rpx;
+  opacity: 0.75;
+}
+
+/* 评分 + 标记按钮同行（标题独占第一行，对齐 weread 布局） */
 .movie-meta-row {
   display: flex;
   align-items: center;
   gap: var(--space-2);
   flex-wrap: wrap;
+}
+
+.movie-meta-row .movie-action {
+  margin-left: auto;
 }
 
 .movie-rating-star {

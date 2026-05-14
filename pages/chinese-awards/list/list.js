@@ -334,6 +334,17 @@ Page({
     this.setData({ activeTab: idx, isBatchEditing: false, selectedMovieIds: [], showSharePicker: false }, () => this.updateFilteredMovies());
   },
 
+  onCopyTitle(e) {
+    const title = e.currentTarget.dataset.title;
+    if (!title) return;
+    wx.setClipboardData({
+      data: title,
+      success: () => {
+        wx.showToast({ title: '已复制', icon: 'success', duration: 1500 });
+      }
+    });
+  },
+
   onMarkTap(e) {
     const openid = this.getActiveOpenid();
     if (!openid) {

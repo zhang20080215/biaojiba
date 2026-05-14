@@ -431,21 +431,62 @@ page {
 }
 
 .movie-title {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  margin-bottom: 10rpx;
+  min-width: 0;
+}
+
+.movie-title-text {
   font-size: 30rpx;
   color: var(--ink);
   font-weight: 700;
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
-  margin-bottom: 10rpx;
   letter-spacing: 0.5rpx;
   line-height: 1.3;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.movie-title-copy {
+  flex: 0 0 auto;
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8rpx;
+}
+
+.movie-title-copy-hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.movie-title-copy-icon {
+  width: 28rpx;
+  height: 28rpx;
+  opacity: 0.75;
 }
 
 .movie-meta {
   display: flex;
   align-items: center;
   gap: 4rpx;
+}
+
+/* meta 行尾承载 mark action（标题独占第一行） */
+.movie-meta .movie-action {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
+.movie-meta .movie-action .mark-status,
+.movie-meta .movie-action .mark-buttons {
+  margin-left: 0;
 }
 
 .rating-star {

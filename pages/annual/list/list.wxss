@@ -419,6 +419,39 @@ page {
   min-width: 0;
 }
 
+/* 标题 + 复制按钮 同行（图标顶端对齐多行标题） */
+.movie-title-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 4rpx;
+  min-width: 0;
+}
+
+.movie-title-line .movie-title {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.movie-title-copy {
+  flex: 0 0 auto;
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8rpx;
+}
+
+.movie-title-copy-hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.movie-title-copy-icon {
+  width: 28rpx;
+  height: 28rpx;
+  opacity: 0.75;
+}
+
 .movie-title {
   font-size: 32rpx;
   line-height: 1.35;

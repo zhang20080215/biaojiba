@@ -10,7 +10,12 @@
   padding-right: var(--space-2);
 }
 
+/* 票房榜电影名常常较长，标题文本允许 2 行 clamp（图标顶端对齐） */
 .movie-title {
+  align-items: flex-start;
+}
+
+.movie-title-text {
   white-space: normal;
   display: -webkit-box;
   -webkit-box-orient: vertical;

@@ -393,16 +393,53 @@ page {
 }
 
 .movie-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 4rpx;
+  min-width: 0;
+}
+
+.movie-title-text {
   font-size: 28rpx;
   line-height: 1.32;
   color: var(--text-primary);
   font-weight: 700;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.movie-title-copy {
+  flex: 0 0 auto;
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8rpx;
+}
+
+.movie-title-copy-hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.movie-title-copy-icon {
+  width: 28rpx;
+  height: 28rpx;
+  opacity: 0.75;
 }
 
 .movie-tag-row {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 8rpx;
+}
+
+/* 标记按钮下沉到 tag-row 末尾，行内横排（覆盖底部默认的 column 布局） */
+.movie-tag-row .movie-action {
+  margin-left: auto;
+  flex-direction: row;
+  align-items: center;
 }
 
 .meta-tag {
