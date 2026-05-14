@@ -462,6 +462,11 @@ page {
   flex-wrap: wrap;
 }
 
+/* action 推到第二行末尾（标题独占第一行，对齐 weread 布局） */
+.movie-meta-row .movie-action {
+  margin-left: auto;
+}
+
 .movie-rating-star {
   font-size: var(--font-caption);
   font-weight: 600;
