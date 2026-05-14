@@ -429,7 +429,7 @@ page {
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-width: 0;
 }
 
@@ -441,7 +441,7 @@ page {
   align-items: center;
   justify-content: center;
   border-radius: 8rpx;
-  margin-left: 4rpx;
+  margin-left: 0;
 }
 
 .movie-title-copy-hover {

@@ -544,7 +544,13 @@ Page({
     onCopyTitle(e) {
         const title = e.currentTarget.dataset.title;
         if (!title) return;
-        wx.setClipboardData({ data: title });
+        wx.setClipboardData({
+            data: title,
+            success: () => {
+                // 覆盖系统默认的"内容已复制"弱提示，统一为"已复制"
+                wx.showToast({ title: '已复制', icon: 'success', duration: 1500 });
+            }
+        });
     },
 
     formatMarkDate(dateStr) {
