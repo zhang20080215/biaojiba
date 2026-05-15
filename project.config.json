@@ -51,7 +51,11 @@
       { "type": "file", "value": "test_imdb.js" },
       { "type": "file", "value": "view_excel.py" },
       { "type": "file", "value": "coupon_creation.html" },
-      { "type": "suffix", "value": ".DS_Store" }
+      { "type": "suffix", "value": ".DS_Store" },
+      { "type": "folder", "value": "data-raw" },
+      { "type": "folder", "value": "tools" },
+      { "type": "folder", "value": ".claude" },
+      { "type": "folder", "value": ".obsidian" }
     ],
     "include": []
   },
