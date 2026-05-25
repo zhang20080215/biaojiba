@@ -91,7 +91,7 @@ Several themes/files live in source but are **excluded from the production bundl
 - Pages: `pages/chinese`, `pages/annual`, `pages/chinese-awards`, `pages/growth/share`
 - Utils (only consumed by excluded pages): `utils/doubanPosterDrawer.js`, `utils/imdbPosterDrawer.js`, `utils/annualLoader.js`, `utils/annualPosterDrawer.js`, `utils/chineseLoader.js`, `utils/chinesePosterDrawer.js`, `utils/fitnessTypes.js`
 - Folders: `data-raw/`, `tools/`, `.claude/`, `.obsidian/`, `doc/`, `docs/`, `douban_spyder/`
-- Root scratch / docs: `小程序首页码.png`, `Water Tracker _standalone_ (1).html`, `coupon_creation.html`, `view_excel.py`, `test_imdb.js`, `app.wsxx`, `CLAUDE.md`
+- Root scratch / docs: `小程序首页码.png`, `Water Tracker _standalone_ (1).html`, `coupon_creation.html`, `view_excel.py`, `test_imdb.js`, `CLAUDE.md`
 
 ## Key Patterns
 
