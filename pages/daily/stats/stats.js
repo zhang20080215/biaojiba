@@ -362,8 +362,8 @@ Page({
   },
 
   _parseDate(dateStr) {
-    const [y, m, d] = dateStr.split('-').map(Number);
-    return new Date(Date.UTC(y, m - 1, d));
+    const ymd = dateStr.split('-').map(Number);
+    return new Date(Date.UTC(ymd[0], ymd[1] - 1, ymd[2]));
   },
 
   _dateStr(d) {

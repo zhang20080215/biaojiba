@@ -23,7 +23,7 @@
     "disableSWC": true,
     "babelSetting": {
       "ignore": [],
-      "disablePlugins": [],
+      "disablePlugins": ["transform-runtime"],
       "outputPath": ""
     }
   },

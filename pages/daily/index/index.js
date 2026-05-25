@@ -265,10 +265,12 @@ Page({
     let step, min, max;
     if (field === 'goal') {
       step = this.data.goalStep;
-      [min, max] = this.data.goalRange;
+      min = this.data.goalRange[0];
+      max = this.data.goalRange[1];
     } else {
       step = this.data.presetStep;
-      [min, max] = this.data.presetRange;
+      min = this.data.presetRange[0];
+      max = this.data.presetRange[1];
     }
     const next = Math.max(min, Math.min(max, value + step * (dir === 'up' ? 1 : -1)));
     this.setData({ [`draft.${field}`]: next });
@@ -362,7 +364,8 @@ Page({
 
   _formatDateLabel(viewDate, today) {
     if (!viewDate) return { primary: '今天', secondary: '' };
-    const [y, m, d] = viewDate.split('-').map(Number);
+    const ymd = viewDate.split('-').map(Number);
+    const y = ymd[0], m = ymd[1], d = ymd[2];
     const dt = new Date(Date.UTC(y, m - 1, d));
     const wd = WD_FULL[dt.getUTCDay()];
     const datePart = `${m}月${d}日`;
