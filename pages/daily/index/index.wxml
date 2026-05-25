@@ -7,6 +7,9 @@
   <view class="custom-nav" style="height: {{navOffset}}px; padding-top: {{statusBarHeight}}px;">
     <view class="nav-bar" style="height: {{navBarHeight}}px;">
       <view class="nav-pills">
+        <view class="nav-pill nav-pill-back" bindtap="onBack" hover-class="nav-pill-active">
+          <text class="nav-pill-back-icon">‹</text>
+        </view>
         <view class="nav-pill" bindtap="onOpenStats" hover-class="nav-pill-active">
           <image class="nav-pill-icon" src="/images/icon-stats.svg" mode="aspectFit" />
           <text class="nav-pill-label">统计</text>

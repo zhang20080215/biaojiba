@@ -79,6 +79,13 @@ Page({
   },
 
   onShow() {
+    // 用户挂着页面跨过零点时，刷新 today，重新拉当周/当月
+    const today = this._today();
+    if (today !== this.data.today) {
+      this.setData({ today });
+      this.fetchPeriod();
+      return;
+    }
     if (!this.data.loading) this.fetchPeriod();
   },
 

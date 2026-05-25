@@ -124,6 +124,8 @@ async function upsertDay(openid, theme, date, mutate) {
 exports.main = async (event, context) => {
     const wxContext = cloud.getWXContext();
     const openid = wxContext.OPENID;
+    // 缺 openid 直接拒绝：理论上小程序调用必给，留作开发态/服务端测试调用兜底
+    if (!openid) return { success: false, error: 'NO_OPENID' };
     const action = event.action;
     const theme = event.theme || 'water';
 
@@ -166,8 +168,9 @@ exports.main = async (event, context) => {
         if (action === 'setGoal') {
             const { daily_goal } = event;
             const v = Number(daily_goal);
-            if (!Number.isFinite(v) || v < 0 || v > 100000) {
-                return { success: false, error: 'daily_goal 越界' };
+            // daily_goal 必须 > 0：前端 progress = total/goal、达标率分母都依赖它
+            if (!Number.isFinite(v) || v <= 0 || v > 100000) {
+                return { success: false, error: 'daily_goal 必须在 (0, 100000] 区间' };
             }
             const now = new Date().toISOString();
             const existing = await db.collection('DailySettings').where({ openid, theme }).limit(1).get();
@@ -209,6 +212,13 @@ exports.main = async (event, context) => {
         if (action === 'getRange') {
             const { from, to } = event;
             if (!from || !to) return { success: false, error: 'from / to 必填' };
+            // 跨度保护：limit(100) 会静默截断，提前拒绝避免数据残缺
+            const spanDays = Math.round(
+                (new Date(to + 'T00:00:00Z') - new Date(from + 'T00:00:00Z')) / 86400000
+            ) + 1;
+            if (!(spanDays >= 1 && spanDays <= 100)) {
+                return { success: false, error: `getRange 跨度需在 1~100 天，当前=${spanDays}` };
+            }
             const res = await db.collection('DailyLogs')
                 .where({ openid, theme, date: _.gte(from).and(_.lte(to)) })
                 .orderBy('date', 'asc')

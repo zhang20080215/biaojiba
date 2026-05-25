@@ -102,6 +102,12 @@ Page({
   },
 
   onShow() {
+    // 跨日：若 dayOffset=0（今日视图）但服务端口径下今天已经变了，
+    // 清掉缓存的 today，让 refresh() 重新认锚
+    if (this.data.dayOffset === 0 && this.data.today) {
+      const realToday = this._dateForOffset(0);
+      if (realToday !== this.data.today) this.setData({ today: '' });
+    }
     if (!this.data.loading) this.refresh();
   },
 
@@ -227,6 +233,14 @@ Page({
   },
 
   // ========= 顶栏 =========
+  onBack() {
+    // 有上级页面 → 返回；否则回到分类首页（深链/分享场景兜底）
+    if (getCurrentPages().length > 1) {
+      wx.navigateBack();
+    } else {
+      wx.reLaunch({ url: '/pages/category/category' });
+    }
+  },
   onOpenStats() {
     wx.navigateTo({ url: `/pages/daily/stats/stats?theme=${this.data.themeId}` });
   },

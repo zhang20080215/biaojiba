@@ -97,6 +97,19 @@ page {
   font-weight: 500;
   line-height: 1;
 }
+/* 返回按钮：纯图标圆 pill，与统计/设置同高同样式 */
+.nav-pill-back {
+  width: 76rpx;
+  padding: 0;
+  justify-content: center;
+}
+.nav-pill-back-icon {
+  font-size: 44rpx;
+  font-weight: 300;
+  color: #1A1A1A;
+  line-height: 1;
+  margin-top: -4rpx;
+}
 
 /* ==== 内容主区 ==== */
 .content {
