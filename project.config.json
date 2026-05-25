@@ -55,7 +55,8 @@
       { "type": "folder", "value": "data-raw" },
       { "type": "folder", "value": "tools" },
       { "type": "folder", "value": ".claude" },
-      { "type": "folder", "value": ".obsidian" }
+      { "type": "folder", "value": ".obsidian" },
+      { "type": "file",   "value": "小程序首页码.png" }
     ],
     "include": []
   },
