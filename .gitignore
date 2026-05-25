@@ -15,3 +15,22 @@ node_modules/
 
 # 开发辅助文档（不打包到小程序）
 doc/
+
+# 数据分析原始数据（含用户隐私，不上传）
+data-raw/
+!data-raw/.gitkeep
+
+# 数据分析临时脚本依赖
+tools/node_modules/
+tools/package-lock.json
+tools/_bundle_extract/
+
+# Claude Code 工作目录
+.claude/worktrees/
+
+# Obsidian
+.obsidian/
+
+# 本地草稿 / 临时素材
+小程序首页码.png
+Water Tracker *.html

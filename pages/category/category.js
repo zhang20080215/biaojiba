@@ -21,6 +21,17 @@ Page({
     },
     themes: [
       {
+        id: 'daily_water',
+        title: '每日喝水',
+        description: '记录每日饮水量，养成健康习惯',
+        image: '',
+        userCount: 0,
+        tag: '每日',
+        category: 'daily',
+        isNew: true,
+        url: '/pages/daily/index/index?theme=water'
+      },
+      {
         id: 'weread_books',
         title: '微信读书 TOP200 总榜',
         description: '微信读书全平台热榜，记录你的阅读旅程',

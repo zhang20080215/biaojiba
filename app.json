@@ -17,7 +17,9 @@
     "pages/weread/list/list",
     "pages/weread/share/share",
     "pages/growth/input/input",
-    "pages/growth/result/result"
+    "pages/growth/result/result",
+    "pages/daily/index/index",
+    "pages/daily/stats/stats"
   ],
   "window": {
     "navigationBarTitleText": "标记吧",

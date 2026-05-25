@@ -41,6 +41,13 @@
       <text>全部</text>
     </view>
     <view
+      class="filter-chip {{activeTab === 'daily' ? 'active' : ''}}"
+      data-tab="daily" bindtap="onTabTap"
+    >
+      <view class="chip-dot" wx:if="{{activeTab === 'daily'}}"></view>
+      <text>每日</text>
+    </view>
+    <view
       class="filter-chip {{activeTab === 'movie' ? 'active' : ''}}"
       data-tab="movie" bindtap="onTabTap"
     >
@@ -82,6 +89,16 @@
           <view class="ruler-icon"></view>
           <text class="placeholder-text">成长评估</text>
         </view>
+        <view wx:elif="{{item.id === 'daily_water'}}" class="cover-placeholder water">
+          <view class="bottle-mini">
+            <view class="bottle-cap"></view>
+            <view class="bottle-neck"></view>
+            <view class="bottle-body">
+              <view class="bottle-water"></view>
+            </view>
+          </view>
+          <text class="placeholder-text">每日喝水</text>
+        </view>
         <view class="cover-mask"></view>
         <view class="tag-badge">
           <text>{{item.tag}}</text>
@@ -100,7 +117,6 @@
       <!-- 信息区 -->
       <view class="card-body">
         <text class="card-title">{{item.title}}</text>
-        <text class="card-desc">{{item.description}}</text>
         <view class="card-meta">
           <view wx:if="{{item.userCount > 0}}" class="meta-count">
             <text class="meta-count-number">{{item.userCountText}}</text>
@@ -137,6 +153,16 @@
           <view class="ruler-icon"></view>
           <text class="placeholder-text">成长评估</text>
         </view>
+        <view wx:elif="{{item.id === 'daily_water'}}" class="cover-placeholder water">
+          <view class="bottle-mini">
+            <view class="bottle-cap"></view>
+            <view class="bottle-neck"></view>
+            <view class="bottle-body">
+              <view class="bottle-water"></view>
+            </view>
+          </view>
+          <text class="placeholder-text">每日喝水</text>
+        </view>
         <view class="cover-mask"></view>
         <view class="tag-badge">
           <text>{{item.tag}}</text>
@@ -155,7 +181,6 @@
       <!-- 信息区 -->
       <view class="card-body">
         <text class="card-title">{{item.title}}</text>
-        <text class="card-desc">{{item.description}}</text>
         <view class="card-meta">
           <view wx:if="{{item.userCount > 0}}" class="meta-count">
             <text class="meta-count-number">{{item.userCountText}}</text>
