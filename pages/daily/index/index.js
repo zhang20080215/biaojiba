@@ -328,8 +328,9 @@ Page({
             toast.show(this, '今日目标达成', { icon: 'success' });
           }
         } else {
-          const [, m, d] = viewDate.split('-');
-          toast.show(this, `已补录到 ${Number(m)}月${Number(d)}日`);
+          // 注意：避免数组带洞解构 const [, m, d]，会触发 @babel/runtime/helpers/arrayWithHoles 缺失
+          const parts = viewDate.split('-');
+          toast.show(this, `已补录到 ${Number(parts[1])}月${Number(parts[2])}日`);
         }
       },
       fail: () => toast.show(this, '网络异常'),
