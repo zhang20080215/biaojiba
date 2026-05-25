@@ -1,0 +1,418 @@
+/* pages/daily/index/index.wxss
+   设计：Claude Design「Water Tracker」极简米白稿
+   配色 token 来自 utils/dailyThemes.js DESIGN_TOKENS
+*/
+page {
+  min-height: 100vh;
+  background: #FAF6EB;
+}
+
+/* ==== 顶部 toast（中上部，替代 wx.showToast 的中央位置）==== */
+.top-toast {
+  position: fixed;
+  top: 22%;
+  left: 50%;
+  transform: translate(-50%, -8rpx);
+  z-index: 1000;
+  background: rgba(26, 26, 26, 0.88);
+  color: #ffffff;
+  padding: 18rpx 32rpx;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease, transform 220ms ease;
+  white-space: nowrap;
+  max-width: 80vw;
+}
+.top-toast.is-show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.top-toast-icon {
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+.page-root {
+  min-height: 100vh;
+  color: #1A1A1A;
+  position: relative;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", system-ui;
+}
+
+/* ==== 顶部自定义 nav（仅 icon 按钮，无标题/返回）==== */
+.custom-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  box-sizing: border-box;
+  background: transparent;
+}
+
+.nav-bar {
+  position: relative;
+  box-sizing: border-box;
+}
+
+/* 左上两个 pill：统计 + 设置（避开右上角胶囊）*/
+.nav-pills {
+  position: absolute;
+  top: 50%;
+  left: 22rpx;
+  margin-top: -38rpx;
+  display: flex;
+  gap: 12rpx;
+}
+.nav-pill {
+  height: 76rpx;
+  padding: 0 24rpx;
+  border-radius: 38rpx;
+  background: rgba(255, 255, 255, 0.6);
+  border: 2rpx solid #E8E0CC;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  box-sizing: border-box;
+}
+.nav-pill-active {
+  background: rgba(26, 26, 26, 0.06);
+  opacity: 0.78;
+}
+.nav-pill-icon {
+  width: 32rpx;
+  height: 32rpx;
+}
+.nav-pill-label {
+  font-size: 24rpx;
+  color: #6B6356;
+  font-weight: 500;
+  line-height: 1;
+}
+
+/* ==== 内容主区 ==== */
+.content {
+  padding: 0 32rpx 60rpx;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-height: 100vh;
+}
+
+/* hero 区：日期 / 水瓶 / 数字 / 进度条 —— 整体垂直居中，填满到 presets 之前 */
+.hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 36rpx;
+  padding: 16rpx 0;
+}
+
+.date-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6rpx;
+  position: relative;            /* 给 .back-today 做 absolute 定位锚点 */
+}
+
+/* 回到今日按钮（仅非今日时出现；absolute 浮在日期上方，不影响 hero 居中布局，避免页面跳动）*/
+.back-today {
+  position: absolute;
+  top: -72rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 10rpx 24rpx;
+  background: #FFFFFF;
+  border: 2rpx solid #E8E0CC;
+  border-radius: 99rpx;
+  font-size: 24rpx;
+  color: #6B6356;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+}
+.back-today-icon {
+  font-size: 26rpx;
+  line-height: 1;
+}
+.back-today-active {
+  background: rgba(26, 26, 26, 0.06);
+  opacity: 0.78;
+}
+
+/* 日期 */
+.date-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28rpx;
+}
+.date-arrow {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6B6356;
+  font-size: 44rpx;
+  line-height: 1;
+  font-weight: 300;
+}
+.date-arrow.is-disabled {
+  opacity: 0.25;
+}
+.arrow-active {
+  background: rgba(26, 26, 26, 0.06);
+}
+.date-main-wrap {
+  min-width: 240rpx;
+  text-align: center;
+}
+.date-main {
+  font-size: 44rpx;
+  font-weight: 700;
+  color: #1A1A1A;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+.date-sub {
+  font-size: 24rpx;
+  color: #A89E8C;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+/* 水瓶（SVG image）*/
+.bottle-wrap {
+  width: 336rpx;
+  height: 480rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bottle-img {
+  width: 336rpx;
+  height: 480rpx;
+}
+
+/* 数字块 */
+.amount-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16rpx;
+}
+
+/* 大数字 */
+.amount {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8rpx;
+}
+.amount-num {
+  font-size: 128rpx;
+  font-weight: 700;
+  color: #1A1A1A;
+  letter-spacing: -0.03em;
+  line-height: 0.95;
+  font-variant-numeric: tabular-nums;
+}
+.amount-unit {
+  font-size: 36rpx;
+  font-weight: 500;
+  color: #6B6356;
+}
+.amount-sub {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: #6B6356;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 细发丝进度条 */
+.progress-track {
+  width: 440rpx;
+  height: 8rpx;
+  border-radius: 99rpx;
+  background: #E8E0CC;
+  position: relative;
+  overflow: hidden;
+}
+.progress-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 99rpx;
+  transition: width 320ms ease;
+}
+
+/* 快捷按钮 */
+.presets {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20rpx;
+}
+.preset-card {
+  background: #FFFFFF;
+  border: 3rpx solid #E8E0CC;
+  border-radius: 36rpx;
+  padding: 24rpx 0 22rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10rpx;
+  box-sizing: border-box;
+}
+.preset-card-active {
+  transform: scale(0.96);
+  opacity: 0.85;
+}
+.cup-icon {
+  width: 56rpx;
+  height: 56rpx;
+}
+.preset-amount {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1A1A1A;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==== 设置抽屉 ==== */
+.sheet-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.32);
+  z-index: 50;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease;
+}
+.sheet-mask.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 51;
+  background: #FAF6EB;
+  border-top-left-radius: 44rpx;
+  border-top-right-radius: 44rpx;
+  padding: 24rpx 44rpx 60rpx;
+  transform: translateY(100%);
+  transition: transform 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 -20rpx 80rpx rgba(0, 0, 0, 0.12);
+  box-sizing: border-box;
+}
+.sheet.is-open {
+  transform: translateY(0);
+}
+.sheet-grip {
+  width: 64rpx;
+  height: 8rpx;
+  margin: 0 auto 14rpx;
+  border-radius: 99rpx;
+  background: #E8E0CC;
+}
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8rpx;
+}
+.sheet-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #1A1A1A;
+}
+.sheet-done {
+  font-size: 28rpx;
+  color: #6B6356;
+  padding: 8rpx 4rpx;
+}
+.sheet-section {
+  display: block;
+  margin-top: 24rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+  color: #A89E8C;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.num-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22rpx 0;
+  border-bottom: 2rpx solid #E8E0CC;
+}
+.num-row-last {
+  border-bottom: 0;
+}
+.num-label {
+  font-size: 28rpx;
+  color: #1A1A1A;
+  font-weight: 500;
+}
+.stepper {
+  display: flex;
+  align-items: center;
+  border: 3rpx solid #E8E0CC;
+  border-radius: 22rpx;
+  overflow: hidden;
+  background: #FFFFFF;
+}
+.stp-btn {
+  width: 64rpx;
+  height: 64rpx;
+  font-size: 36rpx;
+  line-height: 60rpx;
+  text-align: center;
+  color: #6B6356;
+}
+.stp-num {
+  min-width: 156rpx;
+  text-align: center;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1A1A1A;
+  padding: 14rpx 8rpx;
+  border-left: 2rpx solid #E8E0CC;
+  border-right: 2rpx solid #E8E0CC;
+  font-variant-numeric: tabular-nums;
+}
+.stp-unit {
+  margin-left: 6rpx;
+  font-size: 22rpx;
+  font-weight: 500;
+  color: #A89E8C;
+}
+.sheet-foot {
+  display: block;
+  margin-top: 28rpx;
+  font-size: 22rpx;
+  color: #A89E8C;
+  text-align: center;
+}

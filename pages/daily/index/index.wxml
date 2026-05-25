@@ -1,0 +1,117 @@
+<!--pages/daily/index/index.wxml-->
+<view class="page-root">
+  <view class="top-toast {{toast.show ? 'is-show' : ''}}">
+    <text class="top-toast-icon" wx:if="{{toast.icon === 'success'}}">✓</text>
+    <text class="top-toast-text">{{toast.text}}</text>
+  </view>
+  <view class="custom-nav" style="height: {{navOffset}}px; padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-pills">
+        <view class="nav-pill" bindtap="onOpenStats" hover-class="nav-pill-active">
+          <image class="nav-pill-icon" src="/images/icon-stats.svg" mode="aspectFit" />
+          <text class="nav-pill-label">统计</text>
+        </view>
+        <view class="nav-pill" bindtap="onOpenSettings" hover-class="nav-pill-active">
+          <image class="nav-pill-icon" src="/images/icon-settings.svg" mode="aspectFit" />
+          <text class="nav-pill-label">设置</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="content" style="padding-top: {{navOffset}}px;">
+    <view class="hero">
+      <view class="date-block">
+        <view class="back-today" wx:if="{{!isToday}}" bindtap="onBackToToday" hover-class="back-today-active">
+          <text class="back-today-icon">↺</text>
+          <text>回到今日</text>
+        </view>
+        <view class="date-row">
+          <view class="date-arrow {{canGoPrev ? '' : 'is-disabled'}}" bindtap="onPrevDay" hover-class="arrow-active">‹</view>
+          <view class="date-main-wrap">
+            <text class="date-main">{{datePrimary}}</text>
+          </view>
+          <view class="date-arrow {{canGoNext ? '' : 'is-disabled'}}" bindtap="onNextDay" hover-class="arrow-active">›</view>
+        </view>
+        <text class="date-sub">{{dateSecondary}}</text>
+      </view>
+
+      <view class="bottle-wrap">
+        <image class="bottle-img" src="{{bottleSvg}}" mode="aspectFit" />
+      </view>
+
+      <view class="amount-block">
+        <view class="amount">
+          <text class="amount-num">{{totalValue}}</text><text class="amount-unit">{{unit}}</text>
+        </view>
+        <text class="amount-sub">目标 {{goalValue}}{{unit}} · 还差 {{remaining}}{{unit}}</text>
+      </view>
+
+      <view class="progress-track">
+        <view class="progress-fill" style="width: {{pctPercent}}%; background: {{accentHex}};"></view>
+      </view>
+    </view>
+
+    <view class="presets">
+      <view
+        wx:for="{{presets}}"
+        wx:key="*this"
+        wx:for-index="idx"
+        class="preset-card"
+        data-value="{{item}}"
+        bindtap="onPresetTap"
+        hover-class="preset-card-active"
+      >
+        <image class="cup-icon" src="{{cupSvgs[idx]}}" mode="aspectFit" />
+        <text class="preset-amount">{{item}}{{unit}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 设置抽屉 -->
+  <view class="sheet-mask {{settingsOpen ? 'is-open' : ''}}" bindtap="onCloseSettings"></view>
+  <view class="sheet {{settingsOpen ? 'is-open' : ''}}">
+    <view class="sheet-grip"></view>
+    <view class="sheet-head">
+      <text class="sheet-title">设置</text>
+      <text class="sheet-done" bindtap="onSaveSettings">完成</text>
+    </view>
+
+    <text class="sheet-section">每日目标</text>
+    <view class="num-row">
+      <text class="num-label">目标饮水量</text>
+      <view class="stepper">
+        <view class="stp-btn" data-field="goal" data-dir="down" bindtap="onStep">−</view>
+        <view class="stp-num"><text>{{draft.goal}}</text><text class="stp-unit">{{unit}}</text></view>
+        <view class="stp-btn" data-field="goal" data-dir="up" bindtap="onStep">+</view>
+      </view>
+    </view>
+
+    <text class="sheet-section">快捷选项</text>
+    <view class="num-row">
+      <text class="num-label">选项 1</text>
+      <view class="stepper">
+        <view class="stp-btn" data-field="q1" data-dir="down" bindtap="onStep">−</view>
+        <view class="stp-num"><text>{{draft.q1}}</text><text class="stp-unit">{{unit}}</text></view>
+        <view class="stp-btn" data-field="q1" data-dir="up" bindtap="onStep">+</view>
+      </view>
+    </view>
+    <view class="num-row">
+      <text class="num-label">选项 2</text>
+      <view class="stepper">
+        <view class="stp-btn" data-field="q2" data-dir="down" bindtap="onStep">−</view>
+        <view class="stp-num"><text>{{draft.q2}}</text><text class="stp-unit">{{unit}}</text></view>
+        <view class="stp-btn" data-field="q2" data-dir="up" bindtap="onStep">+</view>
+      </view>
+    </view>
+    <view class="num-row num-row-last">
+      <text class="num-label">选项 3</text>
+      <view class="stepper">
+        <view class="stp-btn" data-field="q3" data-dir="down" bindtap="onStep">−</view>
+        <view class="stp-num"><text>{{draft.q3}}</text><text class="stp-unit">{{unit}}</text></view>
+        <view class="stp-btn" data-field="q3" data-dir="up" bindtap="onStep">+</view>
+      </view>
+    </view>
+    <text class="sheet-foot">单位 · 毫升 (ml)</text>
+  </view>
+</view>

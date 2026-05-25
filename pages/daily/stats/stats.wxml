@@ -1,0 +1,87 @@
+<!--pages/daily/stats/stats.wxml-->
+<view class="page-root">
+  <view class="top-toast {{toast.show ? 'is-show' : ''}}">
+    <text class="top-toast-icon" wx:if="{{toast.icon === 'success'}}">✓</text>
+    <text class="top-toast-text">{{toast.text}}</text>
+  </view>
+  <view class="custom-nav" style="height: {{navOffset}}px; padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-btn nav-btn-left" bindtap="onBack" hover-class="nav-btn-active">
+        <text class="nav-chev">‹</text>
+      </view>
+      <text class="nav-title">统计</text>
+    </view>
+  </view>
+
+  <view class="content" style="padding-top: {{navOffset}}px;">
+    <!-- 分段 Tab -->
+    <view class="seg">
+      <view class="seg-item {{range === 'day' ? 'active' : ''}}" data-range="day" bindtap="onRangeTap">日</view>
+      <view class="seg-item {{range === 'week' ? 'active' : ''}}" data-range="week" bindtap="onRangeTap">周</view>
+      <view class="seg-item {{range === 'month' ? 'active' : ''}}" data-range="month" bindtap="onRangeTap">月</view>
+    </view>
+
+    <!-- Headline -->
+    <view class="headline">
+      <text class="headline-cap">{{headlineCap}}</text>
+      <view class="headline-num">
+        <text class="hnum">{{headline.num}}</text><text class="hunit">{{unit}}</text>
+      </view>
+      <text class="headline-sub">{{headline.sub}}</text>
+    </view>
+
+    <!-- Chart card -->
+    <view class="card chart-card">
+      <!-- 周/月翻页 nav -->
+      <view class="period-nav" wx:if="{{showPeriodNav}}">
+        <view class="period-arrow {{canGoPrevPeriod ? '' : 'is-disabled'}}" bindtap="onPrevPeriod" hover-class="period-arrow-active">‹</view>
+        <text class="period-label">{{periodLabel}}</text>
+        <view class="period-arrow {{canGoNextPeriod ? '' : 'is-disabled'}}" bindtap="onNextPeriod" hover-class="period-arrow-active">›</view>
+      </view>
+      <text class="card-title" wx:if="{{!showPeriodNav}}">{{chartTitle}}</text>
+
+      <!-- day / week 柱状 -->
+      <view class="bars" wx:if="{{range !== 'month'}}">
+        <view wx:for="{{bars}}" wx:key="date" class="bar-col">
+          <text class="bar-pct {{item.pctHit ? 'bar-pct-hit' : ''}}">{{item.pctText}}</text>
+          <view class="wc {{item.isAchieved ? 'wc-achieved' : ''}} {{item.isFuture ? 'wc-future' : ''}}">
+            <view class="wc-fill" style="height: {{item.fillPctH}}%; background: {{item.fillColor}};">
+              <view class="wc-wave"></view>
+            </view>
+          </view>
+          <text class="bar-label" wx:if="{{item.label}}">{{item.label}}</text>
+        </view>
+      </view>
+
+      <!-- month 日历（周一开头）-->
+      <block wx:if="{{range === 'month'}}">
+        <view class="cal-head">
+          <text wx:for="{{weekHeader}}" wx:key="*this" class="cal-head-cell">{{item}}</text>
+        </view>
+        <view class="cal-grid">
+          <block wx:for="{{cells}}" wx:key="index">
+            <view wx:if="{{item.empty}}" class="cal-cell cal-empty"></view>
+            <view wx:else class="cal-cell {{item.isFuture ? 'cal-cell-future' : ''}}">
+              <view class="wc wc-small {{item.isAchieved ? 'wc-achieved' : ''}}">
+                <view class="wc-fill" style="height: {{item.fillPctH}}%;"></view>
+              </view>
+              <text class="cal-day {{item.isAchieved ? 'cal-day-hit' : ''}}">{{item.day}}</text>
+            </view>
+          </block>
+        </view>
+      </block>
+    </view>
+
+    <!-- KPI 4 宫格（仅 week/month）-->
+    <view class="kpi-grid" wx:if="{{showKpi}}">
+      <view class="kpi-tile" wx:for="{{kpi}}" wx:key="label">
+        <text class="kpi-label">{{item.label}}</text>
+        <view class="kpi-value-row">
+          <text class="kpi-value">{{item.value}}</text>
+          <text class="kpi-unit">{{item.unit}}</text>
+        </view>
+      </view>
+    </view>
+
+  </view>
+</view>
