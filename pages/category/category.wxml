@@ -10,22 +10,28 @@
           <view class="theme-toggle" bindtap="onToggleThemePicker"><view class="theme-toggle-dot"></view></view>
         </view>
         <text class="app-slogan">标记生活的仪式感，分享专属记录</text>
-        <!-- 登录/用户卡片 -->
-        <view wx:if="{{!userInfo}}" class="user-card" bindtap="onGetUserProfile">
-          <view class="user-card-accent"></view>
-          <view class="user-card-body">
-            <text class="user-card-title">点击登录</text>
-            <text class="user-card-sub">登录后开始你的标记旅程</text>
+        <!-- 登录/用户卡片 + 意见反馈卡片（横向并列） -->
+        <view class="user-row">
+          <view wx:if="{{!userInfo}}" class="user-card user-card-main" bindtap="onGetUserProfile">
+            <view class="user-card-accent"></view>
+            <view class="user-card-body">
+              <text class="user-card-title">点击登录</text>
+              <text class="user-card-sub">登录后开始你的标记旅程</text>
+            </view>
+            <text class="user-card-arrow">›</text>
           </view>
-          <text class="user-card-arrow">›</text>
-        </view>
-        <view wx:else class="user-card" bindtap="onLogout">
-          <view class="user-card-accent"></view>
-          <image class="user-card-avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
-          <view class="user-card-body">
-            <text class="user-card-title">{{userInfo.nickName}}</text>
-            <text class="user-card-sub">欢迎回来，继续标记吧</text>
+          <view wx:else class="user-card user-card-main" bindtap="onLogout">
+            <view class="user-card-accent"></view>
+            <image class="user-card-avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
+            <view class="user-card-body">
+              <text class="user-card-title">{{userInfo.nickName}}</text>
+              <text class="user-card-sub">欢迎回来，继续标记吧</text>
+            </view>
           </view>
+          <button class="user-card feedback-card-side" open-type="feedback" hover-class="feedback-card-hover">
+            <text class="feedback-side-icon">✉</text>
+            <text class="feedback-side-label">反馈</text>
+          </button>
         </view>
       </view>
     </view>

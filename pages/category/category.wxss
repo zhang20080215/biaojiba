@@ -175,16 +175,32 @@
 }
 
 /* 用户卡片（登录前 & 登录后共用） */
+/* 用户卡 + 反馈卡 横向并列容器（撑满 .header-left 的可用宽度）*/
+.user-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .user-card {
   display: flex;
   align-items: center;
-  margin-top: var(--space-2);
   background: var(--bg-card);
   border-radius: var(--radius-lg);
   padding: var(--space-3);
   box-shadow: var(--shadow-card);
   overflow: hidden;
   transition: transform 120ms ease-out;
+}
+
+.user-card-main {
+  flex: 1;
+  min-width: 0;
+  height: 132rpx;
+  box-sizing: border-box;
 }
 
 .user-card:active {
@@ -230,6 +246,9 @@
   color: var(--category-user-sub);
   margin-top: 4rpx;
   line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .user-card-arrow {
@@ -238,6 +257,47 @@
   margin-left: var(--space-2);
   font-weight: 700;
   flex-shrink: 0;
+}
+
+/* ========== 反馈卡（固定 1:1 小方块，不随左侧用户卡撑大）========== */
+.feedback-card-side {
+  /* button reset */
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  line-height: normal;
+  font-size: inherit;
+  font-weight: normal;
+  color: inherit;
+  /* 固定 132rpx × 132rpx 方块，align-self:center 防止被 stretch */
+  flex: 0 0 132rpx;
+  width: 132rpx;
+  height: 132rpx;
+  align-self: center;
+  /* 内容居中（icon + 文字 竖向） */
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+}
+.feedback-card-side::after {
+  border: none;
+}
+.feedback-card-hover {
+  transform: scale(0.96);
+  opacity: 0.85;
+}
+.feedback-side-icon {
+  font-size: 36rpx;
+  color: var(--category-user-title);
+  line-height: 1;
+  margin-bottom: 6rpx;
+}
+.feedback-side-label {
+  font-size: var(--font-caption);
+  color: var(--category-user-sub);
+  font-weight: 600;
+  line-height: 1;
 }
 
 /* ========== 分类筛选 ========== */
