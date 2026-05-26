@@ -207,7 +207,7 @@ Page({
     }
   },
 
-  // 寮€濮嬬櫥褰?
+  // 开始登录
   onGetUserProfile() {
     if (this.data.loading) return;
     this.setData({ loading: true });
@@ -270,7 +270,7 @@ Page({
       return;
     }
 
-    wx.showLoading({ title: '淇濆瓨涓?..', mask: true });
+    wx.showLoading({ title: '保存中...', mask: true });
     try {
       let finalAvatarUrl = tempAvatar;
       if (tempAvatar.startsWith('wxfile://') || tempAvatar.startsWith('http://tmp/')) {
@@ -388,7 +388,7 @@ Page({
         themes[idx].userCountText = this.formatUserCount(displayCount);
       }
     } catch (e) {
-      console.error('鍔犺浇鑲插効缁熻澶辫触:', e);
+      console.error('加载育儿统计失败:', e);
     }
 
 
