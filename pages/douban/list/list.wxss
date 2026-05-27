@@ -109,6 +109,32 @@ page {
   margin-top: var(--space-3);
 }
 
+.hero-subscribe-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: var(--space-3);
+}
+
+.hero-subscribe-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 8rpx 20rpx;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1rpx solid rgba(255, 255, 255, 0.42);
+  border-radius: 999rpx;
+}
+
+.hero-subscribe-chip-hover {
+  background: rgba(255, 255, 255, 0.32);
+}
+
+.hero-subscribe-chip-text {
+  font-size: var(--font-caption);
+  color: #FFFFFF;
+  letter-spacing: 1rpx;
+}
+
 .hero-progress-head {
   display: flex;
   align-items: baseline;

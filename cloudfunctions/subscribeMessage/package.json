@@ -1,0 +1,11 @@
+{
+  "name": "subscribeMessage",
+  "version": "1.0.0",
+  "description": "Record subscribe-message quota per (openid, topic)",
+  "main": "index.js",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

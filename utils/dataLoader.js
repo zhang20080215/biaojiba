@@ -15,15 +15,19 @@ function readMovieCache(theme) {
     const raw = wx.getStorageSync(getCacheKey(theme));
     if (!raw || !raw.ts || !raw.data) return null;
     if (Date.now() - raw.ts > CACHE_TTL_MS) return null; // 过期
-    return raw.data;
+    return { data: raw.data, version: raw.version != null ? raw.version : null };
   } catch (e) {
     return null;
   }
 }
 
-function writeMovieCache(theme, movies) {
+function writeMovieCache(theme, movies, version) {
   try {
-    wx.setStorageSync(getCacheKey(theme), { ts: Date.now(), data: movies });
+    wx.setStorageSync(getCacheKey(theme), {
+      ts: Date.now(),
+      version: version != null ? version : null,
+      data: movies
+    });
   } catch (e) {
     console.warn('写入电影缓存失败:', e);
   }
@@ -50,25 +54,32 @@ async function loadMoviesData(theme, openid, forceRefresh = false) {
 
   let movies;
   let marks = [];
+  let useFull = !cached;
 
   if (cached) {
-    // 命中缓存：电影列表直接使用缓存，标记单独从云函数刷新
-    movies = cached;
-    if (openid) {
-      try {
-        const markRes = await wx.cloud.callFunction({
-          name: 'getMoviesData',
-          data: { theme, openid, marksOnly: true }
-        });
-        if (markRes.result && markRes.result.marks) {
-          marks = markRes.result.marks;
+    // 命中缓存：刷标记的同时拿后端 listVersion 做比对
+    movies = cached.data;
+    try {
+      const markRes = await wx.cloud.callFunction({
+        name: 'getMoviesData',
+        data: { theme, openid, marksOnly: true }
+      });
+      const result = markRes && markRes.result;
+      if (result) {
+        if (result.marks) marks = result.marks;
+        const serverVersion = result.listVersion != null ? result.listVersion : null;
+        if (serverVersion != null && cached.version !== serverVersion) {
+          // 后端榜单已更新，丢弃缓存走全量
+          useFull = true;
+          marks = [];
         }
-      } catch (e) {
-        console.warn('刷新标记失败，使用空标记:', e);
       }
+    } catch (e) {
+      console.warn('刷新标记失败，使用空标记:', e);
     }
-  } else {
-    // 缓存未命中：全量请求
+  }
+
+  if (useFull) {
     const res = await wx.cloud.callFunction({
       name: 'getMoviesData',
       data: { theme, openid }
@@ -78,7 +89,7 @@ async function loadMoviesData(theme, openid, forceRefresh = false) {
     }
     movies = res.result.movies;
     marks = res.result.marks || [];
-    writeMovieCache(theme, movies);
+    writeMovieCache(theme, movies, res.result.listVersion);
   }
 
   return { movies, marks };
