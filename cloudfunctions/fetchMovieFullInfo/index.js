@@ -19,27 +19,23 @@ const queriesCollection = db.collection('user_movie_queries');
 
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
-// 豆瓣对详情页有更严格反爬，需要完整的浏览器 headers + bid Cookie 才能 200
-// bid 是豆瓣给匿名用户分配的标识，11 位 [A-Za-z0-9]，每次随机生成即可绕过简单反爬
-function genBid() {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let bid = '';
-  for (let i = 0; i < 11; i++) {
-    bid += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return bid;
-}
-
+// 豆瓣桌面端详情页反爬严，会 302 到 sec.douban.com 安全挑战页（需 JS 执行才能过）；
+// 改走移动端 m.douban.com + iPhone UA，反爬明显宽松（fetchImdbMovies 已验证可用）
 function buildDoubanHeaders() {
   return {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+    'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
     'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-    'Referer': 'https://movie.douban.com/',
-    'Cookie': `bid=${genBid()}`,
-    'Connection': 'keep-alive',
-    'Upgrade-Insecure-Requests': '1'
+    'Referer': 'https://m.douban.com/'
   };
+}
+
+function buildRexxarUrl(doubanId) {
+  return `https://m.douban.com/rexxar/api/v2/movie/${doubanId}`;
+}
+
+function buildMobileDetailUrl(doubanId) {
+  return `https://m.douban.com/movie/subject/${doubanId}/`;
 }
 
 
@@ -63,37 +59,49 @@ async function downloadAndUploadPoster(imageUrl, movieDocId) {
   }
 }
 
+// 并发调 rexxar JSON 接口（拿结构化主数据）+ 移动端详情页 HTML（仅用来正则提 IMDB ID）
+// rexxar JSON 不返 imdb_id；HTML 接口反爬比桌面端 movie.douban.com 宽松（实测 200）
 async function scrapeDoubanDetail(doubanId) {
-  const url = `https://movie.douban.com/subject/${doubanId}/`;
-  const res = await axios.get(url, { headers: buildDoubanHeaders(), timeout: 15000 });
-  const $ = cheerio.load(res.data);
+  const headers = buildDoubanHeaders();
 
-  const ratingText = $('strong[property="v:average"]').first().text().trim();
-  const votesText = $('span[property="v:votes"]').first().text().trim();
-  const title = $('h1 span[property="v:itemreviewed"]').first().text().trim();
-  const yearRaw = $('h1 .year').first().text() || '';
-  const year = yearRaw.replace(/[()（）\s]/g, '').trim();
+  const [rexxarRes, htmlRes] = await Promise.all([
+    axios.get(buildRexxarUrl(doubanId), {
+      headers,
+      timeout: 15000,
+      responseType: 'json'
+    }),
+    axios.get(buildMobileDetailUrl(doubanId), {
+      headers,
+      timeout: 15000,
+      responseType: 'text',
+      validateStatus: () => true
+    }).catch(e => {
+      console.warn('mobile_detail 抓取失败（不影响主流程）:', e && e.message);
+      return { data: '' };
+    })
+  ]);
 
-  const posterUrl = $('#mainpic img').attr('src') || '';
+  const j = (rexxarRes && rexxarRes.data) || {};
+  const html = typeof (htmlRes && htmlRes.data) === 'string' ? htmlRes.data : '';
 
-  const directors = [];
-  $('#info a[rel="v:directedBy"]').each((i, el) => {
-    const name = $(el).text().trim();
-    if (name) directors.push(name);
-  });
-
-  const genres = [];
-  $('#info span[property="v:genre"]').each((i, el) => {
-    const g = $(el).text().trim();
-    if (g) genres.push(g);
-  });
-
-  const infoText = $('#info').text();
-  const imdbMatch = infoText.match(/IMDb:?\s*(tt\d+)/i);
+  // 从 HTML 提 IMDB ID（rexxar JSON 不返这个字段）
+  const imdbMatch = html.match(/IMDb:?\s*(tt\d+)/i);
   const imdbId = imdbMatch ? imdbMatch[1] : null;
 
-  const rating = parseFloat(ratingText);
-  const votes = parseInt(votesText.replace(/,/g, ''), 10);
+  // 从 rexxar 提其余结构化字段
+  const title = j.title || '';
+  const year = j.year || '';
+  const posterUrl = j.cover_url || (j.pic && (j.pic.large || j.pic.normal)) || '';
+  const genres = Array.isArray(j.genres) ? j.genres : [];
+  const countries = Array.isArray(j.countries) ? j.countries : [];
+  const languages = Array.isArray(j.languages) ? j.languages : [];
+  const durations = Array.isArray(j.durations) ? j.durations : [];
+  const directors = Array.isArray(j.directors)
+    ? j.directors.map(d => d && d.name).filter(Boolean)
+    : [];
+  const rating = j.rating && j.rating.value != null ? Number(j.rating.value) : null;
+  const votes = j.rating && j.rating.count != null ? Number(j.rating.count) : null;
+  const intro = j.intro || '';
 
   return {
     title,
@@ -101,6 +109,10 @@ async function scrapeDoubanDetail(doubanId) {
     posterUrl,
     directors,
     genres,
+    countries,
+    languages,
+    durations,
+    intro,
     imdbId,
     douban: {
       rating: !isNaN(rating) ? rating : null,
@@ -164,6 +176,7 @@ async function upsertUserQuery(openid, doubanId, movieRefId) {
 exports.main = async (event, context) => {
   const doubanId = String((event && event.doubanId) || '').trim();
   const forceRefresh = !!(event && event.forceRefresh);
+  const debug = !!(event && event.debug);
   // 优先用 event 显式传入的 openid（云端测试可指定空），否则从微信上下文取
   const wxCtx = cloud.getWXContext() || {};
   const openid = event && event.openid !== undefined ? event.openid : wxCtx.OPENID;
@@ -210,6 +223,10 @@ exports.main = async (event, context) => {
       year: detail.year,
       directors: detail.directors,
       genres: detail.genres,
+      countries: detail.countries,
+      languages: detail.languages,
+      durations: detail.durations,
+      intro: detail.intro,
       poster: cloudPoster || detail.posterUrl,
       originalPoster: detail.posterUrl,
       douban: {
