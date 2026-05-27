@@ -159,9 +159,11 @@ async function scrapeDoubanDetail(doubanId) {
   const intro = j.intro || '';
 
   const aka = Array.isArray(j.aka) ? j.aka : [];
+  const originalTitle = j.original_title || '';
 
   return {
     title,
+    originalTitle,
     year,
     posterUrl,
     directors,
@@ -177,6 +179,19 @@ async function scrapeDoubanDetail(doubanId) {
       votes: !isNaN(votes) ? votes : null
     }
   };
+}
+
+// 从 detail 里挑一个英文标题用来 OMDb 反查：original_title 优先，否则 aka 里找不含中文字符的
+function pickEnglishTitle(detail) {
+  if (detail.originalTitle && !/[一-龥]/.test(detail.originalTitle)) {
+    return detail.originalTitle;
+  }
+  if (Array.isArray(detail.aka)) {
+    for (const a of detail.aka) {
+      if (a && !/[一-龥]/.test(a)) return a;
+    }
+  }
+  return null;
 }
 
 // 调 OMDb API，支持两种查询模式：
@@ -284,20 +299,24 @@ exports.main = async (event, context) => {
     // 2. 爬豆瓣
     const detail = await scrapeDoubanDetail(doubanId);
 
-    // 3. OMDb：豆瓣有 IMDb ID 则精确查；没有就用英文别名 aka[0] + year 反查
+    // 3. OMDb：豆瓣有 IMDb ID 则精确查；没有就挑英文标题（original_title 或 aka 中的英文项）反查
     let omdb;
     if (detail.imdbId) {
       omdb = await fetchOmdb({ imdbId: detail.imdbId });
-    } else if (detail.aka && detail.aka.length > 0) {
-      console.log(`[OMDb] 豆瓣未提供 IMDb ID，用 aka='${detail.aka[0]}' year='${detail.year}' 反查`);
-      omdb = await fetchOmdb({ title: detail.aka[0], year: detail.year });
-      if (omdb.imdbId) {
-        console.log(`[OMDb] 反查命中 imdbId=${omdb.imdbId}`);
-      } else {
-        console.log(`[OMDb] 反查失败，reason=${omdb.reason}`);
-      }
     } else {
-      omdb = { imdb: null, rottenTomatoes: null, imdbId: null, reason: 'no_query' };
+      const enTitle = pickEnglishTitle(detail);
+      if (enTitle) {
+        console.log(`[OMDb] 豆瓣未提供 IMDb ID，用 title='${enTitle}' year='${detail.year}' 反查`);
+        omdb = await fetchOmdb({ title: enTitle, year: detail.year });
+        if (omdb.imdbId) {
+          console.log(`[OMDb] 反查命中 imdbId=${omdb.imdbId}`);
+        } else {
+          console.log(`[OMDb] 反查失败，reason=${omdb.reason}`);
+        }
+      } else {
+        console.log(`[OMDb] 没有可用的英文标题（originalTitle 为空且 aka 全是中文），跳过反查`);
+        omdb = { imdb: null, rottenTomatoes: null, imdbId: null, reason: 'no_en_title' };
+      }
     }
     const finalImdbId = detail.imdbId || omdb.imdbId || null;
 
