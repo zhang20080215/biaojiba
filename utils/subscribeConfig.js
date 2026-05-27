@@ -5,9 +5,11 @@
 
 const TEMPLATES = {
   // 豆瓣 TOP250 新片入榜提醒
-  top250NewEntry: '',
-  // 豆瓣 TOP250 排名变化提醒
-  top250RankChange: ''
+  top250NewEntry: '5dwmndMuaw3O3v3oEq9PZDlYjxgmJHPistZYEpquHfc',
+  // 豆瓣 TOP250 排名变化提醒（待申请）
+  top250RankChange: '',
+  // 每日喝水提醒（daily 主题，预留）
+  dailyWaterReminder: 'BvLJBlkFNwROHvLjn64qyixXax6lDGjkh8Zbg5D8Mao'
 };
 
 function getTemplateId(key) {
