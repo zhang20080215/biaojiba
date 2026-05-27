@@ -255,20 +255,26 @@ exports.main = async (event, context) => {
   const movieDocId = `movie_search_${doubanId}`;
 
   try {
-    // 1. 缓存检查
-    if (!forceRefresh) {
-      let existing = null;
-      try {
-        const r = await moviesCollection.doc(movieDocId).get();
-        existing = r && r.data;
-      } catch (e) { /* 文档不存在 */ }
+    // 1. 缓存检查：24h 内有数据一律返缓存（无论 forceRefresh）
+    //    forceRefresh=true 但被 24h 拦下时额外标 refreshLimited，前端可 toast 提示
+    //    设计目的：保护 OMDb 配额（1000/日）+ 防止豆瓣反爬升级
+    let existing = null;
+    try {
+      const r = await moviesCollection.doc(movieDocId).get();
+      existing = r && r.data;
+    } catch (e) { /* 文档不存在 */ }
 
-      if (existing && existing.updatedAt) {
-        const ageMs = Date.now() - new Date(existing.updatedAt).getTime();
-        if (ageMs < CACHE_TTL_MS) {
-          if (openid) await upsertUserQuery(openid, doubanId, movieDocId);
-          return { success: true, movie: existing, cached: true };
-        }
+    if (existing && existing.updatedAt) {
+      const ageMs = Date.now() - new Date(existing.updatedAt).getTime();
+      if (ageMs < CACHE_TTL_MS) {
+        if (openid) await upsertUserQuery(openid, doubanId, movieDocId);
+        return {
+          success: true,
+          movie: existing,
+          cached: true,
+          refreshLimited: forceRefresh,
+          nextRefreshAvailableInMs: CACHE_TTL_MS - ageMs
+        };
       }
     }
 

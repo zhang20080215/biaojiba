@@ -63,6 +63,16 @@ Page({
         cached: !!result.cached,
         updatedAtDisplay: this._formatTime(movie.updatedAt)
       });
+
+      // 用户主动点"刷新数据"但被服务端 24h 限流，弹 toast 让用户知道为啥数据没变
+      if (forceRefresh && result.refreshLimited) {
+        const hours = Math.ceil((result.nextRefreshAvailableInMs || 0) / 3600000);
+        wx.showToast({
+          title: `${hours} 小时后可再次刷新`,
+          icon: 'none',
+          duration: 2500
+        });
+      }
     } catch (e) {
       console.error('fetchMovieFullInfo 异常', e);
       this.setData({ loading: false, error: '网络异常，请重试' });
