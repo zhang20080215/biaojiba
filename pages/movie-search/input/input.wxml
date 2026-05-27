@@ -1,0 +1,48 @@
+<!-- 全平台电影评分查询：输入页 -->
+<view class="page-root">
+
+  <view class="hero-section">
+    <view class="header">
+      <view class="header-left">
+        <text class="app-name">全平台电影评分查询</text>
+        <text class="app-slogan">输入电影名，对比豆瓣 / IMDB / 烂番茄评分</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="search-bar">
+    <input class="search-input"
+           placeholder="输入电影名，例如：阿嬷的情书"
+           value="{{keyword}}"
+           bindinput="onKeywordInput"
+           confirm-type="search"
+           bindconfirm="onSearch"
+           maxlength="50" />
+    <view class="search-btn {{keyword ? '' : 'disabled'}}" bindtap="onSearch">搜索</view>
+  </view>
+
+  <view class="hint-area">
+    <view wx:if="{{loading}}" class="hint">搜索中…</view>
+    <view wx:elif="{{error}}" class="hint error">{{error}}</view>
+    <view wx:elif="{{searched && candidates.length === 0}}" class="hint">没找到匹配的电影，换个关键词试试</view>
+    <view wx:elif="{{candidates.length > 0}}" class="hint">找到 {{candidates.length}} 个结果，点击查看跨平台评分</view>
+  </view>
+
+  <view class="candidate-list">
+    <block wx:for="{{candidates}}" wx:key="doubanId">
+      <view class="candidate-card" bindtap="onTapCandidate" data-douban-id="{{item.doubanId}}" hover-class="candidate-card-hover" hover-stay-time="100">
+        <image class="candidate-thumb" src="{{item.posterUrl}}" mode="aspectFill" lazy-load="true" />
+        <view class="candidate-info">
+          <text class="candidate-title">{{item.title}}</text>
+          <text wx:if="{{item.year}}" class="candidate-year">{{item.year}}</text>
+          <text wx:if="{{item.subtype}}" class="candidate-subtype">{{item.subtype}}</text>
+        </view>
+        <view class="candidate-arrow">›</view>
+      </view>
+    </block>
+  </view>
+
+  <view class="list-entry" bindtap="onGoToList">
+    <text class="list-entry-text">我的查询历史 →</text>
+  </view>
+</view>

@@ -1,0 +1,12 @@
+{
+  "name": "searchMovieByTitle",
+  "version": "1.0.0",
+  "description": "Search movies by title via Douban subject_suggest API",
+  "main": "index.js",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "wx-server-sdk": "latest",
+    "axios": "^0.27.2"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "我的查询历史",
+  "navigationBarBackgroundColor": "#FAE0E4",
+  "navigationBarTextStyle": "black",
+  "enablePullDownRefresh": true
+}

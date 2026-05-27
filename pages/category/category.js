@@ -93,6 +93,16 @@ Page({
         category: 'movie',
         url: '/pages/boxoffice/list/list'
       },
+      {
+        id: 'movie_search_all_platforms',
+        title: '全平台电影评分查询',
+        description: '搜索任意电影，对比豆瓣 / IMDB / 烂番茄评分',
+        image: '',
+        userCount: 0,
+        tag: '电影',
+        category: 'movie',
+        url: '/pages/movie-search/input/input'
+      },
       // {
       //   id: 'chinese_awards',
       //   title: '华语电影最高荣誉殿堂',

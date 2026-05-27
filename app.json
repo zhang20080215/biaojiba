@@ -19,7 +19,10 @@
     "pages/growth/input/input",
     "pages/growth/result/result",
     "pages/daily/index/index",
-    "pages/daily/stats/stats"
+    "pages/daily/stats/stats",
+    "pages/movie-search/input/input",
+    "pages/movie-search/list/list",
+    "pages/movie-search/detail/detail"
   ],
   "window": {
     "navigationBarTitleText": "标记吧",

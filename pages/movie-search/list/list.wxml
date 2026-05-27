@@ -1,0 +1,51 @@
+<!-- 全平台电影评分查询：用户查询历史列表 -->
+<view class="page-root">
+
+  <view class="hero-section">
+    <view class="header">
+      <view class="header-left">
+        <text class="app-name">我的电影评分查询</text>
+        <text class="app-slogan">{{total > 0 ? total + ' 部电影的跨平台评分' : '还没有查询记录，去搜一部吧'}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="search-entry-bar">
+    <view class="search-entry-btn" bindtap="onGoToSearch" hover-class="search-entry-btn-hover">
+      <text>＋ 搜索新电影</text>
+    </view>
+  </view>
+
+  <view wx:if="{{loading}}" class="hint">加载中…</view>
+  <view wx:elif="{{error}}" class="hint error">{{error}}</view>
+  <view wx:elif="{{!loading && movies.length === 0}}" class="empty-state">
+    <text class="empty-text">还没有查询过任何电影</text>
+    <view class="empty-cta" bindtap="onGoToSearch">去搜索一部</view>
+  </view>
+
+  <view class="movie-list">
+    <block wx:for="{{movies}}" wx:key="_id">
+      <view class="movie-card" bindtap="onTapMovie" data-douban-id="{{item.doubanId}}" hover-class="movie-card-hover" hover-stay-time="100">
+        <image class="movie-poster" src="{{item.poster}}" mode="aspectFill" lazy-load="true" />
+        <view class="movie-meta">
+          <text class="movie-title">{{item.title}}</text>
+          <text wx:if="{{item.year}}" class="movie-year">{{item.year}}</text>
+          <view class="rating-row">
+            <view class="rating-cell">
+              <text class="rating-label">豆瓣</text>
+              <text class="rating-value">{{item.douban.rating || '—'}}</text>
+            </view>
+            <view class="rating-cell">
+              <text class="rating-label">IMDB</text>
+              <text class="rating-value">{{item.imdb.rating || '—'}}</text>
+            </view>
+            <view class="rating-cell">
+              <text class="rating-label">烂番茄</text>
+              <text class="rating-value">{{item.rottenTomatoes.score || '—'}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </block>
+  </view>
+</view>

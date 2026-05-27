@@ -1,0 +1,13 @@
+{
+  "name": "fetchMovieFullInfo",
+  "version": "1.0.0",
+  "description": "Aggregate single movie data from Douban + OMDb (IMDb + Rotten Tomatoes)",
+  "main": "index.js",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "wx-server-sdk": "latest",
+    "axios": "^0.27.2",
+    "cheerio": "^0.22.0"
+  }
+}

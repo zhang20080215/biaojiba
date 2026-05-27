@@ -1,0 +1,11 @@
+{
+  "name": "getMyMovieQueries",
+  "version": "1.0.0",
+  "description": "Fetch user's queried movies from user_movie_queries + searched_movies",
+  "main": "index.js",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}
