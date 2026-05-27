@@ -38,34 +38,10 @@ function buildMobileDetailUrl(doubanId) {
   return `https://m.douban.com/movie/subject/${doubanId}/`;
 }
 
-// 豆瓣 App 内部 API（frodo），用 App User-Agent + 公开 apikey
-// rexxar JSON 不返 imdb 字段，m.douban HTML 也砍掉了，只能从 frodo 拿
-// 灰色但稳定：公开 apikey 长期可用，豆瓣自家 App 走这条路
-async function fetchImdbIdFromFrodo(doubanId) {
-  const url = `https://frodo.douban.com/api/v2/movie/${doubanId}?apikey=0ac44ae016490db2204ce0a042db2916`;
-  try {
-    const res = await axios.get(url, {
-      headers: {
-        'User-Agent': 'api-client/1 com.douban.frodo/7.49.0(255) Android/30',
-        'Accept': 'application/json'
-      },
-      timeout: 12000,
-      responseType: 'json',
-      validateStatus: () => true
-    });
-    const dataStr = typeof res.data === 'string' ? res.data : JSON.stringify(res.data || {});
-    if (res.status !== 200) {
-      console.warn(`[frodo] status=${res.status} body 前 300 字: ${dataStr.slice(0, 300)}`);
-      return null;
-    }
-    const d = res.data || {};
-    const id = d.imdb || d.imdb_id || null;
-    console.log(`[frodo] status=200, keys=${Object.keys(d).slice(0, 30).join(',')}, imdb=${id}`);
-    return id;
-  } catch (e) {
-    console.warn('[frodo] 调用异常:', e && e.message, e && e.code);
-    return null;
-  }
+// frodo 路径在实测中始终返回 400 invalid_request_997（apikey 已被豆瓣废弃），
+// 已弃用。保留函数签名为空实现，主流程靠 OMDb 按 original_title 反查搞定 IMDb ID。
+async function fetchImdbIdFromFrodo(_doubanId) {
+  return null;
 }
 
 // 从 m.douban.com 详情页 HTML 里提 IMDB ID，多种 pattern 都试一遍
