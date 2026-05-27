@@ -5,7 +5,7 @@ var adManager = require('../../../utils/adManager');
 var grayBucket = require('../../../utils/grayBucket');
 var subscribeConfig = require('../../../utils/subscribeConfig');
 
-const SUBSCRIBE_BUCKET_PERCENT = 100; // 开发期内部全开；上线时调低
+const SUBSCRIBE_BUCKET_PERCENT = 0; // 临时关闭订阅入口（access_token 链路问题待排查），代码完整保留，恢复时改回 100
 
 Page({
     data: {
