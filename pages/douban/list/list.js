@@ -2,6 +2,10 @@ import DataLoader from '../../../utils/dataLoader';
 import imageCacheManager from '../../../utils/imageCacheManager';
 var adConfig = require('../../../utils/adConfig');
 var adManager = require('../../../utils/adManager');
+var grayBucket = require('../../../utils/grayBucket');
+var subscribeConfig = require('../../../utils/subscribeConfig');
+
+const SUBSCRIBE_BUCKET_PERCENT = 0; // 临时关闭订阅入口（access_token 链路问题待排查），代码完整保留，恢复时改回 100
 
 Page({
     data: {
@@ -31,6 +35,7 @@ Page({
         customToast: '',
         customToastVisible: false,
         showSharePicker: false,
+        subscribeBucketIn: false,
         tempAvatar: '',
         tempNickname: '',
         themeClass: '',
@@ -137,10 +142,61 @@ Page({
     checkLoginStatus() {
         const userInfo = this.getStoredUserInfo();
         if (userInfo) {
-            this.setData({ userInfo, openid: userInfo._openid || '', pendingOpenid: '' });
+            const openid = userInfo._openid || '';
+            this.setData({
+                userInfo,
+                openid,
+                pendingOpenid: '',
+                subscribeBucketIn: grayBucket.isInBucket(openid, SUBSCRIBE_BUCKET_PERCENT)
+            });
         } else {
-            this.setData({ userInfo: null, openid: '' });
+            this.setData({ userInfo: null, openid: '', subscribeBucketIn: false });
         }
+    },
+
+    onTapSubscribeNewEntry() {
+        this._requestSubscribe('top250NewEntry');
+    },
+
+    onTapSubscribeRankChange() {
+        this._requestSubscribe('top250RankChange');
+    },
+
+    _requestSubscribe(templateKey) {
+        if (!this.hasLogin()) {
+            wx.showToast({ title: '请先完成登录', icon: 'none' });
+            this.onGetUserProfile();
+            return;
+        }
+        const templateId = subscribeConfig.getTemplateId(templateKey);
+        if (!templateId) {
+            wx.showToast({ title: '功能即将开放', icon: 'none' });
+            return;
+        }
+        wx.requestSubscribeMessage({
+            tmplIds: [templateId],
+            success: (res) => {
+                if (res[templateId] !== 'accept') {
+                    wx.showToast({ title: '已取消', icon: 'none' });
+                    return;
+                }
+                wx.cloud.callFunction({
+                    name: 'subscribeMessage',
+                    data: { topic: templateKey, theme: 'douban', templateId, accepted: true }
+                }).then((cloudRes) => {
+                    const ok = cloudRes && cloudRes.result && cloudRes.result.success;
+                    wx.showToast({
+                        title: ok ? '已开启提醒' : '开启失败',
+                        icon: ok ? 'success' : 'none'
+                    });
+                }).catch(() => {
+                    wx.showToast({ title: '网络异常，稍后重试', icon: 'none' });
+                });
+            },
+            fail: () => {
+                wx.showToast({ title: '订阅未开启', icon: 'none' });
+            }
+        });
     },
 
     onShareTap() {

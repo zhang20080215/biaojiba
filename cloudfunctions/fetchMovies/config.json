@@ -3,5 +3,11 @@
         "openapi": []
     },
     "timeout": 60,
-    "triggers": []
+    "triggers": [
+        {
+            "name": "dailyTop250Refresh",
+            "type": "timer",
+            "config": "0 0 4 * * * *"
+        }
+    ]
 }

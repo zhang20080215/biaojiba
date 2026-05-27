@@ -5,7 +5,23 @@ const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
 const db = cloud.database();
-const MAX_LIMIT = 100; // 浜戝嚱鏁扮鍗曟鏈€澶氳 1000锛?00 鏉′竴鎵硅冻澶熷揩
+const MAX_LIMIT = 100;
+
+// 各主题在 metaInfo 集合中的版本号文档 ID（前端缓存协调用）
+const THEME_VERSION_DOC = {
+    douban: 'top250_douban_version'
+};
+
+async function readListVersion(theme) {
+    const docId = THEME_VERSION_DOC[theme];
+    if (!docId) return null;
+    try {
+        const res = await db.collection('metaInfo').doc(docId).get();
+        return res && res.data && res.data.version != null ? res.data.version : null;
+    } catch (e) {
+        return null;
+    }
+} // 浜戝嚱鏁扮鍗曟鏈€澶氳 1000锛?00 鏉′竴鎵硅冻澶熷揩
 
 /**
  * 鍒嗘壒璇诲彇闆嗗悎鏁版嵁锛堜簯鍑芥暟绔棤 20 鏉￠檺鍒讹紝浣嗗缓璁壒閲忓埌 100 浠ュ唴锛?
@@ -51,10 +67,13 @@ exports.main = async (event, context) => {
 
     try {
         if (marksOnly) {
-            const marks = openid
-                ? await readAll(marksCollectionName, db.collection(marksCollectionName).where(buildMarksWhere({ openid })))
-                : [];
-            return { success: true, movies: [], marks };
+            const [marks, listVersion] = await Promise.all([
+                openid
+                    ? readAll(marksCollectionName, db.collection(marksCollectionName).where(buildMarksWhere({ openid })))
+                    : Promise.resolve([]),
+                readListVersion(theme)
+            ]);
+            return { success: true, movies: [], marks, listVersion };
         }
 
         let collectionName = 'movies';
@@ -96,11 +115,12 @@ exports.main = async (event, context) => {
             .where(whereCondition)
             .orderBy(orderByField, orderDirection);
 
-        const [moviesRaw, marks] = await Promise.all([
+        const [moviesRaw, marks, listVersion] = await Promise.all([
             readAll(collectionName, moviesQuery),
             openid
                 ? readAll(marksCollectionName, db.collection(marksCollectionName).where(buildMarksWhere({ openid })))
-                : Promise.resolve([])
+                : Promise.resolve([]),
+            readListVersion(theme)
         ]);
 
         let movies = moviesRaw;
@@ -136,7 +156,7 @@ exports.main = async (event, context) => {
             });
         }
 
-        return { success: true, movies, marks };
+        return { success: true, movies, marks, listVersion };
     } catch (err) {
         console.error('getMoviesData 澶辫触:', err);
         return { success: false, error: err.message, movies: [], marks: [] };

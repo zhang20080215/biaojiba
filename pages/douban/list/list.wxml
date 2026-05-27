@@ -16,6 +16,14 @@
             <view class="hero-progress-fill" style="width: {{watchedProgressWidth}};"></view>
           </view>
         </view>
+        <view wx:if="{{subscribeBucketIn}}" class="hero-subscribe-row">
+          <view class="hero-subscribe-chip" bindtap="onTapSubscribeNewEntry" hover-class="hero-subscribe-chip-hover">
+            <text class="hero-subscribe-chip-text">🔔 新片入榜提醒</text>
+          </view>
+          <view class="hero-subscribe-chip" bindtap="onTapSubscribeRankChange" hover-class="hero-subscribe-chip-hover">
+            <text class="hero-subscribe-chip-text">📊 排名变化提醒</text>
+          </view>
+        </view>
       </view>
     </view>
   </view>
