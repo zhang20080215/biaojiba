@@ -38,6 +38,30 @@ function buildMobileDetailUrl(doubanId) {
   return `https://m.douban.com/movie/subject/${doubanId}/`;
 }
 
+// 豆瓣 App 内部 API（frodo），用 App User-Agent + 公开 apikey
+// rexxar JSON 不返 imdb 字段，m.douban HTML 也砍掉了，只能从 frodo 拿
+// 灰色但稳定：公开 apikey 长期可用，豆瓣自家 App 走这条路
+async function fetchImdbIdFromFrodo(doubanId) {
+  try {
+    const url = `https://frodo.douban.com/api/v2/movie/${doubanId}?apikey=0ac44ae016490db2204ce0a042db2916`;
+    const res = await axios.get(url, {
+      headers: {
+        'User-Agent': 'api-client/1 com.douban.frodo/7.49.0(255) Android/30',
+        'Accept': 'application/json'
+      },
+      timeout: 12000,
+      responseType: 'json',
+      validateStatus: () => true
+    });
+    if (res.status !== 200 || !res.data) return null;
+    const d = res.data;
+    return d.imdb || d.imdb_id || null;
+  } catch (e) {
+    console.warn('frodo API 失败（不影响主流程）:', e && e.message);
+    return null;
+  }
+}
+
 // 从 m.douban.com 详情页 HTML 里提 IMDB ID，多种 pattern 都试一遍
 function extractImdbIdFromHtml(html) {
   if (!html) return null;
@@ -84,7 +108,7 @@ async function downloadAndUploadPoster(imageUrl, movieDocId) {
 async function scrapeDoubanDetail(doubanId) {
   const headers = buildDoubanHeaders();
 
-  const [rexxarRes, htmlRes] = await Promise.all([
+  const [rexxarRes, htmlRes, frodoImdbId] = await Promise.all([
     axios.get(buildRexxarUrl(doubanId), {
       headers,
       timeout: 15000,
@@ -98,26 +122,19 @@ async function scrapeDoubanDetail(doubanId) {
     }).catch(e => {
       console.warn('mobile_detail 抓取失败（不影响主流程）:', e && e.message);
       return { data: '' };
-    })
+    }),
+    fetchImdbIdFromFrodo(doubanId)
   ]);
 
   const j = (rexxarRes && rexxarRes.data) || {};
   const html = typeof (htmlRes && htmlRes.data) === 'string' ? htmlRes.data : '';
 
-  // 从 HTML 提 IMDB ID（rexxar JSON 不返这个字段，HTML 里格式不固定，多种 pattern 都试）
-  const imdbId = extractImdbIdFromHtml(html);
-  if (!imdbId && html) {
-    // 抓不到时打日志：HTML 里"imdb"关键字附近上下文（最多 5 段），帮助诊断
-    const ctx = [];
-    const lower = html.toLowerCase();
-    let idx = 0;
-    while ((idx = lower.indexOf('imdb', idx)) !== -1 && ctx.length < 5) {
-      const start = Math.max(0, idx - 30);
-      const end = Math.min(html.length, idx + 80);
-      ctx.push(html.slice(start, end).replace(/\s+/g, ' '));
-      idx += 4;
-    }
-    console.log(`[scrapeDoubanDetail] IMDB ID 未提取到，html len=${html.length}, imdb 关键字附近上下文:`, ctx);
+  // IMDB ID 提取优先级：frodo API > HTML 正则（m.douban HTML 实际不渲染 IMDb 字段，仅作兜底）
+  let imdbId = frodoImdbId || extractImdbIdFromHtml(html);
+  if (!imdbId) {
+    console.log(`[scrapeDoubanDetail] IMDB ID 在 frodo / HTML 都未提取到（doubanId=${j.id || ''})，可能这部豆瓣未关联 IMDB`);
+  } else {
+    console.log(`[scrapeDoubanDetail] IMDB ID 命中: ${imdbId} (来源: ${frodoImdbId ? 'frodo' : 'html'})`);
   }
 
   // 从 rexxar 提其余结构化字段
