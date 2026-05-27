@@ -156,13 +156,20 @@ exports.main = async (event, context) => {
       }
     }
 
-    try {
-      await db.collection('push_events').doc(evt._id).update({
-        data: { pushedAt: db.serverDate(), pushedCount: eventPushCount }
-      });
-      pushedEvents += 1;
-    } catch (e) {
-      console.error('标记事件已推送失败:', e && e.message);
+    // 只有"至少有一条推送成功" 或 "本来就没订阅者"时才标记事件已处理；
+    // 全部失败（如 access_token 失效）时保留 pushedAt=null，下次定时器重试
+    const shouldMarkPushed = eventPushCount > 0 || quotaUsers.length === 0;
+    if (shouldMarkPushed) {
+      try {
+        await db.collection('push_events').doc(evt._id).update({
+          data: { pushedAt: db.serverDate(), pushedCount: eventPushCount }
+        });
+        pushedEvents += 1;
+      } catch (e) {
+        console.error('标记事件已推送失败:', e && e.message);
+      }
+    } else {
+      console.warn(`事件 ${evt._id} (topic=${evt.topic}) 推送全部失败 (${quotaUsers.length} 个订阅者)，保留 pushedAt=null 等下次重试`);
     }
   }
 
