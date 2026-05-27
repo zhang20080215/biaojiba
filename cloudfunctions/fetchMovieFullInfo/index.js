@@ -42,8 +42,8 @@ function buildMobileDetailUrl(doubanId) {
 // rexxar JSON 不返 imdb 字段，m.douban HTML 也砍掉了，只能从 frodo 拿
 // 灰色但稳定：公开 apikey 长期可用，豆瓣自家 App 走这条路
 async function fetchImdbIdFromFrodo(doubanId) {
+  const url = `https://frodo.douban.com/api/v2/movie/${doubanId}?apikey=0ac44ae016490db2204ce0a042db2916`;
   try {
-    const url = `https://frodo.douban.com/api/v2/movie/${doubanId}?apikey=0ac44ae016490db2204ce0a042db2916`;
     const res = await axios.get(url, {
       headers: {
         'User-Agent': 'api-client/1 com.douban.frodo/7.49.0(255) Android/30',
@@ -53,11 +53,17 @@ async function fetchImdbIdFromFrodo(doubanId) {
       responseType: 'json',
       validateStatus: () => true
     });
-    if (res.status !== 200 || !res.data) return null;
-    const d = res.data;
-    return d.imdb || d.imdb_id || null;
+    const dataStr = typeof res.data === 'string' ? res.data : JSON.stringify(res.data || {});
+    if (res.status !== 200) {
+      console.warn(`[frodo] status=${res.status} body 前 300 字: ${dataStr.slice(0, 300)}`);
+      return null;
+    }
+    const d = res.data || {};
+    const id = d.imdb || d.imdb_id || null;
+    console.log(`[frodo] status=200, keys=${Object.keys(d).slice(0, 30).join(',')}, imdb=${id}`);
+    return id;
   } catch (e) {
-    console.warn('frodo API 失败（不影响主流程）:', e && e.message);
+    console.warn('[frodo] 调用异常:', e && e.message, e && e.code);
     return null;
   }
 }
@@ -152,6 +158,8 @@ async function scrapeDoubanDetail(doubanId) {
   const votes = j.rating && j.rating.count != null ? Number(j.rating.count) : null;
   const intro = j.intro || '';
 
+  const aka = Array.isArray(j.aka) ? j.aka : [];
+
   return {
     title,
     year,
@@ -162,6 +170,7 @@ async function scrapeDoubanDetail(doubanId) {
     languages,
     durations,
     intro,
+    aka,
     imdbId,
     douban: {
       rating: !isNaN(rating) ? rating : null,
@@ -170,17 +179,30 @@ async function scrapeDoubanDetail(doubanId) {
   };
 }
 
-async function fetchOmdb(imdbId) {
+// 调 OMDb API，支持两种查询模式：
+//   按 IMDB ID 精确查（imdbId 传入）
+//   按片名 + 年份反查（title 传入，year 选填）
+// 返回 { imdb, rottenTomatoes, imdbId, reason }
+//   imdbId 在按 title 查时来自 OMDb 返回，用于补全豆瓣未提供的 IMDB 关联
+async function fetchOmdb({ imdbId, title, year }) {
   const apiKey = process.env.OMDB_API_KEY;
-  if (!apiKey) return { imdb: null, rottenTomatoes: null, reason: 'no_api_key' };
-  if (!imdbId) return { imdb: null, rottenTomatoes: null, reason: 'no_imdb_id' };
+  if (!apiKey) return { imdb: null, rottenTomatoes: null, imdbId: null, reason: 'no_api_key' };
+
+  let url;
+  if (imdbId) {
+    url = `https://www.omdbapi.com/?i=${encodeURIComponent(imdbId)}&apikey=${encodeURIComponent(apiKey)}`;
+  } else if (title) {
+    const yearPart = year ? `&y=${encodeURIComponent(year)}` : '';
+    url = `https://www.omdbapi.com/?t=${encodeURIComponent(title)}${yearPart}&apikey=${encodeURIComponent(apiKey)}`;
+  } else {
+    return { imdb: null, rottenTomatoes: null, imdbId: null, reason: 'no_query' };
+  }
 
   try {
-    const url = `https://www.omdbapi.com/?i=${encodeURIComponent(imdbId)}&apikey=${encodeURIComponent(apiKey)}`;
     const res = await axios.get(url, { timeout: 10000, responseType: 'json' });
     const data = res.data || {};
     if (data.Response === 'False') {
-      return { imdb: null, rottenTomatoes: null, reason: 'omdb_not_found' };
+      return { imdb: null, rottenTomatoes: null, imdbId: null, reason: 'omdb_not_found' };
     }
 
     const imdbRating = parseFloat(data.imdbRating);
@@ -193,10 +215,15 @@ async function fetchOmdb(imdbId) {
     const rt = (data.Ratings || []).find(r => r && r.Source === 'Rotten Tomatoes');
     const rottenTomatoes = rt ? { score: rt.Value } : null;
 
-    return { imdb, rottenTomatoes, reason: 'ok' };
+    return {
+      imdb,
+      rottenTomatoes,
+      imdbId: data.imdbID || imdbId || null,  // OMDb 返回的是 imdbID（大小写敏感）
+      reason: 'ok'
+    };
   } catch (e) {
     console.error('OMDb 调用失败:', e && e.message);
-    return { imdb: null, rottenTomatoes: null, reason: 'omdb_error' };
+    return { imdb: null, rottenTomatoes: null, imdbId: null, reason: 'omdb_error' };
   }
 }
 
@@ -257,8 +284,22 @@ exports.main = async (event, context) => {
     // 2. 爬豆瓣
     const detail = await scrapeDoubanDetail(doubanId);
 
-    // 3. OMDb
-    const omdb = await fetchOmdb(detail.imdbId);
+    // 3. OMDb：豆瓣有 IMDb ID 则精确查；没有就用英文别名 aka[0] + year 反查
+    let omdb;
+    if (detail.imdbId) {
+      omdb = await fetchOmdb({ imdbId: detail.imdbId });
+    } else if (detail.aka && detail.aka.length > 0) {
+      console.log(`[OMDb] 豆瓣未提供 IMDb ID，用 aka='${detail.aka[0]}' year='${detail.year}' 反查`);
+      omdb = await fetchOmdb({ title: detail.aka[0], year: detail.year });
+      if (omdb.imdbId) {
+        console.log(`[OMDb] 反查命中 imdbId=${omdb.imdbId}`);
+      } else {
+        console.log(`[OMDb] 反查失败，reason=${omdb.reason}`);
+      }
+    } else {
+      omdb = { imdb: null, rottenTomatoes: null, imdbId: null, reason: 'no_query' };
+    }
+    const finalImdbId = detail.imdbId || omdb.imdbId || null;
 
     // 4. 海报上传（每次都新上传，简单稳；后续可优化为复用旧 cloudPoster）
     const cloudPoster = await downloadAndUploadPoster(detail.posterUrl, movieDocId);
@@ -267,7 +308,7 @@ exports.main = async (event, context) => {
     const movieData = {
       _id: movieDocId,
       doubanId,
-      imdbId: detail.imdbId,
+      imdbId: finalImdbId,
       title: detail.title,
       year: detail.year,
       directors: detail.directors,
@@ -276,6 +317,7 @@ exports.main = async (event, context) => {
       languages: detail.languages,
       durations: detail.durations,
       intro: detail.intro,
+      aka: detail.aka,
       poster: cloudPoster || detail.posterUrl,
       originalPoster: detail.posterUrl,
       douban: {
