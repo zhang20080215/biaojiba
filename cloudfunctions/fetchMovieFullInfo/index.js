@@ -242,7 +242,9 @@ exports.main = async (event, context) => {
     };
 
     // 5. upsert searched_movies（用 set，避免 update 在文档不存在时静默成功的坑）
-    await moviesCollection.doc(movieDocId).set({ data: movieData });
+    // 注意：doc(id).set() 的 data 不能含 _id 字段，否则报 -501007 "不能更新_id的值"
+    const { _id: _omit, ...dataToSet } = movieData;
+    await moviesCollection.doc(movieDocId).set({ data: dataToSet });
 
     // 6. upsert user_movie_queries
     if (openid) {
