@@ -28,14 +28,20 @@ const TOPIC_CONFIG = {
   top250NewEntry: {
     envVar: 'TOP250_NEW_ENTRY_TPL_ID',
     page: 'pages/douban/list/list',
+    // 模板字段：thing1=任务名称、time7=提醒时间、thing10=备注
+    // 任务名称固定，时间用北京时间当前时刻，备注固定
     render: (payload, evt) => {
-      const entries = (payload && payload.entries) || [];
-      const headline = entries.slice(0, 3).map(e => e.title).join('、');
-      const more = entries.length > 3 ? ` 等${entries.length}部` : '';
+      const now = new Date();
+      const bj = new Date(now.getTime() + 8 * 3600 * 1000);
+      const yyyy = bj.getUTCFullYear();
+      const MM = String(bj.getUTCMonth() + 1).padStart(2, '0');
+      const dd = String(bj.getUTCDate()).padStart(2, '0');
+      const HH = String(bj.getUTCHours()).padStart(2, '0');
+      const mm = String(bj.getUTCMinutes()).padStart(2, '0');
       return {
-        thing1: { value: (headline + more).slice(0, 20) },
-        number2: { value: entries.length },
-        date3: { value: evt.eventDate || new Date().toISOString().slice(0, 10) }
+        thing1: { value: '豆瓣电影 TOP250 有新片入榜' },
+        time7: { value: `${yyyy}-${MM}-${dd} ${HH}:${mm}` },
+        thing10: { value: '点击进入小程序查看' }
       };
     }
   },
@@ -89,9 +95,13 @@ exports.main = async (event, context) => {
 
   let pendingEvents;
   try {
+    // 兼容字段缺失：手动在控制台插入的测试事件可能没有 pushedAt 字段
     pendingEvents = await readAll(
       'push_events',
-      db.collection('push_events').where({ pushedAt: null })
+      db.collection('push_events').where(_.or([
+        { pushedAt: null },
+        { pushedAt: _.exists(false) }
+      ]))
     );
   } catch (e) {
     return { success: false, error: 'READ_EVENTS_FAIL', detail: e && e.message };
