@@ -20,6 +20,16 @@ function isInPushWindow(date) {
   return beijingHour >= PUSH_WINDOW_START_HOUR && beijingHour < PUSH_WINDOW_END_HOUR;
 }
 
+function formatBeijingTime(date) {
+  const bj = new Date(date.getTime() + 8 * 3600 * 1000);
+  const yyyy = bj.getUTCFullYear();
+  const MM = String(bj.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(bj.getUTCDate()).padStart(2, '0');
+  const HH = String(bj.getUTCHours()).padStart(2, '0');
+  const mm = String(bj.getUTCMinutes()).padStart(2, '0');
+  return `${yyyy}-${MM}-${dd} ${HH}:${mm}`;
+}
+
 // ───────── topic 配置表（加新订阅在这里加一行即可）─────────
 // envVar: 模板 ID 来自哪个环境变量
 // page: 点击消息跳转的小程序内页面
@@ -29,21 +39,21 @@ const TOPIC_CONFIG = {
     envVar: 'TOP250_NEW_ENTRY_TPL_ID',
     page: 'pages/douban/list/list',
     // 模板字段：thing1=任务名称、time7=提醒时间、thing10=备注
-    // 任务名称固定，时间用北京时间当前时刻，备注固定
-    render: (payload, evt) => {
-      const now = new Date();
-      const bj = new Date(now.getTime() + 8 * 3600 * 1000);
-      const yyyy = bj.getUTCFullYear();
-      const MM = String(bj.getUTCMonth() + 1).padStart(2, '0');
-      const dd = String(bj.getUTCDate()).padStart(2, '0');
-      const HH = String(bj.getUTCHours()).padStart(2, '0');
-      const mm = String(bj.getUTCMinutes()).padStart(2, '0');
-      return {
-        thing1: { value: '豆瓣电影 TOP250 有新片入榜' },
-        time7: { value: `${yyyy}-${MM}-${dd} ${HH}:${mm}` },
-        thing10: { value: '点击进入小程序查看' }
-      };
-    }
+    render: (payload, evt) => ({
+      thing1: { value: '豆瓣电影 TOP250 有新片入榜' },
+      time7: { value: formatBeijingTime(new Date()) },
+      thing10: { value: '点击进入小程序查看' }
+    })
+  },
+  dailyWaterReminder: {
+    envVar: 'DAILY_WATER_REMINDER_TPL_ID',
+    page: 'pages/daily/index/index',
+    // 模板字段：thing1=提醒人、time2=时间、thing3=温馨提醒
+    render: (payload, evt) => ({
+      thing1: { value: '标记吧-每日喝水提醒' },
+      time2: { value: formatBeijingTime(new Date()) },
+      thing3: { value: '该喝水啦' }
+    })
   },
   top250RankChange: {
     envVar: 'TOP250_RANK_CHANGE_TPL_ID',
