@@ -38,6 +38,26 @@ function buildMobileDetailUrl(doubanId) {
   return `https://m.douban.com/movie/subject/${doubanId}/`;
 }
 
+// 从 m.douban.com 详情页 HTML 里提 IMDB ID，多种 pattern 都试一遍
+function extractImdbIdFromHtml(html) {
+  if (!html) return null;
+  const patterns = [
+    /IMDb:?\s*(tt\d+)/i,
+    /imdb_id["']?\s*[:=]\s*["']?(tt\d+)/i,
+    /imdb\.com\/title\/(tt\d+)/i,
+    /["']?imdb["']?\s*:\s*["'](tt\d+)["']/i,
+    /\btt(\d{7,})\b/  // 兜底：找任意 tt + 7~8 位数字
+  ];
+  for (const p of patterns) {
+    const m = html.match(p);
+    if (m) {
+      const id = m[1].startsWith('tt') ? m[1] : 'tt' + m[1];
+      return id;
+    }
+  }
+  return null;
+}
+
 
 async function downloadAndUploadPoster(imageUrl, movieDocId) {
   if (!imageUrl) return null;
@@ -84,9 +104,21 @@ async function scrapeDoubanDetail(doubanId) {
   const j = (rexxarRes && rexxarRes.data) || {};
   const html = typeof (htmlRes && htmlRes.data) === 'string' ? htmlRes.data : '';
 
-  // 从 HTML 提 IMDB ID（rexxar JSON 不返这个字段）
-  const imdbMatch = html.match(/IMDb:?\s*(tt\d+)/i);
-  const imdbId = imdbMatch ? imdbMatch[1] : null;
+  // 从 HTML 提 IMDB ID（rexxar JSON 不返这个字段，HTML 里格式不固定，多种 pattern 都试）
+  const imdbId = extractImdbIdFromHtml(html);
+  if (!imdbId && html) {
+    // 抓不到时打日志：HTML 里"imdb"关键字附近上下文（最多 5 段），帮助诊断
+    const ctx = [];
+    const lower = html.toLowerCase();
+    let idx = 0;
+    while ((idx = lower.indexOf('imdb', idx)) !== -1 && ctx.length < 5) {
+      const start = Math.max(0, idx - 30);
+      const end = Math.min(html.length, idx + 80);
+      ctx.push(html.slice(start, end).replace(/\s+/g, ' '));
+      idx += 4;
+    }
+    console.log(`[scrapeDoubanDetail] IMDB ID 未提取到，html len=${html.length}, imdb 关键字附近上下文:`, ctx);
+  }
 
   // 从 rexxar 提其余结构化字段
   const title = j.title || '';
