@@ -232,9 +232,21 @@ exports.main = async (event, context) => {
   if (!event || typeof event !== 'object') {
     throw new Error('fetchMovies 必须显式传参，禁止空参数执行。请显式传 { dryRun: true } 或 { realRun: true }');
   }
-  // 微信云定时触发器会注入 TriggerName / Time 字段，识别为受信触发，自动按真跑执行
-  const isTimerTriggered = typeof event.TriggerName === 'string' && event.TriggerName.length > 0;
-  const ALLOWED_KEYS = new Set(['dryRun', 'realRun', 'TriggerName', 'Time']);
+  // 微信云定时触发器有两套封装格式，两套都识别为受信触发、自动按真跑：
+  //   旧版（早期 node 运行时）：{ TriggerName, Time }
+  //   新版（node18 云运行时）：{ Message, Type: 'Timer', tcbContext, userInfo }
+  // 历史教训：2026-05 之前一直只认旧版，新版上线后定时器每天凌晨 4:00 被守卫拦死 5ms，
+  // movies 表停更直到本次修复。新增的封装字段一律加白名单，不要再回到"全部拒绝"的姿态
+  const isTimerTriggered =
+    (typeof event.TriggerName === 'string' && event.TriggerName.length > 0) ||
+    event.Type === 'Timer';
+  const ALLOWED_KEYS = new Set([
+    'dryRun', 'realRun',
+    // 旧版定时器封装
+    'TriggerName', 'Time',
+    // 新版云运行时定时器封装
+    'Message', 'Type', 'tcbContext', 'userInfo'
+  ]);
   const unknownKeys = Object.keys(event).filter(k => !ALLOWED_KEYS.has(k));
   if (unknownKeys.length > 0) {
     throw new Error(`fetchMovies 收到未知参数: ${unknownKeys.join(', ')}。仅接受 dryRun / realRun（大小写敏感）`);
