@@ -1,86 +1,81 @@
-<!-- 全平台电影评分查询：电影详情页（三平台聚合数据） -->
+<!-- 全平台电影评分查询：电影详情页（沉浸式海报背景，同首页 hero 风格） -->
 <view class="page-root">
 
-  <view wx:if="{{loading}}" class="loading-state">
-    <text>正在抓取数据…首次查询需要 10 秒左右</text>
+  <view class="ms-toast {{toast.show ? 'is-show' : ''}}" aria-live="polite">
+    <text wx:if="{{toast.icon === 'success'}}" class="ms-toast-icon">✓</text>
+    <text class="ms-toast-text">{{toast.text}}</text>
   </view>
 
+  <!-- loading：全屏居中 spinner -->
+  <view wx:if="{{loading && !movie}}" class="loading-state">
+    <view class="loading-spinner" />
+    <text class="loading-text">正在抓取三平台评分\n首次查询约需 10 秒</text>
+  </view>
+
+  <!-- error：全屏居中报错 + 重试 -->
   <view wx:elif="{{error}}" class="error-state">
     <text class="error-text">{{error}}</text>
-    <view class="retry-btn" bindtap="onRefresh">重试</view>
+    <view class="retry-btn" bindtap="onRetry">重试</view>
   </view>
 
-  <block wx:elif="{{movie}}">
-    <view class="hero-section">
-      <image class="hero-poster" src="{{movie.poster}}" mode="aspectFill" />
-      <view class="hero-overlay">
-        <text class="movie-title">{{movie.title}}</text>
-        <view class="meta-line">
-          <text wx:if="{{movie.year}}" class="meta-text">{{movie.year}}</text>
-          <text wx:if="{{movie.directors && movie.directors.length}}" class="meta-text">· {{movie.directors[0]}}{{movie.directors.length > 1 ? ' 等' : ''}}</text>
+  <!-- 主体：沉浸式海报 + 评分卡 -->
+  <view wx:elif="{{movie}}" class="hero-wrap">
+    <image wx:if="{{movie.poster}}"
+           class="hero-bg"
+           src="{{movie.poster}}"
+           mode="aspectFill"
+           lazy-load="false" />
+    <view wx:else class="hero-bg hero-bg-placeholder" />
+
+    <view class="hero-mask" />
+
+    <view class="status-bar-spacer" style="height: {{statusBarHeight}}px;" />
+
+    <view class="hero-content">
+      <view class="hero-meta">
+        <text class="hero-title">{{movie.title}}</text>
+        <view class="hero-sub-line">
+          <text wx:if="{{movie.year}}" class="hero-sub">{{movie.year}}</text>
+          <text wx:if="{{movie.directorText}}" class="hero-sub">· 导演 {{movie.directorText}}</text>
         </view>
         <view wx:if="{{movie.genres && movie.genres.length}}" class="genre-row">
           <view wx:for="{{movie.genres}}" wx:key="*this" class="genre-tag">{{item}}</view>
         </view>
       </view>
-    </view>
 
-    <view class="rating-grid">
-      <!-- 豆瓣 -->
-      <view class="rating-card douban">
-        <view class="rating-card-header">
-          <text class="platform-name">豆瓣</text>
+      <view class="hero-rating-row">
+        <view wx:if="{{movie.douban && movie.douban.rating}}" class="hero-rating-cell">
+          <text class="hero-rating-label">豆瓣</text>
+          <text class="hero-rating-value">{{movie.douban.rating}}</text>
+          <text class="hero-rating-votes">{{movie.doubanVotesRaw || ' '}}</text>
         </view>
-        <block wx:if="{{movie.douban && movie.douban.rating}}">
-          <text class="rating-main">{{movie.douban.rating}}</text>
-          <text class="rating-sub">{{movie.douban.votes || 0}} 人评分</text>
-        </block>
-        <view wx:else class="no-data">暂无数据</view>
-      </view>
-
-      <!-- IMDB -->
-      <view class="rating-card imdb">
-        <view class="rating-card-header">
-          <text class="platform-name">IMDB</text>
+        <view wx:if="{{movie.imdb && movie.imdb.rating}}" class="hero-rating-cell">
+          <text class="hero-rating-label">IMDB</text>
+          <text class="hero-rating-value">{{movie.imdb.rating}}</text>
+          <text class="hero-rating-votes">{{movie.imdbVotesRaw || ' '}}</text>
         </view>
-        <block wx:if="{{movie.imdb && movie.imdb.rating}}">
-          <text class="rating-main">{{movie.imdb.rating}}</text>
-          <text class="rating-sub">{{movie.imdb.votes || 0}} 人评分</text>
-        </block>
-        <view wx:else class="no-data">
-          <text>{{movie.imdbId ? '暂无数据' : '无 IMDB 条目'}}</text>
+        <view wx:if="{{movie.hasRtCritic}}" class="hero-rating-cell">
+          <text class="hero-rating-label">新鲜度</text>
+          <text class="hero-rating-value">{{movie.rtCriticText}}</text>
+          <text class="hero-rating-votes">{{movie.rtCriticCountRaw || '影评人'}}</text>
+        </view>
+        <view wx:if="{{movie.hasRtAudience}}" class="hero-rating-cell">
+          <text class="hero-rating-label">爆米花</text>
+          <text class="hero-rating-value">{{movie.rtAudienceText}}</text>
+          <text class="hero-rating-votes">{{movie.rtAudienceCountRaw || '观众'}}</text>
         </view>
       </view>
 
-      <!-- 烂番茄 -->
-      <view class="rating-card rotten">
-        <view class="rating-card-header">
-          <text class="platform-name">烂番茄</text>
-        </view>
-        <block wx:if="{{movie.rottenTomatoes && movie.rottenTomatoes.score}}">
-          <text class="rating-main">{{movie.rottenTomatoes.score}}</text>
-          <text class="rating-sub">新鲜度</text>
-        </block>
-        <view wx:else class="no-data">
-          <text>{{movie.imdbId ? '暂无数据' : '无烂番茄条目'}}</text>
-        </view>
+      <!-- 保存到相册（命中广告灰度时显示副文案：需观看广告后保存） -->
+      <view class="save-btn {{isGenerating ? 'is-loading' : ''}}"
+            bindtap="onSaveImage"
+            hover-class="save-btn-hover" hover-stay-time="100">
+        <text class="save-btn-main">{{isGenerating ? '生成中…' : '保存图片到相册'}}</text>
+        <text wx:if="{{needRewardedAd && !isGenerating}}" class="save-btn-sub">需观看广告后保存</text>
       </view>
     </view>
+  </view>
 
-    <view wx:if="{{movie.imdbId}}" class="info-row">
-      <text class="info-label">IMDB ID</text>
-      <text class="info-value">{{movie.imdbId}}</text>
-    </view>
-
-    <view class="info-row">
-      <text class="info-label">数据更新</text>
-      <text class="info-value">{{updatedAtDisplay}}{{cached ? ' (缓存)' : ''}}</text>
-    </view>
-
-    <view class="action-bar">
-      <view class="refresh-btn" bindtap="onRefresh" hover-class="refresh-btn-hover">
-        <text>{{loading ? '刷新中…' : '刷新数据'}}</text>
-      </view>
-    </view>
-  </block>
+  <!-- 离屏 Canvas：放在视野外，仅用于绘制海报后导出 -->
+  <canvas type="2d" id="saveCanvas" class="save-canvas-offscreen" />
 </view>

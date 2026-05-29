@@ -1,48 +1,249 @@
-<!-- 全平台电影评分查询：输入页 -->
+<!-- 全平台电影评分查询：输入页（沉浸式海报背景） -->
 <view class="page-root">
 
-  <view class="hero-section">
-    <view class="header">
-      <view class="header-left">
-        <text class="app-name">全平台电影评分查询</text>
-        <text class="app-slogan">输入电影名，对比豆瓣 / IMDB / 烂番茄评分</text>
+  <!-- 顶部自定义 toast（长文案自动换行） -->
+  <view class="ms-toast {{toast.show ? 'is-show' : ''}}" aria-live="polite">
+    <text wx:if="{{toast.icon === 'success'}}" class="ms-toast-icon">✓</text>
+    <text class="ms-toast-text">{{toast.text}}</text>
+  </view>
+
+  <!-- ============== Hero：阿嬷的情书海报作为沉浸式背景（无点击交互） ============== -->
+  <view class="hero-wrap">
+    <!-- 海报背景图（沉浸到状态栏顶部）-->
+    <image wx:if="{{featured && featured.poster}}"
+           class="hero-bg"
+           src="{{featured.poster}}"
+           mode="aspectFill"
+           lazy-load="false" />
+    <view wx:else class="hero-bg hero-bg-placeholder" />
+
+    <!-- 自下而上的渐变蒙层：与页面背景融为一体 -->
+    <view class="hero-mask" />
+
+    <!-- 状态栏占位（无标题，纯沉浸式） -->
+    <view class="status-bar-spacer" style="height: {{statusBarHeight}}px;" />
+
+    <!-- Hero 下半部：电影标题 + 4 评分横排 -->
+    <view class="hero-content">
+      <view class="hero-meta">
+        <text wx:if="{{featured}}" class="hero-tag">每日推荐</text>
+        <text wx:if="{{featured && featured.title}}" class="hero-title">{{featured.title}}</text>
+        <view wx:if="{{featured}}" class="hero-sub-line">
+          <text wx:if="{{featured.year}}" class="hero-sub">{{featured.year}}</text>
+          <text wx:if="{{featured.directorText}}" class="hero-sub">· 导演 {{featured.directorText}}</text>
+        </view>
+      </view>
+
+      <view wx:if="{{featured}}" class="hero-rating-row">
+        <view wx:if="{{featured.douban && featured.douban.rating}}" class="hero-rating-cell">
+          <text class="hero-rating-label">豆瓣</text>
+          <text class="hero-rating-value">{{featured.douban.rating}}</text>
+          <text class="hero-rating-votes">{{featured.doubanVotesLabel || ' '}}</text>
+        </view>
+        <view wx:if="{{featured.imdb && featured.imdb.rating}}" class="hero-rating-cell">
+          <text class="hero-rating-label">IMDB</text>
+          <text class="hero-rating-value">{{featured.imdb.rating}}</text>
+          <text class="hero-rating-votes">{{featured.imdbVotesLabel || ' '}}</text>
+        </view>
+        <view wx:if="{{featured.hasRtCritic}}" class="hero-rating-cell">
+          <text class="hero-rating-label">新鲜度</text>
+          <text class="hero-rating-value">{{featured.rtCriticText}}</text>
+          <text class="hero-rating-votes">{{featured.rtCriticCountLabel || ' '}}</text>
+        </view>
+        <view wx:if="{{featured.hasRtAudience}}" class="hero-rating-cell">
+          <text class="hero-rating-label">爆米花</text>
+          <text class="hero-rating-value">{{featured.rtAudienceText}}</text>
+          <text class="hero-rating-votes">{{featured.rtAudienceCountLabel || ' '}}</text>
+        </view>
       </view>
     </view>
   </view>
 
+  <!-- ============== 搜索栏 ============== -->
   <view class="search-bar">
-    <input class="search-input"
-           placeholder="输入电影名，例如：阿嬷的情书"
-           value="{{keyword}}"
-           bindinput="onKeywordInput"
-           confirm-type="search"
-           bindconfirm="onSearch"
-           maxlength="50" />
-    <view class="search-btn {{keyword ? '' : 'disabled'}}" bindtap="onSearch">搜索</view>
+    <view class="search-input-wrap">
+      <text class="search-icon">⌕</text>
+      <input class="search-input"
+             placeholder="输入电影名称，查全平台评分"
+             placeholder-class="search-placeholder"
+             value="{{keyword}}"
+             bindinput="onKeywordInput"
+             confirm-type="search"
+             bindconfirm="onSearch"
+             maxlength="50" />
+    </view>
+    <view class="search-btn {{keyword ? '' : 'disabled'}}" bindtap="onSearch">立即查询</view>
   </view>
 
   <view class="hint-area">
-    <view wx:if="{{loading}}" class="hint">搜索中…</view>
+    <view wx:if="{{searching}}" class="hint">搜索中…</view>
     <view wx:elif="{{error}}" class="hint error">{{error}}</view>
     <view wx:elif="{{searched && candidates.length === 0}}" class="hint">没找到匹配的电影，换个关键词试试</view>
-    <view wx:elif="{{candidates.length > 0}}" class="hint">找到 {{candidates.length}} 个结果，点击查看跨平台评分</view>
+    <view wx:elif="{{candidates.length > 0}}" class="hint">找到 {{candidates.length}} 个结果，点"查询评分"开始</view>
   </view>
 
-  <view class="candidate-list">
+  <!-- ============== 候选列表 ============== -->
+  <view wx:if="{{candidates.length > 0}}" class="candidate-list">
     <block wx:for="{{candidates}}" wx:key="doubanId">
-      <view class="candidate-card" bindtap="onTapCandidate" data-douban-id="{{item.doubanId}}" hover-class="candidate-card-hover" hover-stay-time="100">
+      <view class="candidate-card">
         <image class="candidate-thumb" src="{{item.posterUrl}}" mode="aspectFill" lazy-load="true" />
         <view class="candidate-info">
           <text class="candidate-title">{{item.title}}</text>
-          <text wx:if="{{item.year}}" class="candidate-year">{{item.year}}</text>
-          <text wx:if="{{item.subtype}}" class="candidate-subtype">{{item.subtype}}</text>
+          <text wx:if="{{item.year}}" class="candidate-meta">{{item.year}}</text>
+          <text wx:if="{{item.director}}" class="candidate-meta">导演：{{item.director}}</text>
         </view>
-        <view class="candidate-arrow">›</view>
+        <view class="fetch-btn {{queryingDoubanId === item.doubanId ? 'fetch-btn-loading' : ''}}"
+              data-douban-id="{{item.doubanId}}"
+              bindtap="onTapFetchScore"
+              hover-class="fetch-btn-hover"
+              hover-stay-time="100">
+          {{queryingDoubanId === item.doubanId ? '查询中' : '查询评分'}}
+        </view>
       </view>
     </block>
   </view>
 
-  <view class="list-entry" bindtap="onGoToList">
-    <text class="list-entry-text">我的查询历史 →</text>
+  <!-- ============== 历史记录 ============== -->
+  <view wx:if="{{candidates.length === 0 && !searching}}" class="history-section">
+    <view wx:if="{{movies.length > 0}}" class="history-header">
+      <view class="history-header-left">
+        <text class="history-title">最近查询</text>
+        <text class="history-count">{{movies.length}} 部</text>
+      </view>
+      <view class="metrics-link" bindtap="onShowMetricsExplain" hover-class="metrics-link-hover" hover-stay-time="80">
+        <text class="metrics-link-icon">ⓘ</text>
+        <text class="metrics-link-text">指标说明</text>
+      </view>
+    </view>
+
+    <view wx:if="{{historyLoading && movies.length === 0}}" class="hint" style="padding-left: var(--space-4);">加载历史中…</view>
+    <view wx:elif="{{historyError}}" class="hint error" style="padding-left: var(--space-4);">{{historyError}}</view>
+
+    <view wx:if="{{movies.length === 0 && !historyLoading && !historyError}}" class="empty-tip">
+      <view class="empty-illustration" />
+      <text class="empty-title">还没有查过任何电影</text>
+      <text class="empty-sub">在上方搜索框输入片名，跨平台对比评分</text>
+    </view>
+
+    <view class="movie-list">
+      <block wx:for="{{movies}}" wx:key="_id">
+        <view class="movie-card-cell">
+          <!-- 左滑后露出的两个操作按钮 -->
+          <view class="card-actions">
+            <view class="action-btn action-update {{queryingDoubanId === item.doubanId ? 'action-loading' : ''}}"
+                  catchtap="onSwipeUpdate"
+                  data-douban-id="{{item.doubanId}}"
+                  data-updated-at="{{item.updatedAt}}">
+              <text>{{queryingDoubanId === item.doubanId ? '更新中' : '更新'}}</text>
+            </view>
+            <view class="action-btn action-delete"
+                  catchtap="onSwipeDelete"
+                  data-douban-id="{{item.doubanId}}"
+                  data-title="{{item.title}}">
+              <text>删除</text>
+            </view>
+          </view>
+
+          <view class="movie-card {{swipedDoubanId === item.doubanId ? 'is-swiped' : ''}}"
+                data-douban-id="{{item.doubanId}}"
+                bindtap="onTapMovie"
+                bindtouchstart="onCardTouchStart"
+                bindtouchend="onCardTouchEnd">
+            <!-- 上半：海报 + 元数据（更新按钮已移到左滑后） -->
+            <view class="movie-card-head">
+              <image class="movie-poster"
+                     src="{{item.poster}}"
+                     mode="aspectFill"
+                     lazy-load="true" />
+              <view class="movie-meta">
+                <text class="movie-title">{{item.title}}</text>
+                <text wx:if="{{item.directorText}}" class="movie-sub">导演：{{item.directorText}}</text>
+                <text wx:if="{{item.year}}" class="movie-sub">{{item.year}}</text>
+              </view>
+            </view>
+
+            <!-- 下半：4 评分 -->
+          <view class="rating-row">
+            <view wx:if="{{item.douban && item.douban.rating}}" class="rating-cell">
+              <text class="rating-label rating-label-douban">豆瓣</text>
+              <text class="rating-value">{{item.douban.rating}}</text>
+              <text class="rating-votes">{{item.doubanVotesLabel || ' '}}</text>
+            </view>
+            <view wx:if="{{item.imdb && item.imdb.rating}}" class="rating-cell">
+              <text class="rating-label rating-label-imdb">IMDB</text>
+              <text class="rating-value">{{item.imdb.rating}}</text>
+              <text class="rating-votes">{{item.imdbVotesLabel || ' '}}</text>
+            </view>
+            <view wx:if="{{item.hasRtCritic}}" class="rating-cell">
+              <text class="rating-label rating-label-rt">新鲜度</text>
+              <text class="rating-value">{{item.rtCriticText}}</text>
+              <text class="rating-votes">{{item.rtCriticCountLabel || '影评人'}}</text>
+            </view>
+            <view wx:if="{{item.hasRtAudience}}" class="rating-cell">
+              <text class="rating-label rating-label-popcorn">爆米花</text>
+              <text class="rating-value">{{item.rtAudienceText}}</text>
+              <text class="rating-votes">{{item.rtAudienceCountLabel || '观众'}}</text>
+            </view>
+          </view>
+          </view><!-- /.movie-card -->
+        </view><!-- /.movie-card-cell -->
+      </block>
+    </view>
+  </view>
+
+  <!-- ============== 指标说明 bottom sheet ============== -->
+  <view wx:if="{{showMetricsExplain}}" class="metrics-mask" bindtap="onHideMetricsExplain">
+    <view class="metrics-sheet" catchtap="">
+      <view class="metrics-handle" />
+      <text class="metrics-sheet-title">评分指标说明</text>
+
+      <view class="metric-item">
+        <text class="metric-name">豆瓣</text>
+        <view class="metric-body">
+          <text class="metric-desc">中国最大影视社区，10 分制。</text>
+          <text class="metric-hint">8.5+ 神作 · 7+ 推荐 · 5- 慎入</text>
+        </view>
+      </view>
+      <view class="metric-item">
+        <text class="metric-name">IMDB</text>
+        <view class="metric-body">
+          <text class="metric-desc">全球最大影视数据库，10 分制。</text>
+          <text class="metric-hint">8+ 经典 · 7+ 推荐 · 6+ 一般</text>
+        </view>
+      </view>
+      <view class="metric-item">
+        <text class="metric-name">新鲜度</text>
+        <view class="metric-body">
+          <text class="metric-desc">烂番茄 Tomatometer，影评人正面率。</text>
+          <text class="metric-hint">75%+ 优秀 · 60%+ 新鲜 · 60%- 烂番茄</text>
+        </view>
+      </view>
+      <view class="metric-item">
+        <text class="metric-name">爆米花</text>
+        <view class="metric-body">
+          <text class="metric-desc">烂番茄 Popcornmeter，观众喜爱度。</text>
+          <text class="metric-hint">90%+ 大众好评 · 60%+ 满意 · 60%- 失望</text>
+        </view>
+      </view>
+
+      <!-- 使用说明：数据局限 + 试运行反馈 -->
+      <view class="metrics-notes">
+        <view class="metrics-note">
+          <text class="metrics-note-bullet">·</text>
+          <text class="metrics-note-text">部分电影在 IMDB / 烂番茄上无条目，对应评分不展示。</text>
+        </view>
+        <view class="metrics-note">
+          <text class="metrics-note-bullet">·</text>
+          <text class="metrics-note-text">功能处于试运行期，若数据有出入欢迎反馈，我们会持续修复。</text>
+        </view>
+      </view>
+
+      <view class="metrics-actions">
+        <view class="metrics-close" bindtap="onHideMetricsExplain">关闭</view>
+        <button class="metrics-feedback"
+                open-type="feedback"
+                hover-class="metrics-feedback-hover">反馈</button>
+      </view>
+    </view>
   </view>
 </view>

@@ -1,5 +1,6 @@
 {
-  "navigationBarTitleText": "全平台电影评分查询",
-  "navigationBarBackgroundColor": "#FAE0E4",
-  "navigationBarTextStyle": "black"
+  "navigationStyle": "custom",
+  "enablePullDownRefresh": true,
+  "backgroundColor": "#FFFCF5",
+  "backgroundTextStyle": "dark"
 }

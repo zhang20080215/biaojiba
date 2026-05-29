@@ -1,0 +1,11 @@
+{
+  "name": "deleteMovieQuery",
+  "version": "1.0.0",
+  "description": "Delete a single entry from user_movie_queries",
+  "main": "index.js",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

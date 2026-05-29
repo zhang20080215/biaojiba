@@ -21,6 +21,17 @@ Page({
     },
     themes: [
       {
+        id: 'movie_search_all_platforms',
+        title: '全平台电影评分查询',
+        description: '搜索任意电影，对比豆瓣 / IMDB / 烂番茄评分',
+        image: '/images/cover-movie-search.jpg',
+        userCount: 0,
+        tag: '电影',
+        category: 'movie',
+        isNew: true,
+        url: '/pages/movie-search/input/input'
+      },
+      {
         id: 'daily_water',
         title: '每日喝水',
         description: '记录每日饮水量，养成健康习惯',
@@ -40,7 +51,6 @@ Page({
         userCount: 0,
         tag: '读书',
         category: 'reading',
-        isNew: true,
         url: '/pages/weread/list/list'
       },
       {
@@ -92,16 +102,6 @@ Page({
         tag: '电影',
         category: 'movie',
         url: '/pages/boxoffice/list/list'
-      },
-      {
-        id: 'movie_search_all_platforms',
-        title: '全平台电影评分查询',
-        description: '搜索任意电影，对比豆瓣 / IMDB / 烂番茄评分',
-        image: '',
-        userCount: 0,
-        tag: '电影',
-        category: 'movie',
-        url: '/pages/movie-search/input/input'
       },
       // {
       //   id: 'chinese_awards',

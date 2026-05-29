@@ -1,51 +1,91 @@
 <!-- 全平台电影评分查询：用户查询历史列表 -->
 <view class="page-root">
 
+  <view class="ms-toast {{toast.show ? 'is-show' : ''}}" aria-live="polite">
+    <text wx:if="{{toast.icon === 'success'}}" class="ms-toast-icon">✓</text>
+    <text class="ms-toast-text">{{toast.text}}</text>
+  </view>
+
   <view class="hero-section">
     <view class="header">
-      <view class="header-left">
-        <text class="app-name">我的电影评分查询</text>
-        <text class="app-slogan">{{total > 0 ? total + ' 部电影的跨平台评分' : '还没有查询记录，去搜一部吧'}}</text>
-      </view>
+      <text class="app-name">我的电影评分</text>
+      <text class="app-slogan">{{total > 0 ? total + ' 部电影的跨平台评分' : '还没有查询记录，去搜一部吧'}}</text>
     </view>
   </view>
 
   <view class="search-entry-bar">
-    <view class="search-entry-btn" bindtap="onGoToSearch" hover-class="search-entry-btn-hover">
-      <text>＋ 搜索新电影</text>
+    <view class="search-entry-btn" bindtap="onGoToSearch" hover-class="search-entry-btn-hover" hover-stay-time="80">
+      <text class="search-entry-plus">+</text>
+      <text>搜索新电影</text>
     </view>
   </view>
 
   <view wx:if="{{loading}}" class="hint">加载中…</view>
   <view wx:elif="{{error}}" class="hint error">{{error}}</view>
   <view wx:elif="{{!loading && movies.length === 0}}" class="empty-state">
-    <text class="empty-text">还没有查询过任何电影</text>
+    <view class="empty-illustration" />
+    <text class="empty-text">还没有查过任何电影</text>
+    <text class="empty-sub">跨平台评分一目了然</text>
     <view class="empty-cta" bindtap="onGoToSearch">去搜索一部</view>
   </view>
 
   <view class="movie-list">
     <block wx:for="{{movies}}" wx:key="_id">
-      <view class="movie-card" bindtap="onTapMovie" data-douban-id="{{item.doubanId}}" hover-class="movie-card-hover" hover-stay-time="100">
-        <image class="movie-poster" src="{{item.poster}}" mode="aspectFill" lazy-load="true" />
-        <view class="movie-meta">
-          <text class="movie-title">{{item.title}}</text>
-          <text wx:if="{{item.year}}" class="movie-year">{{item.year}}</text>
-          <view class="rating-row">
-            <view class="rating-cell">
-              <text class="rating-label">豆瓣</text>
-              <text class="rating-value">{{item.douban.rating || '—'}}</text>
-            </view>
-            <view class="rating-cell">
-              <text class="rating-label">IMDB</text>
-              <text class="rating-value">{{item.imdb.rating || '—'}}</text>
-            </view>
-            <view class="rating-cell">
-              <text class="rating-label">烂番茄</text>
-              <text class="rating-value">{{item.rottenTomatoes.score || '—'}}</text>
-            </view>
+      <view class="movie-card-cell">
+        <view class="card-actions">
+          <view class="action-btn action-update {{queryingDoubanId === item.doubanId ? 'action-loading' : ''}}"
+                catchtap="onSwipeUpdate"
+                data-douban-id="{{item.doubanId}}"
+                data-updated-at="{{item.updatedAt}}">
+            <text>{{queryingDoubanId === item.doubanId ? '更新中' : '更新'}}</text>
+          </view>
+          <view class="action-btn action-delete"
+                catchtap="onSwipeDelete"
+                data-douban-id="{{item.doubanId}}"
+                data-title="{{item.title}}">
+            <text>删除</text>
           </view>
         </view>
-      </view>
+        <view class="movie-card {{swipedDoubanId === item.doubanId ? 'is-swiped' : ''}}"
+              data-douban-id="{{item.doubanId}}"
+              bindtap="onTapMovie"
+              bindtouchstart="onCardTouchStart"
+              bindtouchend="onCardTouchEnd">
+          <view class="movie-card-head">
+            <image class="movie-poster"
+                   src="{{item.poster}}"
+                   mode="aspectFill"
+                   lazy-load="true" />
+            <view class="movie-meta">
+              <text class="movie-title">{{item.title}}</text>
+              <text wx:if="{{item.directorText}}" class="movie-sub">导演：{{item.directorText}}</text>
+              <text wx:if="{{item.year}}" class="movie-sub">{{item.year}}</text>
+            </view>
+          </view>
+          <view class="rating-row">
+          <view wx:if="{{item.douban && item.douban.rating}}" class="rating-cell">
+            <text class="rating-label rating-label-douban">豆瓣</text>
+            <text class="rating-value">{{item.douban.rating}}</text>
+            <text class="rating-votes">{{item.doubanVotesLabel || ' '}}</text>
+          </view>
+          <view wx:if="{{item.imdb && item.imdb.rating}}" class="rating-cell">
+            <text class="rating-label rating-label-imdb">IMDB</text>
+            <text class="rating-value">{{item.imdb.rating}}</text>
+            <text class="rating-votes">{{item.imdbVotesLabel || ' '}}</text>
+          </view>
+          <view wx:if="{{item.hasRtCritic}}" class="rating-cell">
+            <text class="rating-label rating-label-rt">新鲜度</text>
+            <text class="rating-value">{{item.rtCriticText}}</text>
+            <text class="rating-votes">{{item.rtCriticCountLabel || '影评人'}}</text>
+          </view>
+          <view wx:if="{{item.hasRtAudience}}" class="rating-cell">
+            <text class="rating-label rating-label-popcorn">爆米花</text>
+            <text class="rating-value">{{item.rtAudienceText}}</text>
+            <text class="rating-votes">{{item.rtAudienceCountLabel || '观众'}}</text>
+          </view>
+        </view>
+        </view><!-- /.movie-card -->
+      </view><!-- /.movie-card-cell -->
     </block>
   </view>
 </view>

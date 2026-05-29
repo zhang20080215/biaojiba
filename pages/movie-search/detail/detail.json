@@ -1,5 +1,5 @@
 {
-  "navigationBarTitleText": "跨平台评分",
-  "navigationBarBackgroundColor": "#FAE0E4",
-  "navigationBarTextStyle": "black"
+  "navigationStyle": "custom",
+  "backgroundColor": "#FFFCF5",
+  "backgroundTextStyle": "dark"
 }

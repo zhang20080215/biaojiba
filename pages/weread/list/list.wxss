@@ -549,7 +549,7 @@ page {
 /* ========== 海报类型选择弹窗 ========== */
 .share-picker {
   position: fixed;
-  inset: 0;
+  top: 0; right: 0; bottom: 0; left: 0;
   z-index: 998;
   visibility: hidden;
   pointer-events: none;
@@ -562,7 +562,7 @@ page {
 
 .share-picker-mask {
   position: absolute;
-  inset: 0;
+  top: 0; right: 0; bottom: 0; left: 0;
   background: rgba(0, 0, 0, 0.32);
   opacity: 0;
   transition: opacity 280ms ease;
@@ -725,7 +725,7 @@ page {
 /* ========== 授权弹窗 ========== */
 .auth-modal {
   position: fixed;
-  inset: 0;
+  top: 0; right: 0; bottom: 0; left: 0;
   z-index: 999;
   display: flex;
   align-items: center;
@@ -734,7 +734,7 @@ page {
 
 .auth-mask {
   position: absolute;
-  inset: 0;
+  top: 0; right: 0; bottom: 0; left: 0;
   background: rgba(0, 0, 0, 0.32);
   backdrop-filter: blur(6rpx);
 }

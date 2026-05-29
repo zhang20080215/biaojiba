@@ -302,8 +302,8 @@
 }
 
 /* ========== 登录弹窗 ========== */
-.auth-modal { position: fixed; inset: 0; z-index: 999; display: flex; align-items: center; justify-content: center; }
-.auth-mask { position: absolute; inset: 0; background: rgba(0,0,0,0.45); backdrop-filter: blur(4rpx); }
+.auth-modal { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 999; display: flex; align-items: center; justify-content: center; }
+.auth-mask { position: absolute; top: 0; right: 0; bottom: 0; left: 0; background: rgba(0,0,0,0.45); backdrop-filter: blur(4rpx); }
 .auth-content { position: relative; width: 80%; background: #fff; border-radius: 28rpx; padding: 44rpx 40rpx 50rpx; box-shadow: 0 20rpx 60rpx rgba(0,0,0,0.12); display: flex; flex-direction: column; align-items: center; }
 .auth-title { font-size: 36rpx; font-weight: 700; color: #2c2c2c; margin-bottom: 12rpx; }
 .auth-subtitle { font-size: 24rpx; color: #aaa; margin-bottom: 40rpx; }
