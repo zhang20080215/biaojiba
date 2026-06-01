@@ -1,0 +1,187 @@
+<view class="page-root">
+  <view class="top-toast {{toast.show ? 'is-show' : ''}}">
+    <text class="top-toast-icon" wx:if="{{toast.icon === 'success'}}">✓</text>
+    <text class="top-toast-text">{{toast.text}}</text>
+  </view>
+
+  <view class="custom-nav" style="height: {{navOffset}}px; padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-btn nav-btn-left" bindtap="onBack" hover-class="nav-btn-active">
+        <text class="nav-chev">‹</text>
+      </view>
+      <text class="nav-title">每日电影</text>
+    </view>
+  </view>
+
+  <view class="content" style="padding-top: {{navOffset}}px;">
+    <!-- 顶部控制：月份切换（左） + 视图切换（右），合并为一行 -->
+    <view class="top-controls">
+      <view class="month-nav">
+        <view class="month-arrow" bindtap="onPrevMonth" hover-class="tap-soft">‹</view>
+        <text class="month-label">{{monthLabel}}</text>
+        <view class="month-arrow {{canGoNextMonth ? '' : 'is-disabled'}}" bindtap="onNextMonth" hover-class="tap-soft">›</view>
+      </view>
+      <view class="seg">
+        <view class="seg-item {{viewMode === 'calendar' ? 'active' : ''}}" data-view="calendar" bindtap="onViewTap">日历</view>
+        <view class="seg-item {{viewMode === 'wall' ? 'active' : ''}}" data-view="wall" bindtap="onViewTap">电影墙</view>
+      </view>
+    </view>
+
+    <!-- ===== 电影墙：定高区块（与日历等高），海报压在底部，仿重力飘落 ===== -->
+    <view wx:if="{{viewMode === 'wall'}}" class="wall-box" style="height: {{wallAreaH}}rpx;">
+      <view wx:if="{{!loading && wallMovies.length === 0}}" class="wall-empty">
+        <text class="empty-title">本月还没有观影记录</text>
+        <text class="empty-sub">切到「日历」即可添加看过的电影</text>
+      </view>
+      <view wx:else class="poster-wall {{wallDense ? 'dense' : ''}}">
+        <view class="wall-item"
+              wx:for="{{wallMovies}}" wx:key="key"
+              style="--fall-from: -{{item.fallFrom}}rpx; animation-delay: {{item.delay}}s;">
+          <view class="wall-card" style="transform: rotate({{item.rotate}});">
+            <image class="wall-poster" src="{{item.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" lazy-load="true" />
+            <text wx:if="{{item.moodEmoji}}" class="wall-mood">{{item.moodEmoji}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- ===== 日历 ===== -->
+    <view wx:else class="cal-block" id="calBlock">
+      <view class="cal-head">
+        <text wx:for="{{weekHeader}}" wx:key="*this" class="cal-head-cell">{{item}}</text>
+      </view>
+      <view class="cal-grid">
+        <block wx:for="{{calendarCells}}" wx:key="index">
+          <view wx:if="{{item.empty}}" class="cal-cell empty-cell"></view>
+          <view wx:else
+                class="cal-cell {{item.isSelected ? 'is-selected' : ''}} {{item.isToday ? 'is-today' : ''}}"
+                data-date="{{item.date}}"
+                bindtap="onSelectDay">
+            <view wx:if="{{item.covers.length}}" class="cal-posters {{item.gridClass}}">
+              <image wx:for="{{item.covers}}" wx:for-item="cv" wx:key="index" class="cal-poster" src="{{cv}}" mode="aspectFill" lazy-load="true" />
+            </view>
+            <view wx:else class="cal-placeholder"></view>
+            <!-- 有心情则显示 emoji；无电影记录才显示日期数字；有电影但无心情则两者都不显示 -->
+            <text wx:if="{{item.moodEmoji}}" class="cal-mood">{{item.moodEmoji}}</text>
+            <text wx:elif="{{!item.hasMovies}}" class="cal-day">{{item.day}}</text>
+          </view>
+        </block>
+      </view>
+    </view>
+
+    <!-- ===== 日历视图底部：添加按钮 + 选中日记录 ===== -->
+    <block wx:if="{{viewMode === 'calendar'}}">
+    <view class="add-record-btn" bindtap="onOpenAdd" hover-class="tap-soft">
+      <text class="add-plus">＋</text>
+      <text>添加观影记录</text>
+    </view>
+
+    <!-- 选中日期的观影记录 -->
+    <view class="sel-section">
+      <view class="sel-head">
+        <text class="sel-date">{{selectedDateText}}</text>
+        <text class="sel-count">{{selectedMovies.length}} 部</text>
+      </view>
+
+      <view wx:if="{{loading}}" class="state-text">加载中...</view>
+
+      <view wx:elif="{{selectedMovies.length === 0}}" class="empty">
+        <text class="empty-title">这一天还没有记录</text>
+        <text class="empty-sub">点上方按钮，添加这天看过的电影</text>
+      </view>
+
+      <block wx:else>
+        <view class="movie-cell" wx:for="{{selectedMovies}}" wx:for-item="movie" wx:key="key">
+          <view class="card-actions">
+            <view class="action-delete"
+                  catchtap="onSwipeDelete"
+                  data-date="{{movie.date}}"
+                  data-ts="{{movie.ts}}"
+                  data-title="{{movie.title}}">删除</view>
+          </view>
+          <view class="movie-card {{swipedKey === movie.key ? 'is-swiped' : ''}}"
+                data-key="{{movie.key}}"
+                data-date="{{movie.date}}"
+                data-ts="{{movie.ts}}"
+                data-title="{{movie.title}}"
+                bindtap="onTapMovieCard"
+                bindlongpress="onLongPressMovie"
+                bindtouchstart="onCardTouchStart"
+                bindtouchend="onCardTouchEnd">
+            <image class="poster" src="{{movie.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" lazy-load="true" />
+            <view class="movie-info">
+              <view class="title-row">
+                <text class="movie-title">{{movie.title}}</text>
+                <text wx:if="{{movie.year}}" class="movie-year">{{movie.year}}</text>
+              </view>
+              <text wx:if="{{movie.director}}" class="movie-meta">导演：{{movie.director}}</text>
+
+              <!-- 全平台评分（客观，有则展示） -->
+              <view wx:if="{{movie.platformRatings.length}}" class="plat-row">
+                <text wx:for="{{movie.platformRatings}}" wx:for-item="pr" wx:key="label" class="plat-chip">{{pr.label}} {{pr.value}}</text>
+              </view>
+
+              <!-- 我的记录：评分 + 心情 + 短评 统一归到「我的」块，与上方平台评分区分 -->
+              <view wx:if="{{movie.rating > 0 || movie.moodEmoji || movie.note}}" class="mine-block">
+                <view class="mine-row">
+                  <text class="mine-tag">我的</text>
+                  <view wx:if="{{movie.rating > 0}}" class="my-rating">
+                    <view class="stars">
+                      <text class="stars-bg">★★★★★</text>
+                      <text class="stars-fg" style="width: {{movie.rating * 20}}%">★★★★★</text>
+                    </view>
+                    <text class="rating-score">{{movie.rating * 2}}分</text>
+                  </view>
+                  <text wx:if="{{movie.moodEmoji}}" class="mine-mood">{{movie.moodEmoji}}</text>
+                  <text wx:if="{{movie.moodLabel}}" class="mine-mood-label">{{movie.moodLabel}}</text>
+                </view>
+                <text wx:if="{{movie.note}}" class="mine-note">{{movie.note}}</text>
+              </view>
+            </view>
+            <text class="movie-time">{{movie.timeText}}</text>
+          </view>
+        </view>
+      </block>
+    </view>
+    </block>
+
+    <!-- ===== 电影墙视图底部：当月观影统计 ===== -->
+    <block wx:else>
+      <view wx:if="{{monthStats.total > 0}}" class="month-stats">
+        <text class="ms-title">{{month}}月观影统计</text>
+        <view class="ms-grid">
+            <view class="ms-item">
+              <text class="ms-value">{{monthStats.total}}</text>
+              <text class="ms-label">共看(部)</text>
+            </view>
+            <view class="ms-item">
+              <text class="ms-value">{{monthStats.activeDays}}</text>
+              <text class="ms-label">活跃(天)</text>
+            </view>
+            <view class="ms-item">
+              <text class="ms-value">{{monthStats.avgRating}}</text>
+              <text class="ms-label">平均评分</text>
+            </view>
+            <view class="ms-item">
+              <text class="ms-value ms-emoji">{{monthStats.topMood}}</text>
+              <text class="ms-label">最多心情</text>
+            </view>
+          </view>
+          <view wx:if="{{monthStats.topMovie}}" class="ms-top">
+            <image class="ms-top-poster" src="{{monthStats.topMovie.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" lazy-load="true" />
+            <view class="ms-top-info">
+              <text class="ms-top-tag">本月最高分</text>
+              <text class="ms-top-title">{{monthStats.topMovie.title}}</text>
+              <view class="ms-top-meta">
+                <view class="stars">
+                  <text class="stars-bg">★★★★★</text>
+                  <text class="stars-fg" style="width: {{monthStats.topMovie.rating * 20}}%">★★★★★</text>
+                </view>
+                <text class="rating-score">{{monthStats.topMovie.score}}</text>
+              </view>
+            </view>
+          </view>
+      </view>
+    </block>
+  </view>
+</view>

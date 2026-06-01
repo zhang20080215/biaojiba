@@ -21,6 +21,17 @@ Page({
     },
     themes: [
       {
+        id: 'daily_movie',
+        title: '每日电影',
+        description: '记录每天看过的电影，攒成年度片单',
+        image: '/images/cover-daily-movie.jpg',
+        userCount: 0,
+        tag: '每日',
+        category: 'daily',
+        isNew: true,
+        url: '/pages/daily/movie/index'
+      },
+      {
         id: 'movie_search_all_platforms',
         title: '全平台电影评分查询',
         description: '搜索任意电影，对比豆瓣 / IMDB / 烂番茄评分',
@@ -401,6 +412,35 @@ Page({
       console.error('加载育儿统计失败:', e);
     }
 
+    // 每日喝水 / 每日电影：DailyLogs 按 theme 统计独立用户；全平台评分查询：user_movie_queries 统计独立用户
+    const countDistinctOpenid = async (collection, match) => {
+      try {
+        const res = await db.collection(collection).aggregate()
+          .match(match)
+          .group({ _id: '$openid' })
+          .count('total')
+          .end();
+        return res.list.length > 0 ? res.list[0].total : 0;
+      } catch (e) {
+        console.error('统计独立用户失败:', collection, e);
+        return 0;
+      }
+    };
+    const extraConfigs = [
+      { id: 'daily_water', collection: 'DailyLogs', match: { theme: 'water', openid: _.exists(true) } },
+      { id: 'daily_movie', collection: 'DailyLogs', match: { theme: 'movie', openid: _.exists(true) } },
+      { id: 'movie_search_all_platforms', collection: 'user_movie_queries', match: { openid: _.exists(true) } }
+    ];
+    const extraResults = await Promise.all(
+      extraConfigs.map(cfg => countDistinctOpenid(cfg.collection, cfg.match))
+    );
+    extraResults.forEach((realUsers, i) => {
+      const idx = themes.findIndex(t => t.id === extraConfigs[i].id);
+      if (idx === -1) return;
+      const displayCount = realUsers + 100;
+      themes[idx].userCount = displayCount;
+      themes[idx].userCountText = this.formatUserCount(displayCount);
+    });
 
     this.setData({ themes });
     this.filterThemes(this.data.activeTab);

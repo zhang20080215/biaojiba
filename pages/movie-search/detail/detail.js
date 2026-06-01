@@ -10,7 +10,7 @@ const rewardedSaveGate = require('../../../utils/rewardedSaveGate.js');
 // 海报固定尺寸 1080×1440（3:4，与详情页一致比例）
 const POSTER_W = 1080;
 const POSTER_H = 1440;
-const FOOTER_TEXT = '全平台电影评分查询 · 微信搜「标记吧」小程序';
+const FOOTER_TEXT = '标记吧小程序 · 制作同款图';
 
 function getNavMetrics() {
   const fallback = { statusBarHeight: 20, navBarHeight: 44, navOffset: 64 };
@@ -349,18 +349,20 @@ Page({
           ratingY + ratingPadTop + ratingLabelSize + ratingValueMt
         );
 
-        // votes "110万人评" 18rpx #94a176
+        // votes 精确人数（如 "1,103,456 人评"），过宽时横向自适应缩放避免溢出
         ctx.fillStyle = '#94a176';
         ctx.font = '400 ' + ratingVotesSize + 'px sans-serif';
-        ctx.fillText(
+        this._drawTextAutoScale(
+          ctx,
           r.votes,
           x + cellW / 2,
-          ratingY + ratingPadTop + ratingLabelSize + ratingValueMt + ratingValueSize + ratingVotesMt
+          ratingY + ratingPadTop + ratingLabelSize + ratingValueMt + ratingValueSize + ratingVotesMt,
+          cellW - 12
         );
       });
     }
 
-    // ===== 9. 水印（详情页本身无水印，海报上加一行作为版权标识，缩小弱化） =====
+    // ===== 9. 水印（去掉引流 CTA，仅作中性署名；透明度维持 0.5） =====
     ctx.fillStyle = 'rgba(255,255,255,0.5)';
     ctx.font = '400 20px sans-serif';
     ctx.textAlign = 'center';
@@ -390,28 +392,28 @@ Page({
       list.push({
         label: '豆瓣',
         value: String(movie.douban.rating),
-        votes: movie.doubanVotesLabel || ''
+        votes: movie.doubanVotesRaw || ''
       });
     }
     if (movie.imdb && movie.imdb.rating) {
       list.push({
         label: 'IMDB',
         value: String(movie.imdb.rating),
-        votes: movie.imdbVotesLabel || ''
+        votes: movie.imdbVotesRaw || ''
       });
     }
     if (movie.hasRtCritic) {
       list.push({
         label: '新鲜度',
         value: movie.rtCriticText,
-        votes: movie.rtCriticCountLabel || '影评人'
+        votes: movie.rtCriticCountRaw || '影评人'
       });
     }
     if (movie.hasRtAudience) {
       list.push({
         label: '爆米花',
         value: movie.rtAudienceText,
-        votes: movie.rtAudienceCountLabel || '观众'
+        votes: movie.rtAudienceCountRaw || '观众'
       });
     }
     return list;

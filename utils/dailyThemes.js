@@ -118,6 +118,50 @@ const THEMES = {
     cheerForMonth: (achieved, total) =>
       `${total} 天里达标 ${achieved} 天，习惯养成中`,
     formatTotal: v => `${(v / 1000).toFixed(1)} L`
+  },
+
+  movie: {
+    id: 'movie',
+    title: '每日电影',
+    description: '记录每天看过的电影，攒成年度片单',
+
+    unit: '部',
+    unitLabel: '部',
+    // movie 主题复用 DailySettings.daily_goal 存储"每月目标部数"。
+    defaultGoal: 10,
+    goalRange: [1, 60],
+    goalStep: 1,
+    defaultPresets: [1],
+    presetRange: [1, 1],
+    presetStep: 1,
+    inverseGoal: false,
+
+    navBg: DESIGN_TOKENS.bg,
+    navTextStyle: 'black',
+    pageGradient: [DESIGN_TOKENS.bg, DESIGN_TOKENS.bg],
+    coverGradient: [DESIGN_TOKENS.bg, DESIGN_TOKENS.bg],
+    coverEmoji: '🎬',
+    tag: '每日',
+
+    progressVisual: 'ring',
+    mainColor: DESIGN_TOKENS.ink,
+    subColor: DESIGN_TOKENS.inkSoft,
+    accentColor: DESIGN_TOKENS.yellow,
+    textColor: DESIGN_TOKENS.ink,
+    accent: 'yellow',
+
+    presetIcon: () => '🎬',
+
+    cheerFor: (progress, total, goal) => {
+      if (total >= goal) return '本月片单目标已达成';
+      if (total > 0) return `本月已记录 ${total} 部`;
+      return '记录今天看过的电影';
+    },
+    cheerForWeek: (progress, achieved, total) =>
+      `${total} 天里观影 ${achieved} 天`,
+    cheerForMonth: (achieved, total) =>
+      `${total} 天里观影 ${achieved} 天`,
+    formatTotal: v => `${v} 部`
   }
 
   // ============================================================

@@ -10,7 +10,7 @@
 //   DailySettings: openid + theme 复合索引（唯一）
 //
 // 入参约定（所有 action 都必填 theme）：
-//   action: 'getToday' | 'addEntry' | 'removeEntry' | 'setGoal' | 'setPresets' | 'getRange'
+//   action: 'getToday' | 'addEntry' | 'removeEntry' | 'setGoal' | 'setPresets' | 'getRange' | 'getYear'
 //   theme:  'water' | 'milktea' | ...
 
 const cloud = require('wx-server-sdk');
@@ -22,7 +22,9 @@ const _ = db.command;
 // 主题默认值（与前端 utils/dailyThemes.js 保持一致；这里只放最小集合，用于无设置时兜底）
 const THEME_DEFAULTS = {
     water:   { unit: 'ml',  daily_goal: 2000, presets: [200, 350, 500] },
-    milktea: { unit: '杯', daily_goal: 1,    presets: [1] }
+    milktea: { unit: '杯', daily_goal: 1,    presets: [1] },
+    // movie 里 daily_goal 复用为"每月目标部数"，用于月度进度。
+    movie:   { unit: '部', daily_goal: 10,   presets: [1] }
 };
 
 function todayStr() {
@@ -54,6 +56,27 @@ async function getDay(openid, theme, date) {
     const res = await db.collection('DailyLogs').where({ openid, theme, date }).limit(1).get();
     if (res.data.length) return res.data[0];
     return null;
+}
+
+async function getYearDays(openid, theme, year) {
+    const from = `${year}-01-01`;
+    const to = `${year}-12-31`;
+    const query = db.collection('DailyLogs')
+        .where({ openid, theme, date: _.gte(from).and(_.lte(to)) })
+        .orderBy('date', 'asc');
+    const countRes = await query.count();
+    const total = countRes.total || 0;
+    if (!total) return [];
+
+    const batchTimes = Math.ceil(total / 100);
+    const tasks = [];
+    for (let i = 0; i < batchTimes; i++) {
+        tasks.push(query.skip(i * 100).limit(100).get());
+    }
+    const results = await Promise.all(tasks);
+    let days = [];
+    results.forEach(r => { days = days.concat(r.data || []); });
+    return days;
 }
 
 // ─── 写入：原子追加（addEntry 专用，规避并发 lost-update） ───────────────
@@ -235,6 +258,18 @@ exports.main = async (event, context) => {
                 days.push(map[k] || { theme, date: k, total_value: 0, entries: [] });
             }
             return { success: true, theme, from, to, days, settings };
+        }
+
+        if (action === 'getYear') {
+            const y = Number(event.year);
+            if (!Number.isInteger(y) || y < 1970 || y > 3000) {
+                return { success: false, error: 'year 参数无效' };
+            }
+            const [days, settings] = await Promise.all([
+                getYearDays(openid, theme, y),
+                getSettings(openid, theme)
+            ]);
+            return { success: true, theme, year: y, days, settings };
         }
 
         return { success: false, error: '未知 action: ' + action };

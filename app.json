@@ -20,6 +20,10 @@
     "pages/growth/result/result",
     "pages/daily/index/index",
     "pages/daily/stats/stats",
+    "pages/daily/movie/index",
+    "pages/daily/movie/add",
+    "pages/daily/movie/stats",
+    "pages/daily/movie/year",
     "pages/movie-search/input/input",
     "pages/movie-search/list/list",
     "pages/movie-search/detail/detail"
