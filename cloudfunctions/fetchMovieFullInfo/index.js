@@ -65,10 +65,38 @@ function buildMobileDetailUrl(doubanId) {
   return `https://m.douban.com/movie/subject/${doubanId}/`;
 }
 
-// frodo 路径在实测中始终返回 400 invalid_request_997（apikey 已被豆瓣废弃），
-// 已弃用。保留函数签名为空实现，主流程靠 OMDb 按 original_title 反查搞定 IMDb ID。
-async function fetchImdbIdFromFrodo(_doubanId) {
-  return null;
+// rexxar desc 端点（m.douban.com/rexxar/api/v2/movie/<id>/desc）返回
+//   { "html": "...<td>IMDb</td><td>tt1798709</td>..." }
+// 即「影片信息」表格的 HTML 片段，里面带真实 IMDb ID。和 rexxar 主接口同源同 headers，
+// 反爬同样宽松（实测 200）。这是拿真实 IMDb ID 的可靠主源——有了它就能走 OMDb `i=` 精确查，
+// 不必再靠 `t=片名&y=年份` 反查（豆瓣年份与 IMDb 年份常差一年，反查易命中同名错片）。
+//
+// frodo 路径已废弃（apikey 被豆瓣下线，恒返 400 invalid_request_997），不再使用。
+function buildDescUrl(doubanId) {
+  return `https://m.douban.com/rexxar/api/v2/movie/${doubanId}/desc`;
+}
+
+async function fetchImdbIdFromDesc(doubanId) {
+  try {
+    const res = await axios.get(buildDescUrl(doubanId), {
+      headers: buildDoubanHeaders(),
+      timeout: 15000,
+      responseType: 'json',
+      validateStatus: () => true
+    });
+    if (res.status >= 400) {
+      console.warn(`[desc] 抓取失败 status=${res.status} (doubanId=${doubanId})`);
+      return null;
+    }
+    const html = res.data && typeof res.data.html === 'string' ? res.data.html : '';
+    if (!html) return null;
+    // 表格行形如：<td>IMDb</td>\n<td>tt1798709</td>，标签间可能有空白/换行
+    const m = html.match(/IMDb\s*<\/td>\s*<td>\s*(tt\d+)/i);
+    return m ? m[1] : null;
+  } catch (e) {
+    console.warn('[desc] 异常（不影响主流程）:', e && e.message);
+    return null;
+  }
 }
 
 // 从 m.douban.com 详情页 HTML 里提 IMDB ID，多种 pattern 都试一遍
@@ -117,7 +145,7 @@ async function downloadAndUploadPoster(imageUrl, movieDocId) {
 async function scrapeDoubanDetail(doubanId) {
   const headers = buildDoubanHeaders();
 
-  const [rexxarRes, htmlRes, frodoImdbId] = await Promise.all([
+  const [rexxarRes, htmlRes, descImdbId] = await Promise.all([
     axios.get(buildRexxarUrl(doubanId), {
       headers,
       timeout: 15000,
@@ -132,18 +160,18 @@ async function scrapeDoubanDetail(doubanId) {
       console.warn('mobile_detail 抓取失败（不影响主流程）:', e && e.message);
       return { data: '' };
     }),
-    fetchImdbIdFromFrodo(doubanId)
+    fetchImdbIdFromDesc(doubanId)
   ]);
 
   const j = (rexxarRes && rexxarRes.data) || {};
   const html = typeof (htmlRes && htmlRes.data) === 'string' ? htmlRes.data : '';
 
-  // IMDB ID 提取优先级：frodo API > HTML 正则（m.douban HTML 实际不渲染 IMDb 字段，仅作兜底）
-  let imdbId = frodoImdbId || extractImdbIdFromHtml(html);
+  // IMDB ID 提取优先级：desc 端点（可靠主源）> HTML 正则（m.douban HTML 实际不渲染 IMDb 字段，仅作兜底）
+  let imdbId = descImdbId || extractImdbIdFromHtml(html);
   if (!imdbId) {
-    console.log(`[scrapeDoubanDetail] IMDB ID 在 frodo / HTML 都未提取到（doubanId=${j.id || ''})，可能这部豆瓣未关联 IMDB`);
+    console.log(`[scrapeDoubanDetail] IMDB ID 在 desc / HTML 都未提取到（doubanId=${j.id || ''})，可能这部豆瓣未关联 IMDB`);
   } else {
-    console.log(`[scrapeDoubanDetail] IMDB ID 命中: ${imdbId} (来源: ${frodoImdbId ? 'frodo' : 'html'})`);
+    console.log(`[scrapeDoubanDetail] IMDB ID 命中: ${imdbId} (来源: ${descImdbId ? 'desc' : 'html'})`);
   }
 
   // 从 rexxar 提其余结构化字段
@@ -197,9 +225,49 @@ function pickEnglishTitle(detail) {
   return null;
 }
 
+// OMDb 按片名反查解析真实 imdbID。
+// 不用 `t=片名&y=年份`：该接口在「豆瓣年份 ≠ IMDb 年份」时会带 y= 命中同名错片
+//   （如《她》Her：豆瓣 2013 / IMDb 2014，t=Her&y=2013 命中的是另一部 Eleanor Rigby: Her）。
+// 改用 s= 搜索拿候选列表，按「标题精确匹配 + 年份最接近(容差)」挑选，再交回 fetchOmdb 走 i= 精确查。
+async function resolveImdbIdByTitle(apiKey, title, year) {
+  try {
+    const url = `https://www.omdbapi.com/?s=${encodeURIComponent(title)}&type=movie&apikey=${encodeURIComponent(apiKey)}`;
+    const res = await axios.get(url, { timeout: 10000, responseType: 'json' });
+    const data = res.data || {};
+    const list = Array.isArray(data.Search) ? data.Search : [];
+    if (list.length === 0) return null;
+
+    const wantTitle = String(title).trim().toLowerCase();
+    const wantYear = year ? parseInt(String(year), 10) : null;
+    const scored = list.map(it => {
+      const t = String(it.Title || '').trim().toLowerCase();
+      const y = parseInt(String(it.Year || '').slice(0, 4), 10);
+      return {
+        id: it.imdbID || null,
+        titleExact: t === wantTitle,
+        yearDiff: (wantYear && !isNaN(y)) ? Math.abs(y - wantYear) : 99
+      };
+    });
+    // 标题精确优先；同等下年份差最小优先
+    scored.sort((a, b) => {
+      if (a.titleExact !== b.titleExact) return a.titleExact ? -1 : 1;
+      return a.yearDiff - b.yearDiff;
+    });
+    const best = scored[0];
+    // 标题精确匹配年份容差放宽到 ±2；非精确匹配要求年份差 ≤1 才敢用
+    if (best.id && best.titleExact && best.yearDiff <= 2) return best.id;
+    if (best.id && !best.titleExact && best.yearDiff <= 1) return best.id;
+    // 都不满足就退回 s= 列表第一条（默认按相关度排序，多数时候即用户想要的主词条）
+    return list[0].imdbID || null;
+  } catch (e) {
+    console.warn('[OMDb] resolveImdbIdByTitle 异常:', e && e.message);
+    return null;
+  }
+}
+
 // 调 OMDb API，支持两种查询模式：
 //   按 IMDB ID 精确查（imdbId 传入）
-//   按片名 + 年份反查（title 传入，year 选填）
+//   按片名 + 年份反查（title 传入，year 选填）—— 内部先用 s= 搜索解析出 imdbID，再走 i= 精确查
 // 返回 { imdb, rottenTomatoes, imdbId, reason }
 //   imdbId 在按 title 查时来自 OMDb 返回，用于补全豆瓣未提供的 IMDB 关联
 async function fetchOmdb({ imdbId, title, year }) {
@@ -210,8 +278,12 @@ async function fetchOmdb({ imdbId, title, year }) {
   if (imdbId) {
     url = `https://www.omdbapi.com/?i=${encodeURIComponent(imdbId)}&apikey=${encodeURIComponent(apiKey)}`;
   } else if (title) {
-    const yearPart = year ? `&y=${encodeURIComponent(year)}` : '';
-    url = `https://www.omdbapi.com/?t=${encodeURIComponent(title)}${yearPart}&apikey=${encodeURIComponent(apiKey)}`;
+    // 先把片名解析成真实 imdbID，再统一走 i= 精确查（规避 t=&y= 同名错片问题）
+    const resolvedId = await resolveImdbIdByTitle(apiKey, title, year);
+    if (!resolvedId) {
+      return { imdb: null, rottenTomatoes: null, imdbId: null, reason: 'omdb_title_not_found' };
+    }
+    url = `https://www.omdbapi.com/?i=${encodeURIComponent(resolvedId)}&apikey=${encodeURIComponent(apiKey)}`;
   } else {
     return { imdb: null, rottenTomatoes: null, imdbId: null, reason: 'no_query' };
   }
