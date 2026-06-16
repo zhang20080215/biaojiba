@@ -1,0 +1,13 @@
+{
+  "name": "searchBookByTitle",
+  "version": "1.0.0",
+  "description": "Search books via Douban search page (cat=1001): fuzzy match, one request, full metadata",
+  "main": "index.js",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "wx-server-sdk": "latest",
+    "axios": "^0.27.2",
+    "cheerio": "^0.22.0"
+  }
+}

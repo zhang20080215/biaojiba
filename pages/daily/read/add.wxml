@@ -1,0 +1,151 @@
+<view class="page-root">
+  <view class="top-toast {{toast.show ? 'is-show' : ''}}">
+    <text class="top-toast-icon" wx:if="{{toast.icon === 'success'}}">✓</text>
+    <text class="top-toast-text">{{toast.text}}</text>
+  </view>
+
+  <view class="custom-nav" style="height: {{navOffset}}px; padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-btn nav-btn-left" bindtap="onBack" hover-class="nav-btn-active">
+        <text class="nav-chev">‹</text>
+      </view>
+      <text class="nav-title">添加图书</text>
+    </view>
+  </view>
+
+  <view class="content" style="padding-top: {{navOffset}}px;">
+    <!-- 日期：简洁右对齐 -->
+    <view class="date-row">
+      <text class="date-row-label">记录到</text>
+      <picker mode="date" value="{{date}}" bindchange="onDateChange">
+        <view class="date-pill">
+          <text class="date-pill-text">{{dateText}}</text>
+          <text class="date-pill-chev">›</text>
+        </view>
+      </picker>
+    </view>
+
+    <!-- 搜索 -->
+    <view class="card">
+      <view class="card-title">搜索书籍</view>
+
+      <view class="search-row">
+        <view class="search-input-wrap">
+          <text class="search-icon">⌕</text>
+          <input class="search-input"
+                 placeholder="输入书名"
+                 placeholder-class="placeholder"
+                 value="{{keyword}}"
+                 bindinput="onKeywordInput"
+                 bindconfirm="onSearch"
+                 confirm-type="search"
+                 maxlength="50" />
+          <text wx:if="{{keyword}}" class="clear-x" bindtap="onClearKeyword">✕</text>
+        </view>
+        <view class="search-btn {{keyword ? '' : 'disabled'}}" bindtap="onSearch">{{searching ? '搜索中' : '搜索'}}</view>
+      </view>
+
+      <text wx:if="{{searching}}" class="hint">搜索中...</text>
+      <text wx:elif="{{error}}" class="hint error">{{error}}</text>
+      <text wx:elif="{{searched && candidates.length === 0}}" class="hint">没找到匹配的书，换个关键词试试</text>
+
+      <!-- 候选列表（未选中时，点整张卡片即选中） -->
+      <view wx:if="{{!selected && candidates.length > 0}}" class="candidate-list">
+        <view class="candidate-card"
+              wx:for="{{candidates}}"
+              wx:key="doubanId"
+              data-douban-id="{{item.doubanId}}"
+              bindtap="onSelectMovie"
+              hover-class="tap-soft">
+          <image class="candidate-poster" src="{{item.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" lazy-load="true" binderror="onCandCoverError" data-index="{{index}}" />
+          <view class="candidate-info">
+            <text class="candidate-title">{{item.title}}</text>
+            <view wx:if="{{item.ratingText}}" class="candidate-rating">
+              <text class="cand-score">豆瓣 {{item.ratingText}}</text>
+              <text wx:if="{{item.votesText}}" class="cand-votes">{{item.votesText}}</text>
+            </view>
+            <text wx:if="{{item.author}}" class="candidate-meta">作者：{{item.author}}</text>
+            <text wx:if="{{item.pubText}}" class="candidate-meta">{{item.pubText}}</text>
+            <text wx:elif="{{item.subtype && !item.author}}" class="candidate-meta">{{item.subtype}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 选中书籍：与搜索结果同款排版（封面 + 书名 + 豆瓣评分/人数 + 作者 + 出版社·年份） -->
+    <view wx:if="{{selected}}" class="card">
+      <view class="selected-head">
+        <image class="candidate-poster" src="{{selected.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" binderror="onSelCoverError" />
+        <view class="candidate-info">
+          <text class="candidate-title">{{selected.title}}</text>
+          <view wx:if="{{selected.ratingText}}" class="candidate-rating">
+            <text class="cand-score">豆瓣 {{selected.ratingText}}</text>
+            <text wx:if="{{selected.votesText}}" class="cand-votes">{{selected.votesText}}</text>
+          </view>
+          <text wx:if="{{selected.author}}" class="candidate-meta">作者：{{selected.author}}</text>
+          <text wx:if="{{selected.pubText}}" class="candidate-meta">{{selected.pubText}}</text>
+        </view>
+        <view class="del-btn" bindtap="onReselect" hover-class="tap-soft">✕</view>
+      </view>
+
+      <view class="divider"></view>
+
+      <!-- 我的评分（拖拽进度条） -->
+      <view class="field">
+        <view class="field-head">
+          <text class="field-label">我的评分</text>
+          <text class="rating-readout {{rating > 0 ? 'is-active' : ''}}">{{ratingLabel}}</text>
+        </view>
+        <slider class="rating-slider"
+                min="0" max="5" step="0.5"
+                value="{{rating}}"
+                block-size="28"
+                activeColor="#F5C518"
+                backgroundColor="#E8E0CC"
+                bindchanging="onRatingChanging"
+                bindchange="onRatingChange" />
+        <view class="rating-scale">
+          <text>0</text>
+          <text>1</text>
+          <text>2</text>
+          <text>3</text>
+          <text>4</text>
+          <text>5</text>
+        </view>
+      </view>
+
+      <!-- 心情 -->
+      <view class="field">
+        <text class="field-label">心情</text>
+        <view class="mood-grid">
+          <view wx:for="{{moods}}" wx:key="key"
+                class="mood-chip {{mood === item.key ? 'active' : ''}}"
+                data-key="{{item.key}}"
+                bindtap="onMoodTap">
+            <text class="mood-emoji">{{item.emoji}}</text>
+            <text class="mood-label">{{item.label}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 短评 -->
+      <view class="field">
+        <view class="field-head">
+          <text class="field-label">短评</text>
+          <text class="count">{{noteCount}}/140</text>
+        </view>
+        <textarea class="note"
+                  value="{{note}}"
+                  maxlength="140"
+                  placeholder="写一句读完后的感受（可不填）"
+                  placeholder-class="placeholder"
+                  bindinput="onNoteInput" />
+      </view>
+    </view>
+
+    <!-- 底部提交 -->
+    <view wx:if="{{selected}}" class="submit-btn {{submitting ? 'disabled' : ''}}" bindtap="onSubmit">
+      {{submitting ? '记录中...' : '记录到书单'}}
+    </view>
+  </view>
+</view>

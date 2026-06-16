@@ -24,6 +24,10 @@
     "pages/daily/movie/add",
     "pages/daily/movie/stats",
     "pages/daily/movie/year",
+    "pages/daily/read/index",
+    "pages/daily/read/add",
+    "pages/daily/read/stats",
+    "pages/daily/read/year",
     "pages/movie-search/input/input",
     "pages/movie-search/list/list",
     "pages/movie-search/detail/detail"

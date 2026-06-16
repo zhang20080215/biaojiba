@@ -1,5 +1,13 @@
 var adConfig = require('../../utils/adConfig')
 
+// 每日主题横排块的图标/底色/文字色（按主题 id）—— 暖调协调配色
+var DAILY_BLOCK_META = {
+  daily_movie: { emoji: '🎬', color: '#F6DED5', label: '#B05B43' }, // 暖陶土
+  daily_read:  { emoji: '📖', color: '#E5EAD2', label: '#6E7B45' }, // 橄榄绿（呼应主题色）
+  daily_water: { emoji: '💧', color: '#D8E7EC', label: '#3F7E93' }  // 雾蓝
+};
+var DAILY_BLOCK_SOON = { emoji: '✨', color: '#EFE9DD', label: '#A89B85' };
+
 Page({
   data: {
     userInfo: null,
@@ -10,6 +18,7 @@ Page({
     tempAvatar: '',
     tempNickname: '',
     activeTab: 'all',
+    dailyBlocks: [],
     themeClass: '',
     showThemePicker: false,
     statusBarHeight: 20,
@@ -30,6 +39,17 @@ Page({
         category: 'daily',
         isNew: true,
         url: '/pages/daily/movie/index'
+      },
+      {
+        id: 'daily_read',
+        title: '每日读书',
+        description: '记录每天读过的书，攒成年度书单',
+        image: '/images/cover-douban-books.jpg',
+        userCount: 0,
+        tag: '每日',
+        category: 'daily',
+        isNew: true,
+        url: '/pages/daily/read/index'
       },
       {
         id: 'movie_search_all_platforms',
@@ -154,6 +174,7 @@ Page({
     });
 
     this.checkLoginStatus();
+    this.buildDailyBlocks();
     this.filterThemes('all');
     this.loadUserCounts();
     this.initAds();
@@ -174,6 +195,7 @@ Page({
       userCountText: this.formatUserCount(theme.userCount)
     }));
     this.setData({ themes });
+    this.buildDailyBlocks();
     this.filterThemes(this.data.activeTab);
   },
 
@@ -197,8 +219,20 @@ Page({
     this.filterThemes(tab);
   },
 
+  // 每日主题独立成顶部横排块（3 个真实 + 1 个敬请期待），不进下方卡片网格
+  buildDailyBlocks() {
+    const daily = (this.data.themes || []).filter(t => t.category === 'daily').slice(0, 3);
+    const blocks = daily.map(t => {
+      const meta = DAILY_BLOCK_META[t.id] || DAILY_BLOCK_SOON;
+      return { key: t.id, id: t.id, title: t.title, url: t.url, emoji: meta.emoji, color: meta.color, label: meta.label, placeholder: false };
+    });
+    blocks.push({ key: 'soon', title: '敬请期待', emoji: DAILY_BLOCK_SOON.emoji, color: DAILY_BLOCK_SOON.color, label: DAILY_BLOCK_SOON.label, placeholder: true });
+    this.setData({ dailyBlocks: blocks });
+  },
+
   filterThemes(tab) {
-    const { themes } = this.data;
+    // 每日主题已独立到顶部横排块，下方网格只放非 daily 主题
+    const themes = (this.data.themes || []).filter(t => t.category !== 'daily');
     let filtered;
     if (tab === 'all') {
       filtered = themes;
@@ -464,7 +498,9 @@ Page({
     let offset = 0;
     const limit = 100;
     while (true) {
-      const whereCondition = config.topFiltered ? { isTop250: _.neq(false) } : {};
+      // topFiltered=false 的集合（如 oscar_movies）没有 isTop250 可筛，但也不能用空 where（会触发"全量扫表"告警）；
+      // 用 _id 存在判断：_id 是默认索引字段，等价于"取全部"，但走索引、不算空查询。
+      const whereCondition = config.topFiltered ? { isTop250: _.neq(false) } : { _id: _.exists(true) };
       const res = await db.collection(config.collection)
         .where(whereCondition)
         .skip(offset).limit(limit).field({ _id: true }).get();

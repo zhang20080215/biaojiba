@@ -162,6 +162,50 @@ const THEMES = {
     cheerForMonth: (achieved, total) =>
       `${total} 天里观影 ${achieved} 天`,
     formatTotal: v => `${v} 部`
+  },
+
+  read: {
+    id: 'read',
+    title: '每日读书',
+    description: '记录每天读过的书，攒成年度书单',
+
+    unit: '本',
+    unitLabel: '本',
+    // read 主题复用 DailySettings.daily_goal 存储"每月目标本数"。
+    defaultGoal: 5,
+    goalRange: [1, 30],
+    goalStep: 1,
+    defaultPresets: [1],
+    presetRange: [1, 1],
+    presetStep: 1,
+    inverseGoal: false,
+
+    navBg: DESIGN_TOKENS.bg,
+    navTextStyle: 'black',
+    pageGradient: [DESIGN_TOKENS.bg, DESIGN_TOKENS.bg],
+    coverGradient: [DESIGN_TOKENS.bg, DESIGN_TOKENS.bg],
+    coverEmoji: '📖',
+    tag: '每日',
+
+    progressVisual: 'ring',
+    mainColor: DESIGN_TOKENS.ink,
+    subColor: DESIGN_TOKENS.inkSoft,
+    accentColor: DESIGN_TOKENS.yellow,
+    textColor: DESIGN_TOKENS.ink,
+    accent: 'yellow',
+
+    presetIcon: () => '📖',
+
+    cheerFor: (progress, total, goal) => {
+      if (total >= goal) return '本月书单目标已达成';
+      if (total > 0) return `本月已读 ${total} 本`;
+      return '记录今天读过的书';
+    },
+    cheerForWeek: (progress, achieved, total) =>
+      `${total} 天里阅读 ${achieved} 天`,
+    cheerForMonth: (achieved, total) =>
+      `${total} 天里阅读 ${achieved} 天`,
+    formatTotal: v => `${v} 本`
   }
 
   // ============================================================

@@ -14,17 +14,80 @@
 //   theme:  'water' | 'milktea' | ...
 
 const cloud = require('wx-server-sdk');
+const axios = require('axios');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
 const db = cloud.database();
 const _ = db.command;
+
+// 封面入库前镜像到云存储，解决「每日电影/读书」封面在 <image> 白屏的问题。
+//
+// 为什么镜像、为什么文件夹叫 daily_boxoffice_covers：
+//   1. 豆瓣图床有防盗链（无 Referer 返回 418），小程序 <image> 无法直接加载豆瓣 URL。
+//   2. 线上（已发布）前端 utils/imageCacheManager.js 的 getThumbnailUrl 对 cloud:// 封面，
+//      只有路径含 imdb_covers / oscar_covers / boxoffice_covers 时才原样返回；否则会拼上
+//      `?imageMogr2/...` query，而 <image> 无法解析「cloud:// 带 query」→ 仍然白屏。
+//   ⇒ 为了不发版（小程序审核耗时）就修好，这里把镜像文件夹命名为 daily_boxoffice_covers，
+//      其路径含线上白名单子串 "boxoffice_covers"，线上前端便会原样渲染该 fileID。
+//      ⚠️ 此命名纯为匹配线上白名单、规避发版，并非票房主题封面。正式发版前端后可回归 daily_covers。
+const MIRROR_DIR = 'daily_boxoffice_covers';
+// 线上前端 getThumbnailUrl 已认得的 cloud:// 白名单 token：命中则无需重新镜像。
+const SAFE_CLOUD_TOKENS = ['imdb_covers', 'oscar_covers', 'boxoffice_covers'];
+
+// 把任意一段封面值规整成「线上 <image> 可直接渲染」的 cloud:// fileID。
+//   - 豆瓣 http(s) URL → 带 Referer 下载后上传到 MIRROR_DIR
+//   - cloud:// 但路径不含白名单 token（如 searched_movie_covers）→ 云端取回后重传到 MIRROR_DIR
+//   - cloud:// 且已含白名单 token / 空值 / 其它 → 原样返回
+//   失败一律原样返回，不阻塞写入。
+async function mirrorCover(url, openid) {
+    if (!url || typeof url !== 'string') return url;
+    try {
+        let buffer = null;
+
+        if (/^cloud:\/\//i.test(url)) {
+            if (SAFE_CLOUD_TOKENS.some(t => url.includes(t))) return url; // 线上已能渲染
+            const dl = await cloud.downloadFile({ fileID: url });
+            buffer = dl && dl.fileContent;
+        } else if (/^https?:\/\/[^/]*\bdoubanio\.com/i.test(url)) {
+            const resp = await axios.get(url, {
+                responseType: 'arraybuffer',
+                timeout: 12000,
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1',
+                    'Referer': 'https://book.douban.com/'
+                }
+            });
+            buffer = Buffer.from(resp.data);
+        } else {
+            return url; // 非豆瓣的普通 URL：交给前端原样渲染
+        }
+
+        if (!buffer) return url;
+        const cloudPath = `${MIRROR_DIR}/${openid || 'anon'}_${Date.now()}_${Math.floor(Math.random() * 1e4)}.jpg`;
+        const up = await cloud.uploadFile({ cloudPath, fileContent: buffer });
+        return (up && up.fileID) ? up.fileID : url;
+    } catch (e) {
+        console.warn('mirrorCover 失败，保留原值：', e && e.message);
+        return url;
+    }
+}
+
+// 镜像 meta 里的封面/海报字段（read 用 cover，movie 用 poster）
+async function mirrorMetaCovers(meta, openid) {
+    if (!meta || typeof meta !== 'object') return meta;
+    if (meta.cover) meta.cover = await mirrorCover(meta.cover, openid);
+    if (meta.poster) meta.poster = await mirrorCover(meta.poster, openid);
+    return meta;
+}
 
 // 主题默认值（与前端 utils/dailyThemes.js 保持一致；这里只放最小集合，用于无设置时兜底）
 const THEME_DEFAULTS = {
     water:   { unit: 'ml',  daily_goal: 2000, presets: [200, 350, 500] },
     milktea: { unit: '杯', daily_goal: 1,    presets: [1] },
     // movie 里 daily_goal 复用为"每月目标部数"，用于月度进度。
-    movie:   { unit: '部', daily_goal: 10,   presets: [1] }
+    movie:   { unit: '部', daily_goal: 10,   presets: [1] },
+    // read 里 daily_goal 复用为"每月目标本数"，用于月度进度。
+    read:    { unit: '本', daily_goal: 5,    presets: [1] }
 };
 
 function todayStr() {
@@ -172,7 +235,9 @@ exports.main = async (event, context) => {
             const { date = todayStr(), value, meta = null } = event;
             const v = Number(value);
             if (!v || v <= 0) return { success: false, error: 'value 必须 > 0' };
-            const entry = { ts: Date.now(), value: v, meta };
+            // 豆瓣封面镜像到云存储，规避 <image> 防盗链 418
+            const safeMeta = await mirrorMetaCovers(meta, openid);
+            const entry = { ts: Date.now(), value: v, meta: safeMeta };
             const updated = await atomicAddEntry(openid, theme, date, entry);
             return { success: true, theme, date, day: updated };
         }

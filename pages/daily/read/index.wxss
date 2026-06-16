@@ -1,0 +1,646 @@
+page {
+  min-height: 100vh;
+  background: #FAF6EB;
+}
+
+.page-root {
+  min-height: 100vh;
+  color: #1A1A1A;
+  font-family: -apple-system, "PingFang SC", system-ui;
+  box-sizing: border-box;
+}
+
+.top-toast {
+  position: fixed;
+  top: 22%;
+  left: 50%;
+  transform: translate(-50%, -8rpx);
+  z-index: 1000;
+  background: rgba(26, 26, 26, 0.88);
+  color: #fff;
+  padding: 18rpx 32rpx;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+.top-toast.is-show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.custom-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: #FAF6EB;
+  box-sizing: border-box;
+}
+.nav-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.nav-title {
+  font-size: 34rpx;
+  font-weight: 700;
+}
+.nav-btn {
+  position: absolute;
+  top: 50%;
+  width: 76rpx;
+  height: 76rpx;
+  margin-top: -38rpx;
+  border-radius: 22rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.nav-btn-left { left: 22rpx; }
+.nav-chev {
+  font-size: 56rpx;
+  font-weight: 300;
+  line-height: 1;
+}
+.nav-btn-active,
+.tap-soft {
+  background: rgba(26, 26, 26, 0.06);
+}
+
+.content {
+  padding-left: 32rpx;
+  padding-right: 32rpx;
+  padding-bottom: 80rpx;
+  box-sizing: border-box;
+}
+
+/* 顶部控制：月份（左）+ 视图切换（右）合并为一行 */
+.top-controls {
+  margin-top: 18rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+/* 视图切换：紧凑分段控件 */
+.seg {
+  flex-shrink: 0;
+  display: flex;
+  background: #EFE7D2;
+  border-radius: 20rpx;
+  padding: 5rpx;
+}
+.seg-item {
+  height: 60rpx;
+  padding: 0 26rpx;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6B6356;
+  font-size: 26rpx;
+  font-weight: 700;
+}
+.seg-item.active {
+  background: #FFFFFF;
+  color: #1A1A1A;
+}
+
+/* 电影墙：定高区块（与日历等高，高度由 JS 测量后内联），海报块绝对贴底 */
+.wall-box {
+  position: relative;
+  margin-top: 32rpx;
+  overflow: hidden;
+}
+.wall-empty {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+/* 绝对贴底 + wrap-reverse：满排沉到最底，剩下的浮在顶上（由下往上堆） */
+.poster-wall {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap-reverse;
+  justify-content: center;
+  gap: 18rpx 14rpx;
+}
+.wall-item {
+  width: 108rpx;
+  height: 152rpx;
+  animation: wall-fall 880ms backwards;
+}
+/* 密集模式：当月 > 15 部，海报缩小，每行 6 张（6×100 + 5×14 = 670 ≤ 686rpx） */
+.poster-wall.dense .wall-item {
+  width: 100rpx;
+  height: 140rpx;
+}
+.wall-card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 12rpx;
+  background: #FFFFFF;
+  box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+.wall-poster {
+  width: 100%;
+  height: 100%;
+}
+.wall-mood {
+  position: absolute;
+  left: 6rpx;
+  bottom: 6rpx;
+  font-size: 30rpx;
+  line-height: 1;
+  text-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.55);
+}
+/* 仿重力飘落：加速下落 + 两段递减回弹 */
+@keyframes wall-fall {
+  0% {
+    transform: translateY(var(--fall-from, -400rpx));
+    opacity: 0;
+    animation-timing-function: cubic-bezier(0.45, 0, 1, 1);
+  }
+  12% { opacity: 1; }
+  68% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0.2, 0, 0.35, 1);
+  }
+  80% {
+    transform: translateY(-16rpx);
+    animation-timing-function: cubic-bezier(0.45, 0, 1, 1);
+  }
+  90% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0.2, 0, 0.35, 1);
+  }
+  96% { transform: translateY(-5rpx); }
+  100% { transform: translateY(0); }
+}
+/* 电影墙视图：当月观影统计 */
+.month-stats {
+  margin-top: 28rpx;
+  background: #FFFFFF;
+  border: 2rpx solid #E8E0CC;
+  border-radius: 24rpx;
+  padding: 26rpx 24rpx;
+}
+.ms-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 800;
+  margin-bottom: 22rpx;
+}
+.ms-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14rpx;
+}
+.ms-item {
+  background: #FAF6EB;
+  border-radius: 18rpx;
+  padding: 22rpx 8rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10rpx;
+}
+.ms-value {
+  font-size: 36rpx;
+  font-weight: 800;
+  color: #1A1A1A;
+  line-height: 1;
+}
+.ms-value.ms-emoji {
+  font-size: 38rpx;
+}
+.ms-label {
+  font-size: 20rpx;
+  color: #A89E8C;
+  font-weight: 600;
+}
+.ms-top {
+  margin-top: 18rpx;
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  background: #FAF6EB;
+  border-radius: 18rpx;
+  padding: 18rpx;
+}
+.ms-top-poster {
+  width: 86rpx;
+  height: 122rpx;
+  border-radius: 10rpx;
+  background: #EFE7D2;
+  flex-shrink: 0;
+}
+.ms-top-info {
+  flex: 1;
+  min-width: 0;
+}
+.ms-top-tag {
+  display: block;
+  font-size: 22rpx;
+  color: #A89E8C;
+  font-weight: 700;
+}
+.ms-top-title {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 30rpx;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ms-top-meta {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-top: 8rpx;
+}
+.ms-empty {
+  text-align: center;
+  color: #A89E8C;
+  font-size: 24rpx;
+  padding: 40rpx 0;
+}
+
+.month-nav {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+.month-arrow {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  color: #6B6356;
+}
+.month-arrow.is-disabled {
+  opacity: 0.25;
+}
+.month-label {
+  text-align: center;
+  font-size: 32rpx;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.month-actions {
+  display: flex;
+  gap: 12rpx;
+}
+.chip {
+  height: 56rpx;
+  padding: 0 22rpx;
+  border-radius: 18rpx;
+  border: 2rpx solid #E8E0CC;
+  background: #FFFFFF;
+  color: #6B6356;
+  display: flex;
+  align-items: center;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.add-record-btn {
+  margin-top: 28rpx;
+  height: 92rpx;
+  border-radius: 24rpx;
+  background: #1A1A1A;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  font-size: 30rpx;
+  font-weight: 700;
+  box-shadow: 0 12rpx 28rpx rgba(0, 0, 0, 0.16);
+}
+.add-record-btn .add-plus {
+  font-size: 40rpx;
+  line-height: 1;
+}
+
+.state-text,
+.empty {
+  padding: 96rpx 20rpx;
+  text-align: center;
+  color: #A89E8C;
+}
+.empty-title {
+  display: block;
+  font-size: 30rpx;
+  color: #1A1A1A;
+  font-weight: 700;
+}
+.empty-sub {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: #A89E8C;
+}
+
+.sel-section {
+  margin-top: 36rpx;
+}
+.sel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0 4rpx 18rpx;
+}
+.sel-date {
+  font-size: 32rpx;
+  font-weight: 800;
+}
+.sel-count {
+  font-size: 24rpx;
+  color: #A89E8C;
+}
+.movie-cell {
+  position: relative;
+  margin-bottom: 18rpx;
+  border-radius: 24rpx;
+  overflow: hidden;
+}
+.card-actions {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 156rpx;
+  z-index: 0;
+}
+.action-delete {
+  height: 100%;
+  background: #D63838;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26rpx;
+  font-weight: 700;
+}
+.movie-card {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 20rpx;
+  padding: 22rpx;
+  background: #FFFFFF;
+  border: 2rpx solid #E8E0CC;
+  border-radius: 24rpx;
+  transition: transform 220ms ease;
+}
+.movie-card.is-swiped {
+  transform: translateX(-156rpx);
+}
+.poster {
+  width: 104rpx;
+  height: 148rpx;
+  border-radius: 12rpx;
+  background: #EFE7D2;
+  flex-shrink: 0;
+}
+.movie-info {
+  flex: 1;
+  min-width: 0;
+}
+.title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10rpx;
+  min-width: 0;
+}
+.movie-title {
+  font-size: 30rpx;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.movie-year,
+.movie-meta,
+.movie-time {
+  font-size: 22rpx;
+  color: #A89E8C;
+}
+.movie-meta,
+.movie-rating,
+.movie-note {
+  display: block;
+  margin-top: 8rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.movie-rating {
+  font-size: 24rpx;
+  color: #8A6A00;
+  font-weight: 700;
+}
+.movie-note {
+  font-size: 24rpx;
+  color: #6B6356;
+}
+
+/* 全平台评分小标签：四个一行，不换行 */
+.plat-row {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6rpx;
+  margin-top: 10rpx;
+}
+.plat-chip {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: 20rpx;
+  color: #6B6356;
+  background: #FAF6EB;
+  border: 2rpx solid #ECE4D2;
+  border-radius: 8rpx;
+  padding: 2rpx 8rpx;
+  line-height: 1.7;
+}
+
+/* 「我的」块：评分 + 心情 + 短评，与上方平台评分视觉区分 */
+.mine-block {
+  margin-top: 12rpx;
+  padding: 12rpx 14rpx;
+  background: #FFFCF3;
+  border: 2rpx solid #F0E6C8;
+  border-radius: 14rpx;
+}
+.mine-tag {
+  flex-shrink: 0;
+  font-size: 19rpx;
+  font-weight: 800;
+  color: #8A6A00;
+  background: #FBEFC0;
+  border-radius: 8rpx;
+  padding: 2rpx 8rpx;
+}
+.mine-note {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #6B6356;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 我的评分 + 心情 */
+.mine-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  min-width: 0;
+}
+.mine-row .movie-rating {
+  margin-top: 0;
+}
+.mine-mood {
+  font-size: 30rpx;
+  line-height: 1;
+}
+.mine-mood-label {
+  font-size: 22rpx;
+  color: #6B6356;
+  font-weight: 600;
+}
+/* 星级评分：金色前景按百分比裁切叠加在灰色底星上，支持半星 */
+.my-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
+}
+.stars {
+  position: relative;
+  display: inline-block;
+  font-size: 26rpx;
+  line-height: 1;
+  white-space: nowrap;
+}
+.stars-bg {
+  color: #E0D6BE;
+}
+.stars-fg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: #F5C518;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.rating-score {
+  font-size: 24rpx;
+  color: #8A6A00;
+  font-weight: 700;
+}
+.movie-time {
+  flex-shrink: 0;
+}
+
+.cal-head {
+  margin-top: 32rpx;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+.cal-head-cell {
+  text-align: center;
+  color: #A89E8C;
+  font-size: 22rpx;
+  font-weight: 700;
+}
+.cal-grid {
+  margin-top: 14rpx;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 12rpx 8rpx;
+}
+.cal-cell {
+  position: relative;
+  aspect-ratio: 1 / 1.22;
+  border-radius: 16rpx;
+  background: #FFFFFF;
+  border: 2rpx solid #E8E0CC;
+  overflow: hidden;
+}
+.empty-cell {
+  visibility: hidden;
+}
+.cal-cell.is-today {
+  border-color: #1A1A1A;
+}
+.cal-cell.is-selected {
+  border-color: #F5C518;
+  border-width: 4rpx;
+  box-shadow: 0 0 0 2rpx rgba(245, 197, 24, 0.35);
+}
+.cal-posters {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 2rpx;
+}
+.cal-poster {
+  width: 100%;
+  height: 100%;
+}
+/* 田字格自适应：1 满格 / 2 双列 / 3 左大右两格 / 4 标准田字格 */
+.cal-posters.g1 .cal-poster:nth-child(1) { grid-column: 1 / 3; grid-row: 1 / 3; }
+.cal-posters.g2 .cal-poster:nth-child(1) { grid-row: 1 / 3; }
+.cal-posters.g2 .cal-poster:nth-child(2) { grid-row: 1 / 3; }
+.cal-posters.g3 .cal-poster:nth-child(1) { grid-row: 1 / 3; }
+.cal-placeholder {
+  width: 100%;
+  height: 100%;
+  background: #F2EAD7;
+}
+.cal-day {
+  position: absolute;
+  left: 8rpx;
+  bottom: 6rpx;
+  min-width: 30rpx;
+  height: 30rpx;
+  border-radius: 15rpx;
+  background: rgba(255, 255, 255, 0.86);
+  text-align: center;
+  line-height: 30rpx;
+  font-size: 20rpx;
+  font-weight: 700;
+}
+/* 心情 emoji：与日期数字同尺寸、同位置 */
+.cal-mood {
+  position: absolute;
+  left: 8rpx;
+  bottom: 6rpx;
+  min-width: 30rpx;
+  height: 30rpx;
+  text-align: center;
+  line-height: 30rpx;
+  font-size: 20rpx;
+}

@@ -1,0 +1,87 @@
+<view class="page-root">
+  <view class="top-toast {{toast.show ? 'is-show' : ''}}">
+    <text class="top-toast-icon" wx:if="{{toast.icon === 'success'}}">✓</text>
+    <text class="top-toast-text">{{toast.text}}</text>
+  </view>
+
+  <view class="custom-nav" style="height: {{navOffset}}px; padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-btn nav-btn-left" bindtap="onBack" hover-class="nav-btn-active">
+        <text class="nav-chev">‹</text>
+      </view>
+      <text class="nav-title">年度书单</text>
+    </view>
+  </view>
+
+  <view class="content" style="padding-top: {{navOffset}}px;">
+    <view class="year-head">
+      <view class="year-arrow" bindtap="onPrevYear">‹</view>
+      <text class="year-label">{{year}}</text>
+      <view class="year-arrow {{canGoNextYear ? '' : 'is-disabled'}}" bindtap="onNextYear">›</view>
+    </view>
+
+    <view class="seg">
+      <view class="seg-item {{tab === 'wall' ? 'active' : ''}}" data-tab="wall" bindtap="onTabTap">书墙</view>
+      <view class="seg-item {{tab === 'months' ? 'active' : ''}}" data-tab="months" bindtap="onTabTap">十二月历</view>
+    </view>
+
+    <view wx:if="{{loading}}" class="state-text">加载中...</view>
+    <view wx:elif="{{movies.length === 0}}" class="empty">
+      <text class="empty-title">这一年还没有读书记录</text>
+      <text class="empty-sub">记录之后会在这里生成年度书单</text>
+    </view>
+
+    <block wx:else>
+      <view wx:if="{{tab === 'wall'}}" class="poster-wall">
+        <view class="wall-item" wx:for="{{movies}}" wx:key="ts" style="transform: rotate({{item.rotate}});">
+          <image class="wall-poster" src="{{item.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" lazy-load="true" />
+        </view>
+      </view>
+
+      <view wx:else class="month-grid">
+        <view class="month-card" wx:for="{{monthCards}}" wx:key="month">
+          <image wx:if="{{item.cover}}" class="month-cover" src="{{item.cover}}" mode="aspectFill" lazy-load="true" />
+          <view wx:else class="month-empty-cover"></view>
+          <text class="month-name">{{item.month}}月</text>
+          <text class="month-count">{{item.count}} 本</text>
+        </view>
+      </view>
+
+      <view class="review">
+        <text class="review-title">年度回顾</text>
+        <view class="review-grid">
+          <view class="review-item">
+            <text class="review-label">共读</text>
+            <text class="review-value">{{review.total}} 本</text>
+          </view>
+          <view class="review-item">
+            <text class="review-label">平均评分</text>
+            <text class="review-value">{{review.avgRating}} 星</text>
+          </view>
+          <view class="review-item">
+            <text class="review-label">活跃天数</text>
+            <text class="review-value">{{review.activeDays}} 天</text>
+          </view>
+          <view class="review-item">
+            <text class="review-label">最多月份</text>
+            <text class="review-value">{{review.bestMonth}}</text>
+          </view>
+        </view>
+
+        <view wx:if="{{review.topMovie}}" class="top-movie">
+          <image class="top-poster" src="{{review.topMovie.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" />
+          <view class="top-info">
+            <text class="top-label">最高分书籍</text>
+            <text class="top-title">{{review.topMovie.title}}</text>
+            <text class="top-meta">{{review.topMovie.ratingText}}</text>
+          </view>
+        </view>
+
+        <view class="director-line">
+          <text class="review-label">最常读作者</text>
+          <text class="review-value">{{review.favoriteAuthor}}</text>
+        </view>
+      </view>
+    </block>
+  </view>
+</view>

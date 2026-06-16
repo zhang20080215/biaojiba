@@ -1,0 +1,12 @@
+{
+  "name": "fetchBookFullInfo",
+  "version": "1.0.0",
+  "description": "Aggregate single book data from Douban (rating + author + publisher + cover)",
+  "main": "index.js",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "wx-server-sdk": "latest",
+    "axios": "^0.27.2"
+  }
+}

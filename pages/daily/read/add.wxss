@@ -1,0 +1,477 @@
+page {
+  min-height: 100vh;
+  background: #FAF6EB;
+}
+.page-root {
+  min-height: 100vh;
+  color: #1A1A1A;
+  font-family: -apple-system, "PingFang SC", system-ui;
+  box-sizing: border-box;
+}
+.top-toast {
+  position: fixed;
+  top: 22%;
+  left: 50%;
+  transform: translate(-50%, -8rpx);
+  z-index: 1000;
+  background: rgba(26, 26, 26, 0.88);
+  color: #fff;
+  padding: 18rpx 32rpx;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+.top-toast.is-show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.custom-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: #FAF6EB;
+  box-sizing: border-box;
+}
+.nav-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.nav-title {
+  font-size: 34rpx;
+  font-weight: 700;
+}
+.nav-btn {
+  position: absolute;
+  top: 50%;
+  width: 76rpx;
+  height: 76rpx;
+  margin-top: -38rpx;
+  border-radius: 22rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.nav-btn-left { left: 22rpx; }
+.nav-btn-active,
+.tap-soft {
+  background: rgba(26, 26, 26, 0.06);
+}
+.nav-chev {
+  font-size: 56rpx;
+  font-weight: 300;
+  line-height: 1;
+}
+.content {
+  padding-left: 32rpx;
+  padding-right: 32rpx;
+  padding-bottom: 80rpx;
+  box-sizing: border-box;
+}
+
+/* 日期：简洁右对齐 pill */
+.date-row {
+  margin-top: 24rpx;
+  padding: 0 6rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.date-row-label {
+  font-size: 26rpx;
+  color: #A89E8C;
+  font-weight: 600;
+}
+.date-pill {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  height: 60rpx;
+  padding: 0 22rpx;
+  border-radius: 30rpx;
+  background: #FFFFFF;
+  border: 2rpx solid #E8E0CC;
+}
+.date-pill-text {
+  font-size: 27rpx;
+  font-weight: 700;
+  color: #1A1A1A;
+}
+.date-pill-chev {
+  font-size: 30rpx;
+  color: #A89E8C;
+  line-height: 1;
+}
+
+/* 卡片 */
+.card {
+  margin-top: 24rpx;
+  background: #FFFFFF;
+  border: 2rpx solid #ECE4D2;
+  border-radius: 28rpx;
+  padding: 28rpx 24rpx;
+}
+.card-title {
+  font-size: 30rpx;
+  font-weight: 800;
+  margin-bottom: 22rpx;
+}
+
+/* 选中电影头部 */
+.movie-head {
+  display: flex;
+  gap: 20rpx;
+  align-items: flex-start;
+}
+.movie-poster {
+  width: 110rpx;
+  height: 154rpx;
+  border-radius: 14rpx;
+  background: #EFE7D2;
+  flex-shrink: 0;
+}
+.movie-head-info {
+  flex: 1;
+  min-width: 0;
+  padding-top: 4rpx;
+}
+.movie-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 800;
+  line-height: 1.3;
+}
+.movie-meta {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  color: #6B6356;
+  line-height: 1.4;
+}
+.del-btn {
+  flex-shrink: 0;
+  width: 52rpx;
+  height: 52rpx;
+  border-radius: 50%;
+  border: 2rpx solid #E8E0CC;
+  color: #A89E8C;
+  font-size: 26rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 选中书籍头部：与搜索候选卡同款排版（poster + info + 重选按钮） */
+.selected-head {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+}
+.selected-head .candidate-info {
+  align-self: center;
+}
+
+/* 全平台评分 */
+.ratings {
+  display: flex;
+  gap: 14rpx;
+  margin-top: 24rpx;
+}
+.rating-cell {
+  flex: 1;
+  background: #FAF6EB;
+  border: 2rpx solid #ECE4D2;
+  border-radius: 18rpx;
+  padding: 16rpx 6rpx 14rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.rating-label {
+  font-size: 22rpx;
+  color: #8A8472;
+  font-weight: 600;
+}
+.rating-value {
+  margin-top: 8rpx;
+  font-size: 34rpx;
+  font-weight: 800;
+  color: #1A1A1A;
+  line-height: 1.1;
+}
+.rating-value.is-empty {
+  color: #C9C0AC;
+}
+.rating-sub {
+  margin-top: 6rpx;
+  font-size: 19rpx;
+  color: #A89E8C;
+}
+.ratings-fail {
+  margin-top: 22rpx;
+  font-size: 24rpx;
+  color: #A89E8C;
+}
+
+/* 评分查询中间态 */
+.ratings-loading {
+  margin-top: 24rpx;
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  padding: 28rpx 26rpx;
+  background: #FAF6EB;
+  border: 2rpx solid #ECE4D2;
+  border-radius: 18rpx;
+}
+.rl-spinner {
+  flex-shrink: 0;
+  width: 34rpx;
+  height: 34rpx;
+  border-radius: 50%;
+  border: 4rpx solid #E3DAC2;
+  border-top-color: #1A1A1A;
+  animation: rl-spin 0.8s linear infinite;
+}
+@keyframes rl-spin {
+  to { transform: rotate(360deg); }
+}
+.rl-text {
+  font-size: 25rpx;
+  color: #6B6356;
+  font-weight: 600;
+}
+
+.divider {
+  height: 2rpx;
+  background: #F0EAD9;
+  margin: 28rpx 0 0;
+}
+
+/* 搜索 */
+.search-row {
+  display: flex;
+  gap: 14rpx;
+}
+.search-input-wrap {
+  flex: 1;
+  height: 80rpx;
+  border-radius: 24rpx;
+  background: #FAF6EB;
+  border: 2rpx solid #E8E0CC;
+  display: flex;
+  align-items: center;
+  padding: 0 18rpx;
+  box-sizing: border-box;
+}
+.search-icon {
+  color: #A89E8C;
+  font-size: 30rpx;
+  margin-right: 10rpx;
+}
+.search-input {
+  flex: 1;
+  height: 80rpx;
+  font-size: 28rpx;
+}
+.clear-x {
+  color: #A89E8C;
+  font-size: 26rpx;
+  padding: 0 6rpx;
+}
+.placeholder {
+  color: #A89E8C;
+}
+.search-btn {
+  width: 132rpx;
+  height: 80rpx;
+  border-radius: 24rpx;
+  background: #1A1A1A;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26rpx;
+  font-weight: 700;
+}
+.search-btn.disabled {
+  background: #E8E0CC;
+  color: #A89E8C;
+}
+.hint {
+  display: block;
+  margin-top: 18rpx;
+  color: #6B6356;
+  font-size: 24rpx;
+}
+.hint.error {
+  color: #D63838;
+}
+
+/* 候选列表 */
+.candidate-list {
+  margin-top: 22rpx;
+}
+.candidate-card {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  background: #FAF6EB;
+  border: 2rpx solid #E8E0CC;
+  border-radius: 24rpx;
+  padding: 16rpx;
+  margin-bottom: 14rpx;
+}
+.candidate-poster {
+  width: 92rpx;
+  height: 130rpx;
+  border-radius: 12rpx;
+  background: #EFE7D2;
+  flex-shrink: 0;
+}
+.candidate-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+.candidate-title {
+  font-size: 30rpx;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.candidate-meta {
+  font-size: 23rpx;
+  color: #6B6356;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.candidate-rating {
+  display: flex;
+  align-items: baseline;
+  gap: 10rpx;
+}
+.cand-score {
+  font-size: 24rpx;
+  font-weight: 800;
+  color: #8A6A00;
+}
+.cand-votes {
+  font-size: 21rpx;
+  color: #A89E8C;
+}
+
+/* 表单字段 */
+.field {
+  margin-top: 26rpx;
+}
+.field:first-child {
+  margin-top: 0;
+}
+.field-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.field-label {
+  display: block;
+  margin-bottom: 14rpx;
+  font-size: 24rpx;
+  font-weight: 800;
+  color: #6B6356;
+}
+.count {
+  font-size: 22rpx;
+  color: #A89E8C;
+}
+.rating-readout {
+  font-size: 24rpx;
+  font-weight: 800;
+  color: #A89E8C;
+}
+.rating-readout.is-active {
+  color: #1A1A1A;
+}
+.rating-slider {
+  margin: 8rpx 8rpx 0;
+}
+.rating-scale {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 6rpx;
+  margin-top: 2rpx;
+}
+.rating-scale text {
+  font-size: 20rpx;
+  color: #C2B9A4;
+}
+
+/* 心情 emoji */
+.mood-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12rpx;
+}
+.mood-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6rpx;
+  padding: 14rpx 0;
+  border-radius: 18rpx;
+  background: #FAF6EB;
+  border: 2rpx solid #E8E0CC;
+}
+.mood-chip.active {
+  background: #FFF7DA;
+  border-color: #1A1A1A;
+}
+.mood-emoji {
+  font-size: 40rpx;
+  line-height: 1;
+}
+.mood-label {
+  font-size: 21rpx;
+  color: #6B6356;
+  font-weight: 600;
+}
+.mood-chip.active .mood-label {
+  color: #1A1A1A;
+}
+.note {
+  width: 100%;
+  min-height: 170rpx;
+  border-radius: 20rpx;
+  background: #FAF6EB;
+  border: 2rpx solid #E8E0CC;
+  padding: 20rpx;
+  box-sizing: border-box;
+  font-size: 28rpx;
+  line-height: 1.5;
+}
+/* 提交 */
+.submit-btn {
+  margin-top: 32rpx;
+  height: 92rpx;
+  border-radius: 26rpx;
+  background: #1A1A1A;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30rpx;
+  font-weight: 800;
+  box-shadow: 0 12rpx 28rpx rgba(0, 0, 0, 0.16);
+}
+.submit-btn.disabled {
+  opacity: 0.6;
+}

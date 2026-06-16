@@ -37,6 +37,28 @@
     </view>
   </view>
 
+  <!-- 每日主题：横排 4 个独立块（最后一个敬请期待） -->
+  <view class="daily-section">
+    <view class="daily-row">
+      <block wx:for="{{dailyBlocks}}" wx:key="key">
+        <navigator
+          wx:if="{{!item.placeholder}}"
+          class="daily-block"
+          style="background:{{item.color}}"
+          url="{{item.url}}"
+          hover-class="daily-block-hover"
+        >
+          <view class="daily-icon"><text class="daily-emoji">{{item.emoji}}</text></view>
+          <text class="daily-label" style="color:{{item.label}}">{{item.title}}</text>
+        </navigator>
+        <view wx:else class="daily-block daily-block-soon" style="background:{{item.color}}">
+          <view class="daily-icon"><text class="daily-emoji">{{item.emoji}}</text></view>
+          <text class="daily-label" style="color:{{item.label}}">{{item.title}}</text>
+        </view>
+      </block>
+    </view>
+  </view>
+
   <!-- 分类筛选 -->
   <view class="filter-bar">
     <view
@@ -45,13 +67,6 @@
     >
       <view class="chip-dot" wx:if="{{activeTab === 'all'}}"></view>
       <text>全部</text>
-    </view>
-    <view
-      class="filter-chip {{activeTab === 'daily' ? 'active' : ''}}"
-      data-tab="daily" bindtap="onTabTap"
-    >
-      <view class="chip-dot" wx:if="{{activeTab === 'daily'}}"></view>
-      <text>每日</text>
     </view>
     <view
       class="filter-chip {{activeTab === 'movie' ? 'active' : ''}}"

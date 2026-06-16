@@ -1,0 +1,247 @@
+page {
+  min-height: 100vh;
+  background: #FAF6EB;
+}
+.page-root {
+  min-height: 100vh;
+  color: #1A1A1A;
+  font-family: -apple-system, "PingFang SC", system-ui;
+}
+.top-toast {
+  position: fixed;
+  top: 22%;
+  left: 50%;
+  transform: translate(-50%, -8rpx);
+  z-index: 1000;
+  background: rgba(26, 26, 26, 0.88);
+  color: #fff;
+  padding: 18rpx 32rpx;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+.top-toast.is-show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.custom-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: #FAF6EB;
+}
+.nav-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.nav-title {
+  font-size: 34rpx;
+  font-weight: 700;
+}
+.nav-btn {
+  position: absolute;
+  top: 50%;
+  left: 22rpx;
+  width: 76rpx;
+  height: 76rpx;
+  margin-top: -38rpx;
+  border-radius: 22rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.nav-btn-active {
+  background: rgba(26, 26, 26, 0.06);
+}
+.nav-chev {
+  font-size: 56rpx;
+  font-weight: 300;
+  line-height: 1;
+}
+.content {
+  padding-left: 32rpx;
+  padding-right: 32rpx;
+  padding-bottom: 80rpx;
+  box-sizing: border-box;
+}
+.seg {
+  margin-top: 16rpx;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  background: #EFE7D2;
+  border-radius: 22rpx;
+  padding: 6rpx;
+}
+.seg-item {
+  height: 70rpx;
+  border-radius: 18rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6B6356;
+  font-size: 26rpx;
+  font-weight: 700;
+}
+.seg-item.active {
+  background: #FFFFFF;
+  color: #1A1A1A;
+}
+.headline {
+  margin-top: 28rpx;
+  text-align: center;
+}
+.headline-cap {
+  color: #A89E8C;
+  font-size: 22rpx;
+  font-weight: 800;
+}
+.headline-num {
+  margin-top: 14rpx;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8rpx;
+}
+.hnum {
+  font-size: 104rpx;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.hunit {
+  font-size: 32rpx;
+  color: #6B6356;
+}
+.headline-sub {
+  display: block;
+  margin-top: 8rpx;
+  color: #A89E8C;
+  font-size: 24rpx;
+}
+.chart-card {
+  margin-top: 28rpx;
+  background: #FFFFFF;
+  border: 2rpx solid #E8E0CC;
+  border-radius: 28rpx;
+  padding: 28rpx 20rpx 24rpx;
+}
+.period-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+.period-arrow {
+  width: 58rpx;
+  height: 58rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6B6356;
+  font-size: 44rpx;
+}
+.period-arrow.is-disabled {
+  opacity: 0.25;
+}
+.period-label {
+  flex: 1;
+  text-align: center;
+  font-size: 28rpx;
+  font-weight: 800;
+}
+.state-text {
+  padding: 80rpx 0;
+  text-align: center;
+  color: #A89E8C;
+}
+.bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 12rpx;
+  min-height: 380rpx;
+  overflow-x: auto;
+}
+.bar-col {
+  flex: 1;
+  min-width: 54rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+}
+.bar-cover {
+  width: 48rpx;
+  height: 68rpx;
+  border-radius: 8rpx;
+  background: #EFE7D2;
+}
+.cover-empty {
+  opacity: 0.35;
+}
+.bar-value {
+  height: 24rpx;
+  font-size: 20rpx;
+  color: #8A6A00;
+  font-weight: 800;
+}
+.bar-track {
+  width: 42rpx;
+  height: 190rpx;
+  border-radius: 16rpx;
+  background: #EFE7D2;
+  position: relative;
+  overflow: hidden;
+}
+.bar-fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #F5C518;
+  border-radius: 16rpx 16rpx 0 0;
+}
+.bar-label {
+  font-size: 20rpx;
+  color: #A89E8C;
+  white-space: nowrap;
+}
+.kpi-grid {
+  margin-top: 22rpx;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18rpx;
+}
+.kpi-tile {
+  background: #FFFFFF;
+  border: 2rpx solid #E8E0CC;
+  border-radius: 24rpx;
+  padding: 24rpx;
+}
+.kpi-label {
+  display: block;
+  font-size: 22rpx;
+  color: #A89E8C;
+  font-weight: 700;
+}
+.kpi-value-row {
+  margin-top: 10rpx;
+  display: flex;
+  align-items: baseline;
+  gap: 6rpx;
+}
+.kpi-value {
+  font-size: 44rpx;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.kpi-unit {
+  font-size: 24rpx;
+  color: #6B6356;
+}

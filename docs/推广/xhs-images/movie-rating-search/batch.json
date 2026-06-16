@@ -1,0 +1,45 @@
+{
+  "jobs": 4,
+  "tasks": [
+    {
+      "id": "02-aggregate",
+      "promptFiles": ["prompts/02-content-aggregate.md"],
+      "image": "02-content-aggregate.png",
+      "provider": "openrouter",
+      "model": "google/gemini-3-pro-image-preview",
+      "ar": "3:4",
+      "quality": "2k",
+      "ref": ["01-cover-bilei.png"]
+    },
+    {
+      "id": "03-vs",
+      "promptFiles": ["prompts/03-cover-vs.md"],
+      "image": "03-cover-vs.png",
+      "provider": "openrouter",
+      "model": "google/gemini-3-pro-image-preview",
+      "ar": "3:4",
+      "quality": "2k",
+      "ref": ["01-cover-bilei.png"]
+    },
+    {
+      "id": "04-kepu",
+      "promptFiles": ["prompts/04-content-kepu.md"],
+      "image": "04-content-kepu.png",
+      "provider": "openrouter",
+      "model": "google/gemini-3-pro-image-preview",
+      "ar": "3:4",
+      "quality": "2k",
+      "ref": ["01-cover-bilei.png"]
+    },
+    {
+      "id": "05-cta",
+      "promptFiles": ["prompts/05-ending-cta.md"],
+      "image": "05-ending-cta.png",
+      "provider": "openrouter",
+      "model": "google/gemini-3-pro-image-preview",
+      "ar": "3:4",
+      "quality": "2k",
+      "ref": ["01-cover-bilei.png"]
+    }
+  ]
+}
