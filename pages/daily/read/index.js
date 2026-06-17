@@ -14,6 +14,45 @@ const {
   getReadThemeView
 } = require('./common.js');
 
+// 心情选项（与添加页保持一致），编辑弹窗复用
+const MOOD_OPTIONS = [
+  { key: 'love', emoji: '😍', label: '超爱' },
+  { key: 'happy', emoji: '😂', label: '欢乐' },
+  { key: 'touched', emoji: '😢', label: '泪目' },
+  { key: 'shocked', emoji: '😱', label: '震撼' },
+  { key: 'healing', emoji: '🥰', label: '治愈' },
+  { key: 'thinking', emoji: '🤔', label: '深思' },
+  { key: 'bored', emoji: '😴', label: '催眠' },
+  { key: 'letdown', emoji: '😞', label: '失望' },
+  { key: 'inspired', emoji: '💡', label: '启发' },
+  { key: 'immersed', emoji: '📖', label: '沉浸' },
+  { key: 'romantic', emoji: '💞', label: '心动' },
+  { key: 'nostalgic', emoji: '🕰️', label: '怀旧' },
+  { key: 'hooked', emoji: '😮', label: '上头' },
+  { key: 'heavy', emoji: '🥀', label: '致郁' }
+];
+
+// rating(0~5, 步进0.5) → 5 颗星状态：'full' | 'half' | 'empty'
+// 时间轴日期标签
+const WEEK_CN = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+function tlLabels(date) {
+  const parts = String(date).split('-').map(Number);
+  const y = parts[0], m = parts[1] || 1, d = parts[2] || 1;
+  const wd = new Date(y, m - 1, d).getDay();
+  return { dateLabel: `${m}月${d}日`, weekday: WEEK_CN[wd] };
+}
+
+function buildStars(rating) {
+  const r = Number(rating) || 0;
+  const arr = [];
+  for (let i = 1; i <= 5; i++) {
+    if (r >= i) arr.push('full');
+    else if (r >= i - 0.5) arr.push('half');
+    else arr.push('empty');
+  }
+  return arr;
+}
+
 Page({
   data: {
     toast: { show: false, text: '', icon: '' },
@@ -29,10 +68,11 @@ Page({
 
     loading: true,
 
-    viewMode: 'calendar', // 'calendar' | 'wall'
+    viewMode: 'calendar', // 'calendar' | 'wall' | 'timeline'
 
     weekHeader: WD_MON,
     calendarCells: [],
+    timeline: [],
     wallMovies: [],
     wallAreaH: 644, // 电影墙区域高度(rpx)，按当月日历周数估算，与日历等高
     wallDense: false, // 当月电影 > 15 部时改为每行 6 张
@@ -41,7 +81,21 @@ Page({
     selectedDate: '',
     selectedDateText: '',
     selectedMovies: [],
-    swipedKey: ''
+    swipedKey: '',
+
+    // 轻编辑弹窗（只改 评分 / 心情 / 短评）
+    editModal: false,
+    editDate: '',
+    editTs: 0,
+    editTitle: '',
+    editRating: 0,
+    editRatingLabel: '未评分',
+    editStars: buildStars(0),
+    editMoods: MOOD_OPTIONS,
+    editMood: '',
+    editNote: '',
+    editNoteCount: 0,
+    editSaving: false
   },
 
   onLoad(options) {
@@ -205,11 +259,30 @@ Page({
       canGoNextMonth: `${this.data.year}-${String(this.data.month).padStart(2, '0')}` < this.data.today.slice(0, 7),
       calendarCells: this.buildCalendar(days),
       selectedMovies: this.buildSelected(days),
+      timeline: this.buildTimeline(days),
       wallAreaH: areaH,
       wallMovies,
       wallDense: wallMovies.length > 15,
       monthStats: this.buildMonthStats(days)
     });
+  },
+
+  // 当月时间轴：按日期升序，每天一组，组内按时间排序
+  buildTimeline(days) {
+    const out = (days || [])
+      .filter(d => (d.entries || []).length > 0)
+      .map(d => {
+        const labels = tlLabels(d.date);
+        const items = (d.entries || [])
+          .map(en => {
+            const m = normalizeBookEntry(en, d.date);
+            return { ...m, key: `${m.date}-${m.ts}` };
+          })
+          .sort((a, b) => (a.ts || 0) - (b.ts || 0));
+        return { date: d.date, dateLabel: labels.dateLabel, weekday: labels.weekday, count: items.length, items };
+      });
+    out.sort((a, b) => (a.date < b.date ? -1 : 1));
+    return out;
   },
 
   // 当月观影统计（电影墙视图下方展示）
@@ -369,6 +442,119 @@ Page({
     const { date, ts, title } = e.currentTarget.dataset;
     this.setData({ swipedKey: '' });
     this.confirmDelete(date, Number(ts), title);
+  },
+
+  // ── 轻编辑：左滑「编辑」打开弹窗，只改 评分 / 心情 / 短评 ──
+  onSwipeEdit(e) {
+    const { date, ts, title } = e.currentTarget.dataset;
+    const tsNum = Number(ts);
+    const day = (this._lastDays || []).find(d => d.date === date);
+    const raw = day && (day.entries || []).find(en => en.ts === tsNum);
+    if (!raw) { toast.show(this, '记录不存在'); return; }
+    this._editRawMeta = { ...(raw.meta || {}) };
+    const rating = Number(this._editRawMeta.rating) || 0;
+    const mood = this._editRawMeta.mood || '';
+    const note = this._editRawMeta.note || '';
+    this.setData({
+      swipedKey: '',
+      editModal: true,
+      editDate: date,
+      editTs: tsNum,
+      editTitle: title || this._editRawMeta.title || '',
+      editRating: rating,
+      editRatingLabel: rating > 0 ? `${rating.toFixed(1)} 星` : '未评分',
+      editStars: buildStars(rating),
+      editMood: mood,
+      editNote: note,
+      editNoteCount: note.length
+    });
+  },
+
+  onCloseEdit() {
+    if (this.data.editSaving) return;
+    this.setData({ editModal: false });
+  },
+
+  // 弹窗内五角星拖拽评分
+  onEditStarTouchStart(e) {
+    this._measureEditStarRow().then(() => this._applyEditStarTouch(e));
+  },
+  onEditStarTouchMove(e) {
+    this._applyEditStarTouch(e);
+  },
+  _measureEditStarRow() {
+    return new Promise(resolve => {
+      wx.createSelectorQuery().in(this).select('.edit-star-row').boundingClientRect(rect => {
+        if (rect && rect.width) this._editStarRect = rect;
+        resolve();
+      }).exec();
+    });
+  },
+  _applyEditStarTouch(e) {
+    const rect = this._editStarRect;
+    if (!rect || !rect.width) return;
+    const t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
+    if (!t) return;
+    let ratio = (t.clientX - rect.left) / rect.width;
+    if (ratio < 0) ratio = 0;
+    if (ratio > 1) ratio = 1;
+    let v = Math.ceil(ratio * 10) / 2;
+    if (v < 0.5) v = 0.5;
+    if (v > 5) v = 5;
+    if (v === this.data.editRating) return;
+    this.setData({ editRating: v, editRatingLabel: `${v.toFixed(1)} 星`, editStars: buildStars(v) });
+  },
+
+  onEditMoodTap(e) {
+    const key = e.currentTarget.dataset.key;
+    this.setData({ editMood: this.data.editMood === key ? '' : key });
+  },
+
+  onEditNoteInput(e) {
+    const note = e.detail.value || '';
+    this.setData({ editNote: note, editNoteCount: note.length });
+  },
+
+  onEditSave() {
+    if (this.data.editSaving) return;
+    const date = this.data.editDate;
+    const oldTs = this.data.editTs;
+    if (!date || !oldTs) return;
+    const moodOpt = MOOD_OPTIONS.find(m => m.key === this.data.editMood);
+    const meta = { ...(this._editRawMeta || {}) };
+    meta.rating = Number(this.data.editRating) || 0;
+    meta.mood = this.data.editMood || '';
+    meta.moodEmoji = moodOpt ? moodOpt.emoji : '';
+    meta.moodLabel = moodOpt ? moodOpt.label : '';
+    meta.note = (this.data.editNote || '').trim();
+    this.setData({ editSaving: true });
+    // 先加新（云端 addEntry 无每日上限），成功后删旧；删失败仅留重复可手动删，避免丢数据
+    wx.cloud.callFunction({
+      name: 'syncDailyLog',
+      data: { action: 'addEntry', theme: 'read', date, value: 1, meta },
+      success: addRes => {
+        const ok = addRes && addRes.result && addRes.result.success;
+        if (!ok) {
+          toast.show(this, '保存失败');
+          this.setData({ editSaving: false });
+          return;
+        }
+        wx.cloud.callFunction({
+          name: 'syncDailyLog',
+          data: { action: 'removeEntry', theme: 'read', date, ts: oldTs },
+          complete: () => {
+            this.setData({ editSaving: false, editModal: false });
+            toast.show(this, '已保存', { icon: 'success' });
+            this.fetchMonth();
+          }
+        });
+      },
+      fail: err => {
+        console.error('read edit save fail', err);
+        toast.show(this, '网络异常');
+        this.setData({ editSaving: false });
+      }
+    });
   },
 
   confirmDelete(date, ts, title) {

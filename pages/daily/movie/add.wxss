@@ -70,7 +70,8 @@ page {
 .content {
   padding-left: 32rpx;
   padding-right: 32rpx;
-  padding-bottom: 80rpx;
+  /* 给底部悬浮按钮预留空间，避免遮挡最后一项 */
+  padding-bottom: calc(180rpx + env(safe-area-inset-bottom));
   box-sizing: border-box;
 }
 
@@ -345,6 +346,20 @@ page {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.candidate-rating {
+  display: flex;
+  align-items: baseline;
+  gap: 10rpx;
+}
+.cand-score {
+  font-size: 24rpx;
+  font-weight: 800;
+  color: #8A6A00;
+}
+.cand-votes {
+  font-size: 21rpx;
+  color: #A89E8C;
+}
 
 /* 表单字段 */
 .field {
@@ -377,18 +392,43 @@ page {
 .rating-readout.is-active {
   color: #1A1A1A;
 }
-.rating-slider {
-  margin: 8rpx 8rpx 0;
-}
-.rating-scale {
+/* 五角星评分（点左半=半颗，点右半=整颗） */
+.star-row {
   display: flex;
-  justify-content: space-between;
-  padding: 0 6rpx;
-  margin-top: 2rpx;
+  gap: 16rpx;
+  padding: 4rpx 0;
 }
-.rating-scale text {
-  font-size: 20rpx;
-  color: #C2B9A4;
+.star {
+  position: relative;
+  width: 56rpx;
+  height: 56rpx;
+}
+.star-base {
+  display: block;
+  width: 56rpx;
+  font-size: 52rpx;
+  line-height: 56rpx;
+  text-align: center;
+  color: #E8E0CC;
+}
+.star-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 56rpx;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.star-fill.star-full { width: 56rpx; }
+.star-fill.star-half { width: 28rpx; }
+.star-fill.star-empty { width: 0; }
+.star-glyph {
+  display: block;
+  width: 56rpx;
+  font-size: 52rpx;
+  line-height: 56rpx;
+  text-align: center;
+  color: #F5C518;
 }
 
 /* 心情 emoji */
@@ -423,6 +463,59 @@ page {
 .mood-chip.active .mood-label {
   color: #1A1A1A;
 }
+.mood-more .mood-emoji {
+  color: #A89E8C;
+  font-size: 44rpx;
+}
+
+/* 更多心情弹窗 */
+.mood-modal {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 200;
+}
+.mood-modal-mask {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(26, 26, 26, 0.45);
+}
+.mood-modal-sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #FFFBF0;
+  border-radius: 28rpx 28rpx 0 0;
+  padding: 28rpx 32rpx calc(32rpx + env(safe-area-inset-bottom));
+  box-shadow: 0 -8rpx 24rpx rgba(0, 0, 0, 0.08);
+}
+.mood-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+.mood-modal-title {
+  font-size: 30rpx;
+  font-weight: 800;
+  color: #1A1A1A;
+}
+.mood-modal-close {
+  font-size: 30rpx;
+  color: #A89E8C;
+  padding: 4rpx 12rpx;
+}
+.mood-modal-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12rpx;
+}
 .note {
   width: 100%;
   min-height: 170rpx;
@@ -435,8 +528,19 @@ page {
   line-height: 1.5;
 }
 /* 提交 */
+/* 底部吸底操作栏：与页面同色 + 顶部弱阴影分隔，按钮嵌在其中（不再裸悬浮） */
+.submit-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  padding: 16rpx 32rpx calc(16rpx + env(safe-area-inset-bottom));
+  background: #FAF6EB;
+  box-shadow: 0 -8rpx 24rpx rgba(0, 0, 0, 0.06);
+  box-sizing: border-box;
+}
 .submit-btn {
-  margin-top: 32rpx;
   height: 92rpx;
   border-radius: 26rpx;
   background: #1A1A1A;
@@ -446,7 +550,6 @@ page {
   justify-content: center;
   font-size: 30rpx;
   font-weight: 800;
-  box-shadow: 0 12rpx 28rpx rgba(0, 0, 0, 0.16);
 }
 .submit-btn.disabled {
   opacity: 0.6;

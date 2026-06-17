@@ -1,12 +1,13 @@
 {
   "name": "searchMovieByTitle",
   "version": "1.0.0",
-  "description": "Search movies by title via Douban subject_suggest API",
+  "description": "Search movies by title via Douban search page (cat=1002): fuzzy match + 评分/人数, suggest fallback",
   "main": "index.js",
   "author": "",
   "license": "ISC",
   "dependencies": {
     "wx-server-sdk": "latest",
-    "axios": "^0.27.2"
+    "axios": "^0.27.2",
+    "cheerio": "^0.22.0"
   }
 }

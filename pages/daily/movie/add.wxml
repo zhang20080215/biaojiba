@@ -60,6 +60,10 @@
           <image class="candidate-poster" src="{{item.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" lazy-load="true" />
           <view class="candidate-info">
             <text class="candidate-title">{{item.title}}</text>
+            <view wx:if="{{item.ratingText}}" class="candidate-rating">
+              <text class="cand-score">豆瓣 {{item.ratingText}}</text>
+              <text wx:if="{{item.votesText}}" class="cand-votes">{{item.votesText}}</text>
+            </view>
             <text wx:if="{{item.year}}" class="candidate-meta">{{item.year}}</text>
             <text wx:if="{{item.director}}" class="candidate-meta">导演：{{item.director}}</text>
             <text wx:if="{{item.subtype && !item.director}}" class="candidate-meta">{{item.subtype}}</text>
@@ -95,40 +99,36 @@
 
       <view class="divider"></view>
 
-      <!-- 我的评分（拖拽进度条） -->
+      <!-- 我的评分（点亮五角星，最少半颗） -->
       <view class="field">
         <view class="field-head">
           <text class="field-label">我的评分</text>
           <text class="rating-readout {{rating > 0 ? 'is-active' : ''}}">{{ratingLabel}}</text>
         </view>
-        <slider class="rating-slider"
-                min="0" max="5" step="0.5"
-                value="{{rating}}"
-                block-size="28"
-                activeColor="#F5C518"
-                backgroundColor="#E8E0CC"
-                bindchanging="onRatingChanging"
-                bindchange="onRatingChange" />
-        <view class="rating-scale">
-          <text>0</text>
-          <text>1</text>
-          <text>2</text>
-          <text>3</text>
-          <text>4</text>
-          <text>5</text>
+        <view class="star-row"
+              bindtouchstart="onStarTouchStart"
+              catchtouchmove="onStarTouchMove">
+          <view class="star" wx:for="{{stars}}" wx:key="index">
+            <text class="star-base">★</text>
+            <view class="star-fill star-{{item}}"><text class="star-glyph">★</text></view>
+          </view>
         </view>
       </view>
 
-      <!-- 心情 -->
+      <!-- 心情：网格末位为「更多」，点击弹窗选更多 -->
       <view class="field">
         <text class="field-label">心情</text>
         <view class="mood-grid">
-          <view wx:for="{{moods}}" wx:key="key"
+          <view wx:for="{{visibleMoods}}" wx:key="key"
                 class="mood-chip {{mood === item.key ? 'active' : ''}}"
                 data-key="{{item.key}}"
                 bindtap="onMoodTap">
             <text class="mood-emoji">{{item.emoji}}</text>
             <text class="mood-label">{{item.label}}</text>
+          </view>
+          <view class="mood-chip mood-more" bindtap="onOpenMoodModal">
+            <text class="mood-emoji">⋯</text>
+            <text class="mood-label">更多</text>
           </view>
         </view>
       </view>
@@ -149,8 +149,30 @@
     </view>
 
     <!-- 底部提交 -->
-    <view wx:if="{{selected}}" class="submit-btn {{submitting ? 'disabled' : ''}}" bindtap="onSubmit">
-      {{submitting ? '记录中...' : '记录到片单'}}
+    <view wx:if="{{selected}}" class="submit-bar">
+      <view class="submit-btn {{submitting ? 'disabled' : ''}}" bindtap="onSubmit">
+        {{submitting ? '记录中...' : '添加观影记录'}}
+      </view>
+    </view>
+  </view>
+
+  <!-- 更多心情弹窗 -->
+  <view class="mood-modal" wx:if="{{moodModal}}" catchtouchmove="true">
+    <view class="mood-modal-mask" bindtap="onCloseMoodModal"></view>
+    <view class="mood-modal-sheet">
+      <view class="mood-modal-head">
+        <text class="mood-modal-title">选择心情</text>
+        <text class="mood-modal-close" bindtap="onCloseMoodModal">✕</text>
+      </view>
+      <view class="mood-modal-grid">
+        <view wx:for="{{moods}}" wx:key="key"
+              class="mood-chip {{mood === item.key ? 'active' : ''}}"
+              data-key="{{item.key}}"
+              bindtap="onPickMood">
+          <text class="mood-emoji">{{item.emoji}}</text>
+          <text class="mood-label">{{item.label}}</text>
+        </view>
+      </view>
     </view>
   </view>
 </view>

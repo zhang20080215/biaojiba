@@ -11,8 +11,36 @@ const MOOD_OPTIONS = [
   { key: 'healing', emoji: '🥰', label: '治愈' },
   { key: 'thinking', emoji: '🤔', label: '深思' },
   { key: 'bored', emoji: '😴', label: '无聊' },
-  { key: 'letdown', emoji: '😞', label: '失望' }
+  { key: 'letdown', emoji: '😞', label: '失望' },
+  { key: 'thrilled', emoji: '🔥', label: '热血' },
+  { key: 'scared', emoji: '😨', label: '惊悚' },
+  { key: 'romantic', emoji: '💞', label: '心动' },
+  { key: 'nostalgic', emoji: '🕰️', label: '怀旧' },
+  { key: 'cool', emoji: '😎', label: '过瘾' },
+  { key: 'confused', emoji: '🤯', label: '烧脑' }
 ];
+// 网格只展示前若干个，最后一格为「更多」，其余进弹窗
+const VISIBLE_MOOD_COUNT = 7;
+
+// rating(0~5, 步进0.5) → 5 颗星状态数组：'full' | 'half' | 'empty'
+function buildStars(rating) {
+  const r = Number(rating) || 0;
+  const arr = [];
+  for (let i = 1; i <= 5; i++) {
+    if (r >= i) arr.push('full');
+    else if (r >= i - 0.5) arr.push('half');
+    else arr.push('empty');
+  }
+  return arr;
+}
+
+// 可见心情：始终包含当前选中项（选中项在隐藏区时顶到末位，避免选了却看不到）
+function computeVisibleMoods(all, selectedKey) {
+  if (!selectedKey) return all.slice(0, VISIBLE_MOOD_COUNT);
+  const idx = all.findIndex(m => m.key === selectedKey);
+  if (idx < 0 || idx < VISIBLE_MOOD_COUNT) return all.slice(0, VISIBLE_MOOD_COUNT);
+  return all.slice(0, VISIBLE_MOOD_COUNT - 1).concat([all[idx]]);
+}
 
 function formatDateText(d) {
   const p = String(d || '').split('-').map(Number);
@@ -25,6 +53,22 @@ function buildMeta(year, director) {
   if (year) parts.push(String(year));
   if (director) parts.push('导演 ' + director);
   return parts.join('  ·  ');
+}
+
+// 千位分隔符：699743 → "699,743"
+function addThousandSep(n) {
+  if (n === null || n === undefined || n === '') return '';
+  return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+// 候选视图模型：搜索页已带豆瓣评分/人数时直接展示，无则留空
+function decorateCandidate(item) {
+  return {
+    ...item,
+    posterThumb: imageCache.getThumbnailUrl(item.posterUrl, 'list'),
+    ratingText: item.rating ? Number(item.rating).toFixed(1) : '',
+    votesText: item.ratingCount ? `${addThousandSep(item.ratingCount)}人评价` : ''
+  };
 }
 
 // 4 平台固定展示：豆瓣 / IMDb / 新鲜度(RT 影评人) / 爆米花(RT 观众)，缺数据补 '—'
@@ -65,7 +109,10 @@ Page({
     dateText: '',
     rating: 0,
     ratingLabel: '未评分',
+    stars: buildStars(0),
     moods: MOOD_OPTIONS,
+    visibleMoods: computeVisibleMoods(MOOD_OPTIONS, ''),
+    moodModal: false,
     mood: '',
     note: '',
     noteCount: 0,
@@ -135,10 +182,7 @@ Page({
         });
         return;
       }
-      const candidates = (result.candidates || []).map(item => ({
-        ...item,
-        posterThumb: imageCache.getThumbnailUrl(item.posterUrl, 'list')
-      }));
+      const candidates = (result.candidates || []).map(decorateCandidate);
       this.setData({ searching: false, searched: true, candidates, error: '' });
     } catch (e) {
       console.error('daily movie search fail', e);
@@ -203,22 +247,53 @@ Page({
     this.setData({ date, dateText: formatDateText(date) });
   },
 
-  // 拖拽进度条评分（0~5，步进 0.5）
-  _applyRating(v) {
-    const n = Math.round((Number(v) || 0) * 2) / 2;
-    this.setData({ rating: n, ratingLabel: n > 0 ? `${n.toFixed(1)} 星` : '未评分' });
+  // 五角星评分：支持点按 + 拖拽，按手指横向落点算分（0.5 步进，最少半颗）
+  onStarTouchStart(e) {
+    this._measureStarRow().then(() => this._applyStarTouch(e));
   },
-  onRatingChanging(e) {
-    this._applyRating(e.detail.value);
+  onStarTouchMove(e) {
+    this._applyStarTouch(e);
   },
-  onRatingChange(e) {
-    this._applyRating(e.detail.value);
+  _measureStarRow() {
+    return new Promise(resolve => {
+      wx.createSelectorQuery().in(this).select('.star-row').boundingClientRect(rect => {
+        if (rect && rect.width) this._starRect = rect;
+        resolve();
+      }).exec();
+    });
+  },
+  _applyStarTouch(e) {
+    const rect = this._starRect;
+    if (!rect || !rect.width) return;
+    const t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
+    if (!t) return;
+    let ratio = (t.clientX - rect.left) / rect.width;
+    if (ratio < 0) ratio = 0;
+    if (ratio > 1) ratio = 1;
+    let v = Math.ceil(ratio * 10) / 2; // 10 个半颗档位
+    if (v < 0.5) v = 0.5;
+    if (v > 5) v = 5;
+    if (v === this.data.rating) return; // 拖拽中避免重复 setData
+    this.setData({ rating: v, ratingLabel: `${v.toFixed(1)} 星`, stars: buildStars(v) });
   },
 
   onMoodTap(e) {
     const key = e.currentTarget.dataset.key;
     // 再次点击当前心情可取消
-    this.setData({ mood: this.data.mood === key ? '' : key });
+    const mood = this.data.mood === key ? '' : key;
+    this.setData({ mood, visibleMoods: computeVisibleMoods(MOOD_OPTIONS, mood) });
+  },
+
+  onOpenMoodModal() {
+    this.setData({ moodModal: true });
+  },
+  onCloseMoodModal() {
+    this.setData({ moodModal: false });
+  },
+  onPickMood(e) {
+    const key = e.currentTarget.dataset.key;
+    const mood = this.data.mood === key ? '' : key;
+    this.setData({ mood, moodModal: false, visibleMoods: computeVisibleMoods(MOOD_OPTIONS, mood) });
   },
 
   onNoteInput(e) {

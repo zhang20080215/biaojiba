@@ -9,7 +9,7 @@
       <view class="nav-btn nav-btn-left" bindtap="onBack" hover-class="nav-btn-active">
         <text class="nav-chev">‹</text>
       </view>
-      <text class="nav-title">每日电影</text>
+      <text class="nav-title">标记吧：每日电影</text>
     </view>
   </view>
 
@@ -24,6 +24,7 @@
       <view class="seg">
         <view class="seg-item {{viewMode === 'calendar' ? 'active' : ''}}" data-view="calendar" bindtap="onViewTap">日历</view>
         <view class="seg-item {{viewMode === 'wall' ? 'active' : ''}}" data-view="wall" bindtap="onViewTap">电影墙</view>
+        <view class="seg-item {{viewMode === 'timeline' ? 'active' : ''}}" data-view="timeline" bindtap="onViewTap">时间轴</view>
       </view>
     </view>
 
@@ -40,6 +41,49 @@
           <view class="wall-card" style="transform: rotate({{item.rotate}});">
             <image class="wall-poster" src="{{item.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" lazy-load="true" />
             <text wx:if="{{item.moodEmoji}}" class="wall-mood">{{item.moodEmoji}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- ===== 时间轴 ===== -->
+    <view wx:elif="{{viewMode === 'timeline'}}" class="timeline-box">
+      <view wx:if="{{!loading && timeline.length === 0}}" class="tl-empty">
+        <text class="empty-title">本月还没有观影记录</text>
+        <text class="empty-sub">切到「日历」即可添加看过的电影</text>
+      </view>
+      <view wx:else class="timeline">
+        <view class="tl-day" wx:for="{{timeline}}" wx:key="date">
+          <view class="tl-rail">
+            <view class="tl-dot"></view>
+            <view class="tl-line"></view>
+          </view>
+          <view class="tl-day-main">
+            <view class="tl-day-head">
+              <text class="tl-date">{{item.dateLabel}}</text>
+              <text class="tl-weekday">{{item.weekday}}</text>
+              <text class="tl-day-count">{{item.count}} 部</text>
+            </view>
+            <view class="tl-card" wx:for="{{item.items}}" wx:for-item="mv" wx:key="key">
+              <image class="tl-poster" src="{{mv.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" lazy-load="true" />
+              <view class="tl-info">
+                <view class="tl-title-row">
+                  <text class="tl-title">{{mv.title}}</text>
+                  <text wx:if="{{mv.year}}" class="tl-year">{{mv.year}}</text>
+                </view>
+                <view wx:if="{{mv.rating > 0}}" class="tl-rating">
+                  <view class="stars">
+                    <text class="stars-bg">★★★★★</text>
+                    <text class="stars-fg" style="width: {{mv.rating * 20}}%">★★★★★</text>
+                  </view>
+                  <text class="tl-score">{{mv.rating * 2}}分</text>
+                </view>
+                <view wx:if="{{mv.moodEmoji || mv.note}}" class="tl-extra">
+                  <text wx:if="{{mv.moodEmoji}}" class="tl-mood">{{mv.moodEmoji}}</text>
+                  <text wx:if="{{mv.note}}" class="tl-note">{{mv.note}}</text>
+                </view>
+              </view>
+            </view>
           </view>
         </view>
       </view>
@@ -93,7 +137,12 @@
       <block wx:else>
         <view class="movie-cell" wx:for="{{selectedMovies}}" wx:for-item="movie" wx:key="key">
           <view class="card-actions">
-            <view class="action-delete"
+            <view class="action action-edit"
+                  catchtap="onSwipeEdit"
+                  data-date="{{movie.date}}"
+                  data-ts="{{movie.ts}}"
+                  data-title="{{movie.title}}">编辑</view>
+            <view class="action action-delete"
                   catchtap="onSwipeDelete"
                   data-date="{{movie.date}}"
                   data-ts="{{movie.ts}}"
@@ -146,7 +195,7 @@
     </block>
 
     <!-- ===== 电影墙视图底部：当月观影统计 ===== -->
-    <block wx:else>
+    <block wx:elif="{{viewMode === 'wall'}}">
       <view wx:if="{{monthStats.total > 0}}" class="month-stats">
         <text class="ms-title">{{month}}月观影统计</text>
         <view class="ms-grid">
@@ -183,5 +232,61 @@
           </view>
       </view>
     </block>
+  </view>
+
+  <!-- 轻编辑弹窗：只改 评分 / 心情 / 短评 -->
+  <view class="edit-modal" wx:if="{{editModal}}">
+    <view class="edit-mask" bindtap="onCloseEdit" catchtouchmove="true"></view>
+    <view class="edit-sheet">
+      <view class="edit-head">
+        <text class="edit-title">编辑记录</text>
+        <text class="edit-close" bindtap="onCloseEdit">✕</text>
+      </view>
+      <text class="edit-movie-title">{{editTitle}}</text>
+
+      <view class="edit-field">
+        <view class="edit-field-head">
+          <text class="edit-label">我的评分</text>
+          <text class="edit-readout {{editRating > 0 ? 'is-active' : ''}}">{{editRatingLabel}}</text>
+        </view>
+        <view class="edit-star-row" bindtouchstart="onEditStarTouchStart" catchtouchmove="onEditStarTouchMove">
+          <view class="star" wx:for="{{editStars}}" wx:key="index">
+            <text class="star-base">★</text>
+            <view class="star-fill star-{{item}}"><text class="star-glyph">★</text></view>
+          </view>
+        </view>
+      </view>
+
+      <view class="edit-field">
+        <text class="edit-label">心情</text>
+        <view class="edit-mood-grid">
+          <view wx:for="{{editMoods}}" wx:key="key"
+                class="mood-chip {{editMood === item.key ? 'active' : ''}}"
+                data-key="{{item.key}}"
+                bindtap="onEditMoodTap">
+            <text class="mood-emoji">{{item.emoji}}</text>
+            <text class="mood-label">{{item.label}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="edit-field">
+        <view class="edit-field-head">
+          <text class="edit-label">短评</text>
+          <text class="edit-count">{{editNoteCount}}/140</text>
+        </view>
+        <textarea class="edit-note"
+                  value="{{editNote}}"
+                  maxlength="140"
+                  placeholder="写一句看完后的感受（可不填）"
+                  placeholder-class="edit-note-ph"
+                  bindinput="onEditNoteInput" />
+      </view>
+
+      <view class="edit-actions">
+        <view class="edit-btn edit-cancel" bindtap="onCloseEdit">取消</view>
+        <view class="edit-btn edit-save {{editSaving ? 'disabled' : ''}}" bindtap="onEditSave">{{editSaving ? '保存中...' : '保存'}}</view>
+      </view>
+    </view>
   </view>
 </view>
