@@ -5,10 +5,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 
 XiaoBiaoji (标记吧) is a WeChat Mini Program with several feature areas:
-1. **Movie / book tracking** — Douban Top 250 (movies + books), IMDb Top 250, Oscar Best Pictures, 票房榜 (boxoffice), WeChat Reading Top 200, plus themes kept in source but pack-excluded for now (annual / chinese / chinese-awards). All share the same list+poster pattern, swap data source.
+1. **Movie / book tracking** — Douban Top 250 (movies + books), IMDb Top 250, Oscar Best Pictures (`oscar`), Oscar Best Animated Feature (`oscarAnime`, 最佳动画长篇), 票房榜 (boxoffice), WeChat Reading Top 200, plus themes kept in source but pack-excluded for now (annual / chinese / chinese-awards). All share the same list+poster pattern, swap data source.
 2. **Movie rating search** (`pages/movie-search`, 全平台电影评分查询) — search any movie by title, aggregate 豆瓣 + IMDb + 烂番茄 (Tomatometer critic + Popcornmeter audience) scores. Independent data path (own collections + cloud functions), separate from the Top-N tracking pattern.
 3. **Child growth assessment** — 0~7岁发育评估 based on WS/T 423-2022 national standard, with precise percentile calculation and shareable report posters.
-4. **Daily check-in** — Theme-driven daily tracker. Two live themes: **每日喝水** (`water`, shared `pages/daily/index` + `pages/daily/stats` page set) and **每日电影** (`movie`, its own richer page set under `pages/daily/movie`). See Daily Check-In Theme.
+4. **Daily check-in** — Theme-driven daily tracker. Live themes: **每日喝水** (`water`, shared `pages/daily/index` + `pages/daily/stats` page set) plus three richer themes with their own page sets — **每日电影** (`movie`), **每日读书** (`read`), **每日运动** (`sport`). See Daily Check-In Theme.
 5. **Subscription push** — WeChat subscribe-message framework for TOP250 new-entry alerts and daily reminders. See Subscription & Push.
 
 Built on WeChat Cloud (serverless cloud functions + cloud database).
@@ -29,7 +29,7 @@ Each tracking theme (douban/imdb/oscar/doubanBooks/weread + the pack-excluded on
 - Cloud function `fetch{Theme}{Movies|Books}` — data scraping/enrichment
 - Marks split by collection: movies → `Marks`, books (douban/weread) → `BookMarks`; cloud function `batchUpdateBookMarks` mirrors `batchUpdateMarks`
 
-**Data flow:** Pages → `utils/dataLoader.js` (24-hour client cache) → `getMoviesData` cloud function → Cloud DB collections (`movies`, `imdb_movies`, `oscar_movies`, `douban_books`, `weread_books`, `Marks`, `BookMarks`)
+**Data flow:** Pages → `utils/dataLoader.js` (24-hour client cache) → `getMoviesData` cloud function → Cloud DB collections (`movies`, `imdb_movies`, `oscar_movies`, `oscar_anime_movies`, `douban_books`, `weread_books`, `Marks`, `BookMarks`)
 
 **Douban TOP250 auto-refresh:** `fetchMovies` (timer-triggered; tolerant of the new cloud runtime `Type=Timer` event wrapper) re-scrapes Douban TOP250 daily into `movies`. Guards against scraper failures: writes are rejected if fewer than `MIN_ACCEPT_COUNT` (240) items are scraped. Tracks a version doc + soft-delete rollback doc, detects `_id` drift (same title, different `_id`), and emits `push_events` + `rank_history` entries consumed by the push framework.
 
@@ -51,7 +51,7 @@ Standalone feature, **not** part of the Top-N tracking pattern. Three pages: `in
 **Data flow:** input page → `app.globalData.growthInput` → result page calls `evaluate()` locally (no cloud)
 
 ### Daily Check-In Theme
-Theme-driven via config. The **`water`** theme follows the original "single page set, config-only" promise; the **`movie`** theme (每日观影记录) needed richer per-entry data so it has its own page set. Both share `syncDailyLog` + the `DailyLogs`/`DailySettings` collections.
+Theme-driven via config. The **`water`** theme follows the original "single page set, config-only" promise; the **`movie`** / **`read`** / **`sport`** themes need richer per-entry data so each has its own page set. All share `syncDailyLog` + the `DailyLogs`/`DailySettings` collections.
 
 **Shared `water`-style page set:**
 - `pages/daily/index/` — main page (date nav, water bottle SVG with 4-stage face per progress, 3 quick presets, settings drawer)
@@ -62,11 +62,16 @@ Theme-driven via config. The **`water`** theme follows the original "single page
 - `common.js` — movie-theme-local helpers: nav metrics, CN-timezone date math, `normalizeMovieEntry` / `flattenMovies`, `getMovieThemeView`
 - Entries carry a rich `meta`: `{ doubanId, title, year, poster, director, rating, mood, platform: {douban, imdb, rtCritic, rtAudience}, note }`. `daily_goal` is reused as "每月目标部数". `addEntry` writes a platform-rating snapshot into `meta.platform`.
 
+**`read` theme — `pages/daily/read/`** (same shape as `movie`, douban-book search driven): `index/add/stats/year` + `common.js` (`normalizeBookEntry`/`flattenBooks`). `meta` carries book fields + 5-star rating + mood; `daily_goal` reused as "每月目标本数".
+
+**`sport` theme — `pages/daily/sport/`** (每日运动, its own set, **清新浅色蓝/橙 UI**): `index.js` (month calendar, calendar/timeline views — **no poster wall**, cells show 动作图标)。**所有运动图标走自定义线性图标 `utils/sportIcons.js`（非 emoji）**：每个图标用 24 网格折线/圆几何描述，`svgUri/uriForType(name)` 出 SVG data-URI 给 WXML 用 `background-image` 渲染、`drawIcon(ctx,...)` 在海报 canvas 上描线；`keyForType(动作名)` 按器械/动作归类映射（同类共用一图标，TYPE_ICON 加行即可扩展）。`add.js` + `stats.js` + `year.js` + `common.js` (`normalizeSportEntry`/`flattenSports`/`getSportThemeView`, `buildSummary`). Unlike movie/read, `add` is **manual entry, not search** — it consumes `utils/fitnessTypes.js`：大类 有氧/力量/拉伸·柔韧，每个大类带 `groups`（`{part, types}`），**力量按身体部位分组**(胸/背/腿/肩/手臂/臀/核心，40+ 项)，`getFieldConfig(type)` 决定动态字段。**No rating/mood** — only objective data. `meta`: `{ category, type, icon, duration, distance, distanceUnit, sets, reps, weight }`. Counting is by 次: each entry `value=1`, `daily_goal` reused as "每月目标训练次数". **`add` 支持「一次添加多组动作」**(pendingList)，也支持**编辑态**(`?date=&ts=` 进入，回填后走 `updateEntry`，编辑态隐藏多组/锁定日期)。**`index` 选中日列表支持：拖拽手柄 `☰` 上下排序(`reorderEntries` 持久化、`entries` 数组序即展示序)、左滑露出「编辑 / 删除」**。(`stats.js`/`year.js` 仍是旧米白、无 UI 入口。)
+  - **`share.js` — 分享运动卡片(小红书发图)**: from `index` selected-day「分享卡片」button → `share?date=`. Fetches that day via `getRange`, draws a **1080×1440 (3:4)** card with `utils/sportPosterDrawer.js` (self-contained, **纯 ctx 线条绘制 + `utils/sportIcons.js` 线性图标，no network image / no CanvasHelper**; 清新浅色信息图风格 —— 浅色渐变底+角落点阵/淡圆装饰、标题+蓝色下划线、扁平**编号清单**：编号徽章+柔彩圆内线性图标+名称+竖向点线分隔+数据小图标，时长/距离用主色、组次/重量用点缀色). **主题色可选**：`sportPosterDrawer.js` 内置 `THEMES` 4 套预设（经典蓝/薄荷绿/樱花粉/暖橙），`draw(dayData, illus, themeId)` 第三参选主题，装饰/图标色全部由 `primary`+`accent`(+`primaryRgb/accentRgb` 派生半透明) 推导；`SportPosterDrawer.THEMES`(色卡列表)/`.DEFAULT_THEME` 暴露给前端。share 页底部色卡条选色、**本地记住**(`wx.storage` key `sportShareTheme`)，切换即 `generatePoster` 重绘。**canvas 是原生组件无法用 opacity 隐藏**，所以直接把 canvas 当屏幕预览图（backing 1080×1440、CSS 缩放显示），不再用 `<image>` 预览；导出 temp file 仅供「保存到相册」。出图时机：`onReady` 置 `_ready` + 数据就绪后 `maybeGenerate` 一次，`onUnload` 置 `_destroyed` 守卫异步 setData。Save 由 `utils/rewardedSaveGate.js`（slot `save_image_rewarded`）把关。底部文字署名「标记吧 · 每日运动」(no QR/小程序码/外链, per promo-compliance)。详见 [[reference-canvas-native-component-hiding]]。
+
 **Shared utilities / endpoint:**
-- `utils/dailyThemes.js` — **single source of truth**: `THEMES` registry (`water`, `movie`), `DESIGN_TOKENS`, `ACCENT_HEX`, `cheerFor*` text generators. `getTheme(id)` falls back to `water`.
+- `utils/dailyThemes.js` — **single source of truth**: `THEMES` registry (`water`, `movie`, `read`, `sport`), `DESIGN_TOKENS`, `ACCENT_HEX`, `cheerFor*` text generators. `getTheme(id)` falls back to `water`.
 - `utils/dailyBottle.js` — (water only) `buildBottleSvg(pct, capColor)` 4-stage face (sleepy/calm/happy/satisfied); `buildCupSvg(fillPct)`; `PRESET_FILL_LEVELS = [0.25, 0.55, 0.9]`
 - `utils/dailyToast.js` — top-positioned custom toast (`wx.showToast` can't be repositioned); `toast.show(this, '已保存', { icon: 'success' })`
-- Cloud function `syncDailyLog` — single endpoint, `theme` param dispatches; collections `DailyLogs` (`openid+theme+date` unique) and `DailySettings` (`openid+theme` unique). Actions: `getToday | addEntry | removeEntry | setGoal | setPresets | getRange | getYear`. `addEntry` accepts arbitrary `date` (backfill) and uses an **atomic append** path with unique-index-conflict retry to avoid concurrent lost-updates.
+- Cloud function `syncDailyLog` — single endpoint, `theme` param dispatches; collections `DailyLogs` (`openid+theme+date` unique) and `DailySettings` (`openid+theme` unique). Actions: `getToday | addEntry | removeEntry | updateEntry | reorderEntries | setGoal | setPresets | getRange | getYear`. `addEntry` accepts arbitrary `date` (backfill) and uses an **atomic append** path with unique-index-conflict retry to avoid concurrent lost-updates. `updateEntry`(改 `meta`/`value`，按 `ts` 定位) 和 `reorderEntries`(`order` = `ts` 数组，重排 `entries`) 走读-改-写。**`entries` 数组顺序即展示顺序**（前端不再按 `ts` 排序），所以拖拽排序靠 `reorderEntries` 持久化。
 
 > 海报分享功能已下线，待后续重写。
 
@@ -102,7 +107,7 @@ WeChat subscribe-message framework — adding a new push topic is a config-row e
 - `batchUpdateMarks` / `batchUpdateBookMarks` — atomic upsert of multiple `(itemId, openid)` marks
 - `syncDailyLog` — single endpoint for daily check-in (see Daily Check-In Theme above)
 - `fetchMovies` — timer-triggered Douban TOP250 daily auto-refresh into `movies` (drift detection, soft-delete rollback, `MIN_ACCEPT_COUNT` guard, emits `push_events`/`rank_history`)
-- `fetchImdbMovies` / `fetchOscarMovies` / `fetchDoubanBooks` / `fetchWereadBooks` / `fetchBoxofficeMovies` / `fetchAnnualMovies` / `fetchChineseMovies` / `fetchAwardMovies` — data scraping/enrichment per theme
+- `fetchImdbMovies` / `fetchOscarMovies` / `fetchOscarAnimeMovies` / `fetchDoubanBooks` / `fetchWereadBooks` / `fetchBoxofficeMovies` / `fetchAnnualMovies` / `fetchChineseMovies` / `fetchAwardMovies` — data scraping/enrichment per theme. `fetchOscarAnimeMovies` mirrors `fetchOscarMovies` (rank=届数, year=film release year, built-in 中文名+英文原名, douban only for cover/rating) → `oscar_anime_movies`; 最佳动画长篇 starts at 第74届(2001).
 - **Movie search:** `searchMovieByTitle` (Douban suggest) / `fetchMovieFullInfo` (豆瓣+OMDb+RT enrichment, daily rate-limited) / `getMyMovieQueries` / `deleteMovieQuery`
 - **Push:** `subscribeMessage` (record authorization + quota) / `pushSubscribeMessages` (timer dispatch by topic)
 - `analyzeMarks` / `analyzeRetention` / `inspectData` — analytics & ops; `migrateCovers` / `migrateData` / `importMovies` — one-shot data migration; `initAdConfig` — seed ad-unit config; `getOpenid` — auth helper
@@ -120,7 +125,7 @@ This project uses **WeChat Developer Tools** (微信开发者工具) for buildin
 ### Pack Excludes (`project.config.json` → `packOptions.ignore`)
 Several themes/files live in source but are **excluded from the production bundle**. When working on them, remember they won't appear in the mini program until removed from the ignore list:
 - Pages: `pages/chinese`, `pages/annual`, `pages/chinese-awards`, `pages/growth/share`
-- Utils (only consumed by excluded pages): `utils/doubanPosterDrawer.js`, `utils/imdbPosterDrawer.js`, `utils/annualLoader.js`, `utils/annualPosterDrawer.js`, `utils/chineseLoader.js`, `utils/chinesePosterDrawer.js`, `utils/fitnessTypes.js`
+- Utils (only consumed by excluded pages): `utils/doubanPosterDrawer.js`, `utils/imdbPosterDrawer.js`, `utils/annualLoader.js`, `utils/annualPosterDrawer.js`, `utils/chineseLoader.js`, `utils/chinesePosterDrawer.js`
 - Folders: `data-raw/`, `tools/`, `.claude/`, `.obsidian/`, `doc/`, `docs/`, `douban_spyder/`
 - Root scratch / docs: `小程序首页码.png`, `Water Tracker _standalone_ (1).html`, `coupon_creation.html`, `view_excel.py`, `test_imdb.js`, `CLAUDE.md`
 

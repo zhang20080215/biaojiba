@@ -1,0 +1,62 @@
+<view class="page-root">
+  <view class="top-toast {{toast.show ? 'is-show' : ''}}">
+    <text class="top-toast-icon" wx:if="{{toast.icon === 'success'}}">✓</text>
+    <text class="top-toast-text">{{toast.text}}</text>
+  </view>
+
+  <view class="custom-nav" style="height: {{navOffset}}px; padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-btn nav-btn-left" bindtap="onBack" hover-class="nav-btn-active">
+        <text class="nav-chev">‹</text>
+      </view>
+      <text class="nav-title">运动统计</text>
+    </view>
+  </view>
+
+  <view class="content" style="padding-top: {{navOffset}}px;">
+    <view class="seg">
+      <view class="seg-item {{range === 'week' ? 'active' : ''}}" data-range="week" bindtap="onRangeTap">周</view>
+      <view class="seg-item {{range === 'month' ? 'active' : ''}}" data-range="month" bindtap="onRangeTap">月</view>
+      <view class="seg-item {{range === 'year' ? 'active' : ''}}" data-range="year" bindtap="onRangeTap">年</view>
+    </view>
+
+    <view class="headline">
+      <text class="headline-cap">{{headlineCap}}</text>
+      <view class="headline-num">
+        <text class="hnum">{{headline.num}}</text><text class="hunit">次</text>
+      </view>
+      <text class="headline-sub">{{headline.sub}}</text>
+    </view>
+
+    <view class="chart-card">
+      <view class="period-nav">
+        <view class="period-arrow {{canGoPrevPeriod ? '' : 'is-disabled'}}" bindtap="onPrevPeriod">‹</view>
+        <text class="period-label">{{periodLabel}}</text>
+        <view class="period-arrow {{canGoNextPeriod ? '' : 'is-disabled'}}" bindtap="onNextPeriod">›</view>
+      </view>
+
+      <view wx:if="{{loading}}" class="state-text">加载中...</view>
+      <view wx:else class="bars">
+        <view wx:for="{{bars}}" wx:key="label" class="bar-col">
+          <text wx:if="{{item.icon}}" class="bar-icon">{{item.icon}}</text>
+          <text wx:else class="bar-icon icon-empty">·</text>
+          <text class="bar-value">{{item.value ? item.value : ''}}</text>
+          <view class="bar-track">
+            <view class="bar-fill" style="height: {{item.fillPctH}}%;"></view>
+          </view>
+          <text class="bar-label">{{item.label}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="kpi-grid">
+      <view class="kpi-tile" wx:for="{{kpi}}" wx:key="label">
+        <text class="kpi-label">{{item.label}}</text>
+        <view class="kpi-value-row">
+          <text class="kpi-value">{{item.value}}</text>
+          <text class="kpi-unit">{{item.unit}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

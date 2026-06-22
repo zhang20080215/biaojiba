@@ -40,7 +40,7 @@
   <!-- 每日标记 -->
   <view class="section-head">每日标记</view>
 
-  <!-- 每日主题：横排 4 个独立块（最后一个敬请期待） -->
+  <!-- 每日主题：横排 4 个独立块（电影/读书/运动/喝水；不足 4 个时补敬请期待） -->
   <view class="daily-section">
     <view class="daily-row">
       <block wx:for="{{dailyBlocks}}" wx:key="key">

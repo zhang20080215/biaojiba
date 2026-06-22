@@ -1,0 +1,477 @@
+import DataLoader from '../../../utils/dataLoader';
+import imageCacheManager from '../../../utils/imageCacheManager';
+var adConfig = require('../../../utils/adConfig');
+var adManager = require('../../../utils/adManager');
+
+Page({
+    data: {
+        statusBarHeight: 0,
+        navBarHeight: 0,
+        userInfo: null,
+        openid: '',
+        pendingOpenid: '',
+        allMovies: [],
+        movies: [],
+        markStatusMap: {},
+        markDateMap: {},
+        watchedIds: [],
+        wishIds: [],
+        watchedCount: 0,
+        wishCount: 0,
+        unwatchedCount: 0,
+        allCount: 0,
+        activeTab: 0,
+        currentFilter: 'all',
+        isBatchEditing: false,
+        selectedMovieIds: [],
+        loading: false,
+        showAuthModal: false,
+        showShareModal: false,
+        tempAvatar: '',
+        tempNickname: '',
+        infeedSlots: {},
+        adUnitIds: {
+            movielist_infeed: adConfig.getAdUnitId('movielist_infeed') || '',
+        },
+    },
+
+    onLoad() {
+        if (!wx.cloud) {
+            wx.showToast({ title: '请升级基础库', icon: 'none' });
+            return;
+        }
+        // 沉浸式布局：获取状态栏和导航栏高度
+        const sysInfo = wx.getWindowInfo();
+        const menuBtn = wx.getMenuButtonBoundingClientRect();
+        const statusBarHeight = sysInfo.statusBarHeight || 20;
+        const navBarHeight = (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
+        this.setData({ statusBarHeight, navBarHeight });
+        wx.setNavigationBarTitle({ title: '历届奥斯卡最佳动画长篇' });
+        this.checkLoginStatus();
+        this.loadAllMovies(true); // 强制跳过24小时缓存拉取最新数据
+        this.initAds();
+    },
+
+    // 下拉刷新 - 强制绕过缓存
+    async onPullDownRefresh() {
+        await this.loadAllMovies(true);
+        wx.stopPullDownRefresh();
+    },
+
+    onShow() {
+        this.checkLoginStatus();
+    },
+
+    onBackHome() {
+        wx.reLaunch({ url: '/pages/category/category' });
+    },
+
+    getStoredUserInfo() {
+        const userInfo = wx.getStorageSync('userInfo');
+        if (!userInfo) return null;
+        const openid = userInfo._openid || userInfo.openid || '';
+        return openid ? { ...userInfo, _openid: openid, openid } : userInfo;
+    },
+
+    getActiveOpenid() {
+        const currentUserInfo = this.data.userInfo || {};
+        return currentUserInfo._openid || currentUserInfo.openid || this.data.openid || ((this.getStoredUserInfo() || {})._openid) || '';
+    },
+
+    hasLogin() {
+        return !!this.getActiveOpenid();
+    },
+
+    checkLoginStatus() {
+        const userInfo = this.getStoredUserInfo();
+        if (userInfo) {
+            this.setData({ userInfo, openid: userInfo._openid || '', pendingOpenid: '' });
+        } else {
+            this.setData({ userInfo: null, openid: '' });
+        }
+    },
+
+    onShareTap() {
+        if (!this.hasLogin()) {
+            wx.showToast({ title: '请先完成登录', icon: 'none' });
+            this.onGetUserProfile();
+            return;
+        }
+        this.setData({ showShareModal: true });
+    },
+
+    onShareSelect(e) {
+        const type = e.currentTarget.dataset.type;
+        this.setData({ showShareModal: false });
+        adManager.showInterstitial('share_interstitial').then(function () {
+            wx.navigateTo({ url: `/pages/oscarAnime/share/share?type=${type}` });
+        });
+    },
+
+    onCloseShareModal() {
+        this.setData({ showShareModal: false });
+    },
+
+    onHeaderLoginClick() {
+        if (!this.data.userInfo) {
+            this.onGetUserProfile();
+        }
+    },
+
+    onGetUserProfile() {
+        if (this.data.loading) return;
+        this.setData({ loading: true });
+        wx.showLoading({ title: '准备登录...' });
+        wx.cloud.callFunction({
+            name: 'getOpenid',
+            success: ret => {
+                const _openid = ret.result.openid;
+                if (!_openid) {
+                    wx.hideLoading();
+                    this.setData({ loading: false });
+                    wx.showToast({ title: '获取openid失败', icon: 'none' });
+                    return;
+                }
+                wx.hideLoading();
+                this.setData({
+                    loading: false, pendingOpenid: _openid,
+                    showAuthModal: true, tempAvatar: '', tempNickname: ''
+                });
+            },
+            fail: err => {
+                console.error('获取openid失败:', err);
+                wx.hideLoading();
+                this.setData({ loading: false });
+                wx.showToast({ title: '网络错误，请重试', icon: 'none' });
+            }
+        });
+    },
+
+    onCancelAuth() { this.setData({ showAuthModal: false, pendingOpenid: '' }); },
+    onChooseAvatar(e) { this.setData({ tempAvatar: e.detail.avatarUrl }); },
+    onNicknameInput(e) { this.setData({ tempNickname: e.detail.value }); },
+
+    async onConfirmAuth() {
+        const { tempAvatar, tempNickname } = this.data;
+        const openid = this.data.pendingOpenid || this.data.openid;
+        if (!openid) {
+            wx.showToast({ title: '请先完成登录', icon: 'none' }); return;
+        }
+        if (!tempAvatar || tempAvatar === '/images/default-avatar.svg') {
+            wx.showToast({ title: '请选择头像', icon: 'none' }); return;
+        }
+        if (!tempNickname || !tempNickname.trim()) {
+            wx.showToast({ title: '请输入昵称', icon: 'none' }); return;
+        }
+
+        wx.showLoading({ title: '保存中...', mask: true });
+        try {
+            let finalAvatarUrl = tempAvatar;
+            if (tempAvatar.startsWith('wxfile://') || tempAvatar.startsWith('http://tmp/')) {
+                const ext = tempAvatar.split('.').pop() || 'png';
+                const cloudPath = `avatars/${openid}_${Date.now()}.${ext}`;
+                const uploadRes = await wx.cloud.uploadFile({ cloudPath, filePath: tempAvatar });
+                finalAvatarUrl = uploadRes.fileID;
+            }
+
+            const userInfo = { _openid: openid, nickName: tempNickname, avatarUrl: finalAvatarUrl };
+            const db = wx.cloud.database();
+            const userRes = await db.collection('users').where({ openid }).get();
+            if (userRes.data.length === 0) {
+                await db.collection('users').add({
+                    data: { openid, nickname: userInfo.nickName, avatarUrl: userInfo.avatarUrl, created_at: new Date(), updated_at: new Date() }
+                });
+            } else {
+                await db.collection('users').doc(userRes.data[0]._id).update({
+                    data: { nickname: userInfo.nickName, avatarUrl: userInfo.avatarUrl, updated_at: new Date() }
+                });
+            }
+
+            wx.setStorageSync('userInfo', userInfo);
+            this.setData({ userInfo, openid, pendingOpenid: '', showAuthModal: false });
+            wx.hideLoading();
+            wx.showToast({ title: '登录成功', icon: 'success' });
+            this.loadUserMarks();
+        } catch (err) {
+            console.error('保存用户信息失败:', err);
+            wx.hideLoading();
+            wx.showToast({ title: '保存失败，请重试', icon: 'none' });
+        }
+    },
+
+    // ─── 核心：使用聚合云函数 + 本地缓存加载数据 ───
+    async loadAllMovies(forceRefresh = false) {
+        wx.showNavigationBarLoading();
+        try {
+            const openid = this.getActiveOpenid() || null;
+            const { movies, marks } = await DataLoader.loadMoviesData('oscarAnime', openid, forceRefresh);
+
+            const allMovies = movies.map(m => ({
+                ...m,
+                _id: String(m._id),
+                // thumbCover：优先取 originalCover（原始 douban URL）转缩略图，cover 保留用于海报生成
+                thumbCover: imageCacheManager.getThumbnailUrl(m.cover || m.coverUrl || m.originalCover, 'list')
+            }));
+            this.data.allMovies = allMovies;
+            this.data.allCount = allMovies.length;
+
+            const { markStatusMap, markDateMap, watchedIds, wishIds, stats } = DataLoader.processMarks(marks, allMovies);
+
+            this.setData({
+                markStatusMap, markDateMap, watchedIds, wishIds,
+                watchedCount: stats.watched, wishCount: stats.wish,
+                unwatchedCount: stats.unwatched, allCount: allMovies.length,
+                allMovies, movies: allMovies
+            }, () => {
+                this.updateFilteredMovies();
+                wx.hideNavigationBarLoading();
+            });
+        } catch (err) {
+            console.error('加载电影/标记数据失败:', err);
+            this.setData({ allMovies: [], movies: [], allCount: 0 });
+            wx.showToast({ title: '无数据或加载失败', icon: 'none' });
+            wx.hideNavigationBarLoading();
+        }
+    },
+
+    // ─── 仅刷新标记（登录后调用，不重复拉取电影列表）───
+    async loadUserMarks() {
+        const openid = this.getActiveOpenid();
+        if (!openid) return;
+        wx.showNavigationBarLoading();
+        try {
+            const { marks } = await DataLoader.loadMoviesData('oscarAnime', openid, false);
+            const { markStatusMap, markDateMap, watchedIds, wishIds, stats } = DataLoader.processMarks(marks, this.data.allMovies);
+            this.setData({
+                markStatusMap, markDateMap, watchedIds, wishIds,
+                watchedCount: stats.watched, wishCount: stats.wish, unwatchedCount: stats.unwatched
+            }, () => {
+                this.updateFilteredMovies();
+                wx.hideNavigationBarLoading();
+            });
+        } catch (err) {
+            console.error('刷新标记失败:', err);
+            wx.hideNavigationBarLoading();
+        }
+    },
+
+    updateFilteredMovies() {
+        const { allMovies, markStatusMap, activeTab } = this.data;
+        let movies = [];
+        if (activeTab === 0) movies = allMovies;
+        else if (activeTab === 1) movies = allMovies.filter(m => markStatusMap[m._id] === 'watched');
+        else if (activeTab === 2) movies = allMovies.filter(m => markStatusMap[m._id] === 'wish');
+        else if (activeTab === 3) movies = allMovies.filter(m => !markStatusMap[m._id]);
+        movies = movies.map(movie => ({ ...movie, checked: this.data.selectedMovieIds.includes(String(movie._id)) }));
+        this.setData({ movies });
+    },
+
+    onTabChange(e) {
+        const idx = Number(e.currentTarget.dataset.idx);
+        this.setData({ activeTab: idx, isBatchEditing: false, selectedMovieIds: [] }, this.updateFilteredMovies);
+    },
+
+    onCopyTitle(e) {
+        const title = e.currentTarget.dataset.title;
+        if (!title) return;
+        wx.setClipboardData({
+            data: title,
+            success: () => {
+                wx.showToast({ title: '已复制', icon: 'success', duration: 1500 });
+            }
+        });
+    },
+
+    onMarkTap(e) {
+        const openid = this.getActiveOpenid();
+        if (!openid) {
+            wx.showModal({
+                title: '提示', content: '请登录后再进行标记', confirmText: '去登录',
+                success: (res) => { if (res.confirm) this.onGetUserProfile(); }
+            });
+            return;
+        }
+
+        const movieId = String(e.currentTarget.dataset.id);
+        const type = e.currentTarget.dataset.type;
+        if (!movieId || !type || !openid) {
+            wx.showToast({ title: '数据不完整', icon: 'none' }); return;
+        }
+        const db = wx.cloud.database();
+        db.collection('Marks').where({ movieId, openid }).get().then(res => {
+            const now = new Date().toISOString();
+            if (res.data.length > 0) {
+                db.collection('Marks').doc(res.data[0]._id).update({
+                    data: { status: type, marked_at: now }
+                }).then(() => {
+                    const markStatusMap = { ...this.data.markStatusMap };
+                    const markDateMap = { ...this.data.markDateMap };
+                    const oldStatus = markStatusMap[movieId];
+                    markStatusMap[movieId] = type;
+                    markDateMap[movieId] = this.formatMarkDate(now);
+                    let { watchedCount, wishCount, unwatchedCount } = this.data;
+                    if (oldStatus === 'watched') watchedCount--;
+                    else if (oldStatus === 'wish') wishCount--;
+                    else unwatchedCount--;
+                    if (type === 'watched') watchedCount++;
+                    else if (type === 'wish') wishCount++;
+                    this.setData({ markStatusMap, markDateMap, watchedCount, wishCount, unwatchedCount }, this.updateFilteredMovies);
+                    wx.showToast({ title: type === 'watched' ? '已更新为已看' : '已更新为想看' });
+                });
+            } else {
+                db.collection('Marks').add({
+                    data: { movieId, openid, status: type, marked_at: now }
+                }).then(() => {
+                    const markStatusMap = { ...this.data.markStatusMap };
+                    const markDateMap = { ...this.data.markDateMap };
+                    markStatusMap[movieId] = type;
+                    markDateMap[movieId] = this.formatMarkDate(now);
+                    let { watchedCount, wishCount, unwatchedCount } = this.data;
+                    if (type === 'watched') watchedCount++;
+                    else if (type === 'wish') wishCount++;
+                    unwatchedCount--;
+                    this.setData({ markStatusMap, markDateMap, watchedCount, wishCount, unwatchedCount }, this.updateFilteredMovies);
+                    wx.showToast({ title: type === 'watched' ? '已看成功' : '想看成功' });
+                });
+            }
+        });
+    },
+
+    formatMarkDate(dateStr) {
+        if (!dateStr) return '';
+        try {
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return '';
+            return `${d.getMonth() + 1}/${d.getDate()}`;
+        } catch (e) { return ''; }
+    },
+
+    onStartBatchEdit() {
+        if (!this.hasLogin()) { this.onGetUserProfile(); return; }
+        this.setData({ isBatchEditing: true, selectedMovieIds: [] });
+        this.updateFilteredMovies();
+    },
+
+    onCancelBatchEdit() {
+        this.setData({ isBatchEditing: false, selectedMovieIds: [] });
+        this.updateFilteredMovies();
+    },
+
+    onMovieCheck(e) {
+        const movieId = e.currentTarget.dataset.movieId;
+        if (movieId === undefined || movieId === null) return;
+
+        let selectedMovieIds = this.data.selectedMovieIds;
+        const index = selectedMovieIds.indexOf(movieId);
+        let checked;
+        if (index > -1) {
+            selectedMovieIds.splice(index, 1);
+            checked = false;
+        } else {
+            selectedMovieIds = [...selectedMovieIds, movieId];
+            checked = true;
+        }
+
+        const updatedMovies = this.data.movies.map(movie => {
+            if (String(movie._id) === String(movieId)) return { ...movie, checked };
+            return movie;
+        });
+        this.setData({ selectedMovieIds, movies: updatedMovies });
+    },
+
+    onBatchWatch() {
+        if (this.data.selectedMovieIds.length === 0) {
+            wx.showToast({ title: '请选择电影', icon: 'none' }); return;
+        }
+        this.batchUpdateMarks(this.data.selectedMovieIds, 'watched');
+    },
+
+    onBatchWish() {
+        if (this.data.selectedMovieIds.length === 0) {
+            wx.showToast({ title: '请选择电影', icon: 'none' }); return;
+        }
+        this.batchUpdateMarks(this.data.selectedMovieIds, 'wish');
+    },
+
+    // ─── 批量标记：一次云函数调用代替 N*2 次直接 DB 操作 ───
+    batchUpdateMarks(movieIds, status) {
+        const openid = this.getActiveOpenid();
+        if (!openid) { wx.showToast({ title: '请先登录', icon: 'none' }); return; }
+
+        wx.showLoading({ title: '批量更新中...' });
+        wx.cloud.callFunction({
+            name: 'batchUpdateMarks',
+            data: { movieIds, status, openid },
+            success: res => {
+                wx.hideLoading();
+                if (res.result && res.result.success) {
+                    wx.showToast({ title: '批量标记成功', icon: 'success' });
+                    this.setData({ isBatchEditing: false, selectedMovieIds: [] });
+                    setTimeout(() => { this.loadUserMarks(); }, 500);
+                } else {
+                    wx.showToast({ title: '部分标记失败', icon: 'none' });
+                }
+            },
+            fail: err => {
+                wx.hideLoading();
+                console.error('批量标记云函数失败:', err);
+                wx.showToast({ title: '网络错误，请重试', icon: 'none' });
+            }
+        });
+    },
+
+    onImageError(e) {
+        const movieId = e.currentTarget.dataset.movieId;
+        if (movieId) {
+            this.tryFallbackImage(movieId);
+        }
+    },
+
+    tryFallbackImage(movieId) {
+        const movie = this.data.movies.find(m => String(m._id) === String(movieId));
+        if (movie && movie.originalCover && movie.cover !== movie.originalCover) {
+            this.updateMovieImage(movieId, movie.originalCover);
+        } else {
+            this.updateMovieImage(movieId, 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQ1MCIgdmlld0JveD0iMCAwIDMwMCA0NTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iNDUwIiBmaWxsPSIjRjVGNUY1Ii8+CjxwYXRoIGQ9Ik0xNTAgMjAwTDEyMCAyNTBMMTUwIDMwMEwyMDAgMjUwTDE1MCAyMDBaIiBmaWxsPSIjQ0NDQ0NDIi8+Cjx0ZXh0IHg9IjE1MCIgeT0iMzUwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOTk5OTk5IiBmb250LXNpemU9IjE0Ij7lm77niYfmlrDpl7vnpL7kvJ08L3RleHQ+Cjwvc3ZnPgo=');
+        }
+    },
+
+    // 只对命中的下标做定点 setData，避免把整张电影数组回传给视图层
+    updateMovieImage(movieId, imageUrl) {
+        const targetId = String(movieId);
+        const updates = {};
+        const mIdx = this.data.movies.findIndex(m => String(m._id) === targetId);
+        if (mIdx >= 0) {
+            updates[`movies[${mIdx}].cover`] = imageUrl;
+            updates[`movies[${mIdx}].thumbCover`] = imageUrl;
+        }
+        const aIdx = this.data.allMovies.findIndex(m => String(m._id) === targetId);
+        if (aIdx >= 0) {
+            updates[`allMovies[${aIdx}].cover`] = imageUrl;
+            updates[`allMovies[${aIdx}].thumbCover`] = imageUrl;
+        }
+        if (Object.keys(updates).length) this.setData(updates);
+    },
+
+    onShareAppMessage() {
+        return {
+            title: '历届奥斯卡最佳动画长篇 - 每年一部经典动画',
+            path: '/pages/oscarAnime/list/list'
+        };
+    },
+
+    // ========== 广告 ==========
+    initAds() {
+        if (!this.data.adUnitIds.movielist_infeed) return;
+        var slots = {};
+        for (var pos = 5; pos <= 25; pos += 20) {
+            slots[pos] = true;
+        }
+        this.setData({ infeedSlots: slots });
+    },
+    onInfeedAdLoad() {},
+    onInfeedAdError(e) {
+        var pos = e.currentTarget.dataset.position;
+        if (pos !== undefined) this.setData({ ['infeedSlots.' + pos]: false });
+    }
+});

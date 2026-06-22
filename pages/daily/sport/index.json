@@ -1,0 +1,8 @@
+{
+  "navigationBarTitleText": "每日运动",
+  "navigationStyle": "custom",
+  "navigationBarBackgroundColor": "#FAFBFF",
+  "navigationBarTextStyle": "black",
+  "backgroundColor": "#EAEEFA",
+  "enablePullDownRefresh": true
+}

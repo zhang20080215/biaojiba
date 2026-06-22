@@ -10,7 +10,7 @@
 //   DailySettings: openid + theme 复合索引（唯一）
 //
 // 入参约定（所有 action 都必填 theme）：
-//   action: 'getToday' | 'addEntry' | 'removeEntry' | 'setGoal' | 'setPresets' | 'getRange' | 'getYear'
+//   action: 'getToday' | 'addEntry' | 'removeEntry' | 'updateEntry' | 'reorderEntries' | 'setGoal' | 'setPresets' | 'getRange' | 'getYear'
 //   theme:  'water' | 'milktea' | ...
 
 const cloud = require('wx-server-sdk');
@@ -87,7 +87,9 @@ const THEME_DEFAULTS = {
     // movie 里 daily_goal 复用为"每月目标部数"，用于月度进度。
     movie:   { unit: '部', daily_goal: 10,   presets: [1] },
     // read 里 daily_goal 复用为"每月目标本数"，用于月度进度。
-    read:    { unit: '本', daily_goal: 5,    presets: [1] }
+    read:    { unit: '本', daily_goal: 5,    presets: [1] },
+    // sport 里 daily_goal 复用为"每月目标训练次数"，用于月度进度。
+    sport:   { unit: '次', daily_goal: 20,   presets: [1] }
 };
 
 function todayStr() {
@@ -198,13 +200,10 @@ async function upsertDay(openid, theme, date, mutate) {
             }
         });
         return { ...existing, ...next, updated_at: now };
-    } else {
-        const next = mutate({ openid, theme, date, total_value: 0, entries: [], unit });
-        const res = await db.collection('DailyLogs').add({
-            data: { ...next, updated_at: now, created_at: now }
-        });
-        return { _id: res._id, ...next, updated_at: now };
     }
+    // 不存在记录：编辑 / 删除 / 重排一个不存在的日期视为 no-op，
+    // 返回空壳但**不写库**，避免产生 entries:[] 的垃圾空文档（addEntry 走 atomicAddEntry，不经此路径）
+    return { openid, theme, date, total_value: 0, entries: [], unit, updated_at: now };
 }
 
 exports.main = async (event, context) => {
@@ -249,6 +248,39 @@ exports.main = async (event, context) => {
                 const entries = (day.entries || []).filter(e => e.ts !== ts);
                 const total_value = entries.reduce((s, e) => s + (Number(e.value) || 0), 0);
                 return { ...day, entries, total_value };
+            });
+            return { success: true, theme, date, day: updated };
+        }
+
+        if (action === 'updateEntry') {
+            const { date, ts, value, meta = null } = event;
+            if (!date || !ts) return { success: false, error: 'date / ts 必填' };
+            const safeMeta = await mirrorMetaCovers(meta, openid);
+            const updated = await upsertDay(openid, theme, date, day => {
+                const entries = (day.entries || []).map(e => {
+                    if (e.ts !== ts) return e;
+                    const nv = (value != null && Number(value) > 0) ? Number(value) : e.value;
+                    return { ...e, value: nv, meta: safeMeta != null ? safeMeta : e.meta };
+                });
+                const total_value = entries.reduce((s, e) => s + (Number(e.value) || 0), 0);
+                return { ...day, entries, total_value };
+            });
+            return { success: true, theme, date, day: updated };
+        }
+
+        if (action === 'reorderEntries') {
+            const { date, order } = event;
+            if (!date || !Array.isArray(order)) return { success: false, error: 'date / order 必填' };
+            const updated = await upsertDay(openid, theme, date, day => {
+                const entries = day.entries || [];
+                const byTs = {};
+                entries.forEach(e => { byTs[e.ts] = e; });
+                const seen = {};
+                const ordered = [];
+                order.forEach(ts => { if (byTs[ts] && !seen[ts]) { ordered.push(byTs[ts]); seen[ts] = true; } });
+                // order 里没覆盖到的（异常）按原序补在后面，避免丢条目
+                entries.forEach(e => { if (!seen[e.ts]) ordered.push(e); });
+                return { ...day, entries: ordered };
             });
             return { success: true, theme, date, day: updated };
         }

@@ -1,0 +1,154 @@
+<view class="page-root">
+  <view class="top-toast {{toast.show ? 'is-show' : ''}}">
+    <text class="top-toast-icon" wx:if="{{toast.icon === 'success'}}">✓</text>
+    <text class="top-toast-text">{{toast.text}}</text>
+  </view>
+
+  <view class="custom-nav" style="height: {{navOffset}}px; padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-btn nav-btn-left" bindtap="onBack" hover-class="nav-btn-active">
+        <text class="nav-chev">‹</text>
+      </view>
+      <text class="nav-title">标记吧：每日运动</text>
+    </view>
+  </view>
+
+  <view class="content" style="padding-top: {{navOffset}}px;">
+    <!-- 顶部控制：月份切换（左） + 视图切换（右） -->
+    <view class="top-controls">
+      <view class="month-nav">
+        <view class="month-arrow" bindtap="onPrevMonth" hover-class="tap-soft">‹</view>
+        <text class="month-label">{{monthLabel}}</text>
+        <view class="month-arrow {{canGoNextMonth ? '' : 'is-disabled'}}" bindtap="onNextMonth" hover-class="tap-soft">›</view>
+      </view>
+      <view class="seg">
+        <view class="seg-item {{viewMode === 'calendar' ? 'active' : ''}}" data-view="calendar" bindtap="onViewTap">日历</view>
+        <view class="seg-item {{viewMode === 'timeline' ? 'active' : ''}}" data-view="timeline" bindtap="onViewTap">时间轴</view>
+      </view>
+    </view>
+
+    <!-- ===== 时间轴 ===== -->
+    <view wx:if="{{viewMode === 'timeline'}}" class="timeline-box">
+      <view wx:if="{{!loading && timeline.length === 0}}" class="tl-empty">
+        <text class="empty-title">本月还没有运动记录</text>
+        <text class="empty-sub">切到「日历」即可添加训练记录</text>
+      </view>
+      <view wx:else class="timeline">
+        <view class="tl-day" wx:for="{{timeline}}" wx:key="date">
+          <view class="tl-rail">
+            <view class="tl-dot"></view>
+            <view class="tl-line"></view>
+          </view>
+          <view class="tl-day-main">
+            <view class="tl-day-head">
+              <text class="tl-date">{{item.dateLabel}}</text>
+              <text class="tl-weekday">{{item.weekday}}</text>
+              <text class="tl-day-count">{{item.count}} 次</text>
+            </view>
+            <view class="tl-card" wx:for="{{item.items}}" wx:for-item="sp" wx:key="key">
+              <view class="tl-icon" style="background-image: url('{{sp.iconUri}}');"></view>
+              <view class="tl-info">
+                <view class="tl-title-row">
+                  <text class="tl-title">{{sp.typeName}}</text>
+                  <text wx:if="{{sp.summaryText}}" class="tl-summary">{{sp.summaryText}}</text>
+                </view>
+                <text wx:if="{{sp.note}}" class="tl-note">{{sp.note}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- ===== 日历 ===== -->
+    <view wx:else class="cal-block" id="calBlock">
+      <view class="cal-head">
+        <text wx:for="{{weekHeader}}" wx:key="*this" class="cal-head-cell">{{item}}</text>
+      </view>
+      <view class="cal-grid">
+        <block wx:for="{{calendarCells}}" wx:key="index">
+          <view wx:if="{{item.empty}}" class="cal-cell empty-cell"></view>
+          <view wx:else
+                class="cal-cell {{item.isSelected ? 'is-selected' : ''}} {{item.isToday ? 'is-today' : ''}}"
+                data-date="{{item.date}}"
+                bindtap="onSelectDay">
+            <block wx:if="{{item.hasSports}}">
+              <view class="cal-icon" style="background-image: url('{{item.iconUri}}');"></view>
+              <text wx:if="{{item.count > 1}}" class="cal-badge">{{item.count}}</text>
+            </block>
+            <text wx:else class="cal-day">{{item.day}}</text>
+          </view>
+        </block>
+      </view>
+    </view>
+
+    <!-- ===== 日历视图底部：添加按钮 + 选中日记录 ===== -->
+    <block wx:if="{{viewMode === 'calendar'}}">
+    <view class="add-record-btn" bindtap="onOpenAdd" hover-class="tap-soft">
+      <text class="add-plus">＋</text>
+      <text>添加运动记录</text>
+    </view>
+
+    <!-- 选中日期的运动记录 -->
+    <view class="sel-section">
+      <view class="sel-head">
+        <text class="sel-date">{{selectedDateText}}</text>
+        <view class="sel-head-right">
+          <text class="sel-count">{{selectedSports.length}} 次</text>
+          <view wx:if="{{selectedSports.length > 0}}" class="share-btn" bindtap="onShareCard" hover-class="tap-soft">
+            <text class="share-icon">↗</text>
+            <text>分享卡片</text>
+          </view>
+        </view>
+      </view>
+
+      <view wx:if="{{loading}}" class="state-text">加载中...</view>
+
+      <view wx:elif="{{selectedSports.length === 0}}" class="empty">
+        <text class="empty-title">这一天还没有记录</text>
+        <text class="empty-sub">点上方按钮，添加这天的训练</text>
+      </view>
+
+      <block wx:else>
+        <view class="sport-cell {{dragTs === sport.ts ? 'is-dragging' : ''}}" style="{{sport.style}}" wx:for="{{selectedSports}}" wx:for-item="sport" wx:key="key">
+          <view class="card-actions">
+            <view class="action action-edit"
+                  catchtap="onSwipeEdit"
+                  data-date="{{sport.date}}"
+                  data-ts="{{sport.ts}}">编辑</view>
+            <view class="action action-delete"
+                  catchtap="onSwipeDelete"
+                  data-date="{{sport.date}}"
+                  data-ts="{{sport.ts}}"
+                  data-title="{{sport.typeName}}">删除</view>
+          </view>
+          <view class="sport-card {{swipedKey === sport.key ? 'is-swiped' : ''}}"
+                data-key="{{sport.key}}"
+                data-date="{{sport.date}}"
+                data-ts="{{sport.ts}}"
+                data-title="{{sport.typeName}}"
+                bindtap="onTapSportCard"
+                bindlongpress="onLongPressSport"
+                bindtouchstart="onCardTouchStart"
+                bindtouchend="onCardTouchEnd">
+            <view class="sport-icon" style="background-image: url('{{sport.iconUri}}');"></view>
+            <view class="sport-info">
+              <view class="title-row">
+                <text class="sport-title">{{sport.typeName}}</text>
+                <text wx:if="{{sport.summaryText}}" class="sport-summary">{{sport.summaryText}}</text>
+              </view>
+              <text wx:if="{{sport.note}}" class="sport-note">{{sport.note}}</text>
+            </view>
+            <view class="drag-handle"
+                  data-ts="{{sport.ts}}"
+                  data-index="{{index}}"
+                  catchtouchstart="onDragStart"
+                  catchtouchmove="onDragMove"
+                  catchtouchend="onDragEnd">☰</view>
+          </view>
+        </view>
+      </block>
+    </view>
+    </block>
+  </view>
+</view>

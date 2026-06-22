@@ -1,0 +1,165 @@
+page {
+  min-height: 100vh;
+  background: #E9EDFA;
+}
+.page-root {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #FAFBFF 0%, #EEF1FB 55%, #E6EAF7 100%);
+  color: #222B45;
+  font-family: -apple-system, "PingFang SC", system-ui;
+  box-sizing: border-box;
+}
+.top-toast {
+  position: fixed;
+  top: 22%;
+  left: 50%;
+  transform: translate(-50%, -8rpx);
+  z-index: 1000;
+  background: rgba(34, 43, 69, 0.9);
+  color: #fff;
+  padding: 18rpx 32rpx;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+.top-toast.is-show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.custom-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: #FAFBFF;
+  box-sizing: border-box;
+}
+.nav-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.nav-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #222B45;
+}
+.nav-btn {
+  position: absolute;
+  top: 50%;
+  width: 76rpx;
+  height: 76rpx;
+  margin-top: -38rpx;
+  border-radius: 22rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.nav-btn-left { left: 22rpx; }
+.nav-btn-active { background: rgba(61, 107, 255, 0.08); }
+.nav-chev {
+  font-size: 56rpx;
+  font-weight: 300;
+  line-height: 1;
+  color: #222B45;
+}
+
+.content {
+  /* padding-top 由内联 style 给定（= navOffset），这里补底部为固定操作栏留白；
+     min-height 撑满视口 + justify-content 居中，让海报垂直居中、消除下方大留白 */
+  min-height: 100vh;
+  padding: 32rpx 32rpx 260rpx;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+/* 预览容器：尺寸由内联 style 给定（= canvas 显示尺寸），自身做底色+阴影衬在原生 canvas 之下 */
+.preview-wrap {
+  border-radius: 24rpx;
+  background: #FFFFFF;
+  box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.14);
+}
+.poster-canvas {
+  display: block;
+}
+.preview-tip {
+  display: block;
+  margin-top: 22rpx;
+  text-align: center;
+  font-size: 23rpx;
+  color: #838BA0;
+}
+
+/* 主题色选择条 */
+.theme-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 30rpx;
+  margin-top: 30rpx;
+}
+.theme-dot {
+  position: relative;
+  width: 58rpx;
+  height: 58rpx;
+  border-radius: 50%;
+  box-shadow: 0 6rpx 16rpx rgba(34, 43, 69, 0.16);
+  transition: transform 160ms ease;
+}
+.theme-dot.is-active {
+  transform: scale(1.12);
+  box-shadow: 0 0 0 6rpx #FFFFFF, 0 0 0 9rpx rgba(34, 43, 69, 0.18);
+}
+.theme-check {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #FFFFFF;
+  font-size: 30rpx;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.action-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  padding: 16rpx 32rpx calc(16rpx + env(safe-area-inset-bottom));
+  background: rgba(250, 251, 255, 0.94);
+  box-shadow: 0 -8rpx 24rpx rgba(34, 43, 69, 0.06);
+  box-sizing: border-box;
+}
+.save-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 92rpx;
+  line-height: 1;
+  border-radius: 26rpx;
+  background: #3D6BFF;
+  color: #FFFFFF;
+  font-size: 30rpx;
+  font-weight: 800;
+  box-shadow: 0 14rpx 30rpx rgba(61, 107, 255, 0.3);
+}
+.save-btn[disabled] {
+  opacity: 0.55;
+  color: #FFFFFF;
+  background: #3D6BFF;
+}
+.save-sub {
+  display: block;
+  margin-top: 12rpx;
+  text-align: center;
+  font-size: 22rpx;
+  color: #838BA0;
+}

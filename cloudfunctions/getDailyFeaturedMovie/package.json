@@ -1,0 +1,11 @@
+{
+  "name": "getDailyFeaturedMovie",
+  "version": "1.0.0",
+  "description": "Pick a daily-rotating featured movie from searched_movies (douban rating > 8.5)",
+  "main": "index.js",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

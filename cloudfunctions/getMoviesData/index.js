@@ -86,6 +86,9 @@ exports.main = async (event, context) => {
         } else if (theme === 'oscar') {
             collectionName = 'oscar_movies';
             orderDirection = 'desc'; // 濂ユ柉鍗＄敱鏈€鏂板線鏃ф帓搴忥紝姣斿 96灞? 95灞?..
+        } else if (theme === 'oscarAnime') {
+            collectionName = 'oscar_anime_movies';
+            orderDirection = 'desc'; // 最佳动画长篇同样由最新一届往旧排序
         } else if (theme === 'boxoffice') {
             collectionName = 'boxoffice_movies';
         } else if (theme === 'chinese') {

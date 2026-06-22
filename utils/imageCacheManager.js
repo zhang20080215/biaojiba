@@ -23,7 +23,8 @@ function getThumbnailUrl(url, usage) {
         // 如果是已被处理过的封面，避免再次经过云处理引发 500 错误
         // daily_covers：每日打卡（电影/读书）镜像到云存储的封面，<image> 不支持 cloud:// 带 imageMogr2 query
         // searched_movie_covers：movie-search/每日电影海报由 fetchMovieFullInfo 镜像的云封面，同样不能带 query
-        if (url.includes('imdb_covers') || url.includes('oscar_covers') || url.includes('boxoffice_covers') ||
+        if (url.includes('imdb_covers') || url.includes('oscar_covers') || url.includes('oscar_anime_covers') ||
+            url.includes('boxoffice_covers') ||
             url.includes('daily_covers') || url.includes('searched_movie_covers')) {
             return url;
         }

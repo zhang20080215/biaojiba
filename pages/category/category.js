@@ -4,6 +4,7 @@ var adConfig = require('../../utils/adConfig')
 var DAILY_BLOCK_META = {
   daily_movie: { emoji: '🎬', color: '#F6DED5', label: '#B05B43' }, // 暖陶土
   daily_read:  { emoji: '📖', color: '#E5EAD2', label: '#6E7B45' }, // 橄榄绿（呼应主题色）
+  daily_sport: { emoji: '🏋️', color: '#DEE7FF', label: '#3F6AD6' }, // 清新蓝（呼应每日运动页风格）
   daily_water: { emoji: '💧', color: '#D8E7EC', label: '#3F7E93' }  // 雾蓝
 };
 var DAILY_BLOCK_SOON = { emoji: '✨', color: '#EFE9DD', label: '#A89B85' };
@@ -50,6 +51,28 @@ Page({
         category: 'daily',
         isNew: true,
         url: '/pages/daily/read/index'
+      },
+      {
+        id: 'daily_sport',
+        title: '每日运动',
+        description: '记录每次训练，坚持养成习惯',
+        image: '',
+        userCount: 0,
+        tag: '每日',
+        category: 'daily',
+        isNew: true,
+        url: '/pages/daily/sport/index'
+      },
+      {
+        id: 'oscar_anime_movies',
+        title: '历届奥斯卡最佳动画长篇',
+        description: '奥斯卡最佳动画长篇历年获奖，每年一部经典动画',
+        image: '/images/cover-oscar.jpg',
+        userCount: 0,
+        tag: '电影',
+        category: 'movie',
+        isNew: true,
+        url: '/pages/oscarAnime/list/list'
       },
       {
         id: 'movie_search_all_platforms',
@@ -155,7 +178,9 @@ Page({
         url: '/pages/growth/input/input'
       }
     ],
-    filteredThemes: []
+    filteredThemes: [],
+    // 奥斯卡最佳动画长篇卡片封面：取该榜单第一部电影的封面（异步从云端拉取后注入）
+    oscarAnimeCover: ''
   },
 
   onLoad() {
@@ -177,7 +202,22 @@ Page({
     this.buildDailyBlocks();
     this.filterThemes('all');
     this.loadUserCounts();
+    this.loadOscarAnimeCover();
     this.initAds();
+  },
+
+  // 拉取奥斯卡最佳动画长篇榜单「第一部」（与列表同序：rank desc）的封面，注入卡片
+  loadOscarAnimeCover() {
+    wx.cloud.database().collection('oscar_anime_movies')
+      .orderBy('rank', 'desc').limit(1).get()
+      .then(res => {
+        const first = res && res.data && res.data[0];
+        const cover = first && (first.cover || first.coverUrl);
+        if (cover) {
+          this.setData({ oscarAnimeCover: cover }, () => this.filterThemes(this.data.activeTab));
+        }
+      })
+      .catch(err => console.warn('loadOscarAnimeCover 失败', err));
   },
 
   onShareAppMessage() {
@@ -219,14 +259,16 @@ Page({
     this.filterThemes(tab);
   },
 
-  // 每日主题独立成顶部横排块（3 个真实 + 1 个敬请期待），不进下方卡片网格
+  // 每日主题独立成顶部横排块（最多 4 个真实；不足 4 个时补「敬请期待」），不进下方卡片网格
   buildDailyBlocks() {
-    const daily = (this.data.themes || []).filter(t => t.category === 'daily').slice(0, 3);
+    const daily = (this.data.themes || []).filter(t => t.category === 'daily').slice(0, 4);
     const blocks = daily.map(t => {
       const meta = DAILY_BLOCK_META[t.id] || DAILY_BLOCK_SOON;
       return { key: t.id, id: t.id, title: t.title, url: t.url, emoji: meta.emoji, color: meta.color, label: meta.label, placeholder: false };
     });
-    blocks.push({ key: 'soon', title: '敬请期待', emoji: DAILY_BLOCK_SOON.emoji, color: DAILY_BLOCK_SOON.color, label: DAILY_BLOCK_SOON.label, placeholder: true });
+    if (blocks.length < 4) {
+      blocks.push({ key: 'soon', title: '敬请期待', emoji: DAILY_BLOCK_SOON.emoji, color: DAILY_BLOCK_SOON.color, label: DAILY_BLOCK_SOON.label, placeholder: true });
+    }
     this.setData({ dailyBlocks: blocks });
   },
 
@@ -240,9 +282,12 @@ Page({
       filtered = themes.filter(t => t.category === tab);
     }
     // 纭繚 userCountText 瀛樺湪
+    const oscarAnimeCover = this.data.oscarAnimeCover;
     filtered = filtered.map(t => ({
       ...t,
-      userCountText: t.userCountText || this.formatUserCount(t.userCount)
+      userCountText: t.userCountText || this.formatUserCount(t.userCount),
+      // 奥斯卡动画卡片封面用榜单第一部电影的封面（云端拉到后覆盖默认图）
+      image: (t.id === 'oscar_anime_movies' && oscarAnimeCover) ? oscarAnimeCover : t.image
     }));
     this.setData({ filteredThemes: filtered });
   },

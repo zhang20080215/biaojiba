@@ -1,0 +1,146 @@
+<view class="page-root">
+  <view class="top-toast {{toast.show ? 'is-show' : ''}}">
+    <text class="top-toast-icon" wx:if="{{toast.icon === 'success'}}">✓</text>
+    <text class="top-toast-text">{{toast.text}}</text>
+  </view>
+
+  <view class="custom-nav" style="height: {{navOffset}}px; padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-btn nav-btn-left" bindtap="onBack" hover-class="nav-btn-active">
+        <text class="nav-chev">‹</text>
+      </view>
+      <text class="nav-title">添加运动</text>
+    </view>
+  </view>
+
+  <view class="content" style="padding-top: {{navOffset}}px;">
+    <!-- 日期：简洁右对齐 -->
+    <view class="date-row">
+      <text class="date-row-label">记录到</text>
+      <picker mode="date" value="{{date}}" bindchange="onDateChange">
+        <view class="date-pill">
+          <text class="date-pill-text">{{dateText}}</text>
+          <text class="date-pill-chev">›</text>
+        </view>
+      </picker>
+    </view>
+
+    <!-- 类型选择 -->
+    <view class="card">
+      <view class="card-title">运动类型</view>
+
+      <!-- 大类 -->
+      <view class="category-group">
+        <view wx:for="{{categories}}" wx:key="id"
+              class="category-btn {{activeCategory === item.id ? 'active' : ''}}"
+              data-category="{{item.id}}"
+              bindtap="onCategoryTap">
+          <view class="category-icon" style="background-image: url('{{item.iconUri}}');"></view>
+          <text class="category-name">{{item.name}}</text>
+        </view>
+      </view>
+
+      <!-- 子类型：按分组(力量按身体部位)渲染 -->
+      <block wx:for="{{categories}}" wx:key="id">
+        <block wx:if="{{item.id === activeCategory}}">
+          <block wx:for="{{item.groups}}" wx:for-item="grp" wx:key="part">
+            <view wx:if="{{grp.part}}" class="part-label">{{grp.part}}</view>
+            <view class="type-grid">
+              <view wx:for="{{grp.types}}" wx:for-item="type" wx:key="name"
+                    class="type-item {{selectedType === type.name ? 'active' : ''}}"
+                    data-type="{{type.name}}"
+                    data-icon="{{type.icon}}"
+                    bindtap="onTypeTap">
+                <view class="type-icon" style="background-image: url('{{type.iconUri}}');"></view>
+                <text class="type-name">{{type.name}}</text>
+              </view>
+            </view>
+          </block>
+        </block>
+      </block>
+    </view>
+
+    <!-- 已加入清单的动作 -->
+    <view wx:if="{{pendingList.length}}" class="card">
+      <view class="card-title">本次清单 · {{pendingList.length}}组</view>
+      <view class="pending-list">
+        <view wx:for="{{pendingList}}" wx:key="id" class="pending-item">
+          <view class="pending-icon" style="background-image: url('{{item.iconUri}}');"></view>
+          <view class="pending-main">
+            <text class="pending-type">{{item.type}}</text>
+            <text class="pending-summary" wx:if="{{item.summary}}">{{item.summary}}</text>
+          </view>
+          <view class="pending-del" data-index="{{index}}" bindtap="onRemovePending" hover-class="tap-soft">
+            <text class="pending-del-x">×</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 数据录入 -->
+    <view wx:if="{{selectedType}}" class="card">
+      <view class="card-title">训练数据</view>
+
+      <!-- 时长 -->
+      <view class="field-row" wx:if="{{showDuration}}">
+        <text class="field-row-label">时长</text>
+        <view class="input-box">
+          <input type="digit" class="input-field" placeholder="请输入" placeholder-class="placeholder" value="{{duration}}" bindinput="onDurationInput" />
+          <text class="input-unit">分钟</text>
+        </view>
+      </view>
+
+      <!-- 距离 -->
+      <view class="field-row" wx:if="{{showDistance}}">
+        <text class="field-row-label">距离</text>
+        <view class="input-box">
+          <input type="digit" class="input-field" placeholder="请输入" placeholder-class="placeholder" value="{{distance}}" bindinput="onDistanceInput" />
+          <text class="input-unit">{{distanceUnit}}</text>
+        </view>
+      </view>
+
+      <!-- 力量：组数 -->
+      <view class="field-row" wx:if="{{showStrength}}">
+        <text class="field-row-label">组数</text>
+        <view class="input-box">
+          <input type="number" class="input-field" placeholder="请输入" placeholder-class="placeholder" value="{{sets}}" bindinput="onSetsInput" />
+          <text class="input-unit">组</text>
+        </view>
+      </view>
+
+      <!-- 力量：次数 -->
+      <view class="field-row" wx:if="{{showStrength}}">
+        <text class="field-row-label">次数</text>
+        <view class="input-box">
+          <input type="number" class="input-field" placeholder="每组次数" placeholder-class="placeholder" value="{{reps}}" bindinput="onRepsInput" />
+          <text class="input-unit">次/组</text>
+        </view>
+      </view>
+
+      <!-- 力量：重量（选填） -->
+      <view class="field-row" wx:if="{{showStrength}}">
+        <view class="field-row-label-group">
+          <text class="field-row-label">重量</text>
+          <text class="optional-badge">选填</text>
+        </view>
+        <view class="input-box">
+          <input type="digit" class="input-field" placeholder="请输入" placeholder-class="placeholder" value="{{weight}}" bindinput="onWeightInput" />
+          <text class="input-unit">kg</text>
+        </view>
+      </view>
+
+      <!-- 再加一组（编辑态隐藏） -->
+      <view wx:if="{{!editing}}" class="add-more-btn" bindtap="onAddMore" hover-class="tap-soft">
+        <text class="add-more-plus">＋</text>
+        <text>再加一组动作</text>
+      </view>
+    </view>
+
+    <!-- 底部提交 -->
+    <view wx:if="{{selectedType || pendingList.length}}" class="submit-bar">
+      <view class="submit-btn {{submitting ? 'disabled' : ''}}" bindtap="onSubmit">
+        {{submitting ? '保存中...' : (editing ? '保存修改' : (pendingList.length ? (selectedType ? '保存全部 · ' + (pendingList.length + 1) + '组' : '保存全部 · ' + pendingList.length + '组') : '添加运动记录')) }}
+      </view>
+    </view>
+  </view>
+</view>

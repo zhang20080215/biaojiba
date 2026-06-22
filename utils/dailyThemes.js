@@ -206,6 +206,50 @@ const THEMES = {
     cheerForMonth: (achieved, total) =>
       `${total} 天里阅读 ${achieved} 天`,
     formatTotal: v => `${v} 本`
+  },
+
+  sport: {
+    id: 'sport',
+    title: '每日运动',
+    description: '记录每次训练，坚持养成习惯',
+
+    unit: '次',
+    unitLabel: '次',
+    // sport 主题复用 DailySettings.daily_goal 存储"每月目标训练次数"。
+    defaultGoal: 20,
+    goalRange: [1, 60],
+    goalStep: 1,
+    defaultPresets: [1],
+    presetRange: [1, 1],
+    presetStep: 1,
+    inverseGoal: false,
+
+    navBg: DESIGN_TOKENS.bg,
+    navTextStyle: 'black',
+    pageGradient: [DESIGN_TOKENS.bg, DESIGN_TOKENS.bg],
+    coverGradient: [DESIGN_TOKENS.bg, DESIGN_TOKENS.bg],
+    coverEmoji: '🏃',
+    tag: '每日',
+
+    progressVisual: 'ring',
+    mainColor: DESIGN_TOKENS.ink,
+    subColor: DESIGN_TOKENS.inkSoft,
+    accentColor: DESIGN_TOKENS.yellow,
+    textColor: DESIGN_TOKENS.ink,
+    accent: 'yellow',
+
+    presetIcon: () => '🏃',
+
+    cheerFor: (progress, total, goal) => {
+      if (total >= goal) return '本月运动目标已达成';
+      if (total > 0) return `本月已训练 ${total} 次`;
+      return '记录今天的训练';
+    },
+    cheerForWeek: (progress, achieved, total) =>
+      `${total} 天里运动 ${achieved} 天`,
+    cheerForMonth: (achieved, total) =>
+      `${total} 天里运动 ${achieved} 天`,
+    formatTotal: v => `${v} 次`
   }
 
   // ============================================================

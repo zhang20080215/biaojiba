@@ -30,6 +30,8 @@ const queriesCollection = db.collection('user_movie_queries');
 // 限流规则：同一自然日(中国时区 UTC+8) 内只允许查一次。00:00 重置。
 // 设计目的：保护 OMDb 配额 (1000/日) + 防止豆瓣反爬升级。
 const CN_TZ_OFFSET_MS = 8 * 60 * 60 * 1000;
+// 缓存新鲜度阈值：普通查看时若数据已超过 24h，自动触发重新查询
+const STALE_MS = 24 * 60 * 60 * 1000;
 
 function cnDateStr(ts) {
   const d = new Date(ts + CN_TZ_OFFSET_MS);
@@ -531,10 +533,10 @@ async function upsertUserQuery(openid, doubanId, movieRefId) {
   try {
     const exist = await queriesCollection.where({ openid, doubanId }).limit(1).get();
     if (exist.data && exist.data.length > 0) {
-      // 已存在：仅更新 movieRefId 以防关联失效，queriedAt 保持首次查询时间
-      // （这样"最近查询"按 queriedAt desc 排序时等价于按创建时间排序，刷新评分不会让卡片置顶）
+      // 已存在：更新 movieRefId + 把 queriedAt 刷新为本次查询时间
+      // （"最近查询"按 queriedAt desc 排序，再次查询同一部会把卡片置顶 → 按最新查询时间排序）
       await queriesCollection.doc(exist.data[0]._id).update({
-        data: { movieRefId }
+        data: { movieRefId, queriedAt: db.serverDate() }
       });
     } else {
       // 首次查询：queriedAt 即创建时间
@@ -588,19 +590,24 @@ exports.main = async (event, context) => {
     if (!bypassCache && existing) {
       const updatedMs = existing.updatedAt ? new Date(existing.updatedAt).getTime() : 0;
       const sameDay = updatedMs && cnDateStr(updatedMs) === cnDateStr(nowMs);
+      // 缓存是否已过 24 小时（无 updatedAt 视作过期，需重抓）
+      const isStale = !updatedMs || (nowMs - updatedMs) >= STALE_MS;
 
       if (!forceRefresh) {
-        // 普通查看：有 doc 就直接返，无视时间
-        if (openid && !skipUserQuery) await upsertUserQuery(openid, doubanId, movieDocId);
-        return {
-          success: true,
-          movie: existing,
-          cached: true,
-          refreshLimited: false,
-          nextRefreshAvailableInMs: 0
-        };
-      }
-      if (forceRefresh && sameDay) {
+        // 普通查看：数据在 24h 内 → 直接返缓存；超过 24h → 落到下方自动重抓
+        if (!isStale) {
+          if (openid && !skipUserQuery) await upsertUserQuery(openid, doubanId, movieDocId);
+          return {
+            success: true,
+            movie: existing,
+            cached: true,
+            refreshLimited: false,
+            nextRefreshAvailableInMs: 0
+          };
+        }
+        console.log(`[fetchMovieFullInfo] 缓存超过24h(updatedAt=${existing.updatedAt})，自动重新查询`);
+        // 不 return，继续往下走重抓流程
+      } else if (forceRefresh && sameDay) {
         // 用户点"更新"但今天已抓过 → 拦下
         if (openid && !skipUserQuery) await upsertUserQuery(openid, doubanId, movieDocId);
         return {
@@ -657,8 +664,20 @@ exports.main = async (event, context) => {
       console.log('[RT] 跳过：无可用英文片名');
     }
 
-    // 5. 海报上传（每次都新上传，简单稳；后续可优化为复用旧 cloudPoster）
-    const cloudPoster = await downloadAndUploadPoster(detail.posterUrl, movieDocId);
+    // 5. 海报：豆瓣外链未变且已有云存储海报 → 直接复用，避免 24h 自动刷新时每次
+    //    都新建一份带 Date.now() 的海报文件，产生孤儿文件 + 云存储膨胀。
+    //    外链变了（豆瓣换图）或还没有云海报时才重新下载上传。
+    let cloudPoster;
+    if (
+      existing &&
+      existing.poster && String(existing.poster).startsWith('cloud://') &&
+      existing.originalPoster && existing.originalPoster === detail.posterUrl
+    ) {
+      cloudPoster = existing.poster;
+      console.log('[fetchMovieFullInfo] 海报外链未变，复用已有云存储海报，跳过重传');
+    } else {
+      cloudPoster = await downloadAndUploadPoster(detail.posterUrl, movieDocId);
+    }
 
     const now = new Date();
 

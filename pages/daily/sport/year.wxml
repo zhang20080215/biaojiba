@@ -1,0 +1,67 @@
+<view class="page-root">
+  <view class="top-toast {{toast.show ? 'is-show' : ''}}">
+    <text class="top-toast-icon" wx:if="{{toast.icon === 'success'}}">✓</text>
+    <text class="top-toast-text">{{toast.text}}</text>
+  </view>
+
+  <view class="custom-nav" style="height: {{navOffset}}px; padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-btn nav-btn-left" bindtap="onBack" hover-class="nav-btn-active">
+        <text class="nav-chev">‹</text>
+      </view>
+      <text class="nav-title">年度运动</text>
+    </view>
+  </view>
+
+  <view class="content" style="padding-top: {{navOffset}}px;">
+    <view class="year-head">
+      <view class="year-arrow" bindtap="onPrevYear">‹</view>
+      <text class="year-label">{{year}}</text>
+      <view class="year-arrow {{canGoNextYear ? '' : 'is-disabled'}}" bindtap="onNextYear">›</view>
+    </view>
+
+    <view wx:if="{{loading}}" class="state-text">加载中...</view>
+    <view wx:elif="{{total === 0}}" class="empty">
+      <text class="empty-title">这一年还没有运动记录</text>
+      <text class="empty-sub">记录之后会在这里生成年度运动</text>
+    </view>
+
+    <block wx:else>
+      <view class="month-grid">
+        <view class="month-card" wx:for="{{monthCards}}" wx:key="month">
+          <text wx:if="{{item.icon}}" class="month-icon">{{item.icon}}</text>
+          <text wx:else class="month-icon icon-empty">·</text>
+          <text class="month-name">{{item.month}}月</text>
+          <text class="month-count">{{item.count}} 次</text>
+        </view>
+      </view>
+
+      <view class="review">
+        <text class="review-title">年度回顾</text>
+        <view class="review-grid">
+          <view class="review-item">
+            <text class="review-label">共练</text>
+            <text class="review-value">{{review.total}} 次</text>
+          </view>
+          <view class="review-item">
+            <text class="review-label">总时长</text>
+            <text class="review-value">{{review.totalDuration}} 分</text>
+          </view>
+          <view class="review-item">
+            <text class="review-label">活跃天数</text>
+            <text class="review-value">{{review.activeDays}} 天</text>
+          </view>
+          <view class="review-item">
+            <text class="review-label">最多月份</text>
+            <text class="review-value">{{review.bestMonth}}</text>
+          </view>
+        </view>
+
+        <view class="director-line">
+          <text class="review-label">最常练</text>
+          <text class="review-value">{{review.favoriteType}}</text>
+        </view>
+      </view>
+    </block>
+  </view>
+</view>

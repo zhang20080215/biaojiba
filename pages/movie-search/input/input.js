@@ -6,8 +6,9 @@
 const toast = require('../../../utils/dailyToast.js');
 const { cnDateStr, decorateMovie } = require('../../../utils/movieFormat.js');
 
-// 首页特色位：阿嬷的情书（doubanId 37116446）海报作为 hero 背景
-const FEATURED_DOUBAN_ID = '37116446';
+// 首页"每日推荐"兜底片：阿嬷的情书（doubanId 37116446）——
+// getDailyFeaturedMovie 池为空时回退到这部
+const FALLBACK_FEATURED_DOUBAN_ID = '37116446';
 
 // 沉浸式：用胶囊按钮位置反推 nav 高度
 function getNavMetrics() {
@@ -57,8 +58,9 @@ Page({
     statusBarHeight: 20,
     navBarHeight: 44,
     navOffset: 64,
-    // hero 特色电影（阿嬷的情书）
+    // hero 每日推荐电影（按日轮换，douban>8.5）
     featured: null,
+    featuredDoubanId: FALLBACK_FEATURED_DOUBAN_ID,
     featuredLoading: true
   },
 
@@ -135,25 +137,50 @@ Page({
     }
   },
 
-  // ===== 首页特色电影（阿嬷的情书） =====
-  // skipUserQuery=true → 后端不会把这次"系统调用"算进用户历史
+  // ===== 首页每日推荐电影（按日轮换，豆瓣>8.5，纯读库不抓取） =====
   async loadFeatured() {
     try {
       const res = await wx.cloud.callFunction({
+        name: 'getDailyFeaturedMovie',
+        data: {}
+      });
+      const result = res && res.result;
+      if (result && result.success && result.movie) {
+        const movie = result.movie;
+        this.setData({
+          featured: decorateMovie(movie),
+          featuredDoubanId: String(movie.doubanId || FALLBACK_FEATURED_DOUBAN_ID),
+          featuredLoading: false
+        });
+        return;
+      }
+      // 池为空 → 回退到兜底片（阿嬷的情书），仍走 skipUserQuery 不计入历史
+      await this.loadFallbackFeatured();
+    } catch (e) {
+      console.warn('loadFeatured 异常', e && e.message);
+      await this.loadFallbackFeatured();
+    }
+  },
+
+  // 兜底：每日推荐池为空时展示阿嬷的情书。skipUserQuery=true → 不计入用户历史
+  async loadFallbackFeatured() {
+    try {
+      const res = await wx.cloud.callFunction({
         name: 'fetchMovieFullInfo',
-        data: { doubanId: FEATURED_DOUBAN_ID, skipUserQuery: true }
+        data: { doubanId: FALLBACK_FEATURED_DOUBAN_ID, skipUserQuery: true }
       });
       const result = res && res.result;
       if (result && result.success && result.movie) {
         this.setData({
           featured: decorateMovie(result.movie),
+          featuredDoubanId: FALLBACK_FEATURED_DOUBAN_ID,
           featuredLoading: false
         });
       } else {
         this.setData({ featuredLoading: false });
       }
     } catch (e) {
-      console.warn('loadFeatured 异常', e && e.message);
+      console.warn('loadFallbackFeatured 异常', e && e.message);
       this.setData({ featuredLoading: false });
     }
   },
@@ -367,11 +394,11 @@ Page({
     this.setData({ showMetricsExplain: false });
   },
 
-  // 点击 hero 跳阿嬷的情书详情
+  // 点击 hero 跳「每日推荐」当前那部的详情
   onTapFeatured() {
     if (!this.data.featured) return;
     wx.navigateTo({
-      url: `/pages/movie-search/detail/detail?doubanId=${FEATURED_DOUBAN_ID}`
+      url: `/pages/movie-search/detail/detail?doubanId=${this.data.featuredDoubanId}`
     });
   }
 });

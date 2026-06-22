@@ -1,0 +1,42 @@
+<view class="page-root">
+  <view class="top-toast {{toast.show ? 'is-show' : ''}}">
+    <text class="top-toast-icon" wx:if="{{toast.icon === 'success'}}">✓</text>
+    <text class="top-toast-text">{{toast.text}}</text>
+  </view>
+
+  <view class="custom-nav" style="height: {{navOffset}}px; padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-btn nav-btn-left" bindtap="onBack" hover-class="nav-btn-active">
+        <text class="nav-chev">‹</text>
+      </view>
+      <text class="nav-title">分享运动卡片</text>
+    </view>
+  </view>
+
+  <!-- canvas 是原生组件，无法用 opacity/overflow 隐藏（DevTools 下尤其明显），所以直接把它当作
+       屏幕上的预览图：backing store 1080×1440（导出分辨率），CSS 缩放到 previewW×previewH 显示。
+       放在 content 内（导航栏之下、底部操作栏之上），避免原生层盖住其它 UI。 -->
+  <view class="content" style="padding-top: {{navOffset}}px;">
+    <view class="preview-wrap" style="width: {{previewW}}px; height: {{previewH}}px;">
+      <canvas type="2d" id="sportCard" class="poster-canvas" style="width: {{previewW}}px; height: {{previewH}}px;"></canvas>
+    </view>
+    <text class="preview-tip">{{ready ? '点下方「保存到相册」即可保存这张运动卡片' : (loading ? '加载记录中…' : '生成卡片中…')}}</text>
+
+    <!-- 主题色选择（本地记住上次选择） -->
+    <view class="theme-row" wx:if="{{!loading}}">
+      <view wx:for="{{themes}}" wx:key="id"
+            class="theme-dot {{themeId === item.id ? 'is-active' : ''}}"
+            style="background: {{item.swatch}};"
+            bindtap="onPickTheme" data-id="{{item.id}}">
+        <text wx:if="{{themeId === item.id}}" class="theme-check">✓</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="action-bar">
+    <button class="save-btn" bindtap="saveImage" disabled="{{isGenerating || !ready}}" loading="{{isGenerating}}">
+      {{isGenerating ? '保存中...' : '保存到相册'}}
+    </button>
+    <text wx:if="{{needRewardedAd && ready}}" class="save-sub">需观看广告后保存</text>
+  </view>
+</view>
