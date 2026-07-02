@@ -1,0 +1,17 @@
+{
+  "name": "enrichthememovies",
+  "version": "1.0.0",
+  "description": "Generic movie-theme onboarding: given a movieList, batch-fetch Douban cover/rating and upsert into shared generic_theme_movies collection (theme field discriminated)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.27.2",
+    "cheerio": "^0.22.0",
+    "wx-server-sdk": "^3.0.1"
+  }
+}

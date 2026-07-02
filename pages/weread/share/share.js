@@ -7,6 +7,7 @@ const CanvasHelper = require('../../../utils/canvasHelper.js');
 const DataLoader = require('../../../utils/dataLoader.js');
 var adConfig = require('../../../utils/adConfig');
 const rewardedSaveGate = require('../../../utils/rewardedSaveGate.js');
+const userStore = require('../../../utils/userStore.js');
 
 const TITLE = '微信读书总榜TOP200阅读海报';
 
@@ -88,7 +89,7 @@ Page({
             wx.setNavigationBarTitle({ title: '海报预览' });
             const windowInfo = wx.getWindowInfo();
             const menuBtn = wx.getMenuButtonBoundingClientRect();
-            const themeClass = wx.getStorageSync('appTheme') || 'theme-green';
+            const themeClass = getApp().globalData.theme || 'theme-green';
             this.setData({
                 shareType: options.type || 'text',
                 statusBarHeight: windowInfo.statusBarHeight || 20,
@@ -140,7 +141,7 @@ Page({
     },
 
     async loadUserInfo() {
-        const userInfo = wx.getStorageSync('userInfo') || { nickName: '昵称', avatarUrl: '' };
+        const userInfo = userStore.getUserInfo() || { nickName: '昵称', avatarUrl: '' };
         try {
             const res = await wx.cloud.getTempFileURL({
                 fileList: [{ fileID: 'cloud://cloud1-3gn3wryx716919c6.636c-cloud1-3gn3wryx716919c6-1360913831/GCGuV-qbcAAVSKH.png', maxAge: 60 * 60 }]

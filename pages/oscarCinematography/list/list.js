@@ -2,14 +2,15 @@ import DataLoader from '../../../utils/dataLoader';
 import imageCacheManager from '../../../utils/imageCacheManager';
 var adConfig = require('../../../utils/adConfig');
 var adManager = require('../../../utils/adManager');
-var grayBucket = require('../../../utils/grayBucket');
-var subscribeConfig = require('../../../utils/subscribeConfig');
 var userStore = require('../../../utils/userStore.js');
 
-const SUBSCRIBE_BUCKET_PERCENT = 0; // 临时关闭订阅入口（access_token 链路问题待排查），代码完整保留，恢复时改回 100
+// 走通用主题流水线（generic_theme_movies + getThemeMovies），排序参数需自行传给 DataLoader
+const QUERY_OPTIONS = { orderByField: 'rank', orderDirection: 'desc' };
 
 Page({
     data: {
+        statusBarHeight: 0,
+        navBarHeight: 0,
         userInfo: null,
         openid: '',
         pendingOpenid: '',
@@ -17,34 +18,21 @@ Page({
         movies: [],
         markStatusMap: {},
         markDateMap: {},
-        markRecordIdMap: {},
         watchedIds: [],
         wishIds: [],
         watchedCount: 0,
         wishCount: 0,
         unwatchedCount: 0,
         allCount: 0,
-        watchedProgressPercent: 0,
-        watchedProgressText: '0%',
-        watchedProgressWidth: '0%',
         activeTab: 0,
         currentFilter: 'all',
         isBatchEditing: false,
         selectedMovieIds: [],
         loading: false,
         showAuthModal: false,
-        customToast: '',
-        customToastVisible: false,
-        showSharePicker: false,
-        subscribeBucketIn: false,
+        showShareModal: false,
         tempAvatar: '',
         tempNickname: '',
-        themeClass: '',
-        statusBarHeight: 20,
-        headerPadTop: 0,
-        menuBtnHeight: 32,
-        stickyTop: 0,
-        // 广告相关
         infeedSlots: {},
         adUnitIds: {
             movielist_infeed: adConfig.getAdUnitId('movielist_infeed') || '',
@@ -56,19 +44,16 @@ Page({
             wx.showToast({ title: '请升级基础库', icon: 'none' });
             return;
         }
-        // 自定义导航：获取状态栏高度和胶囊按钮位置
-        const savedTheme = getApp().globalData.theme || '';
-        this.setData({
-            statusBarHeight: 0,
-            headerPadTop: 0,
-            menuBtnHeight: 0,
-            stickyTop: 0,
-            themeClass: savedTheme
-        });
+        // 沉浸式布局：获取状态栏和导航栏高度
+        const sysInfo = wx.getWindowInfo();
+        const menuBtn = wx.getMenuButtonBoundingClientRect();
+        const statusBarHeight = sysInfo.statusBarHeight || 20;
+        const navBarHeight = (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
+        this.setData({ statusBarHeight, navBarHeight });
+        wx.setNavigationBarTitle({ title: '历届奥斯卡最佳摄影奖' });
         this.checkLoginStatus();
-        this.loadAllMovies();
+        this.loadAllMovies(true); // 强制跳过24小时缓存拉取最新数据
         this.initAds();
-        this.setNavBarColor(savedTheme);
     },
 
     // 下拉刷新 - 强制绕过缓存
@@ -78,27 +63,7 @@ Page({
     },
 
     onShow() {
-        const currentTheme = getApp().globalData.theme || '';
-        if (this.data.themeClass !== currentTheme) {
-            this.setData({ themeClass: currentTheme });
-        }
         this.checkLoginStatus();
-        this.setNavBarColor(currentTheme);
-    },
-
-    // 将导航栏背景色与 hero 配色对齐，消除 hairline 对比度
-    setNavBarColor(theme) {
-        const colorMap = {
-            'theme-gold':  { bg: '#F7D66E', fg: '#000000' },
-            'theme-green': { bg: '#9AAB65', fg: '#ffffff' },
-            'theme-sand':  { bg: '#F8F3E7', fg: '#000000' },
-        };
-        const c = colorMap[theme] || { bg: '#FAE0E4', fg: '#000000' };
-        wx.setNavigationBarColor({ frontColor: c.fg, backgroundColor: c.bg, animation: { duration: 0 } });
-    },
-
-    onUnload() {
-        if (this._toastTimer) clearTimeout(this._toastTimer);
     },
 
     onBackHome() {
@@ -121,83 +86,13 @@ Page({
         return !!this.getActiveOpenid();
     },
 
-    buildWatchedProgress(watchedCount = 0, allCount = 0) {
-        const safeWatchedCount = Math.max(0, Number(watchedCount) || 0);
-        const safeAllCount = Math.max(0, Number(allCount) || 0);
-        const watchedProgressPercent = safeAllCount > 0
-            ? Math.min(100, Math.round((safeWatchedCount / safeAllCount) * 100))
-            : 0;
-
-        return {
-            watchedProgressPercent,
-            watchedProgressText: `${watchedProgressPercent}%`,
-            watchedProgressWidth: `${watchedProgressPercent}%`
-        };
-    },
-
-    refreshMoviesAfterMarkChange() {
-        if (this.data.activeTab === 0) return;
-        this.updateFilteredMovies();
-    },
-
     checkLoginStatus() {
         const userInfo = this.getStoredUserInfo();
         if (userInfo) {
-            const openid = userInfo._openid || '';
-            this.setData({
-                userInfo,
-                openid,
-                pendingOpenid: '',
-                subscribeBucketIn: grayBucket.isInBucket(openid, SUBSCRIBE_BUCKET_PERCENT)
-            });
+            this.setData({ userInfo, openid: userInfo._openid || '', pendingOpenid: '' });
         } else {
-            this.setData({ userInfo: null, openid: '', subscribeBucketIn: false });
+            this.setData({ userInfo: null, openid: '' });
         }
-    },
-
-    onTapSubscribeNewEntry() {
-        this._requestSubscribe('top250NewEntry');
-    },
-
-    onTapSubscribeRankChange() {
-        this._requestSubscribe('top250RankChange');
-    },
-
-    _requestSubscribe(templateKey) {
-        if (!this.hasLogin()) {
-            wx.showToast({ title: '请先完成登录', icon: 'none' });
-            this.onGetUserProfile();
-            return;
-        }
-        const templateId = subscribeConfig.getTemplateId(templateKey);
-        if (!templateId) {
-            wx.showToast({ title: '功能即将开放', icon: 'none' });
-            return;
-        }
-        wx.requestSubscribeMessage({
-            tmplIds: [templateId],
-            success: (res) => {
-                if (res[templateId] !== 'accept') {
-                    wx.showToast({ title: '已取消', icon: 'none' });
-                    return;
-                }
-                wx.cloud.callFunction({
-                    name: 'subscribeMessage',
-                    data: { topic: templateKey, theme: 'douban', templateId, accepted: true }
-                }).then((cloudRes) => {
-                    const ok = cloudRes && cloudRes.result && cloudRes.result.success;
-                    wx.showToast({
-                        title: ok ? '已开启提醒' : '开启失败',
-                        icon: ok ? 'success' : 'none'
-                    });
-                }).catch(() => {
-                    wx.showToast({ title: '网络异常，稍后重试', icon: 'none' });
-                });
-            },
-            fail: () => {
-                wx.showToast({ title: '订阅未开启', icon: 'none' });
-            }
-        });
     },
 
     onShareTap() {
@@ -206,32 +101,19 @@ Page({
             this.onGetUserProfile();
             return;
         }
-        this.setData({ showSharePicker: true });
+        this.setData({ showShareModal: true });
     },
 
-    onCloseSharePicker() {
-        this.setData({ showSharePicker: false });
-    },
-
-    onSharePickerTouchMove() {},
-
-    onShareTypeSelect(e) {
+    onShareSelect(e) {
         const type = e.currentTarget.dataset.type;
-        if (this._navigatingToShare) return;
-        this._navigatingToShare = true;
-
-        this.setData({ showSharePicker: false }, () => {
-            wx.nextTick(() => {
-                adManager.showInterstitial('share_interstitial').then(() => {
-                    wx.navigateTo({
-                        url: `/pages/douban/share/share?type=${type}`,
-                        complete: () => {
-                            this._navigatingToShare = false;
-                        }
-                    });
-                });
-            });
+        this.setData({ showShareModal: false });
+        adManager.showInterstitial('share_interstitial').then(function () {
+            wx.navigateTo({ url: `/pages/oscarCinematography/share/share?type=${type}` });
         });
+    },
+
+    onCloseShareModal() {
+        this.setData({ showShareModal: false });
     },
 
     onHeaderLoginClick() {
@@ -326,24 +208,23 @@ Page({
         wx.showNavigationBarLoading();
         try {
             const openid = this.getActiveOpenid() || null;
-            const { movies, marks } = await DataLoader.loadMoviesData('douban', openid, forceRefresh);
+            const { movies, marks } = await DataLoader.loadMoviesData('oscarCinematography', openid, forceRefresh, QUERY_OPTIONS);
 
             const allMovies = movies.map(m => ({
                 ...m,
                 _id: String(m._id),
                 // thumbCover：优先取 originalCover（原始 douban URL）转缩略图，cover 保留用于海报生成
-                thumbCover: imageCacheManager.getThumbnailUrl(m.originalCover || m.coverUrl || m.cover, 'list')
+                thumbCover: imageCacheManager.getThumbnailUrl(m.cover || m.coverUrl || m.originalCover, 'list')
             }));
             this.data.allMovies = allMovies;
             this.data.allCount = allMovies.length;
 
-            const { markStatusMap, markDateMap, markRecordIdMap, watchedIds, wishIds, stats } = DataLoader.processMarks(marks, allMovies);
+            const { markStatusMap, markDateMap, watchedIds, wishIds, stats } = DataLoader.processMarks(marks, allMovies);
 
             this.setData({
-                markStatusMap, markDateMap, markRecordIdMap, watchedIds, wishIds,
+                markStatusMap, markDateMap, watchedIds, wishIds,
                 watchedCount: stats.watched, wishCount: stats.wish,
                 unwatchedCount: stats.unwatched, allCount: allMovies.length,
-                ...this.buildWatchedProgress(stats.watched, allMovies.length),
                 allMovies, movies: allMovies
             }, () => {
                 this.updateFilteredMovies();
@@ -351,19 +232,8 @@ Page({
             });
         } catch (err) {
             console.error('加载电影/标记数据失败:', err);
-            this.setData({
-                allMovies: [],
-                movies: [],
-                markStatusMap: {},
-                markDateMap: {},
-                markRecordIdMap: {},
-                watchedCount: 0,
-                wishCount: 0,
-                unwatchedCount: 0,
-                allCount: 0,
-                ...this.buildWatchedProgress(0, 0)
-            });
-            wx.showToast({ title: '暂无数据或加载失败', icon: 'none' });
+            this.setData({ allMovies: [], movies: [], allCount: 0 });
+            wx.showToast({ title: '无数据或加载失败', icon: 'none' });
             wx.hideNavigationBarLoading();
         }
     },
@@ -374,12 +244,11 @@ Page({
         if (!openid) return;
         wx.showNavigationBarLoading();
         try {
-            const { marks } = await DataLoader.loadMoviesData('douban', openid, false);
-            const { markStatusMap, markDateMap, markRecordIdMap, watchedIds, wishIds, stats } = DataLoader.processMarks(marks, this.data.allMovies);
+            const { marks } = await DataLoader.loadMoviesData('oscarCinematography', openid, false, QUERY_OPTIONS);
+            const { markStatusMap, markDateMap, watchedIds, wishIds, stats } = DataLoader.processMarks(marks, this.data.allMovies);
             this.setData({
-                markStatusMap, markDateMap, markRecordIdMap, watchedIds, wishIds,
-                watchedCount: stats.watched, wishCount: stats.wish, unwatchedCount: stats.unwatched,
-                ...this.buildWatchedProgress(stats.watched, this.data.allMovies.length)
+                markStatusMap, markDateMap, watchedIds, wishIds,
+                watchedCount: stats.watched, wishCount: stats.wish, unwatchedCount: stats.unwatched
             }, () => {
                 this.updateFilteredMovies();
                 wx.hideNavigationBarLoading();
@@ -406,135 +275,6 @@ Page({
         this.setData({ activeTab: idx, isBatchEditing: false, selectedMovieIds: [] }, this.updateFilteredMovies);
     },
 
-    recalculateMarkStats(markStatusMap) {
-        let watchedCount = 0;
-        let wishCount = 0;
-        const allCount = this.data.allMovies.length;
-
-        Object.keys(markStatusMap).forEach(movieId => {
-            const status = markStatusMap[movieId];
-            if (status === 'watched') watchedCount++;
-            else if (status === 'wish') wishCount++;
-        });
-
-        return {
-            watchedCount,
-            wishCount,
-            unwatchedCount: Math.max(0, allCount - watchedCount - wishCount),
-            watchedIds: Object.keys(markStatusMap).filter(movieId => markStatusMap[movieId] === 'watched'),
-            wishIds: Object.keys(markStatusMap).filter(movieId => markStatusMap[movieId] === 'wish')
-        };
-    },
-
-    applyBatchMarksLocally(movieIds, status) {
-        const markStatusMap = { ...this.data.markStatusMap };
-        const markDateMap = { ...this.data.markDateMap };
-        const now = this.formatMarkDate(new Date().toISOString());
-
-        movieIds.forEach(movieId => {
-            const normalizedMovieId = String(movieId);
-            if (status === 'unwatched') {
-                delete markStatusMap[normalizedMovieId];
-                delete markDateMap[normalizedMovieId];
-            } else {
-                markStatusMap[normalizedMovieId] = status;
-                markDateMap[normalizedMovieId] = now;
-            }
-        });
-
-        const { watchedCount, wishCount, unwatchedCount, watchedIds, wishIds } = this.recalculateMarkStats(markStatusMap);
-
-        this.setData({
-            markStatusMap,
-            markDateMap,
-            watchedIds,
-            wishIds,
-            watchedCount,
-            wishCount,
-            unwatchedCount,
-            ...this.buildWatchedProgress(watchedCount, this.data.allMovies.length),
-            isBatchEditing: false,
-            selectedMovieIds: []
-        }, () => {
-            this.updateFilteredMovies();
-        });
-    },
-
-    applySingleMarkLocally(movieId, status, markedAt, recordId) {
-        const markStatusMap = { ...this.data.markStatusMap };
-        const markDateMap = { ...this.data.markDateMap };
-        const markRecordIdMap = { ...this.data.markRecordIdMap };
-        const oldStatus = markStatusMap[movieId];
-
-        markStatusMap[movieId] = status;
-        markDateMap[movieId] = this.formatMarkDate(markedAt);
-        if (recordId) {
-            markRecordIdMap[movieId] = recordId;
-        }
-
-        let { watchedCount, wishCount, unwatchedCount } = this.data;
-        if (oldStatus === 'watched') watchedCount--;
-        else if (oldStatus === 'wish') wishCount--;
-        else unwatchedCount--;
-
-        if (status === 'watched') watchedCount++;
-        else if (status === 'wish') wishCount++;
-
-        const nextData = {
-            markStatusMap,
-            markDateMap,
-            markRecordIdMap,
-            watchedCount,
-            wishCount,
-            unwatchedCount,
-            ...this.buildWatchedProgress(watchedCount, this.data.allMovies.length)
-        };
-
-        if (this.data.activeTab === 0) {
-            this.setData(nextData);
-            return;
-        }
-
-        this.setData(nextData, () => {
-            this.refreshMoviesAfterMarkChange();
-        });
-    },
-
-    restoreSingleMarkLocally(movieId, snapshot) {
-        const markStatusMap = { ...this.data.markStatusMap };
-        const markDateMap = { ...this.data.markDateMap };
-        const markRecordIdMap = { ...this.data.markRecordIdMap };
-
-        if (snapshot.status) markStatusMap[movieId] = snapshot.status;
-        else delete markStatusMap[movieId];
-
-        if (snapshot.date) markDateMap[movieId] = snapshot.date;
-        else delete markDateMap[movieId];
-
-        if (snapshot.recordId) markRecordIdMap[movieId] = snapshot.recordId;
-        else delete markRecordIdMap[movieId];
-
-        const { watchedCount, wishCount, unwatchedCount } = this.recalculateMarkStats(markStatusMap);
-        const nextData = {
-            markStatusMap,
-            markDateMap,
-            markRecordIdMap,
-            watchedCount,
-            wishCount,
-            unwatchedCount,
-            ...this.buildWatchedProgress(watchedCount, this.data.allMovies.length)
-        };
-
-        if (this.data.activeTab === 0) {
-            this.setData(nextData);
-            return;
-        }
-
-        this.setData(nextData, () => {
-            this.refreshMoviesAfterMarkChange();
-        });
-    },
-
     onCopyTitle(e) {
         const title = e.currentTarget.dataset.title;
         if (!title) return;
@@ -558,56 +298,47 @@ Page({
 
         const movieId = String(e.currentTarget.dataset.id);
         const type = e.currentTarget.dataset.type;
-        const runOptimisticMark = () => {
-            if (!this._pendingMarkMap) this._pendingMarkMap = {};
-            if (this._pendingMarkMap[movieId]) return;
-
-            const snapshot = {
-                status: this.data.markStatusMap[movieId] || '',
-                date: this.data.markDateMap[movieId] || '',
-                recordId: this.data.markRecordIdMap[movieId] || ''
-            };
-            const now = new Date().toISOString();
-            const db = wx.cloud.database();
-            const existingRecordId = this.data.markRecordIdMap[movieId];
-
-            this._pendingMarkMap[movieId] = true;
-            this.applySingleMarkLocally(movieId, type, now, existingRecordId);
-            this.showCustomToast(type === 'watched' ? '✓ 已标记为已看' : '✓ 已标记为想看');
-
-            const persistMark = existingRecordId
-                ? db.collection('Marks').doc(existingRecordId).update({
-                    data: { status: type, marked_at: now }
-                })
-                : db.collection('Marks').add({
-                    data: { movieId, openid, status: type, marked_at: now }
-                });
-
-            persistMark.then(res => {
-                if (!existingRecordId && res && res._id) {
-                    const markRecordIdMap = { ...this.data.markRecordIdMap, [movieId]: res._id };
-                    this.setData({ markRecordIdMap });
-                }
-            }).catch(err => {
-                console.error('标记失败:', err);
-                this.restoreSingleMarkLocally(movieId, snapshot);
-                wx.showToast({ title: '标记失败，请重试', icon: 'none' });
-            }).finally(() => {
-                delete this._pendingMarkMap[movieId];
-            });
-        };
         if (!movieId || !type || !openid) {
             wx.showToast({ title: '数据不完整', icon: 'none' }); return;
         }
-        runOptimisticMark();
-    },
-
-    showCustomToast(msg) {
-        if (this._toastTimer) clearTimeout(this._toastTimer);
-        this.setData({ customToast: msg, customToastVisible: true });
-        this._toastTimer = setTimeout(() => {
-            this.setData({ customToastVisible: false });
-        }, 1500);
+        const db = wx.cloud.database();
+        db.collection('Marks').where({ movieId, openid }).get().then(res => {
+            const now = new Date().toISOString();
+            if (res.data.length > 0) {
+                db.collection('Marks').doc(res.data[0]._id).update({
+                    data: { status: type, marked_at: now }
+                }).then(() => {
+                    const markStatusMap = { ...this.data.markStatusMap };
+                    const markDateMap = { ...this.data.markDateMap };
+                    const oldStatus = markStatusMap[movieId];
+                    markStatusMap[movieId] = type;
+                    markDateMap[movieId] = this.formatMarkDate(now);
+                    let { watchedCount, wishCount, unwatchedCount } = this.data;
+                    if (oldStatus === 'watched') watchedCount--;
+                    else if (oldStatus === 'wish') wishCount--;
+                    else unwatchedCount--;
+                    if (type === 'watched') watchedCount++;
+                    else if (type === 'wish') wishCount++;
+                    this.setData({ markStatusMap, markDateMap, watchedCount, wishCount, unwatchedCount }, this.updateFilteredMovies);
+                    wx.showToast({ title: type === 'watched' ? '已更新为已看' : '已更新为想看' });
+                });
+            } else {
+                db.collection('Marks').add({
+                    data: { movieId, openid, status: type, marked_at: now }
+                }).then(() => {
+                    const markStatusMap = { ...this.data.markStatusMap };
+                    const markDateMap = { ...this.data.markDateMap };
+                    markStatusMap[movieId] = type;
+                    markDateMap[movieId] = this.formatMarkDate(now);
+                    let { watchedCount, wishCount, unwatchedCount } = this.data;
+                    if (type === 'watched') watchedCount++;
+                    else if (type === 'wish') wishCount++;
+                    unwatchedCount--;
+                    this.setData({ markStatusMap, markDateMap, watchedCount, wishCount, unwatchedCount }, this.updateFilteredMovies);
+                    wx.showToast({ title: type === 'watched' ? '已看成功' : '想看成功' });
+                });
+            }
+        });
     },
 
     formatMarkDate(dateStr) {
@@ -666,13 +397,6 @@ Page({
         this.batchUpdateMarks(this.data.selectedMovieIds, 'wish');
     },
 
-    onBatchUnwatch() {
-        if (this.data.selectedMovieIds.length === 0) {
-            wx.showToast({ title: '请选择电影', icon: 'none' }); return;
-        }
-        this.batchUpdateMarks(this.data.selectedMovieIds, 'unwatched');
-    },
-
     // ─── 批量标记：一次云函数调用代替 N*2 次直接 DB 操作 ───
     batchUpdateMarks(movieIds, status) {
         const openid = this.getActiveOpenid();
@@ -685,9 +409,9 @@ Page({
             success: res => {
                 wx.hideLoading();
                 if (res.result && res.result.success) {
-                    this.applyBatchMarksLocally(movieIds, status);
                     wx.showToast({ title: '批量标记成功', icon: 'success' });
-                    setTimeout(() => { this.loadUserMarks(); }, 300);
+                    this.setData({ isBatchEditing: false, selectedMovieIds: [] });
+                    setTimeout(() => { this.loadUserMarks(); }, 500);
                 } else {
                     wx.showToast({ title: '部分标记失败', icon: 'none' });
                 }
@@ -716,7 +440,7 @@ Page({
         }
     },
 
-    // 只对命中的下标做定点 setData，避免把 250 条电影数组整体回传给视图层
+    // 只对命中的下标做定点 setData，避免把整张电影数组回传给视图层
     updateMovieImage(movieId, imageUrl) {
         const targetId = String(movieId);
         const updates = {};
@@ -735,8 +459,8 @@ Page({
 
     onShareAppMessage() {
         return {
-            title: '豆瓣电影TOP250 - 记录你的观影旅程',
-            path: '/pages/douban/list/list'
+            title: '历届奥斯卡最佳摄影奖 - 每年一部影像典范',
+            path: '/pages/oscarCinematography/list/list'
         };
     },
 

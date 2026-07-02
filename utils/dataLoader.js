@@ -40,6 +40,18 @@ function invalidateMovieCache(theme) {
 }
 
 // ─────────────────────────────────────────────
+// 主题 → 云函数名解析
+// ─────────────────────────────────────────────
+
+// 走 enrichThemeMovies 灌入共享集合 generic_theme_movies 的新主题，注册到这里即可，
+// 读取改走 getThemeMovies；未注册的主题维持走 getMoviesData（老主题代码路径不受影响）。
+const GENERIC_THEMES = new Set(['oscarCinematography']);
+
+function cloudFnForTheme(theme) {
+  return GENERIC_THEMES.has(theme) ? 'getThemeMovies' : 'getMoviesData';
+}
+
+// ─────────────────────────────────────────────
 // 核心：调用聚合云函数，优先命中本地缓存
 // ─────────────────────────────────────────────
 
@@ -48,8 +60,9 @@ function invalidateMovieCache(theme) {
  * @param {string} theme - 'douban' | 'imdb'
  * @param {string|null} openid
  * @param {boolean} forceRefresh - 是否强制忽略缓存
+ * @param {object} queryOptions - 走 getThemeMovies 的通用主题可传 { orderByField, orderDirection }
  */
-async function loadMoviesData(theme, openid, forceRefresh = false) {
+async function loadMoviesData(theme, openid, forceRefresh = false, queryOptions = {}) {
   const cached = forceRefresh ? null : readMovieCache(theme);
 
   let movies;
@@ -61,8 +74,8 @@ async function loadMoviesData(theme, openid, forceRefresh = false) {
     movies = cached.data;
     try {
       const markRes = await wx.cloud.callFunction({
-        name: 'getMoviesData',
-        data: { theme, openid, marksOnly: true }
+        name: cloudFnForTheme(theme),
+        data: { theme, openid, marksOnly: true, ...queryOptions }
       });
       const result = markRes && markRes.result;
       if (result) {
@@ -81,8 +94,8 @@ async function loadMoviesData(theme, openid, forceRefresh = false) {
 
   if (useFull) {
     const res = await wx.cloud.callFunction({
-      name: 'getMoviesData',
-      data: { theme, openid }
+      name: cloudFnForTheme(theme),
+      data: { theme, openid, ...queryOptions }
     });
     if (!res.result || !res.result.success) {
       throw new Error(res.result ? res.result.error : '云函数调用失败');

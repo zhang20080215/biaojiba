@@ -1,4 +1,5 @@
 var adConfig = require('../../utils/adConfig')
+var userStore = require('../../utils/userStore.js')
 
 // 每日主题横排块的图标/底色/文字色（按主题 id）—— 暖调协调配色
 var DAILY_BLOCK_META = {
@@ -31,10 +32,22 @@ Page({
     },
     themes: [
       {
+        id: 'oscar_cinematography_movies',
+        title: '历届奥斯卡最佳摄影奖',
+        description: '奥斯卡最佳摄影历年获奖，每年一部影像典范',
+        image: '/images/cover-oscar-cinematography.webp',
+        userCount: 0,
+        tag: '电影',
+        category: 'movie',
+        isNew: true,
+        wishFrom: 'And**',
+        url: '/pages/oscarCinematography/list/list'
+      },
+      {
         id: 'daily_movie',
         title: '每日电影',
         description: '记录每天看过的电影，攒成年度片单',
-        image: '/images/cover-daily-movie.jpg',
+        image: '/images/cover-daily-movie.webp',
         userCount: 0,
         tag: '每日',
         category: 'daily',
@@ -67,18 +80,19 @@ Page({
         id: 'oscar_anime_movies',
         title: '历届奥斯卡最佳动画长篇',
         description: '奥斯卡最佳动画长篇历年获奖，每年一部经典动画',
-        image: '/images/cover-oscar.jpg',
+        image: '/images/cover-oscar-anime.webp',
         userCount: 0,
         tag: '电影',
         category: 'movie',
         isNew: true,
+        wishFrom: '安然**',
         url: '/pages/oscarAnime/list/list'
       },
       {
         id: 'movie_search_all_platforms',
         title: '全平台电影评分查询',
         description: '搜索任意电影，对比豆瓣 / IMDB / 烂番茄评分',
-        image: '/images/cover-movie-search.jpg',
+        image: '/images/cover-movie-search.webp',
         userCount: 0,
         tag: '电影',
         category: 'movie',
@@ -179,8 +193,10 @@ Page({
       }
     ],
     filteredThemes: [],
-    // 奥斯卡最佳动画长篇卡片封面：取该榜单第一部电影的封面（异步从云端拉取后注入）
-    oscarAnimeCover: ''
+    // 片单/书单需求收集弹窗
+    showRequestModal: false,
+    requestType: 'movie',
+    requestContent: ''
   },
 
   onLoad() {
@@ -189,9 +205,8 @@ Page({
     const menuBtn = wx.getMenuButtonBoundingClientRect();
     // header paddingTop = 鑳跺泭鎸夐挳椤堕儴鐣欑櫧
     const headerPadTop = menuBtn.top;
-    const savedTheme = wx.getStorageSync('appTheme') || 'theme-green';
-    const app = getApp();
-    app.globalData.theme = savedTheme;
+    this._firstShow = true;
+    const savedTheme = getApp().globalData.theme || 'theme-green';
     this.setData({
       statusBarHeight: windowInfo.statusBarHeight || 20,
       headerPadTop,
@@ -201,23 +216,60 @@ Page({
     this.checkLoginStatus();
     this.buildDailyBlocks();
     this.filterThemes('all');
-    this.loadUserCounts();
-    this.loadOscarAnimeCover();
-    this.initAds();
+
+    // 非关键数据加载延迟到首屏渲染后，避免拉长 onLoad 长任务
+    wx.nextTick(() => {
+      this.loadUserCounts();
+      this.initAds();
+    });
   },
 
-  // 拉取奥斯卡最佳动画长篇榜单「第一部」（与列表同序：rank desc）的封面，注入卡片
-  loadOscarAnimeCover() {
-    wx.cloud.database().collection('oscar_anime_movies')
-      .orderBy('rank', 'desc').limit(1).get()
-      .then(res => {
-        const first = res && res.data && res.data[0];
-        const cover = first && (first.cover || first.coverUrl);
-        if (cover) {
-          this.setData({ oscarAnimeCover: cover }, () => this.filterThemes(this.data.activeTab));
-        }
-      })
-      .catch(err => console.warn('loadOscarAnimeCover 失败', err));
+  // ── 片单/书单需求收集 ──
+  onOpenRequestModal() {
+    this.setData({ showRequestModal: true });
+  },
+
+  onCloseRequestModal() {
+    this.setData({ showRequestModal: false });
+  },
+
+  onRequestTypeTap(e) {
+    this.setData({ requestType: e.currentTarget.dataset.type });
+  },
+
+  onRequestInput(e) {
+    this.setData({ requestContent: e.detail.value });
+  },
+
+  async onSubmitRequest() {
+    const content = (this.data.requestContent || '').trim();
+    if (!content) {
+      wx.showToast({ title: '先写点内容吧', icon: 'none' });
+      return;
+    }
+    if (this._requestSubmitting) return;
+    this._requestSubmitting = true;
+    wx.showLoading({ title: '提交中', mask: true });
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'submitThemeRequest',
+        data: { type: this.data.requestType, content }
+      });
+      wx.hideLoading();
+      const result = res && res.result;
+      if (result && result.success) {
+        this.setData({ showRequestModal: false, requestContent: '' });
+        // 带 icon 的 toast 标题最多显示 7 个字符，超出会被截断
+        wx.showToast({ title: '许愿已收到', icon: 'success' });
+      } else {
+        wx.showToast({ title: (result && result.error) || '提交失败，稍后再试', icon: 'none' });
+      }
+    } catch (err) {
+      wx.hideLoading();
+      console.warn('submitThemeRequest 失败', err);
+      wx.showToast({ title: '网络异常，稍后再试', icon: 'none' });
+    }
+    this._requestSubmitting = false;
   },
 
   onShareAppMessage() {
@@ -229,6 +281,11 @@ Page({
 
   onShow() {
     this.checkLoginStatus();
+    // 首次 show 紧随 onLoad，主题/卡片已构建，跳过重复 rebuild
+    if (this._firstShow) {
+      this._firstShow = false;
+      return;
+    }
     // 鏍煎紡鍖栫敤鎴锋暟閲忓苟杩囨护
     const themes = this.data.themes.map(theme => ({
       ...theme,
@@ -282,19 +339,16 @@ Page({
       filtered = themes.filter(t => t.category === tab);
     }
     // 纭繚 userCountText 瀛樺湪
-    const oscarAnimeCover = this.data.oscarAnimeCover;
     filtered = filtered.map(t => ({
       ...t,
-      userCountText: t.userCountText || this.formatUserCount(t.userCount),
-      // 奥斯卡动画卡片封面用榜单第一部电影的封面（云端拉到后覆盖默认图）
-      image: (t.id === 'oscar_anime_movies' && oscarAnimeCover) ? oscarAnimeCover : t.image
+      userCountText: t.userCountText || this.formatUserCount(t.userCount)
     }));
     this.setData({ filteredThemes: filtered });
   },
 
   // 妫€鏌ョ櫥褰曠姸鎬?
   checkLoginStatus() {
-    const userInfo = wx.getStorageSync('userInfo');
+    const userInfo = userStore.getUserInfo();
     if (userInfo) {
       const openid = userInfo._openid || userInfo.openid || '';
       this.setData({
@@ -411,7 +465,7 @@ Page({
         });
       }
 
-      wx.setStorageSync('userInfo', userInfo);
+      userStore.setUserInfo(userInfo);
       this.setData({
         userInfo,
         openid,
@@ -433,7 +487,7 @@ Page({
       content: '确定要退出登录吗？',
       success: (res) => {
         if (res.confirm) {
-          wx.removeStorageSync('userInfo');
+          userStore.clearUserInfo();
           this.setData({
             userInfo: null,
             openid: ''
@@ -451,7 +505,9 @@ Page({
         { id: 'douban_movies', collection: 'movies', topFiltered: true },
         { id: 'imdb_movies', collection: 'imdb_movies', topFiltered: true },
         { id: 'oscar_movies', collection: 'oscar_movies', topFiltered: false },
+        { id: 'oscar_anime_movies', collection: 'oscar_anime_movies', topFiltered: false },
         { id: 'boxoffice_movies', collection: 'boxoffice_movies', topFiltered: true },
+        { id: 'oscar_cinematography_movies', collection: 'generic_theme_movies', theme: 'oscarCinematography', topFiltered: false },
         // 书线：marks 集合是 BookMarks，主键是 bookId，按 source 字段区分豆瓣/微信读书
         { id: 'douban_books', collection: 'douban_books', topFiltered: true, marksCollection: 'BookMarks', idField: 'bookId', source: 'douban' },
         { id: 'weread_books', collection: 'weread_books', topFiltered: true, marksCollection: 'BookMarks', idField: 'bookId', source: 'weread' }
@@ -546,6 +602,8 @@ Page({
       // topFiltered=false 的集合（如 oscar_movies）没有 isTop250 可筛，但也不能用空 where（会触发"全量扫表"告警）；
       // 用 _id 存在判断：_id 是默认索引字段，等价于"取全部"，但走索引、不算空查询。
       const whereCondition = config.topFiltered ? { isTop250: _.neq(false) } : { _id: _.exists(true) };
+      // 共享集合（generic_theme_movies）走 enrichThemeMovies 灌入的新主题，多传一个 theme 精确过滤
+      if (config.theme) whereCondition.theme = config.theme;
       const res = await db.collection(config.collection)
         .where(whereCondition)
         .skip(offset).limit(limit).field({ _id: true }).get();

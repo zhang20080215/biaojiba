@@ -4,6 +4,7 @@ const DataLoader = require('../../../utils/dataLoader.js');
 const BoxofficePosterDrawer = require('../../../utils/boxofficePosterDrawer.js');
 var adConfig = require('../../../utils/adConfig');
 const rewardedSaveGate = require('../../../utils/rewardedSaveGate.js');
+const userStore = require('../../../utils/userStore.js');
 
 const TITLE = '全球电影票房榜观影海报墙';
 
@@ -56,7 +57,7 @@ Page({
             const shareType = options.type || 'wall';
             const windowInfo = wx.getWindowInfo();
             const menuBtn = wx.getMenuButtonBoundingClientRect();
-            const themeClass = wx.getStorageSync('appTheme') || 'theme-green';
+            const themeClass = getApp().globalData.theme || 'theme-green';
             const bgThemes = this.getDoubanBgThemes();
             const defaultTheme = bgThemes[0];
 
@@ -82,7 +83,7 @@ Page({
     },
 
     onShow() {
-        const themeClass = wx.getStorageSync('appTheme') || 'theme-green';
+        const themeClass = getApp().globalData.theme || 'theme-green';
         if (themeClass !== this.data.themeClass) {
             this.setData({ themeClass });
         }
@@ -132,7 +133,7 @@ Page({
     },
 
     async loadUserInfo() {
-        const userInfo = wx.getStorageSync('userInfo') || { nickName: '昵称', avatarUrl: '' };
+        const userInfo = userStore.getUserInfo() || { nickName: '昵称', avatarUrl: '' };
         try {
             const res = await wx.cloud.getTempFileURL({
                 fileList: [{ fileID: 'cloud://cloud1-3gn3wryx716919c6.636c-cloud1-3gn3wryx716919c6-1360913831/GCGuV-qbcAAVSKH.png', maxAge: 60 * 60 }]
