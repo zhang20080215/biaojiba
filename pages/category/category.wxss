@@ -470,6 +470,21 @@
 }
 
 /* NEW 角标 — 放右上角，与左上角 tag-badge 对称 */
+/* 许愿来源标识 — 封面左下角，压在 cover-mask 渐变上 */
+.wish-badge {
+  position: absolute;
+  bottom: var(--space-2);
+  left: var(--space-2);
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: var(--radius-pill);
+  padding: 6rpx 14rpx;
+  backdrop-filter: blur(4rpx);
+  font-size: var(--font-mini);
+  color: rgba(255, 255, 255, 0.95);
+  line-height: 1.2;
+  z-index: 2;
+}
+
 .new-badge {
   position: absolute;
   top: var(--space-2);
@@ -901,4 +916,106 @@
   font-size: var(--font-caption);
   color: var(--text-secondary);
   font-weight: 500;
+}
+
+/* ========== 片单/书单需求收集 ========== */
+.request-entry {
+  display: flex;
+  align-items: center;
+  /* 位于 filter-bar（自带 space-2 下边距）与卡片网格之间：上 8+16=24rpx，与下 24rpx 对称 */
+  margin: var(--space-1) var(--space-3) var(--space-3);
+  padding: var(--space-3);
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+}
+
+.request-entry-hover {
+  transform: scale(0.98);
+}
+
+.request-entry-icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: var(--bg-section);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  margin-right: var(--space-2);
+  flex-shrink: 0;
+}
+
+.request-entry-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.request-entry-title {
+  font-size: var(--font-body);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.request-entry-sub {
+  font-size: var(--font-caption);
+  color: var(--text-muted);
+  margin-top: 4rpx;
+}
+
+.request-entry-arrow {
+  font-size: 40rpx;
+  color: var(--text-muted);
+  margin-left: var(--space-2);
+}
+
+.request-type-row {
+  display: flex;
+  width: 100%;
+  margin-bottom: var(--space-3);
+}
+
+.request-type-chip {
+  flex: 1;
+  height: 68rpx;
+  line-height: 68rpx;
+  text-align: center;
+  border-radius: var(--radius-pill);
+  background: var(--bg-section);
+  color: var(--text-secondary);
+  font-size: var(--font-body);
+  margin: 0 var(--space-1);
+  transition: transform 120ms ease-out;
+}
+
+.request-type-chip:active {
+  transform: scale(0.96);
+}
+
+.request-type-chip.active {
+  background: var(--brand-primary);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.request-textarea {
+  width: 100%;
+  height: 220rpx;
+  box-sizing: border-box;
+  padding: var(--space-2);
+  background: var(--bg-section);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-body);
+  color: var(--text-primary);
+}
+
+.request-count {
+  width: 100%;
+  text-align: right;
+  font-size: var(--font-caption);
+  color: var(--text-muted);
+  margin: var(--space-1) 0 var(--space-3);
 }

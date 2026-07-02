@@ -1,4 +1,5 @@
 const { formatAge } = require('../../../utils/growthCalculator.js');
+const userStore = require('../../../utils/userStore.js');
 
 Page({
   onLoad() {
@@ -41,7 +42,7 @@ Page({
   },
 
   checkLoginStatus() {
-    const userInfo = wx.getStorageSync('userInfo');
+    const userInfo = userStore.getUserInfo();
     if (userInfo) {
       const openid = userInfo._openid || userInfo.openid || '';
       this.setData({ userInfo: { ...userInfo, _openid: openid, openid }, openid, pendingOpenid: '' });
@@ -237,7 +238,7 @@ Page({
         });
       }
 
-      wx.setStorageSync('userInfo', userInfo);
+      userStore.setUserInfo(userInfo);
       this.setData({ userInfo, openid, pendingOpenid: '', showAuthModal: false });
       wx.hideLoading();
       wx.showToast({ title: '登录成功', icon: 'success' });

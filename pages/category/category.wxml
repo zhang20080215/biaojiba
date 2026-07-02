@@ -97,6 +97,16 @@
     </view>
   </view>
 
+  <!-- 片单/书单需求收集入口 -->
+  <view class="request-entry" bindtap="onOpenRequestModal" hover-class="request-entry-hover">
+    <view class="request-entry-icon"><text>💡</text></view>
+    <view class="request-entry-body">
+      <text class="request-entry-title">没找到想要的片单/书单？</text>
+      <text class="request-entry-sub">说说你想标记的榜单，采纳后会上线</text>
+    </view>
+    <text class="request-entry-arrow">›</text>
+  </view>
+
   <!-- 主题卡片网格（两列）：前两张 → 广告 → 剩余，确保广告在首屏可见 -->
   <view class="card-grid">
     <!-- 第一行（前2张） -->
@@ -132,6 +142,9 @@
         </view>
         <view wx:if="{{item.isNew}}" class="new-badge">
           <text>NEW</text>
+        </view>
+        <view wx:if="{{item.wishFrom}}" class="wish-badge">
+          <text>来自用户{{item.wishFrom}}的许愿</text>
         </view>
         <image
           wx:if="{{item.id === 'oscar_movies'}}"
@@ -197,6 +210,9 @@
         <view wx:if="{{item.isNew}}" class="new-badge">
           <text>NEW</text>
         </view>
+        <view wx:if="{{item.wishFrom}}" class="wish-badge">
+          <text>来自用户{{item.wishFrom}}的许愿</text>
+        </view>
         <image
           wx:if="{{item.id === 'oscar_movies'}}"
           class="oscar-icon"
@@ -219,6 +235,36 @@
         </view>
       </view>
     </navigator>
+  </view>
+
+  <!-- 片单/书单需求收集弹窗 -->
+  <view class="modal-overlay" hidden="{{!showRequestModal}}">
+    <view class="modal-mask" bindtap="onCloseRequestModal"></view>
+    <view class="modal-card">
+      <text class="modal-title">许愿新榜单</text>
+      <text class="modal-hint">想标记什么片单/书单，写下来告诉我们</text>
+
+      <view class="request-type-row">
+        <view class="request-type-chip {{requestType === 'movie' ? 'active' : ''}}" data-type="movie" bindtap="onRequestTypeTap">片单</view>
+        <view class="request-type-chip {{requestType === 'book' ? 'active' : ''}}" data-type="book" bindtap="onRequestTypeTap">书单</view>
+        <view class="request-type-chip {{requestType === 'other' ? 'active' : ''}}" data-type="other" bindtap="onRequestTypeTap">其他</view>
+      </view>
+
+      <textarea
+        class="request-textarea"
+        placeholder="例如：戛纳金棕榈获奖片单、茅盾文学奖书单…"
+        placeholder-class="input-placeholder"
+        maxlength="200"
+        value="{{requestContent}}"
+        bindinput="onRequestInput"
+      ></textarea>
+      <view class="request-count">{{requestContent.length}}/200</view>
+
+      <view class="modal-actions">
+        <button class="action-btn secondary" bindtap="onCloseRequestModal">取消</button>
+        <button class="action-btn primary" bindtap="onSubmitRequest">提交</button>
+      </view>
+    </view>
   </view>
 
   <!-- 授权弹窗 -->

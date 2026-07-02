@@ -4,6 +4,7 @@ const DataLoader = require('../../../utils/dataLoader.js');
 const DoubanLoader = require('../../../utils/doubanLoader.js');
 var adConfig = require('../../../utils/adConfig');
 const rewardedSaveGate = require('../../../utils/rewardedSaveGate.js');
+const userStore = require('../../../utils/userStore.js');
 
 const TITLE = '豆瓣电影TOP250观影海报';
 const FOOTER_TEXT = '搜索小程序：标记吧，免费制作同款图片';
@@ -71,7 +72,7 @@ Page({
             wx.setNavigationBarTitle({ title: '海报预览' });
             const windowInfo = wx.getWindowInfo();
             const menuBtn = wx.getMenuButtonBoundingClientRect();
-            const themeClass = wx.getStorageSync('appTheme') || 'theme-green';
+            const themeClass = getApp().globalData.theme || 'theme-green';
             this.setData({
                 shareType: options.type || 'text',
                 statusBarHeight: windowInfo.statusBarHeight || 20,
@@ -123,7 +124,7 @@ Page({
     },
 
     async loadUserInfo() {
-        const userInfo = wx.getStorageSync('userInfo') || { nickName: '昵称', avatarUrl: '' };
+        const userInfo = userStore.getUserInfo() || { nickName: '昵称', avatarUrl: '' };
         try {
             const res = await wx.cloud.getTempFileURL({
                 fileList: [{ fileID: 'cloud://cloud1-3gn3wryx716919c6.636c-cloud1-3gn3wryx716919c6-1360913831/GCGuV-qbcAAVSKH.png', maxAge: 60 * 60 }]

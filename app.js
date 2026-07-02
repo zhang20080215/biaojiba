@@ -12,22 +12,32 @@ App({
       })
     }
 
-    // 拉取远程广告配置（异步，不阻塞启动）
-    adConfig.fetchRemoteConfig()
+    // 主题色一次性载入内存，后续全站读 globalData.theme，避免各页重复 getStorageSync('appTheme')
+    try {
+      this.globalData.theme = wx.getStorageSync('appTheme') || 'theme-green'
+    } catch (e) {
+      this.globalData.theme = 'theme-green'
+    }
 
-    // 获取用户openid
-    wx.cloud.callFunction({
-      name: 'getOpenid',
-      success: res => {
-        console.log('云函数调用成功，完整返回：', res);
-        if (res.result && res.result.openid) {
-          this.globalData.openid = res.result.openid;
+    // 非关键启动任务延迟到首屏渲染后发起，避免阻塞 onLaunch 同步路径
+    setTimeout(() => {
+      // 拉取远程广告配置（含一次本地缓存读取）
+      adConfig.fetchRemoteConfig()
+
+      // 获取用户openid
+      wx.cloud.callFunction({
+        name: 'getOpenid',
+        success: res => {
+          console.log('云函数调用成功，完整返回：', res);
+          if (res.result && res.result.openid) {
+            this.globalData.openid = res.result.openid;
+          }
+        },
+        fail: err => {
+          console.error('云函数调用失败，错误详情：', err);
         }
-      },
-      fail: err => {
-        console.error('云函数调用失败，错误详情：', err);
-      }
-    });
+      });
+    }, 0);
   },
 
   globalData: {

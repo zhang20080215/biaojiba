@@ -1,10 +1,13 @@
-// pages/oscar/share/share.js - Oscar 海报生成页
+// pages/oscarCinematography/share/share.js - Oscar 最佳摄影奖 海报生成页
 const CanvasHelper = require('../../../utils/canvasHelper.js');
 const DataLoader = require('../../../utils/dataLoader.js');
-const OscarPosterDrawer = require('../../../utils/oscarPosterDrawer.js');
+const OscarPosterDrawer = require('../../../utils/oscarCinematographyPosterDrawer.js');
 var adConfig = require('../../../utils/adConfig');
 const rewardedSaveGate = require('../../../utils/rewardedSaveGate.js');
 const userStore = require('../../../utils/userStore.js');
+
+// 走通用主题流水线（generic_theme_movies + getThemeMovies），排序参数需自行传给 DataLoader
+const QUERY_OPTIONS = { orderByField: 'rank', orderDirection: 'desc' };
 
 Page({
     data: {
@@ -14,7 +17,7 @@ Page({
         markStatusMap: {},
         stats: { watched: 0, wish: 0, unwatched: 0 },
         shareType: 'wall',
-        canvasSize: { width: 1242, height: 1660 },
+        canvasSize: { width: 1080, height: 1440 },  // 小红书标准 3:4，尺寸更小、字相对更大
         loadProgress: 0,
         isGenerating: false,
         needRewardedAd: false,
@@ -29,7 +32,7 @@ Page({
 
     async onLoad(options) {
         try {
-            wx.setNavigationBarTitle({ title: '奥斯卡最佳影片海报' });
+            wx.setNavigationBarTitle({ title: '奥斯卡最佳摄影奖海报' });
             const shareType = options.type || 'wall';
             this.setData({ shareType });
             await this.loadUserInfo();
@@ -112,7 +115,7 @@ Page({
         try {
             wx.showLoading({ title: '加载数据中...' });
             const openid = this.data.userInfo && this.data.userInfo._openid ? this.data.userInfo._openid : '';
-            const { movies, marks } = await DataLoader.loadMoviesData('oscar', openid, false);
+            const { movies, marks } = await DataLoader.loadMoviesData('oscarCinematography', openid, false, QUERY_OPTIONS);
             const { markStatusMap, stats, watchedMovies } = DataLoader.processMarks(marks, movies);
             this.setData({ allMovies: movies, markStatusMap, stats, watchedMovies });
             wx.hideLoading();
@@ -159,15 +162,18 @@ Page({
     },
 
     // ════════════════════════════════════════
-    //  电影墙模式 — 全部97部海报 + 状态蒙层 + 片名
+    //  电影墙模式 — 全部电影海报 + 状态蒙层 + 片名
     //  核心：加载与绘制分离，避免 ctx.clip 并发交叉污染
     // ════════════════════════════════════════
     async drawMovieWall() {
         const ctx = this.canvasHelper.ctx;
-        const { width, height } = this.data.canvasSize; // 1242 × 1660
+        const { width, height } = this.data.canvasSize; // 1080 × 1440
 
         // ── 布局参数 ──
-        const cols = 11;
+        // 列数随片数自适应：片少时减少每行数量，避免每格被拉长（保持接近 2:3 海报比例）。
+        // 公式由「可用区宽高比 × 目标海报比 1.4」推导：奥斯卡(97)→11，最佳摄影(26)→6。
+        const movieCount = (this.data.allMovies || []).length || 1;
+        const cols = Math.min(11, Math.max(4, Math.round(Math.sqrt(1.22 * movieCount))));
         const padding = 30;
         const colGap = 5;
         const rowGap = 5;
@@ -337,7 +343,7 @@ Page({
         ctx.fillRect(x, y + h - textGradH, w, textGradH);
 
         // 5) 电影名
-        ctx.font = '600 13px sans-serif';
+        ctx.font = '600 17px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
         ctx.fillStyle = '#ffffff';
@@ -415,11 +421,11 @@ Page({
     },
 
     // ════════════════════════════════════════
-    //  文字海报模式 — 6列×17行 规则网格
+    //  文字海报模式 — 4列×n行 规则网格
     // ════════════════════════════════════════
     async drawTextCard() {
         const ctx = this.canvasHelper.ctx;
-        const { width, height } = this.data.canvasSize; // 1242 × 1660
+        const { width, height } = this.data.canvasSize; // 1080 × 1440
 
         // 布局
         const headerTitleY = 80;
@@ -558,8 +564,8 @@ Page({
     // ─── Header（含程序化绘制的小金人图标）───
     drawCanvasHeader(ctx, width, startY) {
         // 标题文字测量
-        ctx.font = '800 44px sans-serif';
-        const titleText = '历届奥斯卡最佳影片';
+        ctx.font = '800 50px sans-serif';
+        const titleText = '历届奥斯卡最佳摄影奖';
         const titleWidth = ctx.measureText(titleText).width;
         const iconW = 28;
         const iconH = 42;
@@ -572,15 +578,15 @@ Page({
 
         // 主标题
         ctx.fillStyle = '#f5d98a';
-        ctx.font = '800 44px sans-serif';
+        ctx.font = '800 50px sans-serif';
         ctx.textAlign = 'center';
         const titleCenterX = headerStartX + iconW + iconGap + titleWidth / 2;
         ctx.fillText(titleText, titleCenterX, startY);
 
         // 副标题
         ctx.fillStyle = 'rgba(212, 175, 55, 0.4)';
-        ctx.font = '400 20px sans-serif';
-        ctx.fillText('Academy Awards · Best Picture', width / 2, startY + 34);
+        ctx.font = '400 23px sans-serif';
+        ctx.fillText('Academy Awards · Best Cinematography', width / 2, startY + 34);
 
         const lineY = startY + 50;
         const lineGrad = ctx.createLinearGradient(width * 0.15, 0, width * 0.85, 0);
@@ -632,12 +638,12 @@ Page({
 
             // 内容：图标 + 标签 + 数值
             ctx.fillStyle = item.color;
-            ctx.font = '500 18px sans-serif';
+            ctx.font = '500 21px sans-serif';
             ctx.textAlign = 'left';
             const labelText = item.label;
             const valueText = item.value.toString();
             const labelWidth = ctx.measureText(labelText).width;
-            ctx.font = '600 20px sans-serif';
+            ctx.font = '600 24px sans-serif';
             const valueWidth = ctx.measureText(valueText).width;
 
             const iconSize = showIcon ? 14 : 0;
@@ -677,30 +683,34 @@ Page({
 
             // 标签
             ctx.fillStyle = item.color;
-            ctx.font = '500 18px sans-serif';
+            ctx.font = '500 21px sans-serif';
             ctx.textAlign = 'left';
             ctx.textBaseline = 'alphabetic';
             ctx.fillText(labelText, curX, textY);
             curX += labelWidth + textGap;
 
             // 数值
-            ctx.font = '600 20px sans-serif';
+            ctx.font = '600 24px sans-serif';
             ctx.fillText(valueText, curX, textY);
         });
     },
 
-    // ─── 文字海报：6列×17行规则网格 ───
+    // ─── 文字海报：4列×n行规则网格 ───
     drawMovieGrid(ctx, startX, startY, availW, availH) {
         const movies = this.data.allMovies;
-        const cols = 6;
-        const rows = 17;
+        // 列数/行数随片数自适应：4 列横向卡片更适合「年份+片名」文字，避免竖条空旷。
+        // 最佳摄影 26 部 → 4 列 ×7 行。
+        const cols = 4;
+        const rows = Math.max(1, Math.ceil(movies.length / cols));
         const colGap = 10;
         const rowGap = Math.floor((availH - rows * 1) / rows); // 先算cellH
 
         const cellW = Math.floor((availW - (cols - 1) * colGap) / cols);
         // 精确计算：把 availH 分配给 rows 个 cell + (rows-1) 个 gap
         const gap = 10;
-        const cellH = Math.floor((availH - (rows - 1) * gap) / rows);
+        let cellH = Math.floor((availH - (rows - 1) * gap) / rows);
+        // 限制格子为横向卡片（高 ≤ 0.62×宽），避免被拉成竖条；多出的高度由下方居中均摊为少量留白
+        cellH = Math.min(cellH, Math.round(cellW * 0.62));
         // 居中修正
         const totalH = rows * cellH + (rows - 1) * gap;
         const totalW = cols * cellW + (cols - 1) * colGap;
@@ -743,7 +753,7 @@ Page({
         // 年份（上半部分）
         const yearText = movie.year ? `${movie.year}年` : '';
         ctx.save();
-        ctx.font = '400 14px sans-serif';
+        ctx.font = '400 18px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         const yearColors = { watched: 'rgba(212, 175, 55, 0.55)', wish: 'rgba(255, 193, 7, 0.55)', unwatched: 'rgba(180, 180, 180, 0.45)' };
@@ -755,7 +765,7 @@ Page({
         ctx.save();
         const titleColors = { watched: '#d4af37', wish: '#FFC107', unwatched: '#BDBDBD' };
         const fontWeight = status === 'wish' ? '600' : '500';
-        ctx.font = `${fontWeight} 18px sans-serif`;
+        ctx.font = `${fontWeight} 23px sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillStyle = titleColors[status] || titleColors.unwatched;
@@ -799,7 +809,7 @@ Page({
         this.drawGoldLine(ctx, lineY, width);
 
         ctx.save();
-        ctx.font = '400 20px sans-serif';
+        ctx.font = '400 23px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillStyle = 'rgba(200, 200, 200, 0.6)';
@@ -892,8 +902,8 @@ Page({
 
     onShareAppMessage() {
         return {
-            title: '我的奥斯卡最佳影片观影海报',
-            path: '/pages/oscar/list/list'
+            title: '我的奥斯卡最佳摄影奖观影海报',
+            path: '/pages/oscarCinematography/list/list'
         };
     },
 

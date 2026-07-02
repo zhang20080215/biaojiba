@@ -47,6 +47,8 @@
       { "type": "folder", "value": "tools" },
       { "type": "folder", "value": ".claude" },
       { "type": "folder", "value": ".obsidian" },
+      { "type": "folder", "value": ".baoyu-skills" },
+      { "type": "file", "value": ".gitignore" },
       { "type": "file", "value": "utils/doubanPosterDrawer.js" },
       { "type": "file", "value": "utils/imdbPosterDrawer.js" },
       { "type": "file", "value": "utils/annualLoader.js" },
@@ -57,6 +59,8 @@
       { "type": "file", "value": "view_excel.py" },
       { "type": "file", "value": "coupon_creation.html" },
       { "type": "file", "value": "CLAUDE.md" },
+      { "type": "file", "value": "CHANGELOG.md" },
+      { "type": "file", "value": "性能优化.md" },
       { "type": "file", "value": "Water Tracker _standalone_ (1).html" },
       { "type": "file", "value": "小程序首页码.png" },
       { "type": "suffix", "value": ".DS_Store" }

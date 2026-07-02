@@ -2,6 +2,7 @@ import DataLoader from '../../../utils/dataLoader';
 import imageCacheManager from '../../../utils/imageCacheManager';
 var adConfig = require('../../../utils/adConfig');
 var adManager = require('../../../utils/adManager');
+var userStore = require('../../../utils/userStore.js');
 
 Page({
     data: {
@@ -45,7 +46,7 @@ Page({
             return;
         }
 
-        const savedTheme = wx.getStorageSync('appTheme') || getApp().globalData.theme || '';
+        const savedTheme = getApp().globalData.theme || '';
 
         this.setData({
             themeClass: savedTheme
@@ -101,7 +102,7 @@ Page({
     },
 
     getStoredUserInfo() {
-        const userInfo = wx.getStorageSync('userInfo');
+        const userInfo = userStore.getUserInfo();
         if (!userInfo) return null;
         const openid = userInfo._openid || userInfo.openid || '';
         return openid ? { ...userInfo, _openid: openid, openid } : userInfo;
@@ -252,7 +253,7 @@ Page({
                 });
             }
 
-            wx.setStorageSync('userInfo', userInfo);
+            userStore.setUserInfo(userInfo);
             this.setData({ userInfo, openid, pendingOpenid: '', showAuthModal: false });
             wx.hideLoading();
             wx.showToast({ title: '登录成功', icon: 'success' });

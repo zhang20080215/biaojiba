@@ -4,6 +4,7 @@ const DataLoader = require('../../../utils/dataLoader.js');
 const OscarPosterDrawer = require('../../../utils/oscarAnimePosterDrawer.js');
 var adConfig = require('../../../utils/adConfig');
 const rewardedSaveGate = require('../../../utils/rewardedSaveGate.js');
+const userStore = require('../../../utils/userStore.js');
 
 Page({
     data: {
@@ -52,7 +53,7 @@ Page({
     },
 
     async loadUserInfo() {
-        const userInfo = wx.getStorageSync('userInfo') || { nickName: '昵称', avatarUrl: '' };
+        const userInfo = userStore.getUserInfo() || { nickName: '昵称', avatarUrl: '' };
         try {
             const res = await wx.cloud.getTempFileURL({
                 fileList: [{ fileID: 'cloud://cloud1-3gn3wryx716919c6.636c-cloud1-3gn3wryx716919c6-1360913831/GCGuV-qbcAAVSKH.png', maxAge: 60 * 60 }]
