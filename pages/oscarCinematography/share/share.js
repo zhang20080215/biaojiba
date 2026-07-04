@@ -17,7 +17,7 @@ Page({
         markStatusMap: {},
         stats: { watched: 0, wish: 0, unwatched: 0 },
         shareType: 'wall',
-        canvasSize: { width: 1080, height: 1440 },  // 小红书标准 3:4，尺寸更小、字相对更大
+        canvasSize: { width: 1242, height: 1660 },  // 海报标准尺寸 1242×1660（约 3:4）
         loadProgress: 0,
         isGenerating: false,
         needRewardedAd: false,
@@ -167,7 +167,7 @@ Page({
     // ════════════════════════════════════════
     async drawMovieWall() {
         const ctx = this.canvasHelper.ctx;
-        const { width, height } = this.data.canvasSize; // 1080 × 1440
+        const { width, height } = this.data.canvasSize; // 1242 × 1660
 
         // ── 布局参数 ──
         // 列数随片数自适应：片少时减少每行数量，避免每格被拉长（保持接近 2:3 海报比例）。
@@ -297,10 +297,17 @@ Page({
         ctx.fillStyle = '#1a1a1a';
         ctx.fillRect(x, y, w, h);
 
-        // 2) 海报图片
+        // 2) 海报图片（aspect-fill：按源图比例填满格子后由 clip 裁剪，避免拉伸压扁）
         if (imgObj) {
             try {
-                ctx.drawImage(imgObj, x, y, w, h);
+                const iw = imgObj.width, ih = imgObj.height;
+                if (iw && ih) {
+                    const scale = Math.max(w / iw, h / ih);
+                    const dw = iw * scale, dh = ih * scale;
+                    ctx.drawImage(imgObj, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+                } else {
+                    ctx.drawImage(imgObj, x, y, w, h);
+                }
             } catch (e) {
                 // drawImage 失败，保持底色
             }
@@ -407,11 +414,12 @@ Page({
     async drawPosterWall() {
         const ctx = this.canvasHelper.ctx;
         const { width, height } = this.data.canvasSize;
-        const headerHeight = 100;
 
+        // header/stats 与文字海报、电影墙保持一致：header 80 / stats 155
+        // （原先 header 100 + stats 130 会让副标题、金色分割线压进统计卡片框）
         this.drawCardBackground();
-        this.drawCanvasHeader(ctx, width, headerHeight);
-        this.drawStats(ctx, 60, headerHeight + 30, width - 120);
+        this.drawCanvasHeader(ctx, width, 80);
+        this.drawStats(ctx, 60, 155, width - 120);
 
         const updateProgress = (progress) => {
             wx.showLoading({ title: `生成中${progress}%`, mask: true });
@@ -425,7 +433,7 @@ Page({
     // ════════════════════════════════════════
     async drawTextCard() {
         const ctx = this.canvasHelper.ctx;
-        const { width, height } = this.data.canvasSize; // 1080 × 1440
+        const { width, height } = this.data.canvasSize; // 1242 × 1660
 
         // 布局
         const headerTitleY = 80;
@@ -695,15 +703,16 @@ Page({
         });
     },
 
-    // ─── 文字海报：4列×n行规则网格 ───
+    // ─── 文字海报：自适应列×n行规则网格 ───
     drawMovieGrid(ctx, startX, startY, availW, availH) {
         const movies = this.data.allMovies;
-        // 列数/行数随片数自适应：4 列横向卡片更适合「年份+片名」文字，避免竖条空旷。
-        // 最佳摄影 26 部 → 4 列 ×7 行。
-        const cols = 4;
-        const rows = Math.max(1, Math.ceil(movies.length / cols));
+        // 列数按可用宽度自适应（目标格宽 ~185px），比原来固定 4 列更密、避免片多时格子被压成又宽又扁；
+        // 再随片数收敛，片数很少时不硬撑列数以免每行没几个又留大片空白。本画布 availW≈1182 → 约 6 列。
+        const count = movies.length;
         const colGap = 10;
-        const rowGap = Math.floor((availH - rows * 1) / rows); // 先算cellH
+        let cols = Math.max(4, Math.min(8, Math.round((availW + colGap) / (185 + colGap))));
+        cols = Math.min(cols, Math.max(4, count));
+        const rows = Math.max(1, Math.ceil(count / cols));
 
         const cellW = Math.floor((availW - (cols - 1) * colGap) / cols);
         // 精确计算：把 availH 分配给 rows 个 cell + (rows-1) 个 gap
@@ -750,22 +759,34 @@ Page({
         ctx.stroke();
         ctx.restore();
 
-        // 年份（上半部分）
+        // 自适应字号 + 垂直居中的「年份 / 片名」文本块
+        // （固定字号 + 固定 0.30/0.65 比例在矮格子里会重叠，改为按 cellH 缩放并居中堆叠，保证不叠）
         const yearText = movie.year ? `${movie.year}年` : '';
-        ctx.save();
-        ctx.font = '400 18px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        const yearColors = { watched: 'rgba(212, 175, 55, 0.55)', wish: 'rgba(255, 193, 7, 0.55)', unwatched: 'rgba(180, 180, 180, 0.45)' };
-        ctx.fillStyle = yearColors[status] || yearColors.unwatched;
-        ctx.fillText(yearText, x + w / 2, y + h * 0.30);
-        ctx.restore();
+        const hasYear = !!yearText;
+        // 字号按格高放大以填满格子（原来 0.20/0.15 系数在矮格子里字太小、竖向留白过多）
+        const titleFont = Math.max(14, Math.min(34, Math.round(h * 0.34)));
+        const yearFont = Math.max(12, Math.min(24, Math.round(h * 0.22)));
+        const lineGap = Math.max(3, Math.min(12, Math.round(h * 0.06)));
+        const blockH = (hasYear ? yearFont + lineGap : 0) + titleFont;
+        const blockTop = y + (h - blockH) / 2;
 
-        // 电影名（下半部分）
+        // 年份（上）
+        if (hasYear) {
+            ctx.save();
+            ctx.font = `400 ${yearFont}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const yearColors = { watched: 'rgba(212, 175, 55, 0.55)', wish: 'rgba(255, 193, 7, 0.55)', unwatched: 'rgba(180, 180, 180, 0.45)' };
+            ctx.fillStyle = yearColors[status] || yearColors.unwatched;
+            ctx.fillText(yearText, x + w / 2, blockTop + yearFont / 2);
+            ctx.restore();
+        }
+
+        // 电影名（下）
         ctx.save();
         const titleColors = { watched: '#d4af37', wish: '#FFC107', unwatched: '#BDBDBD' };
         const fontWeight = status === 'wish' ? '600' : '500';
-        ctx.font = `${fontWeight} 23px sans-serif`;
+        ctx.font = `${fontWeight} ${titleFont}px sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillStyle = titleColors[status] || titleColors.unwatched;
@@ -778,7 +799,7 @@ Page({
             }
             title += '…';
         }
-        const titleY = y + h * 0.65;
+        const titleY = blockTop + (hasYear ? yearFont + lineGap : 0) + titleFont / 2;
         ctx.fillText(title, x + w / 2, titleY);
 
         // 已看：删除线

@@ -19,10 +19,10 @@ OscarCinematographyPosterDrawer.prototype.drawPosterWall = async function (movie
 
     const availableWidth = width - padding * 2;
     const posterWidth = Math.floor((availableWidth - gap * (colsPerRow - 1)) / colsPerRow);
-    const posterHeight = Math.floor(posterWidth * 1.4);
+    const posterHeight = Math.floor(posterWidth * 1.5); // 标准海报 2:3
 
-    // 与 share.js drawPosterWall 中 header(100) + stats(130+50) + gap 保持一致
-    const posterAreaStartY = 200;
+    // 与 share.js drawPosterWall 中 header(80) + stats(155+50) + gap 保持一致
+    const posterAreaStartY = 225;
 
     const displayMovies = movies;
     const total = displayMovies.length;
@@ -75,7 +75,17 @@ OscarCinematographyPosterDrawer.prototype.drawSinglePoster = async function (mov
         ctx.save();
         this.helper.drawRoundRectPath(x, y, width, height, 12);
         ctx.clip();
-        ctx.drawImage(imagePath, x, y, width, height);
+        // aspect-fill：按源图比例缩放填满格子后由 clip 裁剪，避免强行拉伸把封面压扁
+        const iw = imagePath && imagePath.width;
+        const ih = imagePath && imagePath.height;
+        if (iw && ih) {
+            const scale = Math.max(width / iw, height / ih);
+            const dw = iw * scale;
+            const dh = ih * scale;
+            ctx.drawImage(imagePath, x + (width - dw) / 2, y + (height - dh) / 2, dw, dh);
+        } else {
+            ctx.drawImage(imagePath, x, y, width, height);
+        }
 
         ctx.strokeStyle = 'rgba(212, 175, 55, 0.15)';
         ctx.lineWidth = 1;

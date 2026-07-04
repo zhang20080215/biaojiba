@@ -412,6 +412,7 @@ page {
   max-width: 60px;
   font-size: 13px;
   font-weight: 600;
+  text-align: center;
   border-radius: 20rpx;
   border: none;
   height: 30px;
