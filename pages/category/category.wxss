@@ -536,6 +536,29 @@
   color: #1A1A1A;
 }
 
+/* 烂番茄三主题占位卡：各自主题色渐变 + 图标 + 白字标签 */
+.cover-placeholder.rt-horror {
+  background: linear-gradient(135deg, #B5514C 0%, #8E2A2A 100%);
+}
+.cover-placeholder.rt-war {
+  background: linear-gradient(135deg, #6E89A0 0%, #3E5C6E 100%);
+}
+.cover-placeholder.rt-animation {
+  background: linear-gradient(135deg, #F2B073 0%, #E8862E 100%);
+}
+.cover-placeholder .placeholder-emoji {
+  font-size: 56rpx;
+  line-height: 1;
+  margin-bottom: var(--space-1);
+}
+.cover-placeholder.rt-horror .placeholder-text,
+.cover-placeholder.rt-war .placeholder-text,
+.cover-placeholder.rt-animation .placeholder-text {
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 600;
+  letter-spacing: 2rpx;
+}
+
 .bottle-mini {
   width: 84rpx;
   height: 124rpx;

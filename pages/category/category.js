@@ -44,6 +44,39 @@ Page({
         url: '/pages/oscarCinematography/list/list'
       },
       {
+        id: 'rt_horror_movies',
+        title: '史上最佳恐怖电影',
+        description: '烂番茄评选史上最佳200部恐怖片，标记你的胆量',
+        image: '',
+        userCount: 0,
+        tag: '电影',
+        category: 'movie',
+        isNew: true,
+        url: '/pages/rtHorror/list/list'
+      },
+      {
+        id: 'rt_war_movies',
+        title: '史上最佳战争电影',
+        description: '烂番茄评选史上最佳150部战争片，铭记历史与人性',
+        image: '',
+        userCount: 0,
+        tag: '电影',
+        category: 'movie',
+        isNew: true,
+        url: '/pages/rtWar/list/list'
+      },
+      {
+        id: 'rt_animation_movies',
+        title: '史上最佳动画电影',
+        description: '烂番茄评选史上最佳动画长片，重温童心与想象',
+        image: '',
+        userCount: 0,
+        tag: '电影',
+        category: 'movie',
+        isNew: true,
+        url: '/pages/rtAnimation/list/list'
+      },
+      {
         id: 'daily_movie',
         title: '每日电影',
         description: '记录每天看过的电影，攒成年度片单',
@@ -508,6 +541,9 @@ Page({
         { id: 'oscar_anime_movies', collection: 'oscar_anime_movies', topFiltered: false },
         { id: 'boxoffice_movies', collection: 'boxoffice_movies', topFiltered: true },
         { id: 'oscar_cinematography_movies', collection: 'generic_theme_movies', theme: 'oscarCinematography', topFiltered: false },
+        { id: 'rt_horror_movies', collection: 'generic_theme_movies', theme: 'rtHorror', topFiltered: false },
+        { id: 'rt_war_movies', collection: 'generic_theme_movies', theme: 'rtWar', topFiltered: false },
+        { id: 'rt_animation_movies', collection: 'generic_theme_movies', theme: 'rtAnimation', topFiltered: false },
         // 书线：marks 集合是 BookMarks，主键是 bookId，按 source 字段区分豆瓣/微信读书
         { id: 'douban_books', collection: 'douban_books', topFiltered: true, marksCollection: 'BookMarks', idField: 'bookId', source: 'douban' },
         { id: 'weread_books', collection: 'weread_books', topFiltered: true, marksCollection: 'BookMarks', idField: 'bookId', source: 'weread' }
