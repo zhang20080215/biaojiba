@@ -17,6 +17,8 @@
     "pages/rtWar/share/share",
     "pages/rtAnimation/list/list",
     "pages/rtAnimation/share/share",
+    "pages/palmeDor/list/list",
+    "pages/palmeDor/share/share",
     "pages/boxoffice/list/list",
     "pages/boxoffice/share/share",
     "pages/doubanBooks/list/list",

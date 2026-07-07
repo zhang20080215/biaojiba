@@ -148,6 +148,10 @@
           <text class="placeholder-emoji">🎨</text>
           <text class="placeholder-text">动画电影</text>
         </view>
+        <view wx:elif="{{item.id === 'palme_dor_movies'}}" class="cover-placeholder palme">
+          <text class="placeholder-emoji">🌴</text>
+          <text class="placeholder-text">金棕榈奖</text>
+        </view>
         <view class="cover-mask"></view>
         <view class="tag-badge">
           <text>{{item.tag}}</text>
@@ -226,6 +230,10 @@
         <view wx:elif="{{item.id === 'rt_animation_movies'}}" class="cover-placeholder rt-animation">
           <text class="placeholder-emoji">🎨</text>
           <text class="placeholder-text">动画电影</text>
+        </view>
+        <view wx:elif="{{item.id === 'palme_dor_movies'}}" class="cover-placeholder palme">
+          <text class="placeholder-emoji">🌴</text>
+          <text class="placeholder-text">金棕榈奖</text>
         </view>
         <view class="cover-mask"></view>
         <view class="tag-badge">

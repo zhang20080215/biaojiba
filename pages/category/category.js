@@ -77,6 +77,17 @@ Page({
         url: '/pages/rtAnimation/list/list'
       },
       {
+        id: 'palme_dor_movies',
+        title: '历届金棕榈奖',
+        description: '戛纳电影节历届金棕榈获奖影片，含届数·导演·国家',
+        image: '',
+        userCount: 0,
+        tag: '电影',
+        category: 'movie',
+        isNew: true,
+        url: '/pages/palmeDor/list/list'
+      },
+      {
         id: 'daily_movie',
         title: '每日电影',
         description: '记录每天看过的电影，攒成年度片单',
@@ -544,6 +555,7 @@ Page({
         { id: 'rt_horror_movies', collection: 'generic_theme_movies', theme: 'rtHorror', topFiltered: false },
         { id: 'rt_war_movies', collection: 'generic_theme_movies', theme: 'rtWar', topFiltered: false },
         { id: 'rt_animation_movies', collection: 'generic_theme_movies', theme: 'rtAnimation', topFiltered: false },
+        { id: 'palme_dor_movies', collection: 'generic_theme_movies', theme: 'palmeDor', topFiltered: false },
         // 书线：marks 集合是 BookMarks，主键是 bookId，按 source 字段区分豆瓣/微信读书
         { id: 'douban_books', collection: 'douban_books', topFiltered: true, marksCollection: 'BookMarks', idField: 'bookId', source: 'douban' },
         { id: 'weread_books', collection: 'weread_books', topFiltered: true, marksCollection: 'BookMarks', idField: 'bookId', source: 'weread' }
