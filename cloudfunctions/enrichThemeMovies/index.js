@@ -38,16 +38,26 @@ function slugify(str) {
 
 /**
  * 搜索豆瓣提取封面和评分
- * 搜索策略：依次尝试 "中文名 年份"、"中文名"、"英文名 年份"、"英文名"
- * 匹配时优先选年份吻合的结果，避免同名电影误匹配
+ * 搜索策略：依次尝试 "中文名 年份"、"英文名 年份"、"中文名"、"英文名"
+ *   —— 「英文名 年份」提到前面，泛用中文名（如「南极探险」）易撞热门条目，英文名基本不撞车。
+ * 匹配策略：跨所有查询优先返回「年份吻合」的候选（避免同名/撞名误匹配），
+ *   全程都没有年份吻合时，才兜底取首个成功查询的第一条。
  */
 async function fetchDoubanInfo(originalTitle, chineseTitle, year) {
     const searchQueries = [
         chineseTitle && year ? `${chineseTitle} ${year}` : null,
-        chineseTitle,
         originalTitle && year ? `${originalTitle} ${year}` : null,
+        chineseTitle,
         originalTitle
     ].filter(Boolean);
+
+    const toInfo = (c) => ({
+        doubanId: c.doubanId,
+        coverUrl: c.coverUrl || '',
+        rating: c.rating ? parseFloat(c.rating) : 0
+    });
+
+    let fallback = null; // 首个非年份吻合的候选，全程没年份吻合时兜底
 
     for (const query of searchQueries) {
         try {
@@ -75,25 +85,35 @@ async function fetchDoubanInfo(originalTitle, chineseTitle, year) {
 
                     const yearMatch = year ? infoText.includes(String(year)) : false;
 
-                    candidates.push({ coverUrl, rating, doubanId, yearMatch });
+                    if (doubanId) candidates.push({ coverUrl, rating, doubanId, yearMatch });
                 }
             });
 
             if (candidates.length === 0) continue;
 
-            const best = candidates.find(c => c.yearMatch) || candidates[0];
-
-            if (best && best.doubanId) {
-                console.log(`  -> Matched douban ID: ${best.doubanId}, year match: ${best.yearMatch}, query: "${query}"`);
-                return {
-                    doubanId: best.doubanId,
-                    coverUrl: best.coverUrl || '',
-                    rating: best.rating ? parseFloat(best.rating) : 0
-                };
+            // 有年份的场景：优先返回本次查询里年份吻合的候选
+            const yearHit = year ? candidates.find(c => c.yearMatch) : null;
+            if (yearHit) {
+                console.log(`  -> Matched douban ID: ${yearHit.doubanId}, year match: true, query: "${query}"`);
+                return toInfo(yearHit);
             }
+
+            // 没年份约束（year 为空）：沿用旧行为，直接取第一条
+            if (!year) {
+                console.log(`  -> Matched douban ID: ${candidates[0].doubanId}, year match: false, query: "${query}"`);
+                return toInfo(candidates[0]);
+            }
+
+            // 有年份但本次无吻合：记下兜底候选，继续尝试后续查询（尤其「英文名 年份」）
+            if (!fallback) fallback = { cand: candidates[0], query };
         } catch (error) {
             console.error(`Fetch douban info failed for "${query}":`, error.message);
         }
+    }
+
+    if (fallback) {
+        console.log(`  -> Fallback douban ID: ${fallback.cand.doubanId}, year match: false, query: "${fallback.query}"`);
+        return toInfo(fallback.cand);
     }
     return null;
 }

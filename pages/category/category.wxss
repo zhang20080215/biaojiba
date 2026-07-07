@@ -549,6 +549,9 @@
 .cover-placeholder.palme {
   background: linear-gradient(135deg, #D4B45C 0%, #A8842B 100%);
 }
+.cover-placeholder.oscar-screenplay {
+  background: linear-gradient(135deg, #9B7BB0 0%, #6B4C7A 100%);
+}
 .cover-placeholder .placeholder-emoji {
   font-size: 56rpx;
   line-height: 1;
@@ -557,7 +560,8 @@
 .cover-placeholder.rt-horror .placeholder-text,
 .cover-placeholder.rt-war .placeholder-text,
 .cover-placeholder.rt-animation .placeholder-text,
-.cover-placeholder.palme .placeholder-text {
+.cover-placeholder.palme .placeholder-text,
+.cover-placeholder.oscar-screenplay .placeholder-text {
   color: rgba(255, 255, 255, 0.95);
   font-weight: 600;
   letter-spacing: 2rpx;

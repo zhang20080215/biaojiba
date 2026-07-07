@@ -19,6 +19,8 @@
     "pages/rtAnimation/share/share",
     "pages/palmeDor/list/list",
     "pages/palmeDor/share/share",
+    "pages/oscarScreenplay/list/list",
+    "pages/oscarScreenplay/share/share",
     "pages/boxoffice/list/list",
     "pages/boxoffice/share/share",
     "pages/doubanBooks/list/list",

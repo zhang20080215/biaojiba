@@ -152,6 +152,10 @@
           <text class="placeholder-emoji">🌴</text>
           <text class="placeholder-text">金棕榈奖</text>
         </view>
+        <view wx:elif="{{item.id === 'oscar_screenplay_movies'}}" class="cover-placeholder oscar-screenplay">
+          <text class="placeholder-emoji">✍️</text>
+          <text class="placeholder-text">原创剧本</text>
+        </view>
         <view class="cover-mask"></view>
         <view class="tag-badge">
           <text>{{item.tag}}</text>
@@ -234,6 +238,10 @@
         <view wx:elif="{{item.id === 'palme_dor_movies'}}" class="cover-placeholder palme">
           <text class="placeholder-emoji">🌴</text>
           <text class="placeholder-text">金棕榈奖</text>
+        </view>
+        <view wx:elif="{{item.id === 'oscar_screenplay_movies'}}" class="cover-placeholder oscar-screenplay">
+          <text class="placeholder-emoji">✍️</text>
+          <text class="placeholder-text">原创剧本</text>
         </view>
         <view class="cover-mask"></view>
         <view class="tag-badge">

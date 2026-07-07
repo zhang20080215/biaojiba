@@ -45,7 +45,7 @@ function invalidateMovieCache(theme) {
 
 // 走 enrichThemeMovies 灌入共享集合 generic_theme_movies 的新主题，注册到这里即可，
 // 读取改走 getThemeMovies；未注册的主题维持走 getMoviesData（老主题代码路径不受影响）。
-const GENERIC_THEMES = new Set(['oscarCinematography', 'rtHorror', 'rtWar', 'rtAnimation', 'palmeDor']);
+const GENERIC_THEMES = new Set(['oscarCinematography', 'rtHorror', 'rtWar', 'rtAnimation', 'palmeDor', 'oscarScreenplay']);
 
 function cloudFnForTheme(theme) {
   return GENERIC_THEMES.has(theme) ? 'getThemeMovies' : 'getMoviesData';
