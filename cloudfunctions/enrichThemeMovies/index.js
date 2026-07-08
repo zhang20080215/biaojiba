@@ -182,7 +182,8 @@ exports.main = async (event, context) => {
         movieList,
         idStrategy = 'rank',
         forceRefresh = false,
-        startFrom = 0
+        startFrom = 0,
+        autoContinue = false   // true 时：跑完一批自动调用自身接力，直到全部处理完（只需手动点一次）
     } = event || {};
 
     if (!theme) {
@@ -317,14 +318,37 @@ exports.main = async (event, context) => {
 
         const nextStartFrom = startFrom + processedCount;
 
+        // 自动接力：开启 autoContinue、本轮有进展、且还没跑完时，触发下一棒（fire-and-forget）。
+        // 注意：cloud.callFunction 是同步调用（会等子任务返回），不能 await —— 否则整条链嵌套等待必然超时；
+        // 只创建调用（请求即刻发出）+ 短暂等待确保请求离开容器，随后本轮正常结束，子任务在独立容器继续。
+        let autoChained = false;
+        if (stoppedEarly && autoContinue && processedCount > 0) {
+            try {
+                cloud.callFunction({
+                    name: 'enrichThemeMovies',
+                    data: { theme, movieList, idStrategy, forceRefresh, startFrom: nextStartFrom, autoContinue: true }
+                }).catch(e => console.error('[enrichThemeMovies] 自动接力触发失败:', e && e.message));
+                await new Promise(r => setTimeout(r, 1200));
+                autoChained = true;
+                console.log(`[enrichThemeMovies] 自动接力已触发：从 ${nextStartFrom} 继续`);
+            } catch (e) {
+                console.error('[enrichThemeMovies] 自动接力异常:', e && e.message);
+            }
+        }
+
         return {
             success: true,
             processed: processedCount,
             added: toAdd.length,
             updated: toUpdate.length,
             stoppedEarly,
+            autoChained,
             nextStartFrom: stoppedEarly ? nextStartFrom : 0,
-            hint: stoppedEarly ? `未处理完，下次请传入 { "theme": "${theme}", "movieList": [...同一份名单], "startFrom": ${nextStartFrom} } 继续` : '全部处理完成'
+            hint: !stoppedEarly
+                ? '全部处理完成'
+                : autoChained
+                    ? `已自动接力，从 ${nextStartFrom} 继续（无需再手动，几分钟后用 getThemeMovies 查条数确认）`
+                    : `未处理完，下次请传入 { "theme": "${theme}", "movieList": [...同一份名单], "startFrom": ${nextStartFrom} } 继续`
         };
 
     } catch (err) {

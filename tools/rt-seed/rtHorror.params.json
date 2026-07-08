@@ -3,6 +3,7 @@
   "idStrategy": "rank",
   "forceRefresh": false,
   "startFrom": 0,
+  "autoContinue": true,
   "movieList": [
     {
       "rank": 1,
