@@ -273,6 +273,8 @@ Page({
             const allMovies = movies.map(m => ({
                 ...m,
                 _id: String(m._id),
+                // 国家拆成标签数组供列表以 chip 展示（数据里以「、」分隔）
+                countryTags: (m.country || '').split('、').map(s => s.trim()).filter(Boolean),
                 // thumbCover：优先取 originalCover（原始 douban URL）转缩略图，cover 保留用于海报生成
                 thumbCover: imageCacheManager.getThumbnailUrl(m.cover || m.coverUrl || m.originalCover, 'list')
             }));

@@ -65,10 +65,19 @@
                 <image class="movie-title-copy-icon" src="/images/icon-copy.svg" mode="aspectFit" />
               </view>
             </view>
-            <view class="movie-submeta">
-              <text class="submeta-edition">第{{item.edition}}届</text><text> · {{item.year}}年</text>
+            <view class="movie-meta-line">
+              <text class="meta-edition">第{{item.edition}}届</text>
+              <text class="meta-dot">·</text>
+              <text class="meta-item">{{item.year}}年</text>
+              <block wx:if="{{item.director}}">
+                <text class="meta-dot">·</text>
+                <text class="meta-item">{{item.director}}</text>
+              </block>
+              <block wx:if="{{item.countryTags.length}}">
+                <text class="meta-dot">·</text>
+                <text class="country-tag" wx:for="{{item.countryTags}}" wx:for-item="country" wx:key="*this">{{country}}</text>
+              </block>
             </view>
-            <view class="movie-submeta director">{{item.director}}<block wx:if="{{item.country}}"> · {{item.country}}</block></view>
             <view class="movie-meta-row">
               <text class="movie-rating-star">豆瓣 {{item.rating}}</text>
               <view class="movie-action" wx:if="{{!isBatchEditing}}">

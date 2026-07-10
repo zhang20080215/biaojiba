@@ -36,12 +36,67 @@ function slugify(str) {
         .replace(/^_+|_+$/g, '') || 'untitled';
 }
 
+// 候选校验最多拉几条详情：常规情况第一条就中，这里只是兜住"泛用词首条候选不对"的坏情况
+const MAX_VERIFY_PER_QUERY = 2;
+
+function normalizeForMatch(s) {
+    return String(s || '')
+        .toLowerCase()
+        .replace(/[\s·・\-–—.,:;'’"“”!！?？()（）\[\]]/g, '');
+}
+
+// 详情是否可信匹配目标：original_title/aka 精确对上，或年份相差 ≤1（regional release 常见偏差）
+function isDetailMatch(detail, year, originalTitle) {
+    if (!detail) return false;
+    const normTarget = normalizeForMatch(originalTitle);
+    const normDetailOrig = normalizeForMatch(detail.originalTitle);
+    if (normTarget && normDetailOrig && normDetailOrig === normTarget) return true;
+    if (normTarget && (detail.aka || []).some(a => normalizeForMatch(a) === normTarget)) return true;
+    return detail.year != null && year != null && Math.abs(detail.year - year) <= 1;
+}
+
+/**
+ * 豆瓣 rexxar 详情接口：取标准片名/年份/原名/别名/封面/评分，用于候选校验 + 灌库数据。
+ * URL/headers 复用 checkDoubanTitles 已验证的同款接口；失败时返回 null。
+ */
+async function fetchDoubanDetail(doubanId) {
+    try {
+        const res = await axios.get(`https://m.douban.com/rexxar/api/v2/movie/${doubanId}`, {
+            timeout: 10000,
+            responseType: 'json',
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+                'Referer': 'https://m.douban.com/'
+            }
+        });
+        const j = (res && res.data) || {};
+        if (!j || !j.id) return null;
+        return {
+            title: j.title || '',
+            year: j.year ? parseInt(j.year, 10) : null,
+            originalTitle: j.original_title || '',
+            aka: j.aka || [],
+            directors: (j.directors || []).map(d => d.name).filter(Boolean).join('、'),
+            countries: (j.countries || []).filter(Boolean).join('、'),
+            coverUrl: (j.pic && (j.pic.large || j.pic.normal)) || j.cover_url || '',
+            rating: j.rating && typeof j.rating.value === 'number' ? j.rating.value : 0
+        };
+    } catch (e) {
+        console.warn(`Fetch douban detail failed for ${doubanId}:`, e.message);
+        return null;
+    }
+}
+
 /**
  * 搜索豆瓣提取封面和评分
  * 搜索策略：依次尝试 "中文名 年份"、"英文名 年份"、"中文名"、"英文名"
  *   —— 「英文名 年份」提到前面，泛用中文名（如「南极探险」）易撞热门条目，英文名基本不撞车。
- * 匹配策略：跨所有查询优先返回「年份吻合」的候选（避免同名/撞名误匹配），
- *   全程都没有年份吻合时，才兜底取首个成功查询的第一条。
+ * 匹配策略：豆瓣搜索结果页文案早已不带年份，光靠候选列表文本猜年份等于没校验（曾误配「地下」
+ *   「寄生上流」等条目）——改成对每条 query 的前 N 条候选逐个拉详情，用 original_title/aka/year
+ *   做真校验，通过才采纳；全程都没通过时兜底取首个成功查询的第一条，并标记 matchVerified:false
+ *   交给调用方汇总提醒人工核对。
  */
 async function fetchDoubanInfo(originalTitle, chineseTitle, year) {
     const searchQueries = [
@@ -51,13 +106,7 @@ async function fetchDoubanInfo(originalTitle, chineseTitle, year) {
         originalTitle
     ].filter(Boolean);
 
-    const toInfo = (c) => ({
-        doubanId: c.doubanId,
-        coverUrl: c.coverUrl || '',
-        rating: c.rating ? parseFloat(c.rating) : 0
-    });
-
-    let fallback = null; // 首个非年份吻合的候选，全程没年份吻合时兜底
+    let fallback = null; // 全程都没校验通过时兜底：首个成功查询的第一条候选
 
     for (const query of searchQueries) {
         try {
@@ -77,69 +126,52 @@ async function fetchDoubanInfo(originalTitle, chineseTitle, year) {
                 if (href && href.includes('/movie/subject/')) {
                     const coverUrl = $(el).find('img').attr('src');
                     const rating = $(el).find('.rating span:nth-child(2)').text().trim();
-                    const infoText = $(el).text();
 
                     let doubanId = '';
                     const match = href.match(/\/subject\/(\d+)\//);
                     if (match && match[1]) doubanId = match[1];
 
-                    const yearMatch = year ? infoText.includes(String(year)) : false;
-
-                    if (doubanId) candidates.push({ coverUrl, rating, doubanId, yearMatch });
+                    if (doubanId) candidates.push({ coverUrl, rating, doubanId });
                 }
             });
 
             if (candidates.length === 0) continue;
-
-            // 有年份的场景：优先返回本次查询里年份吻合的候选
-            const yearHit = year ? candidates.find(c => c.yearMatch) : null;
-            if (yearHit) {
-                console.log(`  -> Matched douban ID: ${yearHit.doubanId}, year match: true, query: "${query}"`);
-                return toInfo(yearHit);
-            }
-
-            // 没年份约束（year 为空）：沿用旧行为，直接取第一条
-            if (!year) {
-                console.log(`  -> Matched douban ID: ${candidates[0].doubanId}, year match: false, query: "${query}"`);
-                return toInfo(candidates[0]);
-            }
-
-            // 有年份但本次无吻合：记下兜底候选，继续尝试后续查询（尤其「英文名 年份」）
             if (!fallback) fallback = { cand: candidates[0], query };
+
+            for (const cand of candidates.slice(0, MAX_VERIFY_PER_QUERY)) {
+                const detail = await fetchDoubanDetail(cand.doubanId);
+                if (isDetailMatch(detail, year, originalTitle)) {
+                    console.log(`  -> 已验证匹配 doubanId=${cand.doubanId}「${detail.title}」, query: "${query}"`);
+                    return {
+                        doubanId: cand.doubanId,
+                        coverUrl: detail.coverUrl || cand.coverUrl || '',
+                        rating: detail.rating || (cand.rating ? parseFloat(cand.rating) : 0),
+                        title: detail.title,
+                        directors: detail.directors,
+                        countries: detail.countries,
+                        matchVerified: true
+                    };
+                }
+            }
         } catch (error) {
             console.error(`Fetch douban info failed for "${query}":`, error.message);
         }
     }
 
     if (fallback) {
-        console.log(`  -> Fallback douban ID: ${fallback.cand.doubanId}, year match: false, query: "${fallback.query}"`);
-        return toInfo(fallback.cand);
+        console.warn(`  -> [未验证匹配] 兜底 doubanId=${fallback.cand.doubanId}，query: "${fallback.query}"，需人工核对`);
+        const detail = await fetchDoubanDetail(fallback.cand.doubanId);
+        return {
+            doubanId: fallback.cand.doubanId,
+            coverUrl: (detail && detail.coverUrl) || fallback.cand.coverUrl || '',
+            rating: (detail && detail.rating) || (fallback.cand.rating ? parseFloat(fallback.cand.rating) : 0),
+            title: detail ? detail.title : '',
+            directors: detail ? detail.directors : '',
+            countries: detail ? detail.countries : '',
+            matchVerified: false
+        };
     }
     return null;
-}
-
-/**
- * 豆瓣 rexxar 详情接口：取大陆标准（简体）片名。
- * URL/headers 复用 checkDoubanTitles 已验证的同款接口；失败时返回 null，调用方保留名单原标题。
- */
-async function fetchDoubanStandardTitle(doubanId) {
-    try {
-        const res = await axios.get(`https://m.douban.com/rexxar/api/v2/movie/${doubanId}`, {
-            timeout: 10000,
-            responseType: 'json',
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-                'Referer': 'https://m.douban.com/'
-            }
-        });
-        const j = (res && res.data) || {};
-        return j.title || '';
-    } catch (e) {
-        console.warn(`Fetch standard title failed for douban ${doubanId}:`, e.message);
-        return '';
-    }
 }
 
 /**
@@ -173,6 +205,29 @@ async function downloadAndUploadImage(imageUrl, theme, movieId) {
     }
 }
 
+// 灌库前自检：写库前把脏数据/字段问题挡下（与 tools/validate-seed.js 同源的精简版）。
+// 只做与主题无关的通用检查；不校验 rank 连续性（允许传子集做单条修正）。
+function validateMovieList(movieList) {
+    const errors = [], warns = [];
+    const TW = { '义大利': '意大利', '纽西兰': '新西兰', '南韩': '韩国', '北韩': '朝鲜', '俄国': '俄罗斯', '寮国': '老挝' };
+    const DIRTY = /[<>]|&[a-zA-Z#0-9]+;|（[^）]*(语|語)[:：]|[《》\[\]|]|\s{2,}/;
+    const curYear = new Date().getFullYear();
+    const ranks = new Set();
+    movieList.forEach((m, i) => {
+        const tag = `#${m && m.rank != null ? m.rank : 'idx' + i} ${(m && m.year) || ''} ${(m && m.title) || ''}`.trim();
+        if (!m || typeof m !== 'object') { errors.push(`${tag}: 非对象`); return; }
+        if (typeof m.rank !== 'number') errors.push(`${tag}: rank 非数字`);
+        else { if (ranks.has(m.rank)) errors.push(`${tag}: rank 重复`); ranks.add(m.rank); }
+        if (typeof m.year !== 'number' || m.year < 1910 || m.year > curYear + 1) errors.push(`${tag}: year 非法(${m.year})`);
+        if (!m.title || !String(m.title).trim()) errors.push(`${tag}: title 为空`);
+        if (!m.originalTitle || !String(m.originalTitle).trim()) warns.push(`${tag}: originalTitle 为空`);
+        ['title', 'originalTitle', 'director', 'country'].forEach(k => { if (m[k] && DIRTY.test(String(m[k]))) warns.push(`${tag}: ${k} 含可疑字符 → "${m[k]}"`); });
+        if (m.director && /[（(]/.test(m.director)) warns.push(`${tag}: director 含括注 → "${m.director}"`);
+        ['director', 'country', 'title'].forEach(k => { const v = String(m[k] || ''); Object.keys(TW).forEach(tw => { if (v.includes(tw)) warns.push(`${tag}: ${k} 港台译名「${tw}」→ 建议「${TW[tw]}」`); }); });
+    });
+    return { errors, warns };
+}
+
 exports.main = async (event, context) => {
     const START_TIME = Date.now();
     const TIME_LIMIT = 45000;
@@ -183,7 +238,8 @@ exports.main = async (event, context) => {
         idStrategy = 'rank',
         forceRefresh = false,
         startFrom = 0,
-        autoContinue = false   // true 时：跑完一批自动调用自身接力，直到全部处理完（只需手动点一次）
+        autoContinue = false,  // true 时：跑完一批自动调用自身接力，直到全部处理完（只需手动点一次）
+        skipValidation = false // true 时：跳过灌库前自检（仅在明知数据有意“不规范”时用）
     } = event || {};
 
     if (!theme) {
@@ -191,6 +247,19 @@ exports.main = async (event, context) => {
     }
     if (!Array.isArray(movieList) || movieList.length === 0) {
         return { success: false, error: 'movieList 为空' };
+    }
+
+    // ── 灌库前自检：只在首批（startFrom===0）跑一次；有 ERROR 直接拦下，不写脏数据 ──
+    let validationWarns = [];
+    if (startFrom === 0) {
+        const v = validateMovieList(movieList);
+        validationWarns = v.warns;
+        if (v.warns.length) console.warn(`[enrichThemeMovies] 自检 WARN (${v.warns.length}):\n` + v.warns.join('\n'));
+        if (v.errors.length && !skipValidation) {
+            console.error(`[enrichThemeMovies] 自检 ERROR (${v.errors.length})，已拦下:\n` + v.errors.join('\n'));
+            return { success: false, error: `数据自检未通过（${v.errors.length} 个错误）`, validation: v, hint: '修正 movieList 后重试；确要强灌可传 skipValidation:true' };
+        }
+        if (v.errors.length) console.warn(`[enrichThemeMovies] 自检 ERROR (${v.errors.length}) 被 skipValidation 跳过`);
     }
 
     try {
@@ -214,6 +283,7 @@ exports.main = async (event, context) => {
 
         const toAdd = [];
         const toUpdate = [];
+        const matchWarnings = []; // 豆瓣匹配没通过校验、走兜底的条目，提醒人工核对
 
         for (let i = 0; i < pending.length; i++) {
             if (Date.now() - START_TIME > TIME_LIMIT) {
@@ -239,6 +309,15 @@ exports.main = async (event, context) => {
                 if (existingDoc.sourceTitle && patch.title === existingDoc.sourceTitle) {
                     delete patch.title;
                 }
+                // 名单本身没带导演/国家（比如 oscarScreenplay 只有片名+年份）且库里也缺：
+                // doubanId 已知，查一次详情补齐，不重新搜索/不重下封面
+                if ((!existingDoc.director || !existingDoc.country) && existingDoc.doubanId) {
+                    const detail = await fetchDoubanDetail(existingDoc.doubanId);
+                    if (detail) {
+                        if (!existingDoc.director && !patch.director && detail.directors) patch.director = detail.directors;
+                        if (!existingDoc.country && !patch.country && detail.countries) patch.country = detail.countries;
+                    }
+                }
                 const hasChanges = Object.keys(patch).some(k => JSON.stringify(patch[k]) !== JSON.stringify(existingDoc[k]));
                 if (hasChanges) {
                     toUpdate.push({ _id: existingDoc._id, data: { ...patch, updateTime: db.serverDate() } });
@@ -259,6 +338,10 @@ exports.main = async (event, context) => {
                     }
                 }
 
+                if (!doubanInfo.matchVerified) {
+                    matchWarnings.push(`#${rank != null ? rank : ''} ${year} ${title}: 豆瓣匹配未通过校验（doubanId=${doubanInfo.doubanId}），请人工核对是否为「${originalTitle}」`);
+                }
+
                 const docId = existingDoc
                     ? existingDoc._id
                     : (idStrategy === 'title-year' ? `${theme}_${slugify(originalTitle)}_${year}` : `${theme}_${rank}`);
@@ -273,14 +356,16 @@ exports.main = async (event, context) => {
                 };
                 delete finalMovieData._id;
 
+                // 名单没带导演/国家（比如 oscarScreenplay）时，用豆瓣详情里的数据补齐；
+                // 名单已经手工提供的（比如 palmeDor）不覆盖
+                if (!finalMovieData.director && doubanInfo.directors) finalMovieData.director = doubanInfo.directors;
+                if (!finalMovieData.country && doubanInfo.countries) finalMovieData.country = doubanInfo.countries;
+
                 // 用豆瓣标准（简体）片名覆盖名单标题，原始标题留档；接口失败则保留名单标题
-                if (doubanInfo.doubanId) {
-                    const standardTitle = await fetchDoubanStandardTitle(doubanInfo.doubanId);
-                    if (standardTitle && standardTitle !== finalMovieData.title) {
-                        finalMovieData.sourceTitle = movieTarget.title;
-                        finalMovieData.title = standardTitle;
-                        console.log(`  -> 片名订正: "${movieTarget.title}" → "${standardTitle}"`);
-                    }
+                if (doubanInfo.title && doubanInfo.title !== finalMovieData.title) {
+                    finalMovieData.sourceTitle = movieTarget.title;
+                    finalMovieData.title = doubanInfo.title;
+                    console.log(`  -> 片名订正: "${movieTarget.title}" → "${doubanInfo.title}"`);
                 }
 
                 if (finalMovieData.coverUrl) {
@@ -343,6 +428,8 @@ exports.main = async (event, context) => {
             updated: toUpdate.length,
             stoppedEarly,
             autoChained,
+            validationWarns,   // 首批自检的告警（脏文本/港台译名/缺 originalTitle 等），仅提示不拦截
+            matchWarnings,     // 本轮豆瓣匹配没通过 original_title/aka/year 校验、走兜底的条目，需人工核对
             nextStartFrom: stoppedEarly ? nextStartFrom : 0,
             hint: !stoppedEarly
                 ? '全部处理完成'

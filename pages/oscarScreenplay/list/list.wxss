@@ -5,17 +5,29 @@
   --shadow-cta: 0 6rpx 14rpx rgba(107, 76, 122, 0.28);
 }
 .page-root.theme-oscar-screenplay .auth-btn.confirm { color: #FFFFFF; }
-/* 金棕榈 list 额外信息行：届数/年份/导演/国家 */
-.movie-submeta {
+/* 原创剧本 list 额外信息行：届数/年份/导演/国家 —— 尽量同排展示，空间不够才换行 */
+.movie-meta-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 6rpx;
+  row-gap: 4rpx;
+  margin-bottom: 6rpx;
   font-size: var(--font-caption);
-  color: var(--text-secondary);
-  line-height: 1.35;
-  margin-bottom: 4rpx;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.5;
 }
-.movie-submeta .submeta-edition { color: #6B4C7A; font-weight: 600; }
+.meta-edition { color: #6B4C7A; font-weight: 600; }
+.meta-item { color: var(--text-secondary); }
+.meta-dot { color: var(--text-muted); }
+.country-tag {
+  font-size: var(--font-mini);
+  color: #55396B;
+  background: rgba(107, 76, 122, 0.10);
+  border: 1rpx solid rgba(107, 76, 122, 0.28);
+  padding: 2rpx 14rpx;
+  border-radius: var(--radius-pill);
+  line-height: 1.6;
+}
 
 /* douban list — design system v2.2.0 */
 

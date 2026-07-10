@@ -82,6 +82,13 @@
       <text>电影</text>
     </view>
     <view
+      class="filter-chip {{activeTab === 'oscar' ? 'active' : ''}}"
+      data-tab="oscar" bindtap="onTabTap"
+    >
+      <view class="chip-dot" wx:if="{{activeTab === 'oscar'}}"></view>
+      <text>奥斯卡</text>
+    </view>
+    <view
       class="filter-chip {{activeTab === 'reading' ? 'active' : ''}}"
       data-tab="reading" bindtap="onTabTap"
     >
@@ -121,7 +128,14 @@
     >
       <!-- 封面 -->
       <view class="card-cover">
-        <image wx:if="{{item.image}}" class="cover-img" src="{{item.image}}" mode="{{item.imageMode || 'aspectFill'}}"></image>
+        <block wx:if="{{item.image}}">
+          <image class="cover-img" src="{{item.image}}" mode="{{item.imageMode || 'aspectFill'}}"></image>
+          <view class="cover-tint {{item.tintClass}}"></view>
+        </block>
+        <block wx:elif="{{item.dynamicCover}}">
+          <image class="cover-img" src="{{item.dynamicCover.cover}}" mode="aspectFill"></image>
+          <view class="cover-tint {{item.tintClass}}"></view>
+        </block>
         <view wx:elif="{{item.id === 'child_growth'}}" class="cover-placeholder growth">
           <view class="ruler-icon"></view>
           <text class="placeholder-text">成长评估</text>
@@ -157,10 +171,8 @@
           <text class="placeholder-text">原创剧本</text>
         </view>
         <view class="cover-mask"></view>
-        <view class="tag-badge">
-          <text>{{item.tag}}</text>
-        </view>
-        <view wx:if="{{item.isNew}}" class="new-badge">
+        <text class="cover-tag-label">{{item.tag}}</text>
+        <view wx:if="{{item.id === 'palme_dor_movies' || item.id === 'oscar_screenplay_movies'}}" class="new-badge">
           <text>NEW</text>
         </view>
         <view wx:if="{{item.wishFrom}}" class="wish-badge">
@@ -174,7 +186,8 @@
         ></image>
       </view>
 
-      <!-- 信息区 -->
+      <!-- 信息区：回到封面下方独立白底区（静态设计封面图本身带文字，叠在图上会跟原图文字打架，
+           这个位置能保证在任何封面上都清晰）；分类标签改成纯文字，不用胶囊底 -->
       <view class="card-body">
         <text class="card-title">{{item.title}}</text>
         <view class="card-meta">
@@ -208,7 +221,14 @@
     >
       <!-- 封面 -->
       <view class="card-cover">
-        <image wx:if="{{item.image}}" class="cover-img" src="{{item.image}}" mode="{{item.imageMode || 'aspectFill'}}"></image>
+        <block wx:if="{{item.image}}">
+          <image class="cover-img" src="{{item.image}}" mode="{{item.imageMode || 'aspectFill'}}"></image>
+          <view class="cover-tint {{item.tintClass}}"></view>
+        </block>
+        <block wx:elif="{{item.dynamicCover}}">
+          <image class="cover-img" src="{{item.dynamicCover.cover}}" mode="aspectFill"></image>
+          <view class="cover-tint {{item.tintClass}}"></view>
+        </block>
         <view wx:elif="{{item.id === 'child_growth'}}" class="cover-placeholder growth">
           <view class="ruler-icon"></view>
           <text class="placeholder-text">成长评估</text>
@@ -244,10 +264,8 @@
           <text class="placeholder-text">原创剧本</text>
         </view>
         <view class="cover-mask"></view>
-        <view class="tag-badge">
-          <text>{{item.tag}}</text>
-        </view>
-        <view wx:if="{{item.isNew}}" class="new-badge">
+        <text class="cover-tag-label">{{item.tag}}</text>
+        <view wx:if="{{item.id === 'palme_dor_movies' || item.id === 'oscar_screenplay_movies'}}" class="new-badge">
           <text>NEW</text>
         </view>
         <view wx:if="{{item.wishFrom}}" class="wish-badge">
@@ -261,7 +279,8 @@
         ></image>
       </view>
 
-      <!-- 信息区 -->
+      <!-- 信息区：回到封面下方独立白底区（静态设计封面图本身带文字，叠在图上会跟原图文字打架，
+           这个位置能保证在任何封面上都清晰）；分类标签改成纯文字，不用胶囊底 -->
       <view class="card-body">
         <text class="card-title">{{item.title}}</text>
         <view class="card-meta">

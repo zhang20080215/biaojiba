@@ -99,7 +99,7 @@ async function downloadAndUploadPoster(imageUrl, movieDocId) {
   try {
     const response = await axios.get(imageUrl, {
       responseType: 'arraybuffer',
-      timeout: 15000,
+      timeout: 10000,
       headers: buildDoubanHeaders()
     });
     const fileName = `searched_movie_covers/${movieDocId}_${Date.now()}.jpg`;
@@ -277,7 +277,7 @@ async function searchRottenTomatoesViaSearchPage(title, year) {
 
   try {
     const res = await axios.get(url, {
-      timeout: 15000,
+      timeout: 10000,
       headers: { ...RT_DESKTOP_HEADERS, 'Accept': 'text/html' },
       responseType: 'text',
       transformResponse: x => x,
@@ -413,7 +413,7 @@ async function fetchRottenTomatoesDetail(slug) {
   const url = `https://www.rottentomatoes.com/m/${slug}`;
   try {
     const res = await axios.get(url, {
-      timeout: 15000,
+      timeout: 10000,
       headers: { ...RT_DESKTOP_HEADERS, 'Accept': 'text/html' },
       responseType: 'text',
       transformResponse: x => x,

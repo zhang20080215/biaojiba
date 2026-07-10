@@ -26,9 +26,22 @@ exports.main = async (event, context) => {
         return { success: false, error: `内容请控制在 ${MAX_CONTENT_LEN} 字以内` };
     }
 
+    // 记录昵称：优先查 users 表（权威，防前端伪造），查不到再回退到前端传入
+    const clientNickname = String((event && event.nickname) || '').trim().slice(0, 50);
+    let nickname = clientNickname;
+    try {
+        const userRes = await db.collection('users').where({ openid: OPENID }).limit(1).get();
+        if (userRes.data && userRes.data.length && userRes.data[0].nickname) {
+            nickname = String(userRes.data[0].nickname).slice(0, 50);
+        }
+    } catch (e) {
+        console.warn('submitThemeRequest 查询用户昵称失败，回退前端传入:', e && e.message);
+    }
+
     const dateStr = cnDateStr();
     const doc = {
         openid: OPENID,
+        nickname,        // 用户昵称（users 表权威，回退前端传入）
         type,            // 'movie' 片单 | 'book' 书单 | 'other'
         content,
         dateStr,
