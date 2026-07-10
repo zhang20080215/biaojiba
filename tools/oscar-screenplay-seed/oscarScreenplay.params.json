@@ -1,0 +1,611 @@
+{
+  "theme": "oscarScreenplay",
+  "idStrategy": "rank",
+  "forceRefresh": false,
+  "startFrom": 0,
+  "autoContinue": true,
+  "movieList": [
+    {
+      "rank": 1,
+      "edition": 98,
+      "year": 2025,
+      "title": "Sinners",
+      "originalTitle": "Sinners"
+    },
+    {
+      "rank": 2,
+      "edition": 97,
+      "year": 2024,
+      "title": "Anora",
+      "originalTitle": "Anora"
+    },
+    {
+      "rank": 3,
+      "edition": 96,
+      "year": 2023,
+      "title": "Anatomy of a Fall",
+      "originalTitle": "Anatomy of a Fall"
+    },
+    {
+      "rank": 4,
+      "edition": 95,
+      "year": 2022,
+      "title": "Everything Everywhere All at Once",
+      "originalTitle": "Everything Everywhere All at Once"
+    },
+    {
+      "rank": 5,
+      "edition": 94,
+      "year": 2021,
+      "title": "Belfast",
+      "originalTitle": "Belfast"
+    },
+    {
+      "rank": 6,
+      "edition": 93,
+      "year": 2020,
+      "title": "Promising Young Woman",
+      "originalTitle": "Promising Young Woman"
+    },
+    {
+      "rank": 7,
+      "edition": 92,
+      "year": 2019,
+      "title": "Parasite",
+      "originalTitle": "Parasite"
+    },
+    {
+      "rank": 8,
+      "edition": 91,
+      "year": 2018,
+      "title": "Green Book",
+      "originalTitle": "Green Book"
+    },
+    {
+      "rank": 9,
+      "edition": 90,
+      "year": 2017,
+      "title": "Get Out",
+      "originalTitle": "Get Out"
+    },
+    {
+      "rank": 10,
+      "edition": 89,
+      "year": 2016,
+      "title": "Manchester by the Sea",
+      "originalTitle": "Manchester by the Sea"
+    },
+    {
+      "rank": 11,
+      "edition": 88,
+      "year": 2015,
+      "title": "Spotlight",
+      "originalTitle": "Spotlight"
+    },
+    {
+      "rank": 12,
+      "edition": 87,
+      "year": 2014,
+      "title": "Birdman",
+      "originalTitle": "Birdman"
+    },
+    {
+      "rank": 13,
+      "edition": 86,
+      "year": 2013,
+      "title": "Her",
+      "originalTitle": "Her"
+    },
+    {
+      "rank": 14,
+      "edition": 85,
+      "year": 2012,
+      "title": "Django Unchained",
+      "originalTitle": "Django Unchained"
+    },
+    {
+      "rank": 15,
+      "edition": 84,
+      "year": 2011,
+      "title": "Midnight in Paris",
+      "originalTitle": "Midnight in Paris"
+    },
+    {
+      "rank": 16,
+      "edition": 83,
+      "year": 2010,
+      "title": "The King's Speech",
+      "originalTitle": "The King's Speech"
+    },
+    {
+      "rank": 17,
+      "edition": 82,
+      "year": 2009,
+      "title": "The Hurt Locker",
+      "originalTitle": "The Hurt Locker"
+    },
+    {
+      "rank": 18,
+      "edition": 81,
+      "year": 2008,
+      "title": "Milk",
+      "originalTitle": "Milk"
+    },
+    {
+      "rank": 19,
+      "edition": 80,
+      "year": 2007,
+      "title": "Juno",
+      "originalTitle": "Juno"
+    },
+    {
+      "rank": 20,
+      "edition": 79,
+      "year": 2006,
+      "title": "Little Miss Sunshine",
+      "originalTitle": "Little Miss Sunshine"
+    },
+    {
+      "rank": 21,
+      "edition": 78,
+      "year": 2005,
+      "title": "Crash",
+      "originalTitle": "Crash"
+    },
+    {
+      "rank": 22,
+      "edition": 77,
+      "year": 2004,
+      "title": "Eternal Sunshine of the Spotless Mind",
+      "originalTitle": "Eternal Sunshine of the Spotless Mind"
+    },
+    {
+      "rank": 23,
+      "edition": 76,
+      "year": 2003,
+      "title": "Lost in Translation",
+      "originalTitle": "Lost in Translation"
+    },
+    {
+      "rank": 24,
+      "edition": 75,
+      "year": 2002,
+      "title": "Talk to Her",
+      "originalTitle": "Talk to Her"
+    },
+    {
+      "rank": 25,
+      "edition": 74,
+      "year": 2001,
+      "title": "Gosford Park",
+      "originalTitle": "Gosford Park"
+    },
+    {
+      "rank": 26,
+      "edition": 73,
+      "year": 2000,
+      "title": "Almost Famous",
+      "originalTitle": "Almost Famous"
+    },
+    {
+      "rank": 27,
+      "edition": 72,
+      "year": 1999,
+      "title": "American Beauty",
+      "originalTitle": "American Beauty"
+    },
+    {
+      "rank": 28,
+      "edition": 71,
+      "year": 1998,
+      "title": "Shakespeare in Love",
+      "originalTitle": "Shakespeare in Love"
+    },
+    {
+      "rank": 29,
+      "edition": 70,
+      "year": 1997,
+      "title": "Good Will Hunting",
+      "originalTitle": "Good Will Hunting"
+    },
+    {
+      "rank": 30,
+      "edition": 69,
+      "year": 1996,
+      "title": "Fargo",
+      "originalTitle": "Fargo"
+    },
+    {
+      "rank": 31,
+      "edition": 68,
+      "year": 1995,
+      "title": "The Usual Suspects",
+      "originalTitle": "The Usual Suspects"
+    },
+    {
+      "rank": 32,
+      "edition": 67,
+      "year": 1994,
+      "title": "Pulp Fiction",
+      "originalTitle": "Pulp Fiction"
+    },
+    {
+      "rank": 33,
+      "edition": 66,
+      "year": 1993,
+      "title": "The Piano",
+      "originalTitle": "The Piano"
+    },
+    {
+      "rank": 34,
+      "edition": 65,
+      "year": 1992,
+      "title": "The Crying Game",
+      "originalTitle": "The Crying Game"
+    },
+    {
+      "rank": 35,
+      "edition": 64,
+      "year": 1991,
+      "title": "Thelma & Louise",
+      "originalTitle": "Thelma & Louise"
+    },
+    {
+      "rank": 36,
+      "edition": 63,
+      "year": 1990,
+      "title": "Ghost",
+      "originalTitle": "Ghost"
+    },
+    {
+      "rank": 37,
+      "edition": 62,
+      "year": 1989,
+      "title": "Dead Poets Society",
+      "originalTitle": "Dead Poets Society"
+    },
+    {
+      "rank": 38,
+      "edition": 61,
+      "year": 1988,
+      "title": "Rain Man",
+      "originalTitle": "Rain Man"
+    },
+    {
+      "rank": 39,
+      "edition": 60,
+      "year": 1987,
+      "title": "Moonstruck",
+      "originalTitle": "Moonstruck"
+    },
+    {
+      "rank": 40,
+      "edition": 59,
+      "year": 1986,
+      "title": "Hannah and Her Sisters",
+      "originalTitle": "Hannah and Her Sisters"
+    },
+    {
+      "rank": 41,
+      "edition": 58,
+      "year": 1985,
+      "title": "Witness",
+      "originalTitle": "Witness"
+    },
+    {
+      "rank": 42,
+      "edition": 57,
+      "year": 1984,
+      "title": "Places in the Heart",
+      "originalTitle": "Places in the Heart"
+    },
+    {
+      "rank": 43,
+      "edition": 56,
+      "year": 1983,
+      "title": "Tender Mercies",
+      "originalTitle": "Tender Mercies"
+    },
+    {
+      "rank": 44,
+      "edition": 55,
+      "year": 1982,
+      "title": "Gandhi",
+      "originalTitle": "Gandhi"
+    },
+    {
+      "rank": 45,
+      "edition": 54,
+      "year": 1981,
+      "title": "Chariots of Fire",
+      "originalTitle": "Chariots of Fire"
+    },
+    {
+      "rank": 46,
+      "edition": 53,
+      "year": 1980,
+      "title": "Melvin and Howard",
+      "originalTitle": "Melvin and Howard"
+    },
+    {
+      "rank": 47,
+      "edition": 52,
+      "year": 1979,
+      "title": "Breaking Away",
+      "originalTitle": "Breaking Away"
+    },
+    {
+      "rank": 48,
+      "edition": 51,
+      "year": 1978,
+      "title": "Coming Home",
+      "originalTitle": "Coming Home"
+    },
+    {
+      "rank": 49,
+      "edition": 50,
+      "year": 1977,
+      "title": "Annie Hall",
+      "originalTitle": "Annie Hall"
+    },
+    {
+      "rank": 50,
+      "edition": 49,
+      "year": 1976,
+      "title": "Network",
+      "originalTitle": "Network"
+    },
+    {
+      "rank": 51,
+      "edition": 48,
+      "year": 1975,
+      "title": "Dog Day Afternoon",
+      "originalTitle": "Dog Day Afternoon"
+    },
+    {
+      "rank": 52,
+      "edition": 47,
+      "year": 1974,
+      "title": "Chinatown",
+      "originalTitle": "Chinatown"
+    },
+    {
+      "rank": 53,
+      "edition": 46,
+      "year": 1973,
+      "title": "The Sting",
+      "originalTitle": "The Sting"
+    },
+    {
+      "rank": 54,
+      "edition": 45,
+      "year": 1972,
+      "title": "The Candidate",
+      "originalTitle": "The Candidate"
+    },
+    {
+      "rank": 55,
+      "edition": 44,
+      "year": 1971,
+      "title": "The Hospital",
+      "originalTitle": "The Hospital"
+    },
+    {
+      "rank": 56,
+      "edition": 43,
+      "year": 1970,
+      "title": "Patton",
+      "originalTitle": "Patton"
+    },
+    {
+      "rank": 57,
+      "edition": 42,
+      "year": 1969,
+      "title": "Butch Cassidy and the Sundance Kid",
+      "originalTitle": "Butch Cassidy and the Sundance Kid"
+    },
+    {
+      "rank": 58,
+      "edition": 41,
+      "year": 1968,
+      "title": "The Producers",
+      "originalTitle": "The Producers"
+    },
+    {
+      "rank": 59,
+      "edition": 40,
+      "year": 1967,
+      "title": "Guess Who's Coming to Dinner",
+      "originalTitle": "Guess Who's Coming to Dinner"
+    },
+    {
+      "rank": 60,
+      "edition": 39,
+      "year": 1966,
+      "title": "A Man and a Woman",
+      "originalTitle": "A Man and a Woman"
+    },
+    {
+      "rank": 61,
+      "edition": 38,
+      "year": 1965,
+      "title": "Darling",
+      "originalTitle": "Darling"
+    },
+    {
+      "rank": 62,
+      "edition": 37,
+      "year": 1964,
+      "title": "Father Goose",
+      "originalTitle": "Father Goose"
+    },
+    {
+      "rank": 63,
+      "edition": 36,
+      "year": 1963,
+      "title": "How the West Was Won",
+      "originalTitle": "How the West Was Won"
+    },
+    {
+      "rank": 64,
+      "edition": 35,
+      "year": 1962,
+      "title": "Divorce Italian Style",
+      "originalTitle": "Divorce Italian Style"
+    },
+    {
+      "rank": 65,
+      "edition": 34,
+      "year": 1961,
+      "title": "Splendor in the Grass",
+      "originalTitle": "Splendor in the Grass"
+    },
+    {
+      "rank": 66,
+      "edition": 33,
+      "year": 1960,
+      "title": "The Apartment",
+      "originalTitle": "The Apartment"
+    },
+    {
+      "rank": 67,
+      "edition": 32,
+      "year": 1959,
+      "title": "Pillow Talk",
+      "originalTitle": "Pillow Talk"
+    },
+    {
+      "rank": 68,
+      "edition": 31,
+      "year": 1958,
+      "title": "The Defiant Ones",
+      "originalTitle": "The Defiant Ones"
+    },
+    {
+      "rank": 69,
+      "edition": 30,
+      "year": 1957,
+      "title": "Designing Woman",
+      "originalTitle": "Designing Woman"
+    },
+    {
+      "rank": 70,
+      "edition": 29,
+      "year": 1956,
+      "title": "The Red Balloon",
+      "originalTitle": "The Red Balloon"
+    },
+    {
+      "rank": 71,
+      "edition": 28,
+      "year": 1955,
+      "title": "Interrupted Melody",
+      "originalTitle": "Interrupted Melody"
+    },
+    {
+      "rank": 72,
+      "edition": 27,
+      "year": 1954,
+      "title": "On the Waterfront",
+      "originalTitle": "On the Waterfront"
+    },
+    {
+      "rank": 73,
+      "edition": 26,
+      "year": 1953,
+      "title": "Titanic",
+      "originalTitle": "Titanic"
+    },
+    {
+      "rank": 74,
+      "edition": 25,
+      "year": 1952,
+      "title": "The Lavender Hill Mob",
+      "originalTitle": "The Lavender Hill Mob"
+    },
+    {
+      "rank": 75,
+      "edition": 24,
+      "year": 1951,
+      "title": "An American in Paris",
+      "originalTitle": "An American in Paris"
+    },
+    {
+      "rank": 76,
+      "edition": 23,
+      "year": 1950,
+      "title": "Sunset Boulevard",
+      "originalTitle": "Sunset Boulevard"
+    },
+    {
+      "rank": 77,
+      "edition": 22,
+      "year": 1949,
+      "title": "Battleground",
+      "originalTitle": "Battleground"
+    },
+    {
+      "rank": 78,
+      "edition": 21,
+      "year": 1948,
+      "title": "N/A",
+      "originalTitle": "N/A"
+    },
+    {
+      "rank": 79,
+      "edition": 20,
+      "year": 1947,
+      "title": "The Bachelor and the Bobby-Soxer",
+      "originalTitle": "The Bachelor and the Bobby-Soxer"
+    },
+    {
+      "rank": 80,
+      "edition": 19,
+      "year": 1946,
+      "title": "The Seventh Veil",
+      "originalTitle": "The Seventh Veil"
+    },
+    {
+      "rank": 81,
+      "edition": 18,
+      "year": 1945,
+      "title": "Marie-Louise",
+      "originalTitle": "Marie-Louise"
+    },
+    {
+      "rank": 82,
+      "edition": 17,
+      "year": 1944,
+      "title": "Wilson",
+      "originalTitle": "Wilson"
+    },
+    {
+      "rank": 83,
+      "edition": 16,
+      "year": 1943,
+      "title": "Princess O'Rourke",
+      "originalTitle": "Princess O'Rourke"
+    },
+    {
+      "rank": 84,
+      "edition": 15,
+      "year": 1942,
+      "title": "Woman of the Year",
+      "originalTitle": "Woman of the Year"
+    },
+    {
+      "rank": 85,
+      "edition": 14,
+      "year": 1941,
+      "title": "Citizen Kane",
+      "originalTitle": "Citizen Kane"
+    },
+    {
+      "rank": 86,
+      "edition": 13,
+      "year": 1940,
+      "title": "The Great McGinty",
+      "originalTitle": "The Great McGinty"
+    }
+  ]
+}

@@ -10,6 +10,17 @@ var DAILY_BLOCK_META = {
 };
 var DAILY_BLOCK_SOON = { emoji: '✨', color: '#EFE9DD', label: '#A89B85' };
 
+// 没有静态设计封面的主题：用榜单 rank=1 那部电影的封面做卡片图（整图铺满裁剪+主题色叠色，
+// 见 category.wxss 的 .cover-tint）。主题色变体由各主题对象自带的 tintClass 决定
+// ——加载/匹配失败前，category.wxml 里同 id 的 .cover-placeholder 兜底占位符照常显示。
+var DYNAMIC_COVER_THEMES = [
+  { id: 'rt_horror_movies', theme: 'rtHorror' },
+  { id: 'rt_war_movies', theme: 'rtWar' },
+  { id: 'rt_animation_movies', theme: 'rtAnimation' },
+  { id: 'palme_dor_movies', theme: 'palmeDor' },
+  { id: 'oscar_screenplay_movies', theme: 'oscarScreenplay' }
+];
+
 Page({
   data: {
     userInfo: null,
@@ -32,13 +43,50 @@ Page({
     },
     themes: [
       {
+        id: 'palme_dor_movies',
+        title: '历届金棕榈奖',
+        description: '戛纳电影节历届金棕榈获奖影片，含届数·导演·国家',
+        image: '',
+        tintClass: 'palme',
+        userCount: 0,
+        tag: '电影',
+        category: 'movie',
+        isNew: true,
+        url: '/pages/palmeDor/list/list'
+      },
+      {
+        id: 'oscar_screenplay_movies',
+        title: '历届奥斯卡最佳原创剧本',
+        description: '奥斯卡最佳原创剧本历届获奖，编剧功力的年度标杆',
+        image: '',
+        tintClass: 'oscar-screenplay',
+        userCount: 0,
+        tag: '奥斯卡',
+        category: 'oscar',
+        isNew: true,
+        wishFrom: 'Mi**',
+        url: '/pages/oscarScreenplay/list/list'
+      },
+      {
+        id: 'douban_movies',
+        title: '豆瓣电影 TOP250',
+        description: '华语影迷的经典片单，记录你的观影旅程',
+        image: '/images/cover-douban.jpg',
+        tintClass: 'douban-movies',
+        userCount: 0,
+        tag: '电影',
+        category: 'movie',
+        url: '/pages/douban/list/list'
+      },
+      {
         id: 'oscar_cinematography_movies',
         title: '历届奥斯卡最佳摄影奖',
         description: '奥斯卡最佳摄影历年获奖，每年一部影像典范',
         image: '/images/cover-oscar-cinematography.jpg',
+        tintClass: 'oscar-cinema',
         userCount: 0,
-        tag: '电影',
-        category: 'movie',
+        tag: '奥斯卡',
+        category: 'oscar',
         isNew: true,
         wishFrom: 'And**',
         url: '/pages/oscarCinematography/list/list'
@@ -48,6 +96,7 @@ Page({
         title: '史上最佳恐怖电影',
         description: '烂番茄评选史上最佳200部恐怖片，标记你的胆量',
         image: '',
+        tintClass: 'rt-horror',
         userCount: 0,
         tag: '电影',
         category: 'movie',
@@ -59,6 +108,7 @@ Page({
         title: '史上最佳战争电影',
         description: '烂番茄评选史上最佳150部战争片，铭记历史与人性',
         image: '',
+        tintClass: 'rt-war',
         userCount: 0,
         tag: '电影',
         category: 'movie',
@@ -70,6 +120,7 @@ Page({
         title: '史上最佳动画电影',
         description: '烂番茄评选史上最佳动画长片，重温童心与想象',
         image: '',
+        tintClass: 'rt-animation',
         userCount: 0,
         tag: '电影',
         category: 'movie',
@@ -81,6 +132,7 @@ Page({
         title: '每日电影',
         description: '记录每天看过的电影，攒成年度片单',
         image: '/images/cover-daily-movie.jpg',
+        tintClass: 'daily-movie',
         userCount: 0,
         tag: '每日',
         category: 'daily',
@@ -92,6 +144,7 @@ Page({
         title: '每日读书',
         description: '记录每天读过的书，攒成年度书单',
         image: '/images/cover-douban-books.jpg',
+        tintClass: 'daily-read',
         userCount: 0,
         tag: '每日',
         category: 'daily',
@@ -114,9 +167,10 @@ Page({
         title: '历届奥斯卡最佳动画长篇',
         description: '奥斯卡最佳动画长篇历年获奖，每年一部经典动画',
         image: '/images/cover-oscar-anime.jpg',
+        tintClass: 'oscar-anime',
         userCount: 0,
-        tag: '电影',
-        category: 'movie',
+        tag: '奥斯卡',
+        category: 'oscar',
         isNew: true,
         wishFrom: '安然**',
         url: '/pages/oscarAnime/list/list'
@@ -126,6 +180,7 @@ Page({
         title: '全平台电影评分查询',
         description: '搜索任意电影，对比豆瓣 / IMDB / 烂番茄评分',
         image: '/images/cover-movie-search.jpg',
+        tintClass: 'movie-search',
         userCount: 0,
         tag: '电影',
         category: 'movie',
@@ -149,6 +204,7 @@ Page({
         description: '微信读书全平台热榜，记录你的阅读旅程',
         image: '/images/cover-weread-santi.png',
         imageMode: 'center',  // 不拉伸，按原图大小居中显示
+        tintClass: 'weread',
         userCount: 0,
         tag: '读书',
         category: 'reading',
@@ -159,26 +215,18 @@ Page({
         title: '豆瓣读书 TOP250',
         description: '华语读者的经典书单，记录你的阅读旅程',
         image: '/images/cover-douban-books.jpg',
+        tintClass: 'douban-books',
         userCount: 0,
         tag: '读书',
         category: 'reading',
         url: '/pages/doubanBooks/list/list'
       },
       {
-        id: 'douban_movies',
-        title: '豆瓣电影 TOP250',
-        description: '华语影迷的经典片单，记录你的观影旅程',
-        image: '/images/cover-douban.jpg',
-        userCount: 0,
-        tag: '电影',
-        category: 'movie',
-        url: '/pages/douban/list/list'
-      },
-      {
         id: 'imdb_movies',
         title: 'IMDB电影 TOP250',
         description: '全球影迷票选，影史高分 250 部电影',
         image: '/images/cover-imdb.jpg',
+        tintClass: 'imdb',
         userCount: 0,
         tag: '电影',
         category: 'movie',
@@ -189,9 +237,10 @@ Page({
         title: '历届奥斯卡最佳影片',
         description: '奥斯卡金像奖历年最佳，每年一部经典',
         image: '/images/cover-oscar.jpg',
+        tintClass: 'oscar-best',
         userCount: 0,
-        tag: '电影',
-        category: 'movie',
+        tag: '奥斯卡',
+        category: 'oscar',
         url: '/pages/oscar/list/list'
       },
       {
@@ -199,6 +248,7 @@ Page({
         title: '全球电影票房榜',
         description: '全球票房最高的电影，见证影史商业传奇',
         image: '/images/cover-boxoffice.jpg',
+        tintClass: 'boxoffice',
         userCount: 0,
         tag: '电影',
         category: 'movie',
@@ -253,8 +303,39 @@ Page({
     // 非关键数据加载延迟到首屏渲染后，避免拉长 onLoad 长任务
     wx.nextTick(() => {
       this.loadUserCounts();
+      this.loadDynamicCovers();
       this.initAds();
     });
+  },
+
+  // 没有静态设计封面的主题：拉一次各自榜单 rank=1 的封面，拼成卡片图
+  async loadDynamicCovers() {
+    const db = wx.cloud.database();
+    const results = await Promise.allSettled(
+      DYNAMIC_COVER_THEMES.map(cfg =>
+        db.collection('generic_theme_movies')
+          .where({ theme: cfg.theme, rank: 1 })
+          .field({ cover: true })
+          .limit(1)
+          .get()
+      )
+    );
+
+    const covers = {};
+    results.forEach((result, i) => {
+      const cfg = DYNAMIC_COVER_THEMES[i];
+      if (result.status !== 'fulfilled') return;
+      const doc = result.value.data && result.value.data[0];
+      if (!doc || !doc.cover) return; // 没匹配到就让占位符继续兜底
+      covers[cfg.id] = { cover: doc.cover };
+    });
+    if (Object.keys(covers).length === 0) return;
+
+    // 现读 this.data.themes 再合并，而不是用调用开始时的旧快照 —— 避免跟 loadUserCounts()
+    // 并发写入时互相用过时快照覆盖对方刚写的字段（比如把这里刚写的 dynamicCover 冲掉）
+    const themes = this.data.themes.map(t => covers[t.id] ? { ...t, dynamicCover: covers[t.id] } : t);
+    this.setData({ themes });
+    this.filterThemes(this.data.activeTab);
   },
 
   // ── 片单/书单需求收集 ──
@@ -286,7 +367,7 @@ Page({
     try {
       const res = await wx.cloud.callFunction({
         name: 'submitThemeRequest',
-        data: { type: this.data.requestType, content }
+        data: { type: this.data.requestType, content, nickname: (this.data.userInfo && this.data.userInfo.nickName) || '' }
       });
       wx.hideLoading();
       const result = res && res.result;
@@ -544,12 +625,16 @@ Page({
         { id: 'rt_horror_movies', collection: 'generic_theme_movies', theme: 'rtHorror', topFiltered: false },
         { id: 'rt_war_movies', collection: 'generic_theme_movies', theme: 'rtWar', topFiltered: false },
         { id: 'rt_animation_movies', collection: 'generic_theme_movies', theme: 'rtAnimation', topFiltered: false },
+        { id: 'palme_dor_movies', collection: 'generic_theme_movies', theme: 'palmeDor', topFiltered: false },
+        { id: 'oscar_screenplay_movies', collection: 'generic_theme_movies', theme: 'oscarScreenplay', topFiltered: false },
         // 书线：marks 集合是 BookMarks，主键是 bookId，按 source 字段区分豆瓣/微信读书
         { id: 'douban_books', collection: 'douban_books', topFiltered: true, marksCollection: 'BookMarks', idField: 'bookId', source: 'douban' },
         { id: 'weread_books', collection: 'weread_books', topFiltered: true, marksCollection: 'BookMarks', idField: 'bookId', source: 'weread' }
       ];
 
-    const themes = [...this.data.themes];
+    // 按 id 收集统计增量，最后统一合并到 this.data.themes —— 不持有调用开始时的旧快照，
+    // 避免跟 loadDynamicCovers() 并发写入时互相用过时快照覆盖对方刚写的字段
+    const countUpdates = {};
 
     // 骞惰缁熻姣忎釜涓婚鐨勭嫭绔嬬敤鎴锋暟
     const results = await Promise.allSettled(
@@ -557,12 +642,9 @@ Page({
     );
 
     results.forEach((result, index) => {
-      const themeIdx = themes.findIndex(t => t.id === themeConfigs[index].id);
-      if (themeIdx === -1) return;
       const realUsers = result.status === 'fulfilled' ? result.value : 0;
       const displayCount = realUsers + 100;
-      themes[themeIdx].userCount = displayCount;
-      themes[themeIdx].userCountText = this.formatUserCount(displayCount);
+      countUpdates[themeConfigs[index].id] = { userCount: displayCount, userCountText: this.formatUserCount(displayCount) };
     });
 
     // 鑲插効涓婚锛氫粠 growth_records 闆嗗悎缁熻鐙珛鐢ㄦ埛鏁?
@@ -573,12 +655,8 @@ Page({
         .count('total')
         .end();
       const growthUsers = growthRes.list.length > 0 ? growthRes.list[0].total : 0;
-      const idx = themes.findIndex(t => t.id === 'child_growth');
-      if (idx !== -1) {
-        const displayCount = growthUsers + 100;
-        themes[idx].userCount = displayCount;
-        themes[idx].userCountText = this.formatUserCount(displayCount);
-      }
+      const displayCount = growthUsers + 100;
+      countUpdates['child_growth'] = { userCount: displayCount, userCountText: this.formatUserCount(displayCount) };
     } catch (e) {
       console.error('加载育儿统计失败:', e);
     }
@@ -606,13 +684,11 @@ Page({
       extraConfigs.map(cfg => countDistinctOpenid(cfg.collection, cfg.match))
     );
     extraResults.forEach((realUsers, i) => {
-      const idx = themes.findIndex(t => t.id === extraConfigs[i].id);
-      if (idx === -1) return;
       const displayCount = realUsers + 100;
-      themes[idx].userCount = displayCount;
-      themes[idx].userCountText = this.formatUserCount(displayCount);
+      countUpdates[extraConfigs[i].id] = { userCount: displayCount, userCountText: this.formatUserCount(displayCount) };
     });
 
+    const themes = this.data.themes.map(t => countUpdates[t.id] ? { ...t, ...countUpdates[t.id] } : t);
     this.setData({ themes });
     this.filterThemes(this.data.activeTab);
   },

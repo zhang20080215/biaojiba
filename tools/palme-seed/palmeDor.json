@@ -1,0 +1,695 @@
+[
+  {
+    "rank": 1,
+    "edition": 78,
+    "year": 2025,
+    "title": "只是一场意外",
+    "originalTitle": "یک تصادف ساده",
+    "director": "贾法·潘纳西",
+    "country": "伊朗"
+  },
+  {
+    "rank": 2,
+    "edition": 77,
+    "year": 2024,
+    "title": "艾诺拉",
+    "originalTitle": "Anora",
+    "director": "西恩·贝克",
+    "country": "美国"
+  },
+  {
+    "rank": 3,
+    "edition": 76,
+    "year": 2023,
+    "title": "一场坠楼的剖析",
+    "originalTitle": "Anatomie d'une chute",
+    "director": "洁丝汀·楚特",
+    "country": "法国"
+  },
+  {
+    "rank": 4,
+    "edition": 75,
+    "year": 2022,
+    "title": "疯狂富作用",
+    "originalTitle": "Triangle of Sadness",
+    "director": "鲁本·奥斯伦",
+    "country": "瑞典"
+  },
+  {
+    "rank": 5,
+    "edition": 74,
+    "year": 2021,
+    "title": "钛",
+    "originalTitle": "Titane",
+    "director": "茱莉亚·迪古何诺",
+    "country": "法国"
+  },
+  {
+    "rank": 6,
+    "edition": 72,
+    "year": 2019,
+    "title": "寄生上流",
+    "originalTitle": "기생충",
+    "director": "奉俊昊",
+    "country": "韩国"
+  },
+  {
+    "rank": 7,
+    "edition": 71,
+    "year": 2018,
+    "title": "小偷家族",
+    "originalTitle": "万引き家族",
+    "director": "是枝裕和",
+    "country": "日本"
+  },
+  {
+    "rank": 8,
+    "edition": 70,
+    "year": 2017,
+    "title": "抓狂美术馆",
+    "originalTitle": "The Square",
+    "director": "鲁本·奥斯伦",
+    "country": "瑞典"
+  },
+  {
+    "rank": 9,
+    "edition": 69,
+    "year": 2016,
+    "title": "我是布莱克",
+    "originalTitle": "I, Daniel Blake",
+    "director": "肯·洛区",
+    "country": "英国"
+  },
+  {
+    "rank": 10,
+    "edition": 68,
+    "year": 2015,
+    "title": "流离者之歌",
+    "originalTitle": "Dheepan",
+    "director": "贾克·欧迪亚",
+    "country": "法国"
+  },
+  {
+    "rank": 11,
+    "edition": 67,
+    "year": 2014,
+    "title": "冬日苏醒",
+    "originalTitle": "Kış Uykusu",
+    "director": "努瑞·贝其·锡兰",
+    "country": "土耳其"
+  },
+  {
+    "rank": 12,
+    "edition": 66,
+    "year": 2013,
+    "title": "蓝色是最温暖的颜色",
+    "originalTitle": "La vie d'Adèle",
+    "director": "阿布戴·柯西胥",
+    "country": "法国"
+  },
+  {
+    "rank": 13,
+    "edition": 65,
+    "year": 2012,
+    "title": "爱·慕",
+    "originalTitle": "Amour",
+    "director": "麦可·汉内克",
+    "country": "奥地利、法国"
+  },
+  {
+    "rank": 14,
+    "edition": 64,
+    "year": 2011,
+    "title": "永生树",
+    "originalTitle": "The Tree of Life",
+    "director": "泰伦斯·马力克",
+    "country": "美国"
+  },
+  {
+    "rank": 15,
+    "edition": 63,
+    "year": 2010,
+    "title": "波米叔叔的前世今生",
+    "originalTitle": "ลุงบุญมีระลึกชาติ",
+    "director": "阿比查邦·魏拉希沙可",
+    "country": "泰国"
+  },
+  {
+    "rank": 16,
+    "edition": 62,
+    "year": 2009,
+    "title": "白色缎带",
+    "originalTitle": "Das weiße Band",
+    "director": "麦可·汉内克",
+    "country": "奥地利"
+  },
+  {
+    "rank": 17,
+    "edition": 61,
+    "year": 2008,
+    "title": "我和我的小鬼们",
+    "originalTitle": "Entre les murs",
+    "director": "洛宏·康铁",
+    "country": "法国"
+  },
+  {
+    "rank": 18,
+    "edition": 60,
+    "year": 2007,
+    "title": "4月3周又2天",
+    "originalTitle": "4 luni, 3 săptămâni şi 2 zile",
+    "director": "克里斯汀·穆基",
+    "country": "罗马尼亚"
+  },
+  {
+    "rank": 19,
+    "edition": 59,
+    "year": 2006,
+    "title": "吹动大麦的风",
+    "originalTitle": "The Wind That Shakes the Barley",
+    "director": "肯·洛区",
+    "country": "英国、爱尔兰"
+  },
+  {
+    "rank": 20,
+    "edition": 58,
+    "year": 2005,
+    "title": "孩子",
+    "originalTitle": "L'Enfant",
+    "director": "尚-皮耶·达顿、卢·达顿",
+    "country": "比利时"
+  },
+  {
+    "rank": 21,
+    "edition": 57,
+    "year": 2004,
+    "title": "华氏911",
+    "originalTitle": "Fahrenheit 9/11",
+    "director": "迈克尔·摩尔",
+    "country": "美国"
+  },
+  {
+    "rank": 22,
+    "edition": 56,
+    "year": 2003,
+    "title": "大象",
+    "originalTitle": "Elephant",
+    "director": "葛斯·范·桑",
+    "country": "美国"
+  },
+  {
+    "rank": 23,
+    "edition": 55,
+    "year": 2002,
+    "title": "战地琴人",
+    "originalTitle": "The Pianist",
+    "director": "罗曼·波兰斯基",
+    "country": "法国"
+  },
+  {
+    "rank": 24,
+    "edition": 54,
+    "year": 2001,
+    "title": "人间有情天",
+    "originalTitle": "La stanza del figlio",
+    "director": "南尼·莫瑞提",
+    "country": "意大利"
+  },
+  {
+    "rank": 25,
+    "edition": 53,
+    "year": 2000,
+    "title": "在黑暗中漫舞",
+    "originalTitle": "Dancer in the Dark",
+    "director": "拉斯·冯·提尔",
+    "country": "丹麦"
+  },
+  {
+    "rank": 26,
+    "edition": 52,
+    "year": 1999,
+    "title": "罗塞塔",
+    "originalTitle": "Rosetta",
+    "director": "尚-皮耶·达顿、卢·达顿",
+    "country": "比利时"
+  },
+  {
+    "rank": 27,
+    "edition": 51,
+    "year": 1998,
+    "title": "永远的一天",
+    "originalTitle": "Μια αιωνιότητα και μια μέρα",
+    "director": "泰奥·安哲罗普洛斯",
+    "country": "希腊"
+  },
+  {
+    "rank": 28,
+    "edition": 50,
+    "year": 1997,
+    "title": "鳗鱼",
+    "originalTitle": "うなぎ",
+    "director": "今村昌平",
+    "country": "日本"
+  },
+  {
+    "rank": 29,
+    "edition": 50,
+    "year": 1997,
+    "title": "樱桃的滋味",
+    "originalTitle": "طعم گيلاس",
+    "director": "阿巴斯·奇亚罗斯塔米",
+    "country": "伊朗"
+  },
+  {
+    "rank": 30,
+    "edition": 49,
+    "year": 1996,
+    "title": "秘密与谎言",
+    "originalTitle": "Secrets & Lie",
+    "director": "麦克·李",
+    "country": "英国"
+  },
+  {
+    "rank": 31,
+    "edition": 48,
+    "year": 1995,
+    "title": "地下",
+    "originalTitle": "Подземље",
+    "director": "艾米尔·库斯杜力卡",
+    "country": "南斯拉夫"
+  },
+  {
+    "rank": 32,
+    "edition": 47,
+    "year": 1994,
+    "title": "黑色追缉令",
+    "originalTitle": "Pulp Fiction",
+    "director": "昆汀·塔伦提诺",
+    "country": "美国"
+  },
+  {
+    "rank": 33,
+    "edition": 46,
+    "year": 1993,
+    "title": "钢琴课",
+    "originalTitle": "The Piano",
+    "director": "珍·康萍",
+    "country": "新西兰"
+  },
+  {
+    "rank": 34,
+    "edition": 45,
+    "year": 1992,
+    "title": "善意的背叛",
+    "originalTitle": "Den Goda viljan",
+    "director": "比利·奥古斯特",
+    "country": "瑞典"
+  },
+  {
+    "rank": 35,
+    "edition": 44,
+    "year": 1991,
+    "title": "巴顿·芬克",
+    "originalTitle": "Barton Fink",
+    "director": "乔尔·柯恩、伊森·柯恩",
+    "country": "美国"
+  },
+  {
+    "rank": 36,
+    "edition": 43,
+    "year": 1990,
+    "title": "我心狂野",
+    "originalTitle": "Wild at Heart",
+    "director": "大卫·林区",
+    "country": "美国"
+  },
+  {
+    "rank": 37,
+    "edition": 42,
+    "year": 1989,
+    "title": "性、谎言、录影带",
+    "originalTitle": "Sex, Lies, and Videotape",
+    "director": "史蒂芬·索德柏",
+    "country": "美国"
+  },
+  {
+    "rank": 38,
+    "edition": 41,
+    "year": 1988,
+    "title": "比利小英雄",
+    "originalTitle": "Pelle erobreren",
+    "director": "比利·奥古斯特",
+    "country": "丹麦"
+  },
+  {
+    "rank": 39,
+    "edition": 40,
+    "year": 1987,
+    "title": "恶魔天空下",
+    "originalTitle": "Sous le soleil de Satan",
+    "director": "莫里斯·皮亚拉",
+    "country": "法国"
+  },
+  {
+    "rank": 40,
+    "edition": 39,
+    "year": 1986,
+    "title": "战火浮生",
+    "originalTitle": "The Mission",
+    "director": "罗兰·约菲",
+    "country": "英国"
+  },
+  {
+    "rank": 41,
+    "edition": 38,
+    "year": 1985,
+    "title": "爸爸出差时",
+    "originalTitle": "Отац на службеном путу",
+    "director": "艾米尔·库斯杜力卡",
+    "country": "南斯拉夫"
+  },
+  {
+    "rank": 42,
+    "edition": 37,
+    "year": 1984,
+    "title": "巴黎，德州",
+    "originalTitle": "Paris, Texas",
+    "director": "温·韦德斯",
+    "country": "西德、法国"
+  },
+  {
+    "rank": 43,
+    "edition": 36,
+    "year": 1983,
+    "title": "楢山节考",
+    "originalTitle": "楢山节考",
+    "director": "今村昌平",
+    "country": "日本"
+  },
+  {
+    "rank": 44,
+    "edition": 35,
+    "year": 1982,
+    "title": "大失踪",
+    "originalTitle": "Missing",
+    "director": "科斯塔·加夫拉斯",
+    "country": "美国"
+  },
+  {
+    "rank": 45,
+    "edition": 35,
+    "year": 1982,
+    "title": "自由之路",
+    "originalTitle": "Yol",
+    "director": "伊尔玛兹·顾内、雪利夫·果伦",
+    "country": "土耳其"
+  },
+  {
+    "rank": 46,
+    "edition": 34,
+    "year": 1981,
+    "title": "波兰铁人",
+    "originalTitle": "Człowiek z żelaza",
+    "director": "安德烈·华依达",
+    "country": "波兰"
+  },
+  {
+    "rank": 47,
+    "edition": 33,
+    "year": 1980,
+    "title": "影武者",
+    "originalTitle": "影武者",
+    "director": "黑泽明",
+    "country": "日本"
+  },
+  {
+    "rank": 48,
+    "edition": 33,
+    "year": 1980,
+    "title": "爵士春秋",
+    "originalTitle": "All That Jazz",
+    "director": "鲍勃·福斯",
+    "country": "美国"
+  },
+  {
+    "rank": 49,
+    "edition": 32,
+    "year": 1979,
+    "title": "现代启示录",
+    "originalTitle": "Apocalypse Now",
+    "director": "法兰西斯·柯波拉",
+    "country": "美国"
+  },
+  {
+    "rank": 50,
+    "edition": 32,
+    "year": 1979,
+    "title": "铁皮鼓",
+    "originalTitle": "Die Blechtrommel",
+    "director": "沃克·施隆多夫",
+    "country": "西德"
+  },
+  {
+    "rank": 51,
+    "edition": 31,
+    "year": 1978,
+    "title": "木鞋树",
+    "originalTitle": "L'Albero degli zoccoli",
+    "director": "埃曼诺·奥尔米",
+    "country": "意大利"
+  },
+  {
+    "rank": 52,
+    "edition": 30,
+    "year": 1977,
+    "title": "我父我主",
+    "originalTitle": "Padre, Padrone",
+    "director": "保罗·塔维亚尼、维托里奥·塔维亚尼",
+    "country": "意大利"
+  },
+  {
+    "rank": 53,
+    "edition": 29,
+    "year": 1976,
+    "title": "计程车司机",
+    "originalTitle": "Taxi Driver",
+    "director": "马丁·史柯西斯",
+    "country": "美国"
+  },
+  {
+    "rank": 54,
+    "edition": 28,
+    "year": 1975,
+    "title": "烽火岁月志",
+    "originalTitle": "وقائع سنين الجمر",
+    "director": "穆罕默德·拉卡达-哈米纳",
+    "country": "阿尔及利亚"
+  },
+  {
+    "rank": 55,
+    "edition": 27,
+    "year": 1974,
+    "title": "对话",
+    "originalTitle": "The Conversation",
+    "director": "法兰西斯·柯波拉",
+    "country": "美国"
+  },
+  {
+    "rank": 56,
+    "edition": 26,
+    "year": 1973,
+    "title": "流浪奇男子",
+    "originalTitle": "Scarecrow",
+    "director": "杰瑞·沙兹堡",
+    "country": "美国"
+  },
+  {
+    "rank": 57,
+    "edition": 26,
+    "year": 1973,
+    "title": "受雇者",
+    "originalTitle": "The Hireling",
+    "director": "艾伦·布里吉斯",
+    "country": "英国"
+  },
+  {
+    "rank": 58,
+    "edition": 25,
+    "year": 1972,
+    "title": "工人阶级上天堂",
+    "originalTitle": "La classe operaia va in paradiso",
+    "director": "艾利欧·派特立",
+    "country": "意大利"
+  },
+  {
+    "rank": 59,
+    "edition": 25,
+    "year": 1972,
+    "title": "马蒂事件",
+    "originalTitle": "Il caso Mattei",
+    "director": "法兰西斯科·罗西",
+    "country": "意大利"
+  },
+  {
+    "rank": 60,
+    "edition": 24,
+    "year": 1971,
+    "title": "一段情",
+    "originalTitle": "The Go-between",
+    "director": "约瑟夫·罗西",
+    "country": "英国"
+  },
+  {
+    "rank": 61,
+    "edition": 23,
+    "year": 1970,
+    "title": "外科医师",
+    "originalTitle": "MASH",
+    "director": "劳勃·阿特曼",
+    "country": "美国"
+  },
+  {
+    "rank": 62,
+    "edition": 22,
+    "year": 1969,
+    "title": "如果…",
+    "originalTitle": "If....",
+    "director": "林赛·安德森",
+    "country": "英国"
+  },
+  {
+    "rank": 63,
+    "edition": 20,
+    "year": 1967,
+    "title": "春光乍现",
+    "originalTitle": "Blow-up",
+    "director": "米开朗基罗·安东尼奥尼",
+    "country": "英国"
+  },
+  {
+    "rank": 64,
+    "edition": 19,
+    "year": 1966,
+    "title": "男欢女爱",
+    "originalTitle": "Un Homme et une Femme",
+    "director": "克劳德·劳路许",
+    "country": "法国"
+  },
+  {
+    "rank": 65,
+    "edition": 19,
+    "year": 1966,
+    "title": "绅士现形记",
+    "originalTitle": "Signore e Signori",
+    "director": "皮亚托·杰米",
+    "country": "意大利"
+  },
+  {
+    "rank": 66,
+    "edition": 18,
+    "year": 1965,
+    "title": "色情男女",
+    "originalTitle": "The Knack ...and How to Get It",
+    "director": "理查·雷斯特",
+    "country": "英国"
+  },
+  {
+    "rank": 67,
+    "edition": 17,
+    "year": 1964,
+    "title": "秋水伊人",
+    "originalTitle": "Les Parapluies de Cherbourg",
+    "director": "雅克·德米",
+    "country": "法国"
+  },
+  {
+    "rank": 68,
+    "edition": 16,
+    "year": 1963,
+    "title": "浩气盖山河",
+    "originalTitle": "II Gattopardo",
+    "director": "卢奇诺·维斯孔蒂",
+    "country": "意大利"
+  },
+  {
+    "rank": 69,
+    "edition": 15,
+    "year": 1962,
+    "title": "诺言",
+    "originalTitle": "O pagador de Promessas",
+    "director": "安塞尔莫·杜阿特",
+    "country": "巴西"
+  },
+  {
+    "rank": 70,
+    "edition": 14,
+    "year": 1961,
+    "title": "维莉蒂安娜",
+    "originalTitle": "Viridiana",
+    "director": "路易斯·布纽尔",
+    "country": "西班牙、墨西哥"
+  },
+  {
+    "rank": 71,
+    "edition": 14,
+    "year": 1961,
+    "title": "长别离",
+    "originalTitle": "Une aussi longue absence",
+    "director": "亨利·柯比",
+    "country": "法国"
+  },
+  {
+    "rank": 72,
+    "edition": 13,
+    "year": 1960,
+    "title": "甜蜜的生活",
+    "originalTitle": "La Dolce Vita",
+    "director": "费德里柯·费里尼",
+    "country": "意大利"
+  },
+  {
+    "rank": 73,
+    "edition": 12,
+    "year": 1959,
+    "title": "黑人奥尔菲",
+    "originalTitle": "Orfeu Negro",
+    "director": "马西·卡缪",
+    "country": "巴西、法国"
+  },
+  {
+    "rank": 74,
+    "edition": 11,
+    "year": 1958,
+    "title": "雁南飞",
+    "originalTitle": "Летят журавли",
+    "director": "米哈伊尔·卡拉托佐夫",
+    "country": "苏联"
+  },
+  {
+    "rank": 75,
+    "edition": 10,
+    "year": 1957,
+    "title": "四海一家",
+    "originalTitle": "The Friendly Persuasion",
+    "director": "威廉·惠勒",
+    "country": "美国"
+  },
+  {
+    "rank": 76,
+    "edition": 9,
+    "year": 1956,
+    "title": "沉默的世界",
+    "originalTitle": "Le Monde du silence",
+    "director": "雅克-伊夫·库斯托、路易·马卢",
+    "country": "法国"
+  },
+  {
+    "rank": 77,
+    "edition": 8,
+    "year": 1955,
+    "title": "君子好逑",
+    "originalTitle": "Marty",
+    "director": "德尔伯特·曼",
+    "country": "美国"
+  }
+]
