@@ -46,6 +46,45 @@ Page({
     },
     themes: [
       {
+        id: 'oscar_foreign_movies',
+        title: '历届奥斯卡最佳外语片',
+        description: '奥斯卡最佳国际影片历届获奖，看见世界各地的电影',
+        image: '',
+        tintClass: 'oscar-foreign',
+        userCount: 0,
+        tag: '奥斯卡',
+        category: 'oscar',
+        isNew: true,
+        wishFrom: '伍**',
+        url: '/pages/genericList/list/list?theme=oscarForeign'
+      },
+      {
+        id: 'rt_action_movies',
+        title: '史上最佳动作电影',
+        description: '烂番茄评选史上最佳动作片，标记你的肾上腺素时刻',
+        image: '',
+        tintClass: 'rt-action',
+        userCount: 0,
+        tag: '电影',
+        category: 'movie',
+        isNew: true,
+        wishFrom: '德**',
+        url: '/pages/genericList/list/list?theme=rtAction'
+      },
+      {
+        id: 'letterboxd500_movies',
+        title: 'Letterboxd Top 500',
+        description: 'Letterboxd 影迷评分最高 500 部电影，硬核影迷片单',
+        image: '',
+        tintClass: 'letterboxd500',
+        userCount: 0,
+        tag: '电影',
+        category: 'movie',
+        isNew: true,
+        wishFrom: 'Be**',
+        url: '/pages/genericList/list/list?theme=letterboxd500'
+      },
+      {
         id: 'palme_dor_movies',
         title: '历届金棕榈奖',
         description: '戛纳电影节历届金棕榈获奖影片，含届数·导演·国家',
@@ -95,18 +134,6 @@ Page({
         url: '/pages/genericList/list/list?theme=oscarCinematography'
       },
       {
-        id: 'oscar_foreign_movies',
-        title: '历届奥斯卡最佳外语片',
-        description: '奥斯卡最佳国际影片历届获奖，看见世界各地的电影',
-        image: '',
-        tintClass: 'oscar-foreign',
-        userCount: 0,
-        tag: '奥斯卡',
-        category: 'oscar',
-        isNew: true,
-        url: '/pages/genericList/list/list?theme=oscarForeign'
-      },
-      {
         id: 'rt_horror_movies',
         title: '史上最佳恐怖电影',
         description: '烂番茄评选史上最佳200部恐怖片，标记你的胆量',
@@ -141,18 +168,6 @@ Page({
         category: 'movie',
         isNew: true,
         url: '/pages/genericList/list/list?theme=rtAnimation'
-      },
-      {
-        id: 'rt_action_movies',
-        title: '史上最佳动作电影',
-        description: '烂番茄评选史上最佳动作片，标记你的肾上腺素时刻',
-        image: '',
-        tintClass: 'rt-action',
-        userCount: 0,
-        tag: '电影',
-        category: 'movie',
-        isNew: true,
-        url: '/pages/genericList/list/list?theme=rtAction'
       },
       {
         id: 'daily_movie',
@@ -258,18 +273,6 @@ Page({
         tag: '电影',
         category: 'movie',
         url: '/pages/imdb/list/list'
-      },
-      {
-        id: 'letterboxd500_movies',
-        title: 'Letterboxd Top 500',
-        description: 'Letterboxd 影迷评分最高 500 部电影，硬核影迷片单',
-        image: '',
-        tintClass: 'letterboxd500',
-        userCount: 0,
-        tag: '电影',
-        category: 'movie',
-        isNew: true,
-        url: '/pages/genericList/list/list?theme=letterboxd500'
       },
       {
         id: 'oscar_movies',

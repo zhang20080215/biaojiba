@@ -184,7 +184,7 @@
         </view>
         <view class="cover-mask"></view>
         <text class="cover-tag-label">{{item.tag}}</text>
-        <view wx:if="{{item.id === 'palme_dor_movies' || item.id === 'oscar_screenplay_movies'}}" class="new-badge">
+        <view wx:if="{{item.id === 'palme_dor_movies' || item.id === 'oscar_screenplay_movies' || item.id === 'oscar_foreign_movies' || item.id === 'rt_action_movies' || item.id === 'letterboxd500_movies'}}" class="new-badge">
           <text>NEW</text>
         </view>
         <view wx:if="{{item.wishFrom}}" class="wish-badge">
@@ -289,7 +289,7 @@
         </view>
         <view class="cover-mask"></view>
         <text class="cover-tag-label">{{item.tag}}</text>
-        <view wx:if="{{item.id === 'palme_dor_movies' || item.id === 'oscar_screenplay_movies'}}" class="new-badge">
+        <view wx:if="{{item.id === 'palme_dor_movies' || item.id === 'oscar_screenplay_movies' || item.id === 'oscar_foreign_movies' || item.id === 'rt_action_movies' || item.id === 'letterboxd500_movies'}}" class="new-badge">
           <text>NEW</text>
         </view>
         <view wx:if="{{item.wishFrom}}" class="wish-badge">

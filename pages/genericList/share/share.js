@@ -306,20 +306,25 @@ Page({
     },
 
     // 胶囊尺寸都按同一套比例从字号推导（跟原设计 20/38/16/10/6 的比例一致），
-    // 保证「先算最佳字号」和「按字号画图」用的是同一份几何关系
+    // 保证「先算最佳字号」和「按字号画图」用的是同一份几何关系。
+    // textFontSize 是实际绘制/测量用的字号，比胶囊尺寸对应的 fontSize 略小一点——
+    // 胶囊本身大小不变，只是文字在胶囊里留白更充分，不那么"顶满"；gapY 也略微加大，
+    // 行与行之间松一点，两者都不影响胶囊本身的宽高计算。
     capsuleMetricsFor(fontSize) {
         return {
             fontSize,
-            pillH: Math.round(fontSize * 1.9),
+            textFontSize: Math.round(fontSize * 0.9),
+            // 高度比例比原来（1.9）收窄一些——字号一放大，胶囊不再跟着显得又高又肿
+            pillH: Math.round(fontSize * 1.7),
             pillPadX: Math.round(fontSize * 0.8),
             gapX: Math.round(fontSize * 0.5),
-            gapY: Math.round(fontSize * 0.3)
+            gapY: Math.round(fontSize * 0.45)
         };
     },
 
     // 用给定字号模拟胶囊流式换行（真实测量文字宽度），算出胶囊堆叠到底部所需的高度
     simulateCapsuleStackHeight(fontSize, maxWidth) {
-        const { pillH, pillPadX, gapX, gapY } = this.capsuleMetricsFor(fontSize);
+        const { pillH, pillPadX, gapX, gapY, textFontSize } = this.capsuleMetricsFor(fontSize);
         const movies = this.data.allMovies;
         if (!movies.length) return pillH;
 
@@ -327,11 +332,11 @@ Page({
         let measure;
         if (ctx) {
             ctx.save();
-            ctx.font = `600 ${fontSize}px sans-serif`;
+            ctx.font = `400 ${textFontSize}px sans-serif`;
             measure = (text) => ctx.measureText(text).width;
         } else {
             // 中文为主，按全角字符近似
-            measure = (text) => text.length * fontSize;
+            measure = (text) => text.length * textFontSize;
         }
 
         let curX = 0;
@@ -386,7 +391,8 @@ Page({
     // 逻辑（250 部左右验证过这套"基准字号+增高"的观感是好的，不改变这一档的行为）。
     decideCapsuleLayout() {
         const BASE_FONT = 20;
-        const MAX_FONT = 34;
+        // 封顶 28——比基准大 40%，电影少时字号放大，配合画布缩小一起让内容显得更满
+        const MAX_FONT = 28;
 
         if (!this.data.allMovies.length) {
             return { width: FIXED_CANVAS_WIDTH, height: FIXED_CANVAS_HEIGHT, fontSize: BASE_FONT };
@@ -421,6 +427,7 @@ Page({
             const decided = this.decideListLayout();
             nextCanvasSize = { width: decided.width, height: decided.height };
             this._decidedFontSize = decided.fontSize;
+            this._decidedColumns = decided.columns;
         }
 
         if (
@@ -635,13 +642,16 @@ Page({
         return Math.round(fontSize * 1.8 + 6);
     },
 
-    // 在给定画布宽高下，二分查找"整行内容总高度不超过这个画布可用高度"的最大字号（绝对像素）
-    searchListFontForCanvas(canvasWidth, canvasHeight, rows, baseFont, maxFont) {
+    // 算可用高度（列数不影响高度，只跟画布尺寸有关）
+    listAvailableHeightFor(canvasWidth, canvasHeight) {
         const scale = canvasWidth / FIXED_CANVAS_WIDTH;
         const panelHeight = canvasHeight - Math.round(CARD_CONTENT_TOP * scale) - Math.round(34 * scale) - Math.round(44 * scale);
         const paddingTop = Math.round(10 * scale);
-        const availableHeight = panelHeight - paddingTop * 2;
+        return panelHeight - paddingTop * 2;
+    },
 
+    // 在给定画布高度、行数下，二分查找"整体内容高度不超过可用高度"的最大字号（绝对像素）
+    searchListFontForRows(availableHeight, rows, baseFont, maxFont) {
         if (rows * this.listRowHeightFor(baseFont) > availableHeight) return null;
         let lo = baseFont;
         let hi = maxFont;
@@ -658,30 +668,48 @@ Page({
         return best;
     },
 
-    // 决定列表文字卡片用哪个画布尺寸 + 字号，策略跟 decideCapsuleLayout 一致：
-    // 优先试紧凑画布（1080×1440），放不下再退回标准画布，标准画布也放不下（电影很多）
-    // 时用基准字号，交给 buildTagLayout 自己的收缩逻辑兜底（不额外增高画布）
+    // 决定列表文字卡片用哪个画布尺寸 + 列数 + 字号。列数固定为 5 时，电影数量不多不少
+    // （比如 80 部左右）会出现"字号顶到封顶、但行数太少填不满"的情况，上下留白很多——
+    // 所以列数也纳入搜索：列数越少，同样电影数换算出的行数越多，越容易把可用高度用满。
+    // 对每个候选列数，用二分查找出"能放下的最大字号"，取"内容高度/可用高度"（填充率）
+    // 最高的那组列数+字号；填充率相同时优先选列数更多的（格子更接近原设计的网格感）。
     decideListLayout() {
         const BASE_FONT = 16;
         const MAX_FONT = 22;
-        const columns = 5;
-        const rows = Math.max(1, Math.ceil(this.data.allMovies.length / columns));
+        const CANDIDATE_COLUMNS = [5, 4, 3, 2];
+        const total = this.data.allMovies.length;
 
-        if (!this.data.allMovies.length) {
-            return { width: FIXED_CANVAS_WIDTH, height: FIXED_CANVAS_HEIGHT, fontSize: BASE_FONT };
+        if (!total) {
+            return { width: FIXED_CANVAS_WIDTH, height: FIXED_CANVAS_HEIGHT, fontSize: BASE_FONT, columns: 5 };
         }
 
-        const compactFont = this.searchListFontForCanvas(COMPACT_CANVAS_WIDTH, COMPACT_CANVAS_HEIGHT, rows, BASE_FONT, MAX_FONT);
-        if (compactFont != null) {
-            return { width: COMPACT_CANVAS_WIDTH, height: COMPACT_CANVAS_HEIGHT, fontSize: compactFont };
+        const tryCanvas = (canvasWidth, canvasHeight) => {
+            const availableHeight = this.listAvailableHeightFor(canvasWidth, canvasHeight);
+            let bestOption = null;
+            CANDIDATE_COLUMNS.forEach(columns => {
+                const rows = Math.max(1, Math.ceil(total / columns));
+                const font = this.searchListFontForRows(availableHeight, rows, BASE_FONT, MAX_FONT);
+                if (font == null) return;
+                const fillRatio = Math.min(1, (rows * this.listRowHeightFor(font)) / availableHeight);
+                if (!bestOption || fillRatio > bestOption.fillRatio + 0.02) {
+                    bestOption = { columns, font, fillRatio };
+                }
+            });
+            return bestOption;
+        };
+
+        const compact = tryCanvas(COMPACT_CANVAS_WIDTH, COMPACT_CANVAS_HEIGHT);
+        if (compact) {
+            return { width: COMPACT_CANVAS_WIDTH, height: COMPACT_CANVAS_HEIGHT, fontSize: compact.font, columns: compact.columns };
         }
 
-        const fullFont = this.searchListFontForCanvas(FIXED_CANVAS_WIDTH, FIXED_CANVAS_HEIGHT, rows, BASE_FONT, MAX_FONT);
-        if (fullFont != null) {
-            return { width: FIXED_CANVAS_WIDTH, height: FIXED_CANVAS_HEIGHT, fontSize: fullFont };
+        const full = tryCanvas(FIXED_CANVAS_WIDTH, FIXED_CANVAS_HEIGHT);
+        if (full) {
+            return { width: FIXED_CANVAS_WIDTH, height: FIXED_CANVAS_HEIGHT, fontSize: full.font, columns: full.columns };
         }
 
-        return { width: FIXED_CANVAS_WIDTH, height: FIXED_CANVAS_HEIGHT, fontSize: BASE_FONT };
+        // 都放不下（电影很多）：标准画布 + 5 列 + 基准字号，buildTagLayout 自己的收缩逻辑兜底
+        return { width: FIXED_CANVAS_WIDTH, height: FIXED_CANVAS_HEIGHT, fontSize: BASE_FONT, columns: 5 };
     },
 
     buildTagLayout(card) {
@@ -691,7 +719,7 @@ Page({
         const panelY = card.contentY;
         const panelWidth = card.contentWidth;
         const panelHeight = card.footerY - panelY - Math.round(34 * scale);
-        const columns = 5;
+        const columns = this._decidedColumns || 5;
         const rows = Math.max(1, Math.ceil(this.data.allMovies.length / columns));
         const paddingTop = Math.round(10 * scale);
         const gapX = Math.round(18 * scale);
@@ -767,7 +795,7 @@ Page({
         // 字号是 startDrawing 阶段 decideCapsuleLayout 已经算好、连同画布尺寸一起决定的绝对值
         // （画布缩小 + 字号放大是同一个决策的两面，不能各自再按 scale 二次缩放，否则互相抵消）
         const fontSize = this._decidedFontSize;
-        const { pillH, pillPadX, gapX, gapY } = this.capsuleMetricsFor(fontSize);
+        const { pillH, pillPadX, gapX, gapY, textFontSize } = this.capsuleMetricsFor(fontSize);
         const startX = card.contentX;
         const maxWidth = card.contentWidth;
         let curX = startX;
@@ -786,7 +814,7 @@ Page({
         };
 
         ctx.save();
-        ctx.font = `600 ${fontSize}px sans-serif`;
+        ctx.font = `400 ${textFontSize}px sans-serif`;
 
         movies.forEach(movie => {
             const status = this.data.markStatusMap[movie._id] || 'unwatched';
@@ -819,7 +847,7 @@ Page({
             // strikethrough for watched
             if (status === 'watched') {
                 ctx.strokeStyle = 'rgba(111, 130, 68, 0.75)';
-                ctx.lineWidth = Math.max(1, Math.round(fontSize * 0.075));
+                ctx.lineWidth = Math.max(1, Math.round(textFontSize * 0.075));
                 ctx.beginPath();
                 ctx.moveTo(textX, textY);
                 ctx.lineTo(textX + textW, textY);
