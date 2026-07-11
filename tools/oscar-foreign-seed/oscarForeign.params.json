@@ -1,0 +1,713 @@
+{
+  "theme": "oscarForeign",
+  "idStrategy": "rank",
+  "forceRefresh": true,
+  "startFrom": 0,
+  "autoContinue": true,
+  "movieList": [
+    {
+      "rank": 1,
+      "edition": 98,
+      "year": 2025,
+      "title": "情感价值",
+      "originalTitle": "Affeksjonsverdi",
+      "director": "尤沃金·提尔",
+      "country": "挪威"
+    },
+    {
+      "rank": 2,
+      "edition": 97,
+      "year": 2024,
+      "title": "我仍在此",
+      "originalTitle": "Ainda Estou Aqui",
+      "director": "瓦尔特·萨列斯",
+      "country": "巴西"
+    },
+    {
+      "rank": 3,
+      "edition": 96,
+      "year": 2023,
+      "title": "利益区域",
+      "originalTitle": "The Zone of Interest",
+      "director": "乔纳森·格雷泽",
+      "country": "英国"
+    },
+    {
+      "rank": 4,
+      "edition": 95,
+      "year": 2022,
+      "title": "西线无战事",
+      "originalTitle": "All Quiet on the Western Fronts",
+      "director": "爱德华·贝尔格",
+      "country": "德国"
+    },
+    {
+      "rank": 5,
+      "edition": 94,
+      "year": 2021,
+      "title": "驾驶我的车",
+      "originalTitle": "ドライブ・マイ・カー",
+      "director": "滨口龙介",
+      "country": "日本"
+    },
+    {
+      "rank": 6,
+      "edition": 93,
+      "year": 2020,
+      "title": "醉好的时光",
+      "originalTitle": "Druk",
+      "director": "托马斯·温特伯格",
+      "country": "丹麦"
+    },
+    {
+      "rank": 7,
+      "edition": 92,
+      "year": 2019,
+      "title": "寄生虫",
+      "originalTitle": "기생충",
+      "director": "奉俊昊",
+      "country": "韩国"
+    },
+    {
+      "rank": 8,
+      "edition": 91,
+      "year": 2018,
+      "title": "罗马",
+      "originalTitle": "Roma",
+      "director": "阿方索·卡隆",
+      "country": "墨西哥"
+    },
+    {
+      "rank": 9,
+      "edition": 90,
+      "year": 2017,
+      "title": "普通女人",
+      "originalTitle": "Una mujer fantástica",
+      "director": "塞巴斯蒂安·萊利奧",
+      "country": "智利"
+    },
+    {
+      "rank": 10,
+      "edition": 89,
+      "year": 2016,
+      "title": "推销员",
+      "originalTitle": "فروشنده",
+      "director": "阿斯哈·法哈蒂",
+      "country": "伊朗"
+    },
+    {
+      "rank": 11,
+      "edition": 88,
+      "year": 2015,
+      "title": "索尔之子",
+      "originalTitle": "Saul fia",
+      "director": "内梅什·拉斯洛",
+      "country": "匈牙利"
+    },
+    {
+      "rank": 12,
+      "edition": 87,
+      "year": 2014,
+      "title": "修女伊达",
+      "originalTitle": "Ida",
+      "director": "帕维乌·帕夫利科夫斯基",
+      "country": "波兰"
+    },
+    {
+      "rank": 13,
+      "edition": 86,
+      "year": 2013,
+      "title": "绝美之城",
+      "originalTitle": "La grande bellezza",
+      "director": "保罗·索伦蒂诺",
+      "country": "意大利"
+    },
+    {
+      "rank": 14,
+      "edition": 85,
+      "year": 2012,
+      "title": "爱",
+      "originalTitle": "Amour",
+      "director": "米夏埃尔·哈内克",
+      "country": "奥地利"
+    },
+    {
+      "rank": 15,
+      "edition": 84,
+      "year": 2011,
+      "title": "纳德和西敏：一次别离",
+      "originalTitle": "جدایی نادر از سیمین",
+      "director": "阿斯哈·法哈蒂",
+      "country": "伊朗"
+    },
+    {
+      "rank": 16,
+      "edition": 83,
+      "year": 2010,
+      "title": "更好的世界",
+      "originalTitle": "Hævnen",
+      "director": "苏珊娜·比尔",
+      "country": "丹麦"
+    },
+    {
+      "rank": 17,
+      "edition": 82,
+      "year": 2009,
+      "title": "谜一样的双眼",
+      "originalTitle": "El secreto de sus ojos",
+      "director": "胡安·J·坎帕内拉",
+      "country": "阿根廷"
+    },
+    {
+      "rank": 18,
+      "edition": 81,
+      "year": 2008,
+      "title": "入殓师",
+      "originalTitle": "おくりびと",
+      "director": "泷田洋二郎",
+      "country": "日本"
+    },
+    {
+      "rank": 19,
+      "edition": 80,
+      "year": 2007,
+      "title": "伪钞制造者",
+      "originalTitle": "Die Fälscher",
+      "director": "斯戴芬·卢佐维茨基",
+      "country": "奥地利"
+    },
+    {
+      "rank": 20,
+      "edition": 79,
+      "year": 2006,
+      "title": "窃听风暴",
+      "originalTitle": "Das Leben der Anderen",
+      "director": "弗洛里安·亨克尔·冯·杜能斯马克",
+      "country": "德国"
+    },
+    {
+      "rank": 21,
+      "edition": 78,
+      "year": 2005,
+      "title": "黑帮暴徒",
+      "originalTitle": "Tsotsi",
+      "director": "加文·胡德",
+      "country": "南非"
+    },
+    {
+      "rank": 22,
+      "edition": 77,
+      "year": 2004,
+      "title": "深海长眠",
+      "originalTitle": "Mar adentro",
+      "director": "亚历杭德罗·阿梅纳瓦尔",
+      "country": "西班牙"
+    },
+    {
+      "rank": 23,
+      "edition": 76,
+      "year": 2003,
+      "title": "野蛮人的入侵",
+      "originalTitle": "Les Invasions barbares",
+      "director": "丹尼斯·阿坎德",
+      "country": "加拿大"
+    },
+    {
+      "rank": 24,
+      "edition": 75,
+      "year": 2002,
+      "title": "何处是我家",
+      "originalTitle": "Nirgendwo in Afrika",
+      "director": "卡洛琳·林克",
+      "country": "德国"
+    },
+    {
+      "rank": 25,
+      "edition": 74,
+      "year": 2001,
+      "title": "三不管地帶",
+      "originalTitle": "Ničija zemlja",
+      "director": "丹尼斯·塔诺维奇",
+      "country": "波斯尼亚和黑塞哥维那"
+    },
+    {
+      "rank": 26,
+      "edition": 73,
+      "year": 2000,
+      "title": "卧虎藏龙",
+      "originalTitle": "卧虎藏龙",
+      "director": "李安",
+      "country": "台湾"
+    },
+    {
+      "rank": 27,
+      "edition": 72,
+      "year": 1999,
+      "title": "关于我母亲的一切",
+      "originalTitle": "Todo sobre mi madre",
+      "director": "佩德罗·阿尔莫多瓦尔",
+      "country": "西班牙"
+    },
+    {
+      "rank": 28,
+      "edition": 71,
+      "year": 1998,
+      "title": "美丽人生",
+      "originalTitle": "La vita è bella",
+      "director": "罗伯托·贝尼尼",
+      "country": "意大利",
+      "doubanId": "1292063"
+    },
+    {
+      "rank": 29,
+      "edition": 70,
+      "year": 1997,
+      "title": "角色",
+      "originalTitle": "Karakter",
+      "director": "麦克·冯戴姆",
+      "country": "荷兰"
+    },
+    {
+      "rank": 30,
+      "edition": 69,
+      "year": 1996,
+      "title": "给我一个爸",
+      "originalTitle": "Kolja",
+      "director": "扬·斯维拉克",
+      "country": "捷克"
+    },
+    {
+      "rank": 31,
+      "edition": 68,
+      "year": 1995,
+      "title": "安东尼娅家族",
+      "originalTitle": "Antonia",
+      "director": "玛琳·格里斯",
+      "country": "荷兰"
+    },
+    {
+      "rank": 32,
+      "edition": 67,
+      "year": 1994,
+      "title": "烈日灼人",
+      "originalTitle": "Утомлённые солнцем",
+      "director": "尼基塔·米亥科夫",
+      "country": "俄罗斯"
+    },
+    {
+      "rank": 33,
+      "edition": 66,
+      "year": 1993,
+      "title": "四千金的情人",
+      "originalTitle": "Belle Époque",
+      "director": "佛南多·楚巴",
+      "country": "西班牙"
+    },
+    {
+      "rank": 34,
+      "edition": 65,
+      "year": 1992,
+      "title": "印度支那",
+      "originalTitle": "Indochine",
+      "director": "雷吉斯·瓦格涅",
+      "country": "法国"
+    },
+    {
+      "rank": 35,
+      "edition": 64,
+      "year": 1991,
+      "title": "地中海",
+      "originalTitle": "Mediterraneo",
+      "director": "加布里埃莱·萨尔瓦托雷斯",
+      "country": "意大利"
+    },
+    {
+      "rank": 36,
+      "edition": 63,
+      "year": 1990,
+      "title": "希望之旅",
+      "originalTitle": "Reise der Hoffnung",
+      "director": "萨维耶·柯勒",
+      "country": "瑞士"
+    },
+    {
+      "rank": 37,
+      "edition": 62,
+      "year": 1989,
+      "title": "天堂电影院",
+      "originalTitle": "Nuovo cinema Paradiso",
+      "director": "朱塞佩·托纳多雷",
+      "country": "意大利"
+    },
+    {
+      "rank": 38,
+      "edition": 61,
+      "year": 1988,
+      "title": "征服者佩尔",
+      "originalTitle": "Pelle Erobreren",
+      "director": "比利·奥古斯特",
+      "country": "丹麦"
+    },
+    {
+      "rank": 39,
+      "edition": 60,
+      "year": 1987,
+      "title": "巴贝特之宴",
+      "originalTitle": "Babettes gæstebud",
+      "director": "盖布里尔·亚斯里",
+      "country": "丹麦"
+    },
+    {
+      "rank": 40,
+      "edition": 59,
+      "year": 1986,
+      "title": "战火葬童年",
+      "originalTitle": "De aanslag",
+      "director": "冯斯·罗德麦克斯",
+      "country": "荷兰"
+    },
+    {
+      "rank": 41,
+      "edition": 58,
+      "year": 1985,
+      "title": "官方说法",
+      "originalTitle": "La historia oficial",
+      "director": "路易斯·普恩佐",
+      "country": "阿根廷"
+    },
+    {
+      "rank": 42,
+      "edition": 57,
+      "year": 1984,
+      "title": "危险行动",
+      "originalTitle": "La Diagonale du fou",
+      "director": "里夏尔·登博",
+      "country": "瑞士"
+    },
+    {
+      "rank": 43,
+      "edition": 56,
+      "year": 1983,
+      "title": "芬妮和亚历山大",
+      "originalTitle": "Fanny och Alexander",
+      "director": "英格玛·伯格曼",
+      "country": "瑞典"
+    },
+    {
+      "rank": 44,
+      "edition": 55,
+      "year": 1982,
+      "title": "重新开始",
+      "originalTitle": "Volver a empezar",
+      "director": "荷西·路易斯·加里西",
+      "country": "西班牙"
+    },
+    {
+      "rank": 45,
+      "edition": 54,
+      "year": 1981,
+      "title": "摩菲斯特",
+      "originalTitle": "Mephisto",
+      "director": "绍博·伊什特万",
+      "country": "匈牙利"
+    },
+    {
+      "rank": 46,
+      "edition": 53,
+      "year": 1980,
+      "title": "莫斯科不相信眼泪",
+      "originalTitle": "Москва слезам не верит",
+      "director": "弗拉基米尔·缅绍夫",
+      "country": "苏联"
+    },
+    {
+      "rank": 47,
+      "edition": 52,
+      "year": 1979,
+      "title": "铁皮鼓",
+      "originalTitle": "Die Blechtrommel",
+      "director": "沃克·施隆多夫",
+      "country": "西德"
+    },
+    {
+      "rank": 48,
+      "edition": 51,
+      "year": 1978,
+      "title": "掏出你的手帕",
+      "originalTitle": "Préparez vos mouchoirs",
+      "director": "贝特朗·布里叶",
+      "country": "法国"
+    },
+    {
+      "rank": 49,
+      "edition": 50,
+      "year": 1977,
+      "title": "罗莎夫人",
+      "originalTitle": "La Vie devant soi",
+      "director": "莫什·米扎西",
+      "country": "法国"
+    },
+    {
+      "rank": 50,
+      "edition": 49,
+      "year": 1976,
+      "title": "黑人为白人作战",
+      "originalTitle": "La Victoire en chantant",
+      "director": "让-雅克·阿诺",
+      "country": "科特迪瓦"
+    },
+    {
+      "rank": 51,
+      "edition": 48,
+      "year": 1975,
+      "title": "德尔苏·乌扎拉",
+      "originalTitle": "Дерсу Узала",
+      "director": "黑泽明",
+      "country": "苏联"
+    },
+    {
+      "rank": 52,
+      "edition": 47,
+      "year": 1974,
+      "title": "阿玛柯德",
+      "originalTitle": "Amarcord",
+      "director": "费德里科·费里尼",
+      "country": "意大利"
+    },
+    {
+      "rank": 53,
+      "edition": 46,
+      "year": 1973,
+      "title": "日以作夜",
+      "originalTitle": "La Nuit américaine",
+      "director": "弗朗索瓦·特吕弗",
+      "country": "法国"
+    },
+    {
+      "rank": 54,
+      "edition": 45,
+      "year": 1972,
+      "title": "资产阶级的审慎魅力",
+      "originalTitle": "Le Charme discret de la bourgeoisie",
+      "director": "路易斯·布努埃尔",
+      "country": "法国"
+    },
+    {
+      "rank": 55,
+      "edition": 44,
+      "year": 1971,
+      "title": "费尼兹花园",
+      "originalTitle": "Il giardino dei Finzi-Contini",
+      "director": "维托里奥·德西卡",
+      "country": "意大利"
+    },
+    {
+      "rank": 56,
+      "edition": 43,
+      "year": 1970,
+      "title": "对一个不容怀疑的公民的调查",
+      "originalTitle": "Indagine su un cittadino al di sopra di ogni sospetto",
+      "director": "埃里奥·贝多利",
+      "country": "意大利"
+    },
+    {
+      "rank": 57,
+      "edition": 42,
+      "year": 1969,
+      "title": "焦点新闻",
+      "originalTitle": "Z",
+      "director": "科斯塔·加夫拉斯",
+      "country": "阿尔及利亚"
+    },
+    {
+      "rank": 58,
+      "edition": 41,
+      "year": 1968,
+      "title": "战争与和平",
+      "originalTitle": "Война и мир",
+      "director": "谢尔盖·邦达尔丘克",
+      "country": "苏联"
+    },
+    {
+      "rank": 59,
+      "edition": 40,
+      "year": 1967,
+      "title": "严密监视的列车",
+      "originalTitle": "Ostře sledované vlaky",
+      "director": "伊日·门策尔",
+      "country": "捷克斯洛伐克"
+    },
+    {
+      "rank": 60,
+      "edition": 39,
+      "year": 1966,
+      "title": "一个男人和一个女人",
+      "originalTitle": "Un homme et une femme",
+      "director": "克洛德·勒卢什",
+      "country": "法国"
+    },
+    {
+      "rank": 61,
+      "edition": 38,
+      "year": 1965,
+      "title": "大街上的商店",
+      "originalTitle": "Obchod na korze",
+      "director": "杨·卡达尔艾尔玛·克洛斯",
+      "country": "捷克斯洛伐克"
+    },
+    {
+      "rank": 62,
+      "edition": 37,
+      "year": 1964,
+      "title": "昨日、今日、明日",
+      "originalTitle": "Ieri, oggi, domani",
+      "director": "维托里奥·德西卡",
+      "country": "意大利"
+    },
+    {
+      "rank": 63,
+      "edition": 36,
+      "year": 1963,
+      "title": "八部半",
+      "originalTitle": "8½",
+      "director": "费德里科·费里尼",
+      "country": "意大利"
+    },
+    {
+      "rank": 64,
+      "edition": 35,
+      "year": 1962,
+      "title": "花落莺啼春",
+      "originalTitle": "Les Dimanches de Ville d'Avray",
+      "director": "塞基·鲍格农",
+      "country": "法国"
+    },
+    {
+      "rank": 65,
+      "edition": 34,
+      "year": 1961,
+      "title": "犹在镜中",
+      "originalTitle": "Såsom i en spegel",
+      "director": "英格玛·伯格曼",
+      "country": "瑞典"
+    },
+    {
+      "rank": 66,
+      "edition": 33,
+      "year": 1960,
+      "title": "处女泉",
+      "originalTitle": "Jungfrukällan",
+      "director": "英格玛·伯格曼",
+      "country": "瑞典"
+    },
+    {
+      "rank": 67,
+      "edition": 32,
+      "year": 1959,
+      "title": "黑色奥菲斯",
+      "originalTitle": "Orfeu Negro",
+      "director": "马赛尔·加谬",
+      "country": "法国"
+    },
+    {
+      "rank": 68,
+      "edition": 31,
+      "year": 1958,
+      "title": "我的舅舅",
+      "originalTitle": "Mon oncle",
+      "director": "雅克·塔蒂",
+      "country": "法国"
+    },
+    {
+      "rank": 69,
+      "edition": 30,
+      "year": 1957,
+      "title": "卡比利亚之夜",
+      "originalTitle": "Le notti di Cabiria",
+      "director": "费德里科·费里尼",
+      "country": "意大利"
+    },
+    {
+      "rank": 70,
+      "edition": 29,
+      "year": 1956,
+      "title": "大路",
+      "originalTitle": "La strada",
+      "director": "费德里科·费里尼",
+      "country": "意大利",
+      "doubanId": "1292719"
+    },
+    {
+      "rank": 71,
+      "edition": 28,
+      "year": 1955,
+      "title": "宫本武藏",
+      "originalTitle": "宫本武蔵",
+      "director": "稻垣浩",
+      "country": "日本"
+    },
+    {
+      "rank": 72,
+      "edition": 27,
+      "year": 1954,
+      "title": "地狱门",
+      "originalTitle": "地獄門",
+      "director": "衣笠贞之助",
+      "country": "日本"
+    },
+    {
+      "rank": 73,
+      "edition": 25,
+      "year": 1952,
+      "title": "禁忌游戏",
+      "originalTitle": "Jeux interdits",
+      "director": "勒内·克莱芒",
+      "country": "法国"
+    },
+    {
+      "rank": 74,
+      "edition": 24,
+      "year": 1951,
+      "title": "罗生门",
+      "originalTitle": "羅生門",
+      "director": "黑泽明",
+      "country": "日本"
+    },
+    {
+      "rank": 75,
+      "edition": 23,
+      "year": 1950,
+      "title": "玛拉巴加之墙",
+      "originalTitle": "Au-delà des grilles",
+      "director": "勒内·克莱芒",
+      "country": "法国"
+    },
+    {
+      "rank": 76,
+      "edition": 22,
+      "year": 1949,
+      "title": "偷自行车的人",
+      "originalTitle": "Ladri di biciclette",
+      "director": "维托里奥·德西卡",
+      "country": "意大利"
+    },
+    {
+      "rank": 77,
+      "edition": 21,
+      "year": 1948,
+      "title": "文森特先生",
+      "originalTitle": "Monsieur Vincent",
+      "director": "莫里斯·克劳",
+      "country": "法国"
+    },
+    {
+      "rank": 78,
+      "edition": 20,
+      "year": 1947,
+      "title": "擦鞋童",
+      "originalTitle": "Sciuscià",
+      "director": "维托里奥·德西卡",
+      "country": "意大利"
+    }
+  ]
+}

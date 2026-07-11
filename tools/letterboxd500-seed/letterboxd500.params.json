@@ -1,0 +1,3013 @@
+{
+  "theme": "letterboxd500",
+  "idStrategy": "rank",
+  "forceRefresh": true,
+  "startFrom": 0,
+  "autoContinue": true,
+  "movieList": [
+    {
+      "rank": 1,
+      "year": 1962,
+      "title": "Harakiri",
+      "originalTitle": "Harakiri"
+    },
+    {
+      "rank": 2,
+      "year": 1961,
+      "title": "The Human Condition III: A Soldier's Prayer",
+      "originalTitle": "The Human Condition III: A Soldier's Prayer",
+      "doubanId": "1441039"
+    },
+    {
+      "rank": 3,
+      "year": 1957,
+      "title": "12 Angry Men",
+      "originalTitle": "12 Angry Men"
+    },
+    {
+      "rank": 4,
+      "year": 1985,
+      "title": "Come and See",
+      "originalTitle": "Come and See"
+    },
+    {
+      "rank": 5,
+      "year": 1954,
+      "title": "Seven Samurai",
+      "originalTitle": "Seven Samurai"
+    },
+    {
+      "rank": 6,
+      "year": 1963,
+      "title": "High and Low",
+      "originalTitle": "High and Low"
+    },
+    {
+      "rank": 7,
+      "year": 1994,
+      "title": "The Shawshank Redemption",
+      "originalTitle": "The Shawshank Redemption"
+    },
+    {
+      "rank": 8,
+      "year": 1974,
+      "title": "The Godfather Part II",
+      "originalTitle": "The Godfather Part II"
+    },
+    {
+      "rank": 9,
+      "year": 1959,
+      "title": "The Human Condition I: No Greater Love",
+      "originalTitle": "The Human Condition I: No Greater Love"
+    },
+    {
+      "rank": 10,
+      "year": 2002,
+      "title": "City of God",
+      "originalTitle": "City of God"
+    },
+    {
+      "rank": 11,
+      "year": 2003,
+      "title": "The Lord of the Rings: The Return of the King",
+      "originalTitle": "The Lord of the Rings: The Return of the King"
+    },
+    {
+      "rank": 12,
+      "year": 1993,
+      "title": "Schindler's List",
+      "originalTitle": "Schindler's List"
+    },
+    {
+      "rank": 13,
+      "year": 2000,
+      "title": "Yi Yi",
+      "originalTitle": "Yi Yi"
+    },
+    {
+      "rank": 14,
+      "year": 2019,
+      "title": "Parasite",
+      "originalTitle": "Parasite"
+    },
+    {
+      "rank": 15,
+      "year": 1972,
+      "title": "The Godfather",
+      "originalTitle": "The Godfather"
+    },
+    {
+      "rank": 16,
+      "year": 1988,
+      "title": "Cinema Paradiso",
+      "originalTitle": "Cinema Paradiso"
+    },
+    {
+      "rank": 17,
+      "year": 1960,
+      "title": "Le Trou",
+      "originalTitle": "Le Trou"
+    },
+    {
+      "rank": 18,
+      "year": 1952,
+      "title": "Ikiru",
+      "originalTitle": "Ikiru"
+    },
+    {
+      "rank": 19,
+      "year": 1985,
+      "title": "Ran",
+      "originalTitle": "Ran"
+    },
+    {
+      "rank": 20,
+      "year": 1966,
+      "title": "The Good, the Bad and the Ugly",
+      "originalTitle": "The Good, the Bad and the Ugly"
+    },
+    {
+      "rank": 21,
+      "year": 1995,
+      "title": "La Haine",
+      "originalTitle": "La Haine"
+    },
+    {
+      "rank": 22,
+      "year": 1991,
+      "title": "A Brighter Summer Day",
+      "originalTitle": "A Brighter Summer Day"
+    },
+    {
+      "rank": 23,
+      "year": 1959,
+      "title": "The Human Condition II: Road to Eternity",
+      "originalTitle": "The Human Condition II: Road to Eternity",
+      "doubanId": "1441038"
+    },
+    {
+      "rank": 24,
+      "year": 1978,
+      "title": "Autumn Sonata",
+      "originalTitle": "Autumn Sonata"
+    },
+    {
+      "rank": 25,
+      "year": 2008,
+      "title": "The Dark Knight",
+      "originalTitle": "The Dark Knight"
+    },
+    {
+      "rank": 26,
+      "year": 1988,
+      "title": "Grave of the Fireflies",
+      "originalTitle": "Grave of the Fireflies"
+    },
+    {
+      "rank": 27,
+      "year": 1997,
+      "title": "Neon Genesis Evangelion: The End of Evangelion",
+      "originalTitle": "Neon Genesis Evangelion: The End of Evangelion"
+    },
+    {
+      "rank": 28,
+      "year": 1964,
+      "title": "Woman in the Dunes",
+      "originalTitle": "Woman in the Dunes"
+    },
+    {
+      "rank": 29,
+      "year": 1964,
+      "title": "I Am Cuba",
+      "originalTitle": "I Am Cuba"
+    },
+    {
+      "rank": 30,
+      "year": 1966,
+      "title": "The Battle of Algiers",
+      "originalTitle": "The Battle of Algiers"
+    },
+    {
+      "rank": 31,
+      "year": 1957,
+      "title": "The Cranes Are Flying",
+      "originalTitle": "The Cranes Are Flying"
+    },
+    {
+      "rank": 32,
+      "year": 2007,
+      "title": "There Will Be Blood",
+      "originalTitle": "There Will Be Blood"
+    },
+    {
+      "rank": 33,
+      "year": 1990,
+      "title": "GoodFellas",
+      "originalTitle": "GoodFellas"
+    },
+    {
+      "rank": 34,
+      "year": 1957,
+      "title": "Paths of Glory",
+      "originalTitle": "Paths of Glory"
+    },
+    {
+      "rank": 35,
+      "year": 2014,
+      "title": "Interstellar",
+      "originalTitle": "Interstellar"
+    },
+    {
+      "rank": 36,
+      "year": 2010,
+      "title": "Incendies",
+      "originalTitle": "Incendies"
+    },
+    {
+      "rank": 37,
+      "year": 1966,
+      "title": "Andrei Rublev",
+      "originalTitle": "Andrei Rublev"
+    },
+    {
+      "rank": 38,
+      "year": 1977,
+      "title": "The Ascent",
+      "originalTitle": "The Ascent"
+    },
+    {
+      "rank": 39,
+      "year": 2001,
+      "title": "Spirited Away",
+      "originalTitle": "Spirited Away"
+    },
+    {
+      "rank": 40,
+      "year": 1946,
+      "title": "It's a Wonderful Life",
+      "originalTitle": "It's a Wonderful Life"
+    },
+    {
+      "rank": 41,
+      "year": 1979,
+      "title": "Apocalypse Now",
+      "originalTitle": "Apocalypse Now"
+    },
+    {
+      "rank": 42,
+      "year": 1960,
+      "title": "The Apartment",
+      "originalTitle": "The Apartment"
+    },
+    {
+      "rank": 43,
+      "year": 1950,
+      "title": "Sunset Boulevard",
+      "originalTitle": "Sunset Boulevard"
+    },
+    {
+      "rank": 44,
+      "year": 1953,
+      "title": "Tokyo Story",
+      "originalTitle": "Tokyo Story"
+    },
+    {
+      "rank": 45,
+      "year": 2002,
+      "title": "The Lord of the Rings: The Two Towers",
+      "originalTitle": "The Lord of the Rings: The Two Towers"
+    },
+    {
+      "rank": 46,
+      "year": 1954,
+      "title": "Sansho the Bailiff",
+      "originalTitle": "Sansho the Bailiff"
+    },
+    {
+      "rank": 47,
+      "year": 1928,
+      "title": "The Passion of Joan of Arc",
+      "originalTitle": "The Passion of Joan of Arc"
+    },
+    {
+      "rank": 48,
+      "year": 2014,
+      "title": "Whiplash",
+      "originalTitle": "Whiplash"
+    },
+    {
+      "rank": 49,
+      "year": 2019,
+      "title": "Portrait of a Lady on Fire",
+      "originalTitle": "Portrait of a Lady on Fire"
+    },
+    {
+      "rank": 50,
+      "year": 1985,
+      "title": "三岛由纪夫传",
+      "originalTitle": "Mishima: A Life in Four Chapters",
+      "doubanId": "1305345"
+    },
+    {
+      "rank": 51,
+      "year": 1982,
+      "title": "Fanny and Alexander",
+      "originalTitle": "Fanny and Alexander"
+    },
+    {
+      "rank": 52,
+      "year": 1965,
+      "title": "Red Beard",
+      "originalTitle": "Red Beard"
+    },
+    {
+      "rank": 53,
+      "year": 2003,
+      "title": "Memories of Murder",
+      "originalTitle": "Memories of Murder"
+    },
+    {
+      "rank": 54,
+      "year": 1990,
+      "title": "Close-Up",
+      "originalTitle": "Close-Up"
+    },
+    {
+      "rank": 55,
+      "year": 1997,
+      "title": "Life Is Beautiful",
+      "originalTitle": "Life Is Beautiful"
+    },
+    {
+      "rank": 56,
+      "year": 1957,
+      "title": "Witness for the Prosecution",
+      "originalTitle": "Witness for the Prosecution"
+    },
+    {
+      "rank": 57,
+      "year": 1993,
+      "title": "Farewell My Concubine",
+      "originalTitle": "Farewell My Concubine"
+    },
+    {
+      "rank": 58,
+      "year": 1948,
+      "title": "The Red Shoes",
+      "originalTitle": "The Red Shoes"
+    },
+    {
+      "rank": 59,
+      "year": 1957,
+      "title": "Nights of Cabiria",
+      "originalTitle": "Nights of Cabiria"
+    },
+    {
+      "rank": 60,
+      "year": 2004,
+      "title": "Nobody Knows",
+      "originalTitle": "Nobody Knows"
+    },
+    {
+      "rank": 61,
+      "year": 1975,
+      "title": "Barry Lyndon",
+      "originalTitle": "Barry Lyndon"
+    },
+    {
+      "rank": 62,
+      "year": 1962,
+      "title": "Lawrence of Arabia",
+      "originalTitle": "Lawrence of Arabia"
+    },
+    {
+      "rank": 63,
+      "year": 2002,
+      "title": "The Pianist",
+      "originalTitle": "The Pianist"
+    },
+    {
+      "rank": 64,
+      "year": 2023,
+      "title": "Spider-Man: Across the Spider-Verse",
+      "originalTitle": "Spider-Man: Across the Spider-Verse"
+    },
+    {
+      "rank": 65,
+      "year": 1989,
+      "title": "Do the Right Thing",
+      "originalTitle": "Do the Right Thing"
+    },
+    {
+      "rank": 66,
+      "year": 1980,
+      "title": "The Empire Strikes Back",
+      "originalTitle": "The Empire Strikes Back"
+    },
+    {
+      "rank": 67,
+      "year": 1998,
+      "title": "Eternity and a Day",
+      "originalTitle": "Eternity and a Day"
+    },
+    {
+      "rank": 68,
+      "year": 1974,
+      "title": "A Woman Under the Influence",
+      "originalTitle": "A Woman Under the Influence"
+    },
+    {
+      "rank": 69,
+      "year": 2004,
+      "title": "Swing Girls",
+      "originalTitle": "Swing Girls"
+    },
+    {
+      "rank": 70,
+      "year": 1979,
+      "title": "Stalker",
+      "originalTitle": "Stalker"
+    },
+    {
+      "rank": 71,
+      "year": 1994,
+      "title": "Satantango",
+      "originalTitle": "Satantango"
+    },
+    {
+      "rank": 72,
+      "year": 1997,
+      "title": "Princess Mononoke",
+      "originalTitle": "Princess Mononoke"
+    },
+    {
+      "rank": 73,
+      "year": 2018,
+      "title": "Spider-Man: Into the Spider-Verse",
+      "originalTitle": "Spider-Man: Into the Spider-Verse"
+    },
+    {
+      "rank": 74,
+      "year": 2008,
+      "title": "Love Exposure",
+      "originalTitle": "Love Exposure"
+    },
+    {
+      "rank": 75,
+      "year": 2025,
+      "title": "The Voice of Hind Rajab",
+      "originalTitle": "The Voice of Hind Rajab"
+    },
+    {
+      "rank": 76,
+      "year": 1973,
+      "title": "Paper Moon",
+      "originalTitle": "Paper Moon"
+    },
+    {
+      "rank": 77,
+      "year": 2016,
+      "title": "The Handmaiden",
+      "originalTitle": "The Handmaiden"
+    },
+    {
+      "rank": 78,
+      "year": 2018,
+      "title": "An Elephant Sitting Still",
+      "originalTitle": "An Elephant Sitting Still"
+    },
+    {
+      "rank": 79,
+      "year": 1968,
+      "title": "Once Upon a Time in the West",
+      "originalTitle": "Once Upon a Time in the West"
+    },
+    {
+      "rank": 80,
+      "year": 2001,
+      "title": "The Lord of the Rings: The Fellowship of the Ring",
+      "originalTitle": "The Lord of the Rings: The Fellowship of the Ring"
+    },
+    {
+      "rank": 81,
+      "year": 1974,
+      "title": "Scenes from a Marriage",
+      "originalTitle": "Scenes from a Marriage"
+    },
+    {
+      "rank": 82,
+      "year": 1966,
+      "title": "Persona",
+      "originalTitle": "Persona"
+    },
+    {
+      "rank": 83,
+      "year": 1997,
+      "title": "Good Will Hunting",
+      "originalTitle": "Good Will Hunting"
+    },
+    {
+      "rank": 84,
+      "year": 1959,
+      "title": "Apur Sansar",
+      "originalTitle": "Apur Sansar"
+    },
+    {
+      "rank": 85,
+      "year": 1987,
+      "title": "Where Is the Friend's House?",
+      "originalTitle": "Where Is the Friend's House?"
+    },
+    {
+      "rank": 86,
+      "year": 1997,
+      "title": "Perfect Blue",
+      "originalTitle": "Perfect Blue"
+    },
+    {
+      "rank": 87,
+      "year": 2024,
+      "title": "Dune: Part Two",
+      "originalTitle": "Dune: Part Two"
+    },
+    {
+      "rank": 88,
+      "year": 2000,
+      "title": "In the Mood for Love",
+      "originalTitle": "In the Mood for Love"
+    },
+    {
+      "rank": 89,
+      "year": 2011,
+      "title": "A Separation",
+      "originalTitle": "A Separation"
+    },
+    {
+      "rank": 90,
+      "year": 1995,
+      "title": "Se7en",
+      "originalTitle": "Se7en"
+    },
+    {
+      "rank": 91,
+      "year": 1969,
+      "title": "Z",
+      "originalTitle": "Z"
+    },
+    {
+      "rank": 92,
+      "year": 1924,
+      "title": "Sherlock Jr.",
+      "originalTitle": "Sherlock Jr."
+    },
+    {
+      "rank": 93,
+      "year": 1975,
+      "title": "One Flew Over the Cuckoo's Nest",
+      "originalTitle": "One Flew Over the Cuckoo's Nest"
+    },
+    {
+      "rank": 94,
+      "year": 1984,
+      "title": "Paris, Texas",
+      "originalTitle": "Paris, Texas"
+    },
+    {
+      "rank": 95,
+      "year": 1953,
+      "title": "The Wages of Fear",
+      "originalTitle": "The Wages of Fear"
+    },
+    {
+      "rank": 96,
+      "year": 1961,
+      "title": "Judgment at Nuremberg",
+      "originalTitle": "Judgment at Nuremberg"
+    },
+    {
+      "rank": 97,
+      "year": 1950,
+      "title": "All About Eve",
+      "originalTitle": "All About Eve"
+    },
+    {
+      "rank": 98,
+      "year": 1954,
+      "title": "Rear Window",
+      "originalTitle": "Rear Window"
+    },
+    {
+      "rank": 99,
+      "year": 1969,
+      "title": "Army of Shadows",
+      "originalTitle": "Army of Shadows"
+    },
+    {
+      "rank": 100,
+      "year": 1988,
+      "title": "Landscape in the Mist",
+      "originalTitle": "Landscape in the Mist"
+    },
+    {
+      "rank": 101,
+      "year": 1998,
+      "title": "Central Station",
+      "originalTitle": "Central Station"
+    },
+    {
+      "rank": 102,
+      "year": 2009,
+      "title": "Inglourious Basterds",
+      "originalTitle": "Inglourious Basterds"
+    },
+    {
+      "rank": 103,
+      "year": 2003,
+      "title": "Oldboy",
+      "originalTitle": "Oldboy"
+    },
+    {
+      "rank": 104,
+      "year": 1984,
+      "title": "Amadeus",
+      "originalTitle": "Amadeus"
+    },
+    {
+      "rank": 105,
+      "year": 2004,
+      "title": "Howl's Moving Castle",
+      "originalTitle": "Howl's Moving Castle"
+    },
+    {
+      "rank": 106,
+      "year": 2012,
+      "title": "It's Such a Beautiful Day",
+      "originalTitle": "It's Such a Beautiful Day"
+    },
+    {
+      "rank": 107,
+      "year": 1955,
+      "title": "Ordet",
+      "originalTitle": "Ordet"
+    },
+    {
+      "rank": 108,
+      "year": 2024,
+      "title": "How to Make Millions Before Grandma Dies",
+      "originalTitle": "How to Make Millions Before Grandma Dies"
+    },
+    {
+      "rank": 109,
+      "year": 1982,
+      "title": "The Thing",
+      "originalTitle": "The Thing"
+    },
+    {
+      "rank": 110,
+      "year": 1977,
+      "title": "A Special Day",
+      "originalTitle": "A Special Day"
+    },
+    {
+      "rank": 111,
+      "year": 1991,
+      "title": "Raise the Red Lantern",
+      "originalTitle": "Raise the Red Lantern"
+    },
+    {
+      "rank": 112,
+      "year": 2025,
+      "title": "链锯人 剧场版：蕾塞篇",
+      "originalTitle": "Chainsaw Man – The Movie: Reze Arc",
+      "doubanId": "37291780"
+    },
+    {
+      "rank": 113,
+      "year": 1956,
+      "title": "A Man Escaped",
+      "originalTitle": "A Man Escaped"
+    },
+    {
+      "rank": 114,
+      "year": 1989,
+      "title": "Dead Poets Society",
+      "originalTitle": "Dead Poets Society"
+    },
+    {
+      "rank": 115,
+      "year": 1952,
+      "title": "Singin' in the Rain",
+      "originalTitle": "Singin' in the Rain"
+    },
+    {
+      "rank": 116,
+      "year": 1979,
+      "title": "All That Jazz",
+      "originalTitle": "All That Jazz"
+    },
+    {
+      "rank": 117,
+      "year": 2006,
+      "title": "The Departed",
+      "originalTitle": "The Departed"
+    },
+    {
+      "rank": 118,
+      "year": 2024,
+      "title": "I'm Still Here",
+      "originalTitle": "I'm Still Here"
+    },
+    {
+      "rank": 119,
+      "year": 2008,
+      "title": "Still Walking",
+      "originalTitle": "Still Walking"
+    },
+    {
+      "rank": 120,
+      "year": 1942,
+      "title": "To Be or Not to Be",
+      "originalTitle": "To Be or Not to Be"
+    },
+    {
+      "rank": 121,
+      "year": 2023,
+      "title": "Monster",
+      "originalTitle": "Monster"
+    },
+    {
+      "rank": 122,
+      "year": 1992,
+      "title": "Twin Peaks: Fire Walk with Me",
+      "originalTitle": "Twin Peaks: Fire Walk with Me"
+    },
+    {
+      "rank": 123,
+      "year": 1994,
+      "title": "Three Colours: Red",
+      "originalTitle": "Three Colours: Red"
+    },
+    {
+      "rank": 124,
+      "year": 1991,
+      "title": "The Silence of the Lambs",
+      "originalTitle": "The Silence of the Lambs"
+    },
+    {
+      "rank": 125,
+      "year": 1949,
+      "title": "Late Spring",
+      "originalTitle": "Late Spring"
+    },
+    {
+      "rank": 126,
+      "year": 2012,
+      "title": "Django Unchained",
+      "originalTitle": "Django Unchained"
+    },
+    {
+      "rank": 127,
+      "year": 1960,
+      "title": "Rocco and His Brothers",
+      "originalTitle": "Rocco and His Brothers"
+    },
+    {
+      "rank": 128,
+      "year": 1981,
+      "title": "Das Boot",
+      "originalTitle": "Das Boot"
+    },
+    {
+      "rank": 129,
+      "year": 2013,
+      "title": "Prisoners",
+      "originalTitle": "Prisoners"
+    },
+    {
+      "rank": 130,
+      "year": 1957,
+      "title": "Wild Strawberries",
+      "originalTitle": "Wild Strawberries"
+    },
+    {
+      "rank": 131,
+      "year": 1940,
+      "title": "The Great Dictator",
+      "originalTitle": "The Great Dictator"
+    },
+    {
+      "rank": 132,
+      "year": 1969,
+      "title": "Funeral Parade of Roses",
+      "originalTitle": "Funeral Parade of Roses"
+    },
+    {
+      "rank": 133,
+      "year": 1931,
+      "title": "City Lights",
+      "originalTitle": "City Lights"
+    },
+    {
+      "rank": 134,
+      "year": 1995,
+      "title": "Underground",
+      "originalTitle": "Underground"
+    },
+    {
+      "rank": 135,
+      "year": 1955,
+      "title": "Pather Panchali",
+      "originalTitle": "Pather Panchali"
+    },
+    {
+      "rank": 136,
+      "year": 1957,
+      "title": "The Seventh Seal",
+      "originalTitle": "The Seventh Seal"
+    },
+    {
+      "rank": 137,
+      "year": 1998,
+      "title": "The Celebration",
+      "originalTitle": "The Celebration"
+    },
+    {
+      "rank": 138,
+      "year": 1997,
+      "title": "Taste of Cherry",
+      "originalTitle": "Taste of Cherry"
+    },
+    {
+      "rank": 139,
+      "year": 1945,
+      "title": "Brief Encounter",
+      "originalTitle": "Brief Encounter"
+    },
+    {
+      "rank": 140,
+      "year": 1967,
+      "title": "The Young Girls of Rochefort",
+      "originalTitle": "The Young Girls of Rochefort"
+    },
+    {
+      "rank": 141,
+      "year": 1975,
+      "title": "Mirror",
+      "originalTitle": "Mirror"
+    },
+    {
+      "rank": 142,
+      "year": 2014,
+      "title": "Mommy",
+      "originalTitle": "Mommy"
+    },
+    {
+      "rank": 143,
+      "year": 2023,
+      "title": "Perfect Days",
+      "originalTitle": "Perfect Days"
+    },
+    {
+      "rank": 144,
+      "year": 2013,
+      "title": "Puella Magi Madoka Magica the Movie Part III: Rebellion",
+      "originalTitle": "Puella Magi Madoka Magica the Movie Part III: Rebellion"
+    },
+    {
+      "rank": 145,
+      "year": 1985,
+      "title": "Tampopo",
+      "originalTitle": "Tampopo"
+    },
+    {
+      "rank": 146,
+      "year": 2004,
+      "title": "Before Sunset",
+      "originalTitle": "Before Sunset"
+    },
+    {
+      "rank": 147,
+      "year": 1960,
+      "title": "Psycho",
+      "originalTitle": "Psycho"
+    },
+    {
+      "rank": 148,
+      "year": 2023,
+      "title": "Sing Sing",
+      "originalTitle": "Sing Sing"
+    },
+    {
+      "rank": 149,
+      "year": 2000,
+      "title": "Werckmeister Harmonies",
+      "originalTitle": "Werckmeister Harmonies"
+    },
+    {
+      "rank": 150,
+      "year": 1987,
+      "title": "Wings of Desire",
+      "originalTitle": "Wings of Desire"
+    },
+    {
+      "rank": 151,
+      "year": 1995,
+      "title": "Heat",
+      "originalTitle": "Heat"
+    },
+    {
+      "rank": 152,
+      "year": 2026,
+      "title": "Project Hail Mary",
+      "originalTitle": "Project Hail Mary"
+    },
+    {
+      "rank": 153,
+      "year": 2007,
+      "title": "No Country for Old Men",
+      "originalTitle": "No Country for Old Men"
+    },
+    {
+      "rank": 154,
+      "year": 2018,
+      "title": "Shoplifters",
+      "originalTitle": "Shoplifters"
+    },
+    {
+      "rank": 155,
+      "year": 1975,
+      "title": "Dog Day Afternoon",
+      "originalTitle": "Dog Day Afternoon"
+    },
+    {
+      "rank": 156,
+      "year": 1980,
+      "title": "The Elephant Man",
+      "originalTitle": "The Elephant Man"
+    },
+    {
+      "rank": 157,
+      "year": 1969,
+      "title": "The Cremator",
+      "originalTitle": "The Cremator"
+    },
+    {
+      "rank": 158,
+      "year": 1964,
+      "title": "Dr. Strangelove or: How I Learned to Stop Worrying and Love the Bomb",
+      "originalTitle": "Dr. Strangelove or: How I Learned to Stop Worrying and Love the Bomb"
+    },
+    {
+      "rank": 159,
+      "year": 1959,
+      "title": "The 400 Blows",
+      "originalTitle": "The 400 Blows"
+    },
+    {
+      "rank": 160,
+      "year": 1975,
+      "title": "Dersu Uzala",
+      "originalTitle": "Dersu Uzala"
+    },
+    {
+      "rank": 161,
+      "year": 1974,
+      "title": "Chinatown",
+      "originalTitle": "Chinatown"
+    },
+    {
+      "rank": 162,
+      "year": 2009,
+      "title": "Fantastic Mr. Fox",
+      "originalTitle": "Fantastic Mr. Fox"
+    },
+    {
+      "rank": 163,
+      "year": 2006,
+      "title": "Children of Men",
+      "originalTitle": "Children of Men"
+    },
+    {
+      "rank": 164,
+      "year": 1961,
+      "title": "Yojimbo",
+      "originalTitle": "Yojimbo"
+    },
+    {
+      "rank": 165,
+      "year": 1945,
+      "title": "Children of Paradise",
+      "originalTitle": "Children of Paradise"
+    },
+    {
+      "rank": 166,
+      "year": 1977,
+      "title": "Opening Night",
+      "originalTitle": "Opening Night"
+    },
+    {
+      "rank": 167,
+      "year": 1995,
+      "title": "Before Sunrise",
+      "originalTitle": "Before Sunrise"
+    },
+    {
+      "rank": 168,
+      "year": 1948,
+      "title": "The Treasure of the Sierra Madre",
+      "originalTitle": "The Treasure of the Sierra Madre"
+    },
+    {
+      "rank": 169,
+      "year": 1974,
+      "title": "We All Loved Each Other So Much",
+      "originalTitle": "We All Loved Each Other So Much"
+    },
+    {
+      "rank": 170,
+      "year": 2006,
+      "title": "The Lives of Others",
+      "originalTitle": "The Lives of Others"
+    },
+    {
+      "rank": 171,
+      "year": 1992,
+      "title": "Malcolm X",
+      "originalTitle": "Malcolm X"
+    },
+    {
+      "rank": 172,
+      "year": 1964,
+      "title": "Fail Safe",
+      "originalTitle": "Fail Safe"
+    },
+    {
+      "rank": 173,
+      "year": 1986,
+      "title": "The Sacrifice",
+      "originalTitle": "The Sacrifice"
+    },
+    {
+      "rank": 174,
+      "year": 1962,
+      "title": "The Man Who Shot Liberty Valance",
+      "originalTitle": "The Man Who Shot Liberty Valance"
+    },
+    {
+      "rank": 175,
+      "year": 2020,
+      "title": "The Father",
+      "originalTitle": "The Father"
+    },
+    {
+      "rank": 176,
+      "year": 1931,
+      "title": "M",
+      "originalTitle": "M"
+    },
+    {
+      "rank": 177,
+      "year": 1961,
+      "title": "La Notte",
+      "originalTitle": "La Notte"
+    },
+    {
+      "rank": 178,
+      "year": 1996,
+      "title": "Secrets & Lies",
+      "originalTitle": "Secrets & Lies"
+    },
+    {
+      "rank": 179,
+      "year": 1948,
+      "title": "Bicycle Thieves",
+      "originalTitle": "Bicycle Thieves"
+    },
+    {
+      "rank": 180,
+      "year": 1991,
+      "title": "Terminator 2: Judgment Day",
+      "originalTitle": "Terminator 2: Judgment Day"
+    },
+    {
+      "rank": 181,
+      "year": 2006,
+      "title": "The Prestige",
+      "originalTitle": "The Prestige"
+    },
+    {
+      "rank": 182,
+      "year": 2006,
+      "title": "Azur & Asmar: The Princes' Quest",
+      "originalTitle": "Azur & Asmar: The Princes' Quest"
+    },
+    {
+      "rank": 183,
+      "year": 1999,
+      "title": "The Green Mile",
+      "originalTitle": "The Green Mile"
+    },
+    {
+      "rank": 184,
+      "year": 1992,
+      "title": "Life, and Nothing More…",
+      "originalTitle": "Life, and Nothing More…"
+    },
+    {
+      "rank": 185,
+      "year": 2021,
+      "title": "Evangelion: 3.0+1.0 Thrice Upon a Time",
+      "originalTitle": "Evangelion: 3.0+1.0 Thrice Upon a Time"
+    },
+    {
+      "rank": 186,
+      "year": 1983,
+      "title": "Nostalgia",
+      "originalTitle": "Nostalgia"
+    },
+    {
+      "rank": 187,
+      "year": 2012,
+      "title": "The Hunt",
+      "originalTitle": "The Hunt"
+    },
+    {
+      "rank": 188,
+      "year": 2014,
+      "title": "Song of the Sea",
+      "originalTitle": "Song of the Sea"
+    },
+    {
+      "rank": 189,
+      "year": 1999,
+      "title": "The Iron Giant",
+      "originalTitle": "The Iron Giant"
+    },
+    {
+      "rank": 190,
+      "year": 1951,
+      "title": "Ace in the Hole",
+      "originalTitle": "Ace in the Hole"
+    },
+    {
+      "rank": 191,
+      "year": 1988,
+      "title": "Akira",
+      "originalTitle": "Akira"
+    },
+    {
+      "rank": 192,
+      "year": 1959,
+      "title": "Some Like It Hot",
+      "originalTitle": "Some Like It Hot"
+    },
+    {
+      "rank": 193,
+      "year": 1942,
+      "title": "Casablanca",
+      "originalTitle": "Casablanca"
+    },
+    {
+      "rank": 194,
+      "year": 1997,
+      "title": "Cure",
+      "originalTitle": "Cure"
+    },
+    {
+      "rank": 195,
+      "year": 2000,
+      "title": "Ritual",
+      "originalTitle": "Ritual"
+    },
+    {
+      "rank": 196,
+      "year": 1994,
+      "title": "Chungking Express",
+      "originalTitle": "Chungking Express"
+    },
+    {
+      "rank": 197,
+      "year": 2003,
+      "title": "Interstella 5555: The 5tory of the 5ecret 5tar 5ystem",
+      "originalTitle": "Interstella 5555: The 5tory of the 5ecret 5tar 5ystem"
+    },
+    {
+      "rank": 198,
+      "year": 2024,
+      "title": "Look Back",
+      "originalTitle": "Look Back"
+    },
+    {
+      "rank": 199,
+      "year": 1963,
+      "title": "8½",
+      "originalTitle": "8½"
+    },
+    {
+      "rank": 200,
+      "year": 2025,
+      "title": "Nirvanna the Band the Show the Movie",
+      "originalTitle": "Nirvanna the Band the Show the Movie"
+    },
+    {
+      "rank": 201,
+      "year": 1966,
+      "title": "Who's Afraid of Virginia Woolf?",
+      "originalTitle": "Who's Afraid of Virginia Woolf?"
+    },
+    {
+      "rank": 202,
+      "year": 1957,
+      "title": "Throne of Blood",
+      "originalTitle": "Throne of Blood"
+    },
+    {
+      "rank": 203,
+      "year": 1999,
+      "title": "Fight Club",
+      "originalTitle": "Fight Club"
+    },
+    {
+      "rank": 204,
+      "year": 1956,
+      "title": "Aparajito",
+      "originalTitle": "Aparajito"
+    },
+    {
+      "rank": 205,
+      "year": 1977,
+      "title": "Sorcerer",
+      "originalTitle": "Sorcerer"
+    },
+    {
+      "rank": 206,
+      "year": 1955,
+      "title": "Rififi",
+      "originalTitle": "Rififi"
+    },
+    {
+      "rank": 207,
+      "year": 1946,
+      "title": "A Matter of Life and Death",
+      "originalTitle": "A Matter of Life and Death"
+    },
+    {
+      "rank": 208,
+      "year": 2009,
+      "title": "Mary and Max",
+      "originalTitle": "Mary and Max"
+    },
+    {
+      "rank": 209,
+      "year": 1960,
+      "title": "La Dolce Vita",
+      "originalTitle": "La Dolce Vita"
+    },
+    {
+      "rank": 210,
+      "year": 1975,
+      "title": "Jeanne Dielman, 23, quai du Commerce, 1080 Bruxelles",
+      "originalTitle": "Jeanne Dielman, 23, quai du Commerce, 1080 Bruxelles"
+    },
+    {
+      "rank": 211,
+      "year": 1953,
+      "title": "Ugetsu",
+      "originalTitle": "Ugetsu"
+    },
+    {
+      "rank": 212,
+      "year": 1976,
+      "title": "Network",
+      "originalTitle": "Network"
+    },
+    {
+      "rank": 213,
+      "year": 1962,
+      "title": "Il Sorpasso",
+      "originalTitle": "Il Sorpasso"
+    },
+    {
+      "rank": 214,
+      "year": 2013,
+      "title": "The Tale of The Princess Kaguya",
+      "originalTitle": "The Tale of The Princess Kaguya"
+    },
+    {
+      "rank": 215,
+      "year": 2006,
+      "title": "The Fall",
+      "originalTitle": "The Fall"
+    },
+    {
+      "rank": 216,
+      "year": 1952,
+      "title": "Umberto D.",
+      "originalTitle": "Umberto D."
+    },
+    {
+      "rank": 217,
+      "year": 2001,
+      "title": "Mulholland Drive",
+      "originalTitle": "Mulholland Drive"
+    },
+    {
+      "rank": 218,
+      "year": 1936,
+      "title": "Modern Times",
+      "originalTitle": "Modern Times"
+    },
+    {
+      "rank": 219,
+      "year": 1966,
+      "title": "The Face of Another",
+      "originalTitle": "The Face of Another"
+    },
+    {
+      "rank": 220,
+      "year": 1955,
+      "title": "The Night of the Hunter",
+      "originalTitle": "The Night of the Hunter"
+    },
+    {
+      "rank": 221,
+      "year": 1996,
+      "title": "A Moment of Innocence",
+      "originalTitle": "A Moment of Innocence"
+    },
+    {
+      "rank": 222,
+      "year": 1969,
+      "title": "Kes",
+      "originalTitle": "Kes"
+    },
+    {
+      "rank": 223,
+      "year": 1944,
+      "title": "Double Indemnity",
+      "originalTitle": "Double Indemnity"
+    },
+    {
+      "rank": 224,
+      "year": 2023,
+      "title": "The Holdovers",
+      "originalTitle": "The Holdovers"
+    },
+    {
+      "rank": 225,
+      "year": 2003,
+      "title": "Tokyo Godfathers",
+      "originalTitle": "Tokyo Godfathers"
+    },
+    {
+      "rank": 226,
+      "year": 1998,
+      "title": "Saving Private Ryan",
+      "originalTitle": "Saving Private Ryan"
+    },
+    {
+      "rank": 227,
+      "year": 1963,
+      "title": "Winter Light",
+      "originalTitle": "Winter Light"
+    },
+    {
+      "rank": 228,
+      "year": 2007,
+      "title": "4 Months, 3 Weeks and 2 Days",
+      "originalTitle": "4 Months, 3 Weeks and 2 Days"
+    },
+    {
+      "rank": 229,
+      "year": 2025,
+      "title": "I Swear",
+      "originalTitle": "I Swear"
+    },
+    {
+      "rank": 230,
+      "year": 1946,
+      "title": "The Best Years of Our Lives",
+      "originalTitle": "The Best Years of Our Lives"
+    },
+    {
+      "rank": 231,
+      "year": 2022,
+      "title": "The First Slam Dunk",
+      "originalTitle": "The First Slam Dunk"
+    },
+    {
+      "rank": 232,
+      "year": 1965,
+      "title": "The Sound of Music",
+      "originalTitle": "The Sound of Music"
+    },
+    {
+      "rank": 233,
+      "year": 1960,
+      "title": "Macario",
+      "originalTitle": "Macario"
+    },
+    {
+      "rank": 234,
+      "year": 2020,
+      "title": "Quo Vadis, Aida?",
+      "originalTitle": "Quo Vadis, Aida?"
+    },
+    {
+      "rank": 235,
+      "year": 2004,
+      "title": "Kamikaze Girls",
+      "originalTitle": "Kamikaze Girls"
+    },
+    {
+      "rank": 236,
+      "year": 1979,
+      "title": "Alien",
+      "originalTitle": "Alien"
+    },
+    {
+      "rank": 237,
+      "year": 1981,
+      "title": "Son of the White Mare",
+      "originalTitle": "Son of the White Mare"
+    },
+    {
+      "rank": 238,
+      "year": 1957,
+      "title": "The Bridge on the River Kwai",
+      "originalTitle": "The Bridge on the River Kwai"
+    },
+    {
+      "rank": 239,
+      "year": 1959,
+      "title": "Anatomy of a Murder",
+      "originalTitle": "Anatomy of a Murder"
+    },
+    {
+      "rank": 240,
+      "year": 2009,
+      "title": "The Secret in Their Eyes",
+      "originalTitle": "The Secret in Their Eyes"
+    },
+    {
+      "rank": 241,
+      "year": 2021,
+      "title": "Marcel the Shell with Shoes On",
+      "originalTitle": "Marcel the Shell with Shoes On"
+    },
+    {
+      "rank": 242,
+      "year": 1988,
+      "title": "Time of the Gypsies",
+      "originalTitle": "Time of the Gypsies"
+    },
+    {
+      "rank": 243,
+      "year": 1927,
+      "title": "Metropolis",
+      "originalTitle": "Metropolis"
+    },
+    {
+      "rank": 244,
+      "year": 2018,
+      "title": "Vada Chennai",
+      "originalTitle": "Vada Chennai"
+    },
+    {
+      "rank": 245,
+      "year": 1964,
+      "title": "Kwaidan",
+      "originalTitle": "Kwaidan"
+    },
+    {
+      "rank": 246,
+      "year": 2022,
+      "title": "Everything Everywhere All at Once",
+      "originalTitle": "Everything Everywhere All at Once"
+    },
+    {
+      "rank": 247,
+      "year": 2010,
+      "title": "Poetry",
+      "originalTitle": "Poetry"
+    },
+    {
+      "rank": 248,
+      "year": 1968,
+      "title": "2001: A Space Odyssey",
+      "originalTitle": "2001: A Space Odyssey"
+    },
+    {
+      "rank": 249,
+      "year": 2008,
+      "title": "WALL·E",
+      "originalTitle": "WALL·E"
+    },
+    {
+      "rank": 250,
+      "year": 1957,
+      "title": "Sweet Smell of Success",
+      "originalTitle": "Sweet Smell of Success"
+    },
+    {
+      "rank": 251,
+      "year": 1965,
+      "title": "For a Few Dollars More",
+      "originalTitle": "For a Few Dollars More"
+    },
+    {
+      "rank": 252,
+      "year": 2014,
+      "title": "The Grand Budapest Hotel",
+      "originalTitle": "The Grand Budapest Hotel"
+    },
+    {
+      "rank": 253,
+      "year": 2004,
+      "title": "Eternal Sunshine of the Spotless Mind",
+      "originalTitle": "Eternal Sunshine of the Spotless Mind"
+    },
+    {
+      "rank": 254,
+      "year": 1994,
+      "title": "To Live",
+      "originalTitle": "To Live"
+    },
+    {
+      "rank": 255,
+      "year": 1991,
+      "title": "The Lovers on the Bridge",
+      "originalTitle": "The Lovers on the Bridge"
+    },
+    {
+      "rank": 256,
+      "year": 1990,
+      "title": "Dreams",
+      "originalTitle": "Dreams"
+    },
+    {
+      "rank": 257,
+      "year": 1962,
+      "title": "An Autumn Afternoon",
+      "originalTitle": "An Autumn Afternoon"
+    },
+    {
+      "rank": 258,
+      "year": 1943,
+      "title": "The Life and Death of Colonel Blimp",
+      "originalTitle": "The Life and Death of Colonel Blimp"
+    },
+    {
+      "rank": 259,
+      "year": 1982,
+      "title": "The King of Comedy",
+      "originalTitle": "The King of Comedy"
+    },
+    {
+      "rank": 260,
+      "year": 1949,
+      "title": "The Third Man",
+      "originalTitle": "The Third Man"
+    },
+    {
+      "rank": 261,
+      "year": 1980,
+      "title": "Kagemusha",
+      "originalTitle": "Kagemusha"
+    },
+    {
+      "rank": 262,
+      "year": 2001,
+      "title": "Millennium Actress",
+      "originalTitle": "Millennium Actress"
+    },
+    {
+      "rank": 263,
+      "year": 2020,
+      "title": "Wolfwalkers",
+      "originalTitle": "Wolfwalkers"
+    },
+    {
+      "rank": 264,
+      "year": 2012,
+      "title": "Amour",
+      "originalTitle": "Amour"
+    },
+    {
+      "rank": 265,
+      "year": 1994,
+      "title": "Pulp Fiction",
+      "originalTitle": "Pulp Fiction"
+    },
+    {
+      "rank": 266,
+      "year": 1971,
+      "title": "The Devils",
+      "originalTitle": "The Devils"
+    },
+    {
+      "rank": 267,
+      "year": 2010,
+      "title": "Inception",
+      "originalTitle": "Inception"
+    },
+    {
+      "rank": 268,
+      "year": 2004,
+      "title": "Turtles Can Fly",
+      "originalTitle": "Turtles Can Fly"
+    },
+    {
+      "rank": 269,
+      "year": 2007,
+      "title": "Ratatouille",
+      "originalTitle": "Ratatouille"
+    },
+    {
+      "rank": 270,
+      "year": 2015,
+      "title": "Embrace of the Serpent",
+      "originalTitle": "Embrace of the Serpent"
+    },
+    {
+      "rank": 271,
+      "year": 1996,
+      "title": "Trainspotting",
+      "originalTitle": "Trainspotting"
+    },
+    {
+      "rank": 272,
+      "year": 2011,
+      "title": "The Turin Horse",
+      "originalTitle": "The Turin Horse"
+    },
+    {
+      "rank": 273,
+      "year": 2016,
+      "title": "Your Name.",
+      "originalTitle": "Your Name."
+    },
+    {
+      "rank": 274,
+      "year": 1997,
+      "title": "Fireworks",
+      "originalTitle": "Fireworks"
+    },
+    {
+      "rank": 275,
+      "year": 2000,
+      "title": "Dancer in the Dark",
+      "originalTitle": "Dancer in the Dark"
+    },
+    {
+      "rank": 276,
+      "year": 1984,
+      "title": "Once Upon a Time in America",
+      "originalTitle": "Once Upon a Time in America"
+    },
+    {
+      "rank": 277,
+      "year": 2009,
+      "title": "The White Ribbon",
+      "originalTitle": "The White Ribbon"
+    },
+    {
+      "rank": 278,
+      "year": 1999,
+      "title": "Magnolia",
+      "originalTitle": "Magnolia"
+    },
+    {
+      "rank": 279,
+      "year": 1994,
+      "title": "The Lion King",
+      "originalTitle": "The Lion King"
+    },
+    {
+      "rank": 280,
+      "year": 1972,
+      "title": "Solaris",
+      "originalTitle": "Solaris"
+    },
+    {
+      "rank": 281,
+      "year": 1968,
+      "title": "Shame",
+      "originalTitle": "Shame"
+    },
+    {
+      "rank": 282,
+      "year": 1991,
+      "title": "Thelma & Louise",
+      "originalTitle": "Thelma & Louise"
+    },
+    {
+      "rank": 283,
+      "year": 1969,
+      "title": "They Shoot Horses, Don't They?",
+      "originalTitle": "They Shoot Horses, Don't They?"
+    },
+    {
+      "rank": 284,
+      "year": 2000,
+      "title": "Joint Security Area",
+      "originalTitle": "Joint Security Area"
+    },
+    {
+      "rank": 285,
+      "year": 2018,
+      "title": "Capernaum",
+      "originalTitle": "Capernaum"
+    },
+    {
+      "rank": 286,
+      "year": 1997,
+      "title": "Children of Heaven",
+      "originalTitle": "Children of Heaven"
+    },
+    {
+      "rank": 287,
+      "year": 1950,
+      "title": "The Young and the Damned",
+      "originalTitle": "The Young and the Damned"
+    },
+    {
+      "rank": 288,
+      "year": 1998,
+      "title": "The Truman Show",
+      "originalTitle": "The Truman Show"
+    },
+    {
+      "rank": 289,
+      "year": 1958,
+      "title": "Vertigo",
+      "originalTitle": "Vertigo"
+    },
+    {
+      "rank": 290,
+      "year": 1970,
+      "title": "Investigation of a Citizen Above Suspicion",
+      "originalTitle": "Investigation of a Citizen Above Suspicion"
+    },
+    {
+      "rank": 291,
+      "year": 2007,
+      "title": "Persepolis",
+      "originalTitle": "Persepolis"
+    },
+    {
+      "rank": 292,
+      "year": 1976,
+      "title": "Cria!",
+      "originalTitle": "Cria!"
+    },
+    {
+      "rank": 293,
+      "year": 1974,
+      "title": "The Man Who Sleeps",
+      "originalTitle": "The Man Who Sleeps"
+    },
+    {
+      "rank": 294,
+      "year": 1980,
+      "title": "The Shining",
+      "originalTitle": "The Shining"
+    },
+    {
+      "rank": 295,
+      "year": 1967,
+      "title": "Le Samouraï",
+      "originalTitle": "Le Samouraï"
+    },
+    {
+      "rank": 296,
+      "year": 2024,
+      "title": "Meiyazhagan",
+      "originalTitle": "Meiyazhagan"
+    },
+    {
+      "rank": 297,
+      "year": 2013,
+      "title": "Hope",
+      "originalTitle": "Hope"
+    },
+    {
+      "rank": 298,
+      "year": 2014,
+      "title": "Winter Sleep",
+      "originalTitle": "Winter Sleep"
+    },
+    {
+      "rank": 299,
+      "year": 1978,
+      "title": "The Deer Hunter",
+      "originalTitle": "The Deer Hunter"
+    },
+    {
+      "rank": 300,
+      "year": 2003,
+      "title": "Kill Bill: Vol. 1",
+      "originalTitle": "Kill Bill: Vol. 1"
+    },
+    {
+      "rank": 301,
+      "year": 2006,
+      "title": "Little Miss Sunshine",
+      "originalTitle": "Little Miss Sunshine"
+    },
+    {
+      "rank": 302,
+      "year": 2004,
+      "title": "Mysterious Skin",
+      "originalTitle": "Mysterious Skin"
+    },
+    {
+      "rank": 303,
+      "year": 2000,
+      "title": "A Dog's Will",
+      "originalTitle": "A Dog's Will"
+    },
+    {
+      "rank": 304,
+      "year": 2001,
+      "title": "Y Tu Mamá También",
+      "originalTitle": "Y Tu Mamá También"
+    },
+    {
+      "rank": 305,
+      "year": 1997,
+      "title": "Happy Together",
+      "originalTitle": "Happy Together"
+    },
+    {
+      "rank": 306,
+      "year": 1972,
+      "title": "Cries and Whispers",
+      "originalTitle": "Cries and Whispers"
+    },
+    {
+      "rank": 307,
+      "year": 1970,
+      "title": "Le Cercle Rouge",
+      "originalTitle": "Le Cercle Rouge"
+    },
+    {
+      "rank": 308,
+      "year": 2017,
+      "title": "A Taxi Driver",
+      "originalTitle": "A Taxi Driver"
+    },
+    {
+      "rank": 309,
+      "year": 1968,
+      "title": "Rosemary's Baby",
+      "originalTitle": "Rosemary's Baby"
+    },
+    {
+      "rank": 310,
+      "year": 1995,
+      "title": "Casino",
+      "originalTitle": "Casino"
+    },
+    {
+      "rank": 311,
+      "year": 2019,
+      "title": "Sound of Metal",
+      "originalTitle": "Sound of Metal"
+    },
+    {
+      "rank": 312,
+      "year": 2022,
+      "title": "Aftersun",
+      "originalTitle": "Aftersun"
+    },
+    {
+      "rank": 313,
+      "year": 1980,
+      "title": "Raging Bull",
+      "originalTitle": "Raging Bull"
+    },
+    {
+      "rank": 314,
+      "year": 2016,
+      "title": "A Silent Voice: The Movie",
+      "originalTitle": "A Silent Voice: The Movie"
+    },
+    {
+      "rank": 315,
+      "year": 2019,
+      "title": "Better Days",
+      "originalTitle": "Better Days"
+    },
+    {
+      "rank": 316,
+      "year": 1971,
+      "title": "The Last Picture Show",
+      "originalTitle": "The Last Picture Show"
+    },
+    {
+      "rank": 317,
+      "year": 1987,
+      "title": "Au Revoir les Enfants",
+      "originalTitle": "Au Revoir les Enfants"
+    },
+    {
+      "rank": 318,
+      "year": 1996,
+      "title": "Comrades, Almost a Love Story",
+      "originalTitle": "Comrades, Almost a Love Story"
+    },
+    {
+      "rank": 319,
+      "year": 1937,
+      "title": "Grand Illusion",
+      "originalTitle": "Grand Illusion"
+    },
+    {
+      "rank": 320,
+      "year": 1985,
+      "title": "Back to the Future",
+      "originalTitle": "Back to the Future"
+    },
+    {
+      "rank": 321,
+      "year": 2004,
+      "title": "The Taste of Tea",
+      "originalTitle": "The Taste of Tea"
+    },
+    {
+      "rank": 322,
+      "year": 1921,
+      "title": "The Kid",
+      "originalTitle": "The Kid"
+    },
+    {
+      "rank": 323,
+      "year": 1973,
+      "title": "The Sting",
+      "originalTitle": "The Sting"
+    },
+    {
+      "rank": 324,
+      "year": 2017,
+      "title": "Night Is Short, Walk On Girl",
+      "originalTitle": "Night Is Short, Walk On Girl"
+    },
+    {
+      "rank": 325,
+      "year": 1959,
+      "title": "Good Morning",
+      "originalTitle": "Good Morning"
+    },
+    {
+      "rank": 326,
+      "year": 2012,
+      "title": "Gangs of Wasseypur – Part 2",
+      "originalTitle": "Gangs of Wasseypur – Part 2"
+    },
+    {
+      "rank": 327,
+      "year": 1993,
+      "title": "In the Name of the Father",
+      "originalTitle": "In the Name of the Father"
+    },
+    {
+      "rank": 328,
+      "year": 2024,
+      "title": "HAIKYU!! The Dumpster Battle",
+      "originalTitle": "HAIKYU!! The Dumpster Battle"
+    },
+    {
+      "rank": 329,
+      "year": 2024,
+      "title": "The Wild Robot",
+      "originalTitle": "The Wild Robot"
+    },
+    {
+      "rank": 330,
+      "year": 1992,
+      "title": "Unforgiven",
+      "originalTitle": "Unforgiven"
+    },
+    {
+      "rank": 331,
+      "year": 1997,
+      "title": "Boogie Nights",
+      "originalTitle": "Boogie Nights"
+    },
+    {
+      "rank": 332,
+      "year": 2021,
+      "title": "Drive My Car",
+      "originalTitle": "Drive My Car"
+    },
+    {
+      "rank": 333,
+      "year": 2005,
+      "title": "Linda Linda Linda",
+      "originalTitle": "Linda Linda Linda"
+    },
+    {
+      "rank": 334,
+      "year": 1984,
+      "title": "Love Streams",
+      "originalTitle": "Love Streams"
+    },
+    {
+      "rank": 335,
+      "year": 2022,
+      "title": "Joyland",
+      "originalTitle": "Joyland"
+    },
+    {
+      "rank": 336,
+      "year": 1994,
+      "title": "Through the Olive Trees",
+      "originalTitle": "Through the Olive Trees"
+    },
+    {
+      "rank": 337,
+      "year": 1967,
+      "title": "PlayTime",
+      "originalTitle": "PlayTime"
+    },
+    {
+      "rank": 338,
+      "year": 1970,
+      "title": "The Conformist",
+      "originalTitle": "The Conformist"
+    },
+    {
+      "rank": 339,
+      "year": 2022,
+      "title": "RRR",
+      "originalTitle": "RRR"
+    },
+    {
+      "rank": 340,
+      "year": 2016,
+      "title": "Moonlight",
+      "originalTitle": "Moonlight"
+    },
+    {
+      "rank": 341,
+      "year": 1957,
+      "title": "A Face in the Crowd",
+      "originalTitle": "A Face in the Crowd"
+    },
+    {
+      "rank": 342,
+      "year": 2003,
+      "title": "Dogville",
+      "originalTitle": "Dogville"
+    },
+    {
+      "rank": 343,
+      "year": 2004,
+      "title": "Mind Game",
+      "originalTitle": "Mind Game"
+    },
+    {
+      "rank": 344,
+      "year": 1950,
+      "title": "Rashomon",
+      "originalTitle": "Rashomon"
+    },
+    {
+      "rank": 345,
+      "year": 1980,
+      "title": "Pixote",
+      "originalTitle": "Pixote"
+    },
+    {
+      "rank": 346,
+      "year": 2019,
+      "title": "Kumbalangi Nights",
+      "originalTitle": "Kumbalangi Nights"
+    },
+    {
+      "rank": 347,
+      "year": 1940,
+      "title": "The Grapes of Wrath",
+      "originalTitle": "The Grapes of Wrath"
+    },
+    {
+      "rank": 348,
+      "year": 1987,
+      "title": "Full Metal Jacket",
+      "originalTitle": "Full Metal Jacket"
+    },
+    {
+      "rank": 349,
+      "year": 1984,
+      "title": "Nausicaä of the Valley of the Wind",
+      "originalTitle": "Nausicaä of the Valley of the Wind"
+    },
+    {
+      "rank": 350,
+      "year": 1950,
+      "title": "In a Lonely Place",
+      "originalTitle": "In a Lonely Place"
+    },
+    {
+      "rank": 351,
+      "year": 2001,
+      "title": "Amélie",
+      "originalTitle": "Amélie"
+    },
+    {
+      "rank": 352,
+      "year": 1926,
+      "title": "The General",
+      "originalTitle": "The General"
+    },
+    {
+      "rank": 353,
+      "year": 2003,
+      "title": "The Return",
+      "originalTitle": "The Return"
+    },
+    {
+      "rank": 354,
+      "year": 1962,
+      "title": "Ivan's Childhood",
+      "originalTitle": "Ivan's Childhood"
+    },
+    {
+      "rank": 355,
+      "year": 1988,
+      "title": "My Neighbor Totoro",
+      "originalTitle": "My Neighbor Totoro"
+    },
+    {
+      "rank": 356,
+      "year": 1953,
+      "title": "Roman Holiday",
+      "originalTitle": "Roman Holiday"
+    },
+    {
+      "rank": 357,
+      "year": 2016,
+      "title": "My Life as a Zucchini",
+      "originalTitle": "My Life as a Zucchini"
+    },
+    {
+      "rank": 358,
+      "year": 1974,
+      "title": "Céline and Julie Go Boating",
+      "originalTitle": "Céline and Julie Go Boating"
+    },
+    {
+      "rank": 359,
+      "year": 2009,
+      "title": "A Prophet",
+      "originalTitle": "A Prophet"
+    },
+    {
+      "rank": 360,
+      "year": 2019,
+      "title": "Klaus",
+      "originalTitle": "Klaus"
+    },
+    {
+      "rank": 361,
+      "year": 1955,
+      "title": "Diabolique",
+      "originalTitle": "Diabolique"
+    },
+    {
+      "rank": 362,
+      "year": 2009,
+      "title": "Coraline",
+      "originalTitle": "Coraline"
+    },
+    {
+      "rank": 363,
+      "year": 2025,
+      "title": "Hamnet",
+      "originalTitle": "Hamnet"
+    },
+    {
+      "rank": 364,
+      "year": 1973,
+      "title": "Day for Night",
+      "originalTitle": "Day for Night"
+    },
+    {
+      "rank": 365,
+      "year": 1999,
+      "title": "All About My Mother",
+      "originalTitle": "All About My Mother"
+    },
+    {
+      "rank": 366,
+      "year": 2000,
+      "title": "Princes and Princesses",
+      "originalTitle": "Princes and Princesses"
+    },
+    {
+      "rank": 367,
+      "year": 1989,
+      "title": "The Cook, the Thief, His Wife & Her Lover",
+      "originalTitle": "The Cook, the Thief, His Wife & Her Lover"
+    },
+    {
+      "rank": 368,
+      "year": 1961,
+      "title": "The Children's Hour",
+      "originalTitle": "The Children's Hour"
+    },
+    {
+      "rank": 369,
+      "year": 1959,
+      "title": "North by Northwest",
+      "originalTitle": "North by Northwest"
+    },
+    {
+      "rank": 370,
+      "year": 1962,
+      "title": "What Ever Happened to Baby Jane?",
+      "originalTitle": "What Ever Happened to Baby Jane?"
+    },
+    {
+      "rank": 371,
+      "year": 1999,
+      "title": "The Straight Story",
+      "originalTitle": "The Straight Story"
+    },
+    {
+      "rank": 372,
+      "year": 1992,
+      "title": "Hard Boiled",
+      "originalTitle": "Hard Boiled"
+    },
+    {
+      "rank": 373,
+      "year": 1940,
+      "title": "The Shop Around the Corner",
+      "originalTitle": "The Shop Around the Corner"
+    },
+    {
+      "rank": 374,
+      "year": 2000,
+      "title": "Amores Perros",
+      "originalTitle": "Amores Perros"
+    },
+    {
+      "rank": 375,
+      "year": 1973,
+      "title": "The Long Goodbye",
+      "originalTitle": "The Long Goodbye"
+    },
+    {
+      "rank": 376,
+      "year": 1986,
+      "title": "Stand by Me",
+      "originalTitle": "Stand by Me"
+    },
+    {
+      "rank": 377,
+      "year": 1984,
+      "title": "Threads",
+      "originalTitle": "Threads"
+    },
+    {
+      "rank": 378,
+      "year": 2010,
+      "title": "Shutter Island",
+      "originalTitle": "Shutter Island"
+    },
+    {
+      "rank": 379,
+      "year": 1995,
+      "title": "Whisper of the Heart",
+      "originalTitle": "Whisper of the Heart"
+    },
+    {
+      "rank": 380,
+      "year": 2013,
+      "title": "Like Father, Like Son",
+      "originalTitle": "Like Father, Like Son"
+    },
+    {
+      "rank": 381,
+      "year": 1959,
+      "title": "Rio Bravo",
+      "originalTitle": "Rio Bravo"
+    },
+    {
+      "rank": 382,
+      "year": 2010,
+      "title": "Who Killed Captain Alex?",
+      "originalTitle": "Who Killed Captain Alex?"
+    },
+    {
+      "rank": 383,
+      "year": 1963,
+      "title": "The Fire Within",
+      "originalTitle": "The Fire Within"
+    },
+    {
+      "rank": 384,
+      "year": 2000,
+      "title": "Gladiator",
+      "originalTitle": "Gladiator"
+    },
+    {
+      "rank": 385,
+      "year": 1941,
+      "title": "Citizen Kane",
+      "originalTitle": "Citizen Kane"
+    },
+    {
+      "rank": 386,
+      "year": 1954,
+      "title": "La Strada",
+      "originalTitle": "La Strada"
+    },
+    {
+      "rank": 387,
+      "year": 1976,
+      "title": "All the President's Men",
+      "originalTitle": "All the President's Men"
+    },
+    {
+      "rank": 388,
+      "year": 2019,
+      "title": "Little Women",
+      "originalTitle": "Little Women"
+    },
+    {
+      "rank": 389,
+      "year": 2003,
+      "title": "Spring, Summer, Fall, Winter... and Spring",
+      "originalTitle": "Spring, Summer, Fall, Winter... and Spring"
+    },
+    {
+      "rank": 390,
+      "year": 2008,
+      "title": "Tokyo Sonata",
+      "originalTitle": "Tokyo Sonata"
+    },
+    {
+      "rank": 391,
+      "year": 1962,
+      "title": "Cléo from 5 to 7",
+      "originalTitle": "Cléo from 5 to 7"
+    },
+    {
+      "rank": 392,
+      "year": 2012,
+      "title": "Ernest & Celestine",
+      "originalTitle": "Ernest & Celestine"
+    },
+    {
+      "rank": 393,
+      "year": 2014,
+      "title": "Güeros",
+      "originalTitle": "Güeros"
+    },
+    {
+      "rank": 394,
+      "year": 1930,
+      "title": "All Quiet on the Western Front",
+      "originalTitle": "All Quiet on the Western Front"
+    },
+    {
+      "rank": 395,
+      "year": 2000,
+      "title": "Memento",
+      "originalTitle": "Memento"
+    },
+    {
+      "rank": 396,
+      "year": 2000,
+      "title": "Vampire Hunter D: Bloodlust",
+      "originalTitle": "Vampire Hunter D: Bloodlust"
+    },
+    {
+      "rank": 397,
+      "year": 1927,
+      "title": "Sunrise: A Song of Two Humans",
+      "originalTitle": "Sunrise: A Song of Two Humans"
+    },
+    {
+      "rank": 398,
+      "year": 1972,
+      "title": "Cabaret",
+      "originalTitle": "Cabaret"
+    },
+    {
+      "rank": 399,
+      "year": 1945,
+      "title": "Rome, Open City",
+      "originalTitle": "Rome, Open City"
+    },
+    {
+      "rank": 400,
+      "year": 1934,
+      "title": "It Happened One Night",
+      "originalTitle": "It Happened One Night"
+    },
+    {
+      "rank": 401,
+      "year": 1999,
+      "title": "The Matrix",
+      "originalTitle": "The Matrix"
+    },
+    {
+      "rank": 402,
+      "year": 1994,
+      "title": "Forrest Gump",
+      "originalTitle": "Forrest Gump"
+    },
+    {
+      "rank": 403,
+      "year": 1974,
+      "title": "Ali: Fear Eats the Soul",
+      "originalTitle": "Ali: Fear Eats the Soul"
+    },
+    {
+      "rank": 404,
+      "year": 2011,
+      "title": "Once Upon a Time in Anatolia",
+      "originalTitle": "Once Upon a Time in Anatolia"
+    },
+    {
+      "rank": 405,
+      "year": 1962,
+      "title": "The Exterminating Angel",
+      "originalTitle": "The Exterminating Angel"
+    },
+    {
+      "rank": 406,
+      "year": 2015,
+      "title": "The Second Mother",
+      "originalTitle": "The Second Mother"
+    },
+    {
+      "rank": 407,
+      "year": 1969,
+      "title": "Butch Cassidy and the Sundance Kid",
+      "originalTitle": "Butch Cassidy and the Sundance Kid"
+    },
+    {
+      "rank": 408,
+      "year": 2009,
+      "title": "Mother",
+      "originalTitle": "Mother"
+    },
+    {
+      "rank": 409,
+      "year": 2003,
+      "title": "Carandiru",
+      "originalTitle": "Carandiru"
+    },
+    {
+      "rank": 410,
+      "year": 1958,
+      "title": "Touch of Evil",
+      "originalTitle": "Touch of Evil"
+    },
+    {
+      "rank": 411,
+      "year": 2024,
+      "title": "Memoir of a Snail",
+      "originalTitle": "Memoir of a Snail"
+    },
+    {
+      "rank": 412,
+      "year": 2023,
+      "title": "Blue Giant",
+      "originalTitle": "Blue Giant"
+    },
+    {
+      "rank": 413,
+      "year": 1975,
+      "title": "Nashville",
+      "originalTitle": "Nashville"
+    },
+    {
+      "rank": 414,
+      "year": 2010,
+      "title": "Black Swan",
+      "originalTitle": "Black Swan"
+    },
+    {
+      "rank": 415,
+      "year": 1973,
+      "title": "The Spirit of the Beehive",
+      "originalTitle": "The Spirit of the Beehive"
+    },
+    {
+      "rank": 416,
+      "year": 1969,
+      "title": "My Night at Maud's",
+      "originalTitle": "My Night at Maud's"
+    },
+    {
+      "rank": 417,
+      "year": 1986,
+      "title": "The Green Ray",
+      "originalTitle": "The Green Ray"
+    },
+    {
+      "rank": 418,
+      "year": 2017,
+      "title": "Phantom Thread",
+      "originalTitle": "Phantom Thread"
+    },
+    {
+      "rank": 419,
+      "year": 2013,
+      "title": "12 Years a Slave",
+      "originalTitle": "12 Years a Slave"
+    },
+    {
+      "rank": 420,
+      "year": 2011,
+      "title": "Silenced",
+      "originalTitle": "Silenced"
+    },
+    {
+      "rank": 421,
+      "year": 2002,
+      "title": "Lilya 4-ever",
+      "originalTitle": "Lilya 4-ever"
+    },
+    {
+      "rank": 422,
+      "year": 1963,
+      "title": "The Great Escape",
+      "originalTitle": "The Great Escape"
+    },
+    {
+      "rank": 423,
+      "year": 2013,
+      "title": "Short Term 12",
+      "originalTitle": "Short Term 12"
+    },
+    {
+      "rank": 424,
+      "year": 2015,
+      "title": "Mad Max: Fury Road",
+      "originalTitle": "Mad Max: Fury Road"
+    },
+    {
+      "rank": 425,
+      "year": 1961,
+      "title": "Through a Glass Darkly",
+      "originalTitle": "Through a Glass Darkly"
+    },
+    {
+      "rank": 426,
+      "year": 1967,
+      "title": "Cool Hand Luke",
+      "originalTitle": "Cool Hand Luke"
+    },
+    {
+      "rank": 427,
+      "year": 1954,
+      "title": "On the Waterfront",
+      "originalTitle": "On the Waterfront"
+    },
+    {
+      "rank": 428,
+      "year": 1998,
+      "title": "After Life",
+      "originalTitle": "After Life"
+    },
+    {
+      "rank": 429,
+      "year": 1998,
+      "title": "Mulan",
+      "originalTitle": "Mulan"
+    },
+    {
+      "rank": 430,
+      "year": 1974,
+      "title": "Alice in the Cities",
+      "originalTitle": "Alice in the Cities"
+    },
+    {
+      "rank": 431,
+      "year": 1989,
+      "title": "The Killer",
+      "originalTitle": "The Killer"
+    },
+    {
+      "rank": 432,
+      "year": 2001,
+      "title": "All About Lily Chou-Chou",
+      "originalTitle": "All About Lily Chou-Chou"
+    },
+    {
+      "rank": 433,
+      "year": 1971,
+      "title": "Punishment Park",
+      "originalTitle": "Punishment Park"
+    },
+    {
+      "rank": 434,
+      "year": 2014,
+      "title": "Pride",
+      "originalTitle": "Pride"
+    },
+    {
+      "rank": 435,
+      "year": 1960,
+      "title": "The Virgin Spring",
+      "originalTitle": "The Virgin Spring"
+    },
+    {
+      "rank": 436,
+      "year": 1998,
+      "title": "American History X",
+      "originalTitle": "American History X"
+    },
+    {
+      "rank": 437,
+      "year": 2008,
+      "title": "Synecdoche, New York",
+      "originalTitle": "Synecdoche, New York"
+    },
+    {
+      "rank": 438,
+      "year": 1995,
+      "title": "Fallen Angels",
+      "originalTitle": "Fallen Angels"
+    },
+    {
+      "rank": 439,
+      "year": 1977,
+      "title": "Star Wars",
+      "originalTitle": "Star Wars"
+    },
+    {
+      "rank": 440,
+      "year": 1994,
+      "title": "Eat Drink Man Woman",
+      "originalTitle": "Eat Drink Man Woman"
+    },
+    {
+      "rank": 441,
+      "year": 2005,
+      "title": "Brokeback Mountain",
+      "originalTitle": "Brokeback Mountain"
+    },
+    {
+      "rank": 442,
+      "year": 2023,
+      "title": "Oppenheimer",
+      "originalTitle": "Oppenheimer"
+    },
+    {
+      "rank": 443,
+      "year": 2018,
+      "title": "The Wolf House",
+      "originalTitle": "The Wolf House"
+    },
+    {
+      "rank": 444,
+      "year": 1959,
+      "title": "Hiroshima Mon Amour",
+      "originalTitle": "Hiroshima Mon Amour"
+    },
+    {
+      "rank": 445,
+      "year": 1968,
+      "title": "The Great Silence",
+      "originalTitle": "The Great Silence"
+    },
+    {
+      "rank": 446,
+      "year": 2023,
+      "title": "Past Lives",
+      "originalTitle": "Past Lives"
+    },
+    {
+      "rank": 447,
+      "year": 2023,
+      "title": "Society of the Snow",
+      "originalTitle": "Society of the Snow"
+    },
+    {
+      "rank": 448,
+      "year": 1954,
+      "title": "Dial M for Murder",
+      "originalTitle": "Dial M for Murder"
+    },
+    {
+      "rank": 449,
+      "year": 1925,
+      "title": "The Gold Rush",
+      "originalTitle": "The Gold Rush"
+    },
+    {
+      "rank": 450,
+      "year": 2011,
+      "title": "The Intouchables",
+      "originalTitle": "The Intouchables"
+    },
+    {
+      "rank": 451,
+      "year": 2009,
+      "title": "3 Idiots",
+      "originalTitle": "3 Idiots"
+    },
+    {
+      "rank": 452,
+      "year": 2025,
+      "title": "Sentimental Value",
+      "originalTitle": "Sentimental Value"
+    },
+    {
+      "rank": 453,
+      "year": 2025,
+      "title": "My Father's Shadow",
+      "originalTitle": "My Father's Shadow"
+    },
+    {
+      "rank": 454,
+      "year": 1969,
+      "title": "Midnight Cowboy",
+      "originalTitle": "Midnight Cowboy"
+    },
+    {
+      "rank": 455,
+      "year": 1963,
+      "title": "The Leopard",
+      "originalTitle": "The Leopard"
+    },
+    {
+      "rank": 456,
+      "year": 2000,
+      "title": "Nine Queens",
+      "originalTitle": "Nine Queens"
+    },
+    {
+      "rank": 457,
+      "year": 1962,
+      "title": "Sanjuro",
+      "originalTitle": "Sanjuro"
+    },
+    {
+      "rank": 458,
+      "year": 2015,
+      "title": "Mustang",
+      "originalTitle": "Mustang"
+    },
+    {
+      "rank": 459,
+      "year": 1981,
+      "title": "Raiders of the Lost Ark",
+      "originalTitle": "Raiders of the Lost Ark"
+    },
+    {
+      "rank": 460,
+      "year": 2006,
+      "title": "Pan's Labyrinth",
+      "originalTitle": "Pan's Labyrinth"
+    },
+    {
+      "rank": 461,
+      "year": 1993,
+      "title": "Three Colours: Blue",
+      "originalTitle": "Three Colours: Blue"
+    },
+    {
+      "rank": 462,
+      "year": 2017,
+      "title": "I Dream in Another Language",
+      "originalTitle": "I Dream in Another Language"
+    },
+    {
+      "rank": 463,
+      "year": 1986,
+      "title": "Terrorizers",
+      "originalTitle": "Terrorizers"
+    },
+    {
+      "rank": 464,
+      "year": 1958,
+      "title": "The Hidden Fortress",
+      "originalTitle": "The Hidden Fortress"
+    },
+    {
+      "rank": 465,
+      "year": 1966,
+      "title": "Seconds",
+      "originalTitle": "Seconds"
+    },
+    {
+      "rank": 466,
+      "year": 1982,
+      "title": "Pink Floyd: The Wall",
+      "originalTitle": "Pink Floyd: The Wall"
+    },
+    {
+      "rank": 467,
+      "year": 1977,
+      "title": "3 Women",
+      "originalTitle": "3 Women"
+    },
+    {
+      "rank": 468,
+      "year": 1952,
+      "title": "Limelight",
+      "originalTitle": "Limelight"
+    },
+    {
+      "rank": 469,
+      "year": 1966,
+      "title": "The Sword of Doom",
+      "originalTitle": "The Sword of Doom"
+    },
+    {
+      "rank": 470,
+      "year": 1974,
+      "title": "Phantom of the Paradise",
+      "originalTitle": "Phantom of the Paradise"
+    },
+    {
+      "rank": 471,
+      "year": 1977,
+      "title": "One Sings, the Other Doesn't",
+      "originalTitle": "One Sings, the Other Doesn't"
+    },
+    {
+      "rank": 472,
+      "year": 2023,
+      "title": "There's Still Tomorrow",
+      "originalTitle": "There's Still Tomorrow"
+    },
+    {
+      "rank": 473,
+      "year": 1989,
+      "title": "Kiki's Delivery Service",
+      "originalTitle": "Kiki's Delivery Service"
+    },
+    {
+      "rank": 474,
+      "year": 1996,
+      "title": "Breaking the Waves",
+      "originalTitle": "Breaking the Waves"
+    },
+    {
+      "rank": 475,
+      "year": 1974,
+      "title": "The Conversation",
+      "originalTitle": "The Conversation"
+    },
+    {
+      "rank": 476,
+      "year": 1983,
+      "title": "Scarface",
+      "originalTitle": "Scarface"
+    },
+    {
+      "rank": 477,
+      "year": 1975,
+      "title": "Monty Python and the Holy Grail",
+      "originalTitle": "Monty Python and the Holy Grail"
+    },
+    {
+      "rank": 478,
+      "year": 2010,
+      "title": "How to Train Your Dragon",
+      "originalTitle": "How to Train Your Dragon"
+    },
+    {
+      "rank": 479,
+      "year": 1996,
+      "title": "Fargo",
+      "originalTitle": "Fargo"
+    },
+    {
+      "rank": 480,
+      "year": 1963,
+      "title": "The Servant",
+      "originalTitle": "The Servant"
+    },
+    {
+      "rank": 481,
+      "year": 1965,
+      "title": "Le Bonheur",
+      "originalTitle": "Le Bonheur"
+    },
+    {
+      "rank": 482,
+      "year": 2014,
+      "title": "Wild Tales",
+      "originalTitle": "Wild Tales"
+    },
+    {
+      "rank": 483,
+      "year": 1926,
+      "title": "Faust",
+      "originalTitle": "Faust"
+    },
+    {
+      "rank": 484,
+      "year": 1948,
+      "title": "Rope",
+      "originalTitle": "Rope"
+    },
+    {
+      "rank": 485,
+      "year": 2004,
+      "title": "Harry Potter and the Prisoner of Azkaban",
+      "originalTitle": "Harry Potter and the Prisoner of Azkaban"
+    },
+    {
+      "rank": 486,
+      "year": 2026,
+      "title": "The Invite",
+      "originalTitle": "The Invite"
+    },
+    {
+      "rank": 487,
+      "year": 2005,
+      "title": "Pride & Prejudice",
+      "originalTitle": "Pride & Prejudice"
+    },
+    {
+      "rank": 488,
+      "year": 2009,
+      "title": "Redline",
+      "originalTitle": "Redline"
+    },
+    {
+      "rank": 489,
+      "year": 1967,
+      "title": "In Cold Blood",
+      "originalTitle": "In Cold Blood"
+    },
+    {
+      "rank": 490,
+      "year": 1971,
+      "title": "McCabe & Mrs. Miller",
+      "originalTitle": "McCabe & Mrs. Miller"
+    },
+    {
+      "rank": 491,
+      "year": 1964,
+      "title": "The Umbrellas of Cherbourg",
+      "originalTitle": "The Umbrellas of Cherbourg"
+    },
+    {
+      "rank": 492,
+      "year": 1939,
+      "title": "Mr. Smith Goes to Washington",
+      "originalTitle": "Mr. Smith Goes to Washington"
+    },
+    {
+      "rank": 493,
+      "year": 2016,
+      "title": "Arrival",
+      "originalTitle": "Arrival"
+    },
+    {
+      "rank": 494,
+      "year": 2024,
+      "title": "Souleymane's Story",
+      "originalTitle": "Souleymane's Story"
+    },
+    {
+      "rank": 495,
+      "year": 1993,
+      "title": "Short Cuts",
+      "originalTitle": "Short Cuts"
+    },
+    {
+      "rank": 496,
+      "year": 1995,
+      "title": "Love Letter",
+      "originalTitle": "Love Letter"
+    },
+    {
+      "rank": 497,
+      "year": 1992,
+      "title": "Reservoir Dogs",
+      "originalTitle": "Reservoir Dogs"
+    },
+    {
+      "rank": 498,
+      "year": 2023,
+      "title": "12th Fail",
+      "originalTitle": "12th Fail"
+    },
+    {
+      "rank": 499,
+      "year": 1928,
+      "title": "The Cameraman",
+      "originalTitle": "The Cameraman"
+    },
+    {
+      "rank": 500,
+      "year": 2015,
+      "title": "Our Little Sister",
+      "originalTitle": "Our Little Sister"
+    }
+  ]
+}

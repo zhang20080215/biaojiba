@@ -45,6 +45,16 @@ function normalizeForMatch(s) {
         .replace(/[\s·・\-–—.,:;'’"“”!！?？()（）\[\]]/g, '');
 }
 
+// 基本质量闸门：评分为 0、没封面、或不是电影（综艺/电视剧等 subtype !== 'movie'）——
+// 实测这三种情况基本都是撞错条目，不管标题/年份是否对得上都直接排除，不进入候选甚至不当兜底。
+function isBasicallyValid(detail) {
+    if (!detail) return false;
+    if (detail.subtype && detail.subtype !== 'movie') return false;
+    if (!detail.rating) return false;
+    if (!detail.coverUrl) return false;
+    return true;
+}
+
 // 详情是否可信匹配目标：original_title/aka 精确对上，或年份相差 ≤1（regional release 常见偏差）
 function isDetailMatch(detail, year, originalTitle) {
     if (!detail) return false;
@@ -79,9 +89,10 @@ async function fetchDoubanDetail(doubanId) {
             originalTitle: j.original_title || '',
             aka: j.aka || [],
             directors: (j.directors || []).map(d => d.name).filter(Boolean).join('、'),
-            countries: (j.countries || []).filter(Boolean).join('、'),
+            countries: (j.countries || []).filter(Boolean)[0] || '', // 合拍片只取第一个国家，不要罗列一长串
             coverUrl: (j.pic && (j.pic.large || j.pic.normal)) || j.cover_url || '',
-            rating: j.rating && typeof j.rating.value === 'number' ? j.rating.value : 0
+            rating: j.rating && typeof j.rating.value === 'number' ? j.rating.value : 0,
+            subtype: j.subtype || '' // 'movie' | 'tv'，非电影（综艺/电视剧）用来在校验阶段直接排除
         };
     } catch (e) {
         console.warn(`Fetch douban detail failed for ${doubanId}:`, e.message);
@@ -94,9 +105,11 @@ async function fetchDoubanDetail(doubanId) {
  * 搜索策略：依次尝试 "中文名 年份"、"英文名 年份"、"中文名"、"英文名"
  *   —— 「英文名 年份」提到前面，泛用中文名（如「南极探险」）易撞热门条目，英文名基本不撞车。
  * 匹配策略：豆瓣搜索结果页文案早已不带年份，光靠候选列表文本猜年份等于没校验（曾误配「地下」
- *   「寄生上流」等条目）——改成对每条 query 的前 N 条候选逐个拉详情，用 original_title/aka/year
- *   做真校验，通过才采纳；全程都没通过时兜底取首个成功查询的第一条，并标记 matchVerified:false
- *   交给调用方汇总提醒人工核对。
+ *   「寄生上流」等条目）——改成对每条 query 的前 N 条候选逐个拉详情，先过 isBasicallyValid 质量闸门
+ *   （评分0/无封面/非电影一律排除，实测这三种信号基本都是撞错条目——比如撞到同名综艺/电视剧），
+ *   再用 original_title/aka/year 做真校验，通过才采纳；全程都没标题/年份校验通过时，兜底取第一个
+ *   "至少过了质量闸门"的候选，标记 matchVerified:false 交给调用方汇总提醒人工核对；
+ *   若连质量闸门都没有候选通过，直接返回 null（调用方会跳过该条，计入 unmatchedMovies）。
  */
 async function fetchDoubanInfo(originalTitle, chineseTitle, year) {
     const searchQueries = [
@@ -136,10 +149,14 @@ async function fetchDoubanInfo(originalTitle, chineseTitle, year) {
             });
 
             if (candidates.length === 0) continue;
-            if (!fallback) fallback = { cand: candidates[0], query };
 
             for (const cand of candidates.slice(0, MAX_VERIFY_PER_QUERY)) {
                 const detail = await fetchDoubanDetail(cand.doubanId);
+                // 质量闸门先过：评分0/无封面/非电影（综艺、电视剧等）直接排除，连兜底候选都不当
+                if (!isBasicallyValid(detail)) {
+                    console.warn(`  -> 排除候选 doubanId=${cand.doubanId}（评分0或无封面或非电影 subtype=${detail && detail.subtype}），query: "${query}"`);
+                    continue;
+                }
                 if (isDetailMatch(detail, year, originalTitle)) {
                     console.log(`  -> 已验证匹配 doubanId=${cand.doubanId}「${detail.title}」, query: "${query}"`);
                     return {
@@ -152,6 +169,7 @@ async function fetchDoubanInfo(originalTitle, chineseTitle, year) {
                         matchVerified: true
                     };
                 }
+                if (!fallback) fallback = { cand, detail, query };
             }
         } catch (error) {
             console.error(`Fetch douban info failed for "${query}":`, error.message);
@@ -160,14 +178,13 @@ async function fetchDoubanInfo(originalTitle, chineseTitle, year) {
 
     if (fallback) {
         console.warn(`  -> [未验证匹配] 兜底 doubanId=${fallback.cand.doubanId}，query: "${fallback.query}"，需人工核对`);
-        const detail = await fetchDoubanDetail(fallback.cand.doubanId);
         return {
             doubanId: fallback.cand.doubanId,
-            coverUrl: (detail && detail.coverUrl) || fallback.cand.coverUrl || '',
-            rating: (detail && detail.rating) || (fallback.cand.rating ? parseFloat(fallback.cand.rating) : 0),
-            title: detail ? detail.title : '',
-            directors: detail ? detail.directors : '',
-            countries: detail ? detail.countries : '',
+            coverUrl: fallback.detail.coverUrl || fallback.cand.coverUrl || '',
+            rating: fallback.detail.rating || (fallback.cand.rating ? parseFloat(fallback.cand.rating) : 0),
+            title: fallback.detail.title,
+            directors: fallback.detail.directors,
+            countries: fallback.detail.countries,
             matchVerified: false
         };
     }
@@ -284,6 +301,22 @@ exports.main = async (event, context) => {
         const toAdd = [];
         const toUpdate = [];
         const matchWarnings = []; // 豆瓣匹配没通过校验、走兜底的条目，提醒人工核对
+        const unmatchedMovies = []; // 连质量闸门都没有候选通过、完全没写入的条目（评分0/无封面/非电影），需人工手动核对补充
+
+        // 预扫描：调序（插入/删除导致其余条目整体错位）场景下，同一部电影按 originalTitle+year 认身份，
+        // 提前"认领"它在数据库里已有的记录（不管当前 rank 是多少）——避免它被当成"这个 rank 位置上的
+        // 另一部电影"而重新搜豆瓣，也避免它的旧 _id 被后面按 rank 匹配到的新电影顶替内容。
+        // 只claim「rank 真的变了」的记录——rank 没变的正常情况不进 claimedIds，
+        // 否则下面 existingDoc 查找会把"就是它自己"误判成"被占用"，反而造出一条重复记录。
+        const claimedIds = new Set();
+        if (idStrategy === 'rank') {
+            pending.forEach(mt => {
+                if (mt.originalTitle != null && mt.year != null) {
+                    const im = existingByTitleYear[`${mt.originalTitle}__${mt.year}`];
+                    if (im && im.rank !== mt.rank) claimedIds.add(im._id);
+                }
+            });
+        }
 
         for (let i = 0; i < pending.length; i++) {
             if (Date.now() - START_TIME > TIME_LIMIT) {
@@ -295,9 +328,27 @@ exports.main = async (event, context) => {
             const movieTarget = pending[i];
             const { rank, year, title, originalTitle } = movieTarget;
 
+            const identityMatch = (idStrategy === 'rank' && originalTitle != null && year != null)
+                ? existingByTitleYear[`${originalTitle}__${year}`]
+                : null;
+
+            // 身份对得上（同一部电影），但 rank 变了：只是调序，不用重新查豆瓣，直接改序号等名单字段
+            if (identityMatch && identityMatch.rank !== rank) {
+                const patch = { ...movieTarget, theme };
+                delete patch._id;
+                if (identityMatch.sourceTitle && patch.title === identityMatch.sourceTitle) delete patch.title;
+                const hasChanges = Object.keys(patch).some(k => JSON.stringify(patch[k]) !== JSON.stringify(identityMatch[k]));
+                if (hasChanges) {
+                    toUpdate.push({ _id: identityMatch._id, data: { ...patch, updateTime: db.serverDate() } });
+                    console.log(`[enrichThemeMovies] 仅调整序号（未重新查豆瓣）: "${title}" rank ${identityMatch.rank} → ${rank}`);
+                }
+                processedCount++;
+                continue;
+            }
+
             const existingDoc = idStrategy === 'title-year'
                 ? existingByTitleYear[`${originalTitle}__${year}`]
-                : existingByRank[rank];
+                : (existingByRank[rank] && !claimedIds.has(existingByRank[rank]._id) ? existingByRank[rank] : null);
 
             // 封面已就绪且非强制刷新：不必重新搜豆瓣/重新下载图片，只按需轻量 patch 调用方传入的字段
             // （比如后续发现片名要从港台译名改成大陆译名），避免每次订正元数据都重新爬一遍豆瓣。
@@ -326,8 +377,25 @@ exports.main = async (event, context) => {
                 continue;
             }
 
-            console.log(`[enrichThemeMovies] 搜索豆瓣: ${title} / ${originalTitle} (${year})`);
-            const doubanInfo = await fetchDoubanInfo(originalTitle, title, year);
+            // 名单条目可手动指定 doubanId（人工在豆瓣核实过的正确条目，比如搜索误配到同名综艺/其他影片时）：
+            // 跳过搜索直接取详情，视为已核实，不再走候选校验流程
+            let doubanInfo;
+            if (movieTarget.doubanId) {
+                console.log(`[enrichThemeMovies] 使用名单手动指定的 doubanId=${movieTarget.doubanId}: ${title}`);
+                const detail = await fetchDoubanDetail(movieTarget.doubanId);
+                doubanInfo = detail ? {
+                    doubanId: movieTarget.doubanId,
+                    coverUrl: detail.coverUrl || '',
+                    rating: detail.rating || 0,
+                    title: detail.title,
+                    directors: detail.directors,
+                    countries: detail.countries,
+                    matchVerified: true
+                } : null;
+            } else {
+                console.log(`[enrichThemeMovies] 搜索豆瓣: ${title} / ${originalTitle} (${year})`);
+                doubanInfo = await fetchDoubanInfo(originalTitle, title, year);
+            }
 
             if (doubanInfo) {
                 if (doubanInfo.doubanId) {
@@ -342,9 +410,14 @@ exports.main = async (event, context) => {
                     matchWarnings.push(`#${rank != null ? rank : ''} ${year} ${title}: 豆瓣匹配未通过校验（doubanId=${doubanInfo.doubanId}），请人工核对是否为「${originalTitle}」`);
                 }
 
+                // 按 rank 生成的"自然" _id（theme_rank）如果已经被别的电影身份认领占用了
+                // （调序场景下常见），改用按身份生成的 _id，避免新增时撞车已有文档
+                const naturalRankId = `${theme}_${rank}`;
                 const docId = existingDoc
                     ? existingDoc._id
-                    : (idStrategy === 'title-year' ? `${theme}_${slugify(originalTitle)}_${year}` : `${theme}_${rank}`);
+                    : (idStrategy === 'title-year' || claimedIds.has(naturalRankId)
+                        ? `${theme}_${slugify(originalTitle)}_${year}`
+                        : naturalRankId);
 
                 const finalMovieData = {
                     ...movieTarget,
@@ -386,6 +459,12 @@ exports.main = async (event, context) => {
                 }
             } else {
                 console.warn(`[enrichThemeMovies] 豆瓣未匹配到: ${title} / ${originalTitle}`);
+                // 手动指定 doubanId 时走的是直接取详情（非搜索候选），失败原因跟"候选全被质量闸门拦下"不是一回事，
+                // 常见是豆瓣临时限流/反爬验证（need_permission），消息分开避免误导排查方向
+                const reason = movieTarget.doubanId
+                    ? `手动指定的 doubanId=${movieTarget.doubanId} 详情请求失败，大概率是豆瓣临时限流/反爬验证，建议隔一段时间重试`
+                    : '候选全部评分0/无封面/非电影，未写入，需人工核实豆瓣ID';
+                unmatchedMovies.push(`#${rank != null ? rank : ''} ${year} ${title}（${originalTitle}）: ${reason}`);
             }
 
             processedCount++;
@@ -430,6 +509,7 @@ exports.main = async (event, context) => {
             autoChained,
             validationWarns,   // 首批自检的告警（脏文本/港台译名/缺 originalTitle 等），仅提示不拦截
             matchWarnings,     // 本轮豆瓣匹配没通过 original_title/aka/year 校验、走兜底的条目，需人工核对
+            unmatchedMovies,   // 本轮完全没写入的条目（候选全部评分0/无封面/非电影），需人工核实补充
             nextStartFrom: stoppedEarly ? nextStartFrom : 0,
             hint: !stoppedEarly
                 ? '全部处理完成'

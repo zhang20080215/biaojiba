@@ -482,6 +482,9 @@
 .cover-tint.douban-movies { background: linear-gradient(135deg, rgba(84, 156, 118, 0.5) 0%, rgba(50, 114, 82, 0.5) 100%); }
 .cover-tint.imdb { background: linear-gradient(135deg, rgba(224, 186, 64, 0.5) 0%, rgba(164, 132, 24, 0.5) 100%); }
 .cover-tint.boxoffice { background: linear-gradient(135deg, rgba(200, 94, 82, 0.5) 0%, rgba(154, 54, 46, 0.5) 100%); }
+.cover-tint.oscar-foreign { background: linear-gradient(135deg, rgba(160, 110, 124, 0.5) 0%, rgba(122, 59, 74, 0.5) 100%); }
+.cover-tint.rt-action { background: linear-gradient(135deg, rgba(100, 110, 128, 0.5) 0%, rgba(59, 66, 82, 0.5) 100%); }
+.cover-tint.letterboxd500 { background: linear-gradient(135deg, rgba(230, 150, 64, 0.5) 0%, rgba(200, 110, 20, 0.5) 100%); }
 
 /* 分类标签 — 封面左上角纯文字，不用胶囊底，靠文字阴影保证对比度 */
 .cover-tag-label {
@@ -586,6 +589,15 @@
 .cover-placeholder.oscar-screenplay {
   background: linear-gradient(135deg, #9B7BB0 0%, #6B4C7A 100%);
 }
+.cover-placeholder.oscar-foreign {
+  background: linear-gradient(135deg, #A06E7C 0%, #7A3B4A 100%);
+}
+.cover-placeholder.rt-action {
+  background: linear-gradient(135deg, #5C6B7A 0%, #3B4252 100%);
+}
+.cover-placeholder.letterboxd500 {
+  background: linear-gradient(135deg, #FF9933 0%, #E67300 100%);
+}
 .cover-placeholder .placeholder-emoji {
   font-size: 56rpx;
   line-height: 1;
@@ -595,7 +607,10 @@
 .cover-placeholder.rt-war .placeholder-text,
 .cover-placeholder.rt-animation .placeholder-text,
 .cover-placeholder.palme .placeholder-text,
-.cover-placeholder.oscar-screenplay .placeholder-text {
+.cover-placeholder.oscar-screenplay .placeholder-text,
+.cover-placeholder.oscar-foreign .placeholder-text,
+.cover-placeholder.rt-action .placeholder-text,
+.cover-placeholder.letterboxd500 .placeholder-text {
   color: rgba(255, 255, 255, 0.95);
   font-weight: 600;
   letter-spacing: 2rpx;

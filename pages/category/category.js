@@ -18,7 +18,10 @@ var DYNAMIC_COVER_THEMES = [
   { id: 'rt_war_movies', theme: 'rtWar' },
   { id: 'rt_animation_movies', theme: 'rtAnimation' },
   { id: 'palme_dor_movies', theme: 'palmeDor' },
-  { id: 'oscar_screenplay_movies', theme: 'oscarScreenplay' }
+  { id: 'oscar_screenplay_movies', theme: 'oscarScreenplay' },
+  { id: 'oscar_foreign_movies', theme: 'oscarForeign' },
+  { id: 'rt_action_movies', theme: 'rtAction' },
+  { id: 'letterboxd500_movies', theme: 'letterboxd500' }
 ];
 
 Page({
@@ -52,7 +55,7 @@ Page({
         tag: '电影',
         category: 'movie',
         isNew: true,
-        url: '/pages/palmeDor/list/list'
+        url: '/pages/genericList/list/list?theme=palmeDor'
       },
       {
         id: 'oscar_screenplay_movies',
@@ -65,7 +68,7 @@ Page({
         category: 'oscar',
         isNew: true,
         wishFrom: 'Mi**',
-        url: '/pages/oscarScreenplay/list/list'
+        url: '/pages/genericList/list/list?theme=oscarScreenplay'
       },
       {
         id: 'douban_movies',
@@ -89,7 +92,19 @@ Page({
         category: 'oscar',
         isNew: true,
         wishFrom: 'And**',
-        url: '/pages/oscarCinematography/list/list'
+        url: '/pages/genericList/list/list?theme=oscarCinematography'
+      },
+      {
+        id: 'oscar_foreign_movies',
+        title: '历届奥斯卡最佳外语片',
+        description: '奥斯卡最佳国际影片历届获奖，看见世界各地的电影',
+        image: '',
+        tintClass: 'oscar-foreign',
+        userCount: 0,
+        tag: '奥斯卡',
+        category: 'oscar',
+        isNew: true,
+        url: '/pages/genericList/list/list?theme=oscarForeign'
       },
       {
         id: 'rt_horror_movies',
@@ -101,7 +116,7 @@ Page({
         tag: '电影',
         category: 'movie',
         isNew: true,
-        url: '/pages/rtHorror/list/list'
+        url: '/pages/genericList/list/list?theme=rtHorror'
       },
       {
         id: 'rt_war_movies',
@@ -113,7 +128,7 @@ Page({
         tag: '电影',
         category: 'movie',
         isNew: true,
-        url: '/pages/rtWar/list/list'
+        url: '/pages/genericList/list/list?theme=rtWar'
       },
       {
         id: 'rt_animation_movies',
@@ -125,7 +140,19 @@ Page({
         tag: '电影',
         category: 'movie',
         isNew: true,
-        url: '/pages/rtAnimation/list/list'
+        url: '/pages/genericList/list/list?theme=rtAnimation'
+      },
+      {
+        id: 'rt_action_movies',
+        title: '史上最佳动作电影',
+        description: '烂番茄评选史上最佳动作片，标记你的肾上腺素时刻',
+        image: '',
+        tintClass: 'rt-action',
+        userCount: 0,
+        tag: '电影',
+        category: 'movie',
+        isNew: true,
+        url: '/pages/genericList/list/list?theme=rtAction'
       },
       {
         id: 'daily_movie',
@@ -173,7 +200,7 @@ Page({
         category: 'oscar',
         isNew: true,
         wishFrom: '安然**',
-        url: '/pages/oscarAnime/list/list'
+        url: '/pages/genericList/list/list?theme=oscarAnime'
       },
       {
         id: 'movie_search_all_platforms',
@@ -231,6 +258,18 @@ Page({
         tag: '电影',
         category: 'movie',
         url: '/pages/imdb/list/list'
+      },
+      {
+        id: 'letterboxd500_movies',
+        title: 'Letterboxd Top 500',
+        description: 'Letterboxd 影迷评分最高 500 部电影，硬核影迷片单',
+        image: '',
+        tintClass: 'letterboxd500',
+        userCount: 0,
+        tag: '电影',
+        category: 'movie',
+        isNew: true,
+        url: '/pages/genericList/list/list?theme=letterboxd500'
       },
       {
         id: 'oscar_movies',
@@ -627,6 +666,9 @@ Page({
         { id: 'rt_animation_movies', collection: 'generic_theme_movies', theme: 'rtAnimation', topFiltered: false },
         { id: 'palme_dor_movies', collection: 'generic_theme_movies', theme: 'palmeDor', topFiltered: false },
         { id: 'oscar_screenplay_movies', collection: 'generic_theme_movies', theme: 'oscarScreenplay', topFiltered: false },
+        { id: 'oscar_foreign_movies', collection: 'generic_theme_movies', theme: 'oscarForeign', topFiltered: false },
+        { id: 'rt_action_movies', collection: 'generic_theme_movies', theme: 'rtAction', topFiltered: false },
+        { id: 'letterboxd500_movies', collection: 'generic_theme_movies', theme: 'letterboxd500', topFiltered: false },
         // 书线：marks 集合是 BookMarks，主键是 bookId，按 source 字段区分豆瓣/微信读书
         { id: 'douban_books', collection: 'douban_books', topFiltered: true, marksCollection: 'BookMarks', idField: 'bookId', source: 'douban' },
         { id: 'weread_books', collection: 'weread_books', topFiltered: true, marksCollection: 'BookMarks', idField: 'bookId', source: 'weread' }
@@ -719,7 +761,7 @@ Page({
       const res = await db.collection(config.collection)
         .where(whereCondition)
         .skip(offset).limit(limit).field({ _id: true }).get();
-      movieIds.push(...res.data.map(m => m._id));
+      res.data.forEach(m => movieIds.push(m._id));
       if (res.data.length < limit) break;
       offset += limit;
     }

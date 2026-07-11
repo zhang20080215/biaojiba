@@ -170,6 +170,18 @@
           <text class="placeholder-emoji">✍️</text>
           <text class="placeholder-text">原创剧本</text>
         </view>
+        <view wx:elif="{{item.id === 'oscar_foreign_movies'}}" class="cover-placeholder oscar-foreign">
+          <text class="placeholder-emoji">🌍</text>
+          <text class="placeholder-text">最佳外语片</text>
+        </view>
+        <view wx:elif="{{item.id === 'rt_action_movies'}}" class="cover-placeholder rt-action">
+          <text class="placeholder-emoji">💥</text>
+          <text class="placeholder-text">动作电影</text>
+        </view>
+        <view wx:elif="{{item.id === 'letterboxd500_movies'}}" class="cover-placeholder letterboxd500">
+          <text class="placeholder-emoji">🎞️</text>
+          <text class="placeholder-text">Letterboxd Top 500</text>
+        </view>
         <view class="cover-mask"></view>
         <text class="cover-tag-label">{{item.tag}}</text>
         <view wx:if="{{item.id === 'palme_dor_movies' || item.id === 'oscar_screenplay_movies'}}" class="new-badge">
@@ -262,6 +274,18 @@
         <view wx:elif="{{item.id === 'oscar_screenplay_movies'}}" class="cover-placeholder oscar-screenplay">
           <text class="placeholder-emoji">✍️</text>
           <text class="placeholder-text">原创剧本</text>
+        </view>
+        <view wx:elif="{{item.id === 'oscar_foreign_movies'}}" class="cover-placeholder oscar-foreign">
+          <text class="placeholder-emoji">🌍</text>
+          <text class="placeholder-text">最佳外语片</text>
+        </view>
+        <view wx:elif="{{item.id === 'rt_action_movies'}}" class="cover-placeholder rt-action">
+          <text class="placeholder-emoji">💥</text>
+          <text class="placeholder-text">动作电影</text>
+        </view>
+        <view wx:elif="{{item.id === 'letterboxd500_movies'}}" class="cover-placeholder letterboxd500">
+          <text class="placeholder-emoji">🎞️</text>
+          <text class="placeholder-text">Letterboxd Top 500</text>
         </view>
         <view class="cover-mask"></view>
         <text class="cover-tag-label">{{item.tag}}</text>

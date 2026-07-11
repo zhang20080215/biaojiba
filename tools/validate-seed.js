@@ -16,6 +16,9 @@ const FILES = [
   { file: 'tools/rt-seed/rtAnimation.json', theme: 'rtAnimation' },
   { file: 'tools/palme-seed/palmeDor.json', theme: 'palmeDor', edition: (y) => y - 1947, needDirector: true, needCountry: true },
   { file: 'tools/oscar-screenplay-seed/oscarScreenplay.json', theme: 'oscarScreenplay', needEdition: true },
+  { file: 'tools/oscar-foreign-seed/oscarForeign.json', theme: 'oscarForeign', edition: (y) => y - 1927, needDirector: true, needCountry: true },
+  { file: 'tools/rt-action-seed/rtAction.json', theme: 'rtAction' },
+  { file: 'tools/letterboxd500-seed/letterboxd500.json', theme: 'letterboxd500' },
 ];
 
 // 港台译名 → 大陆标准（命中即 WARN）
