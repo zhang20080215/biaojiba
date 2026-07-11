@@ -1,0 +1,23 @@
+{
+  "theme": "letterboxd500",
+  "idStrategy": "rank",
+  "forceRefresh": true,
+  "startFrom": 0,
+  "autoContinue": false,
+  "movieList": [
+    {
+      "rank": 50,
+      "year": 1985,
+      "title": "三岛由纪夫传",
+      "originalTitle": "Mishima: A Life in Four Chapters",
+      "doubanId": "1305345"
+    },
+    {
+      "rank": 112,
+      "year": 2025,
+      "title": "链锯人 剧场版：蕾塞篇",
+      "originalTitle": "Chainsaw Man – The Movie: Reze Arc",
+      "doubanId": "37291780"
+    }
+  ]
+}

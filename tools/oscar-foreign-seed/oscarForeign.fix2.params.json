@@ -1,0 +1,29 @@
+{
+  "theme": "oscarForeign",
+  "idStrategy": "rank",
+  "forceRefresh": true,
+  "startFrom": 0,
+  "autoContinue": false,
+  "movieList": [
+    {
+      "rank": 28,
+      "edition": 71,
+      "year": 1998,
+      "title": "美丽人生",
+      "originalTitle": "La vita è bella",
+      "director": "罗伯托·贝尼尼",
+      "country": "意大利",
+      "doubanId": "1292063"
+    },
+    {
+      "rank": 70,
+      "edition": 29,
+      "year": 1956,
+      "title": "大路",
+      "originalTitle": "La strada",
+      "director": "费德里科·费里尼",
+      "country": "意大利",
+      "doubanId": "1292719"
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "theme": "letterboxd500",
+  "idStrategy": "rank",
+  "forceRefresh": true,
+  "startFrom": 0,
+  "autoContinue": false,
+  "movieList": [
+    {
+      "rank": 2,
+      "year": 1961,
+      "title": "The Human Condition III: A Soldier's Prayer",
+      "originalTitle": "The Human Condition III: A Soldier's Prayer",
+      "doubanId": "1441039"
+    },
+    {
+      "rank": 23,
+      "year": 1959,
+      "title": "The Human Condition II: Road to Eternity",
+      "originalTitle": "The Human Condition II: Road to Eternity",
+      "doubanId": "1441038"
+    },
+    {
+      "rank": 50,
+      "year": 1985,
+      "title": "Mishima: A Life in Four Chapters",
+      "originalTitle": "Mishima: A Life in Four Chapters",
+      "doubanId": "1305345"
+    },
+    {
+      "rank": 112,
+      "year": 2025,
+      "title": "Chainsaw Man – The Movie: Reze Arc",
+      "originalTitle": "Chainsaw Man – The Movie: Reze Arc",
+      "doubanId": "37291780"
+    }
+  ]
+}
