@@ -76,6 +76,46 @@ const THEME_CONFIG = {
     editionField: 'edition',
     orderDirection: 'asc',
   },
+  oscarDirector: {
+    title: '历届奥斯卡最佳导演',
+    slogan: '标记你看过的经典，生成专属观影海报',
+    brandPrimary: '#2F6B4F',
+    brandSoft: '#5C9B7E',
+    shadowRgb: '47, 107, 79',
+    showEdition: true,
+    editionField: 'edition',
+    orderDirection: 'asc',
+  },
+  oscarVFX: {
+    title: '历届奥斯卡最佳视觉效果',
+    slogan: '标记你看过的经典，生成专属观影海报',
+    brandPrimary: '#1E7A99',
+    brandSoft: '#4FB3CC',
+    shadowRgb: '30, 122, 153',
+    showEdition: true,
+    editionField: 'edition',
+    orderDirection: 'asc',
+  },
+  oscarActor: {
+    title: '历届奥斯卡最佳男主角',
+    slogan: '标记你看过的经典，生成专属观影海报',
+    brandPrimary: '#A6763C',
+    brandSoft: '#C99B5E',
+    shadowRgb: '166, 118, 60',
+    showEdition: true,
+    editionField: 'edition',
+    orderDirection: 'asc',
+  },
+  oscarActress: {
+    title: '历届奥斯卡最佳女主角',
+    slogan: '标记你看过的经典，生成专属观影海报',
+    brandPrimary: '#B0476E',
+    brandSoft: '#D07AA0',
+    shadowRgb: '176, 71, 110',
+    showEdition: true,
+    editionField: 'edition',
+    orderDirection: 'asc',
+  },
   letterboxd500: {
     title: 'Letterboxd Top 500',
     slogan: '标记你看过的经典，生成专属观影海报',
@@ -120,8 +160,17 @@ const DEFAULT_CONFIG = {
   orderDirection: 'asc',
 };
 
+var themeRegistry = require('./themeRegistry.js');
+
 function getThemeConfig(theme) {
-  const cfg = THEME_CONFIG[theme] || DEFAULT_CONFIG;
+  let cfg = THEME_CONFIG[theme];
+  if (!cfg) {
+    // 未硬编码：可能是走云端注册表新增的通用影单主题（不用发版）。
+    // 读本地注册表缓存（分类页已写入）——注册文档字段名与本表一致，可直接展开。
+    var reg = themeRegistry.find(theme);
+    if (reg && reg.type !== 'book') cfg = reg;
+  }
+  cfg = cfg || DEFAULT_CONFIG;
   return { editionField: 'edition', orderDirection: 'asc', ...cfg };
 }
 

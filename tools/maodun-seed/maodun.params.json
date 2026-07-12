@@ -1,0 +1,70 @@
+{
+  "theme": "maodun",
+  "idStrategy": "rank",
+  "autoContinue": true,
+  "bookList": [
+    { "rank": 1,  "edition": 11, "year": 2023, "title": "雪山大地",           "author": "杨志军" },
+    { "rank": 2,  "edition": 11, "year": 2023, "title": "宝水",               "author": "乔叶" },
+    { "rank": 3,  "edition": 11, "year": 2023, "title": "本巴",               "author": "刘亮程" },
+    { "rank": 4,  "edition": 11, "year": 2023, "title": "千里江山图",         "author": "孙甘露" },
+    { "rank": 5,  "edition": 11, "year": 2023, "title": "回响",               "author": "东西" },
+
+    { "rank": 6,  "edition": 10, "year": 2019, "title": "人世间",             "author": "梁晓声" },
+    { "rank": 7,  "edition": 10, "year": 2019, "title": "牵风记",             "author": "徐怀中" },
+    { "rank": 8,  "edition": 10, "year": 2019, "title": "北上",               "author": "徐则臣" },
+    { "rank": 9,  "edition": 10, "year": 2019, "title": "主角",               "author": "陈彦" },
+    { "rank": 10, "edition": 10, "year": 2019, "title": "应物兄",             "author": "李洱" },
+
+    { "rank": 11, "edition": 9,  "year": 2015, "title": "江南三部曲",         "author": "格非" },
+    { "rank": 12, "edition": 9,  "year": 2015, "title": "这边风景",           "author": "王蒙" },
+    { "rank": 13, "edition": 9,  "year": 2015, "title": "生命册",             "author": "李佩甫" },
+    { "rank": 14, "edition": 9,  "year": 2015, "title": "繁花",               "author": "金宇澄" },
+    { "rank": 15, "edition": 9,  "year": 2015, "title": "黄雀记",             "author": "苏童" },
+
+    { "rank": 16, "edition": 8,  "year": 2011, "title": "你在高原",           "author": "张炜" },
+    { "rank": 17, "edition": 8,  "year": 2011, "title": "天行者",             "author": "刘醒龙" },
+    { "rank": 18, "edition": 8,  "year": 2011, "title": "推拿",               "author": "毕飞宇" },
+    { "rank": 19, "edition": 8,  "year": 2011, "title": "蛙",                 "author": "莫言" },
+    { "rank": 20, "edition": 8,  "year": 2011, "title": "一句顶一万句",       "author": "刘震云" },
+
+    { "rank": 21, "edition": 7,  "year": 2008, "title": "秦腔",               "author": "贾平凹" },
+    { "rank": 22, "edition": 7,  "year": 2008, "title": "额尔古纳河右岸",     "author": "迟子建" },
+    { "rank": 23, "edition": 7,  "year": 2008, "title": "暗算",               "author": "麦家" },
+    { "rank": 24, "edition": 7,  "year": 2008, "title": "湖光山色",           "author": "周大新" },
+
+    { "rank": 25, "edition": 6,  "year": 2005, "title": "张居正",             "author": "熊召政" },
+    { "rank": 26, "edition": 6,  "year": 2005, "title": "无字",               "author": "张洁" },
+    { "rank": 27, "edition": 6,  "year": 2005, "title": "历史的天空",         "author": "徐贵祥" },
+    { "rank": 28, "edition": 6,  "year": 2005, "title": "英雄时代",           "author": "柳建伟" },
+    { "rank": 29, "edition": 6,  "year": 2005, "title": "东藏记",             "author": "宗璞" },
+
+    { "rank": 30, "edition": 5,  "year": 2000, "title": "尘埃落定",           "author": "阿来" },
+    { "rank": 31, "edition": 5,  "year": 2000, "title": "长恨歌",             "author": "王安忆" },
+    { "rank": 32, "edition": 5,  "year": 2000, "title": "抉择",               "author": "张平" },
+    { "rank": 33, "edition": 5,  "year": 2000, "title": "茶人三部曲",         "author": "王旭烽" },
+
+    { "rank": 34, "edition": 4,  "year": 1997, "title": "白鹿原",             "author": "陈忠实" },
+    { "rank": 35, "edition": 4,  "year": 1997, "title": "战争和人",           "author": "王火" },
+    { "rank": 36, "edition": 4,  "year": 1997, "title": "白门柳",             "author": "刘斯奋" },
+    { "rank": 37, "edition": 4,  "year": 1997, "title": "骚动之秋",           "author": "刘玉民" },
+
+    { "rank": 38, "edition": 3,  "year": 1991, "title": "平凡的世界",         "author": "路遥" },
+    { "rank": 39, "edition": 3,  "year": 1991, "title": "少年天子",           "author": "凌力" },
+    { "rank": 40, "edition": 3,  "year": 1991, "title": "都市风流",           "author": "孙力、余小惠" },
+    { "rank": 41, "edition": 3,  "year": 1991, "title": "第二个太阳",         "author": "刘白羽" },
+    { "rank": 42, "edition": 3,  "year": 1991, "title": "穆斯林的葬礼",       "author": "霍达" },
+    { "rank": 43, "edition": 3,  "year": 1991, "title": "浴血罗霄",           "author": "萧克" },
+    { "rank": 44, "edition": 3,  "year": 1991, "title": "金瓯缺",             "author": "徐兴业" },
+
+    { "rank": 45, "edition": 2,  "year": 1985, "title": "沉重的翅膀",         "author": "张洁" },
+    { "rank": 46, "edition": 2,  "year": 1985, "title": "钟鼓楼",             "author": "刘心武" },
+    { "rank": 47, "edition": 2,  "year": 1985, "title": "黄河东流去",         "author": "李准" },
+
+    { "rank": 48, "edition": 1,  "year": 1982, "title": "东方",               "author": "魏巍" },
+    { "rank": 49, "edition": 1,  "year": 1982, "title": "许茂和他的女儿们",   "author": "周克芹" },
+    { "rank": 50, "edition": 1,  "year": 1982, "title": "李自成",             "author": "姚雪垠" },
+    { "rank": 51, "edition": 1,  "year": 1982, "title": "将军吟",             "author": "莫应丰" },
+    { "rank": 52, "edition": 1,  "year": 1982, "title": "冬天里的春天",       "author": "李国文" },
+    { "rank": 53, "edition": 1,  "year": 1982, "title": "芙蓉镇",             "author": "古华" }
+  ]
+}

@@ -3,11 +3,11 @@ import imageCacheManager from '../../../utils/imageCacheManager';
 var adConfig = require('../../../utils/adConfig');
 var adManager = require('../../../utils/adManager');
 var userStore = require('../../../utils/userStore.js');
-var { getThemeConfig } = require('../../../utils/genericThemeConfig.js');
+var { getThemeConfig } = require('../../../utils/genericBookThemeConfig.js');
 
-// 通用榜单页：走 enrichThemeMovies/generic_theme_movies 流水线的新主题、以及迁移过来的老主题共用这一套页面，
-// 通过 ?theme=xxx 区分（同 pages/daily/index 靠 ?theme= 复用一套页面的思路）。
-// 排序方向按主题不同（新到旧连续编号的 asc，rank 本身是历史届数的 desc），见 cfg.orderDirection。
+// 通用读书榜单页：走 enrichThemeBooks/generic_theme_books 流水线的新读书主题共用这一套页面，
+// 通过 ?theme=xxx 区分（结构镜像 pages/genericList/list/list.js 电影版；标记语义/BookMarks 写入
+// 部分镜像 pages/doubanBooks/list/list.js —— 'read'/'wish'/'unread'，取消标记要删记录）。
 function queryOptionsFor(cfg) {
     return { orderByField: 'rank', orderDirection: (cfg && cfg.orderDirection) || 'asc' };
 }
@@ -17,24 +17,24 @@ Page({
         userInfo: null,
         openid: '',
         pendingOpenid: '',
-        allMovies: [],
-        movies: [],
+        allBooks: [],
+        books: [],
         markStatusMap: {},
         markDateMap: {},
         markRecordIdMap: {},
-        watchedIds: [],
+        readIds: [],
         wishIds: [],
-        watchedCount: 0,
+        readCount: 0,
         wishCount: 0,
-        unwatchedCount: 0,
+        unreadCount: 0,
         allCount: 0,
-        watchedProgressPercent: 0,
-        watchedProgressText: '0%',
-        watchedProgressWidth: '0%',
+        readProgressPercent: 0,
+        readProgressText: '0%',
+        readProgressWidth: '0%',
         activeTab: 0,
         currentFilter: 'all',
         isBatchEditing: false,
-        selectedMovieIds: [],
+        selectedBookIds: [],
         loading: false,
         showAuthModal: false,
         customToast: '',
@@ -48,7 +48,7 @@ Page({
         headerPadTop: 0,
         menuBtnHeight: 32,
         stickyTop: 0,
-        // 广告相关
+        // 广告复用电影线 movielist_infeed 槽位
         infeedSlots: {},
         adUnitIds: {
             movielist_infeed: adConfig.getAdUnitId('movielist_infeed') || '',
@@ -62,7 +62,6 @@ Page({
         }
         const theme = (options && options.theme) || '';
         const cfg = getThemeConfig(theme);
-        // 自定义导航：获取状态栏高度和胶囊按钮位置
         this.setData({
             statusBarHeight: 0,
             headerPadTop: 0,
@@ -73,14 +72,13 @@ Page({
         });
         wx.setNavigationBarTitle({ title: cfg.title });
         this.checkLoginStatus();
-        this.loadAllMovies(true); // 通用主题 listVersion 恒为 null，缓存不会自动失效，进页面强制拉最新
+        this.loadAllBooks(true); // 通用主题 listVersion 恒为 null，缓存不会自动失效，进页面强制拉最新
         this.initAds();
         this.setNavBarColor();
     },
 
-    // 下拉刷新 - 强制绕过缓存
     async onPullDownRefresh() {
-        await this.loadAllMovies(true);
+        await this.loadAllBooks(true);
         wx.stopPullDownRefresh();
     },
 
@@ -89,7 +87,6 @@ Page({
         this.setNavBarColor();
     },
 
-    // 将导航栏背景色与 hero 配色对齐，消除 hairline 对比度
     setNavBarColor() {
         const bg = (this.data.cfg && this.data.cfg.brandPrimary) || '#3B4252';
         wx.setNavigationBarColor({ frontColor: '#ffffff', backgroundColor: bg, animation: { duration: 0 } });
@@ -119,23 +116,23 @@ Page({
         return !!this.getActiveOpenid();
     },
 
-    buildWatchedProgress(watchedCount = 0, allCount = 0) {
-        const safeWatchedCount = Math.max(0, Number(watchedCount) || 0);
+    buildReadProgress(readCount = 0, allCount = 0) {
+        const safeReadCount = Math.max(0, Number(readCount) || 0);
         const safeAllCount = Math.max(0, Number(allCount) || 0);
-        const watchedProgressPercent = safeAllCount > 0
-            ? Math.min(100, Math.round((safeWatchedCount / safeAllCount) * 100))
+        const readProgressPercent = safeAllCount > 0
+            ? Math.min(100, Math.round((safeReadCount / safeAllCount) * 100))
             : 0;
 
         return {
-            watchedProgressPercent,
-            watchedProgressText: `${watchedProgressPercent}%`,
-            watchedProgressWidth: `${watchedProgressPercent}%`
+            readProgressPercent,
+            readProgressText: `${readProgressPercent}%`,
+            readProgressWidth: `${readProgressPercent}%`
         };
     },
 
-    refreshMoviesAfterMarkChange() {
+    refreshBooksAfterMarkChange() {
         if (this.data.activeTab === 0) return;
-        this.updateFilteredMovies();
+        this.updateFilteredBooks();
     },
 
     checkLoginStatus() {
@@ -171,7 +168,7 @@ Page({
             wx.nextTick(() => {
                 adManager.showInterstitial('share_interstitial').then(() => {
                     wx.navigateTo({
-                        url: `/pages/genericList/share/share?type=${type}&theme=${this.data.theme}`,
+                        url: `/pages/genericBookList/share/share?type=${type}&theme=${this.data.theme}`,
                         complete: () => {
                             this._navigatingToShare = false;
                         }
@@ -269,91 +266,81 @@ Page({
     },
 
     // ─── 核心：使用聚合云函数 + 本地缓存加载数据 ───
-    async loadAllMovies(forceRefresh = false) {
+    async loadAllBooks(forceRefresh = false) {
         wx.showNavigationBarLoading();
         try {
             const openid = this.getActiveOpenid() || null;
-            const { movies, marks } = await DataLoader.loadMoviesData(this.data.theme, openid, forceRefresh, queryOptionsFor(this.data.cfg));
+            const { movies: rawBooks, marks } = await DataLoader.loadMoviesData(this.data.theme, openid, forceRefresh, queryOptionsFor(this.data.cfg));
 
             const cfg = this.data.cfg;
             const editionField = cfg.editionField || 'edition';
-            const allMovies = movies.map(m => {
-                // 信息行按数据实际有什么就显示什么，不跟 cfg.showEdition 强绑定——
-                // 有些主题设计上不显示"第X届"（如 rank 榜单类），但豆瓣详情可能已经把导演/国家自动补上了，
-                // 这部分数据只要存在就该露出来，不能因为该主题不显示届数就整行隐藏
+            const allBooks = rawBooks.map(b => {
                 const metaParts = [];
-                const editionValue = m[editionField];
+                const editionValue = b[editionField];
                 if (cfg.showEdition && editionValue != null) {
-                    metaParts.push({ type: 'edition', text: `第${editionValue}届 · ${m.year}年` });
+                    metaParts.push({ type: 'edition', text: `第${editionValue}届 · ${b.year}年` });
+                } else if (cfg.showYear && b.year != null) {
+                    // 按年份评选、无“届”概念的奖项（如纽伯瑞金奖）：只显示年份
+                    metaParts.push({ type: 'edition', text: `${b.year}年` });
                 }
-                // 获奖人（表演奖如最佳男/女主角：奖颁给演员本人，名单里带 winner 字段）——
-                // 放在导演之前突出显示；其它主题没有 winner，不渲染
-                if (m.winner) {
-                    metaParts.push({ type: 'winner', text: m.winner });
-                }
-                if (m.director) {
-                    metaParts.push({ type: 'director', text: m.director });
-                }
-                const countryTags = (m.country || '').split('、').map(s => s.trim()).filter(Boolean);
-                if (countryTags.length) {
-                    metaParts.push({ type: 'country', tags: countryTags });
+                if (b.author) {
+                    metaParts.push({ type: 'author', text: b.author });
                 }
                 return {
-                    ...m,
-                    _id: String(m._id),
+                    ...b,
+                    _id: String(b._id),
                     metaParts,
-                    // thumbCover：优先取 originalCover（原始 douban URL）转缩略图，cover 保留用于海报生成
-                    thumbCover: imageCacheManager.getThumbnailUrl(m.cover || m.coverUrl || m.originalCover, 'list')
+                    thumbCover: imageCacheManager.getThumbnailUrl(b.cover || b.coverUrl || b.originalCover, 'list')
                 };
             });
-            this.data.allMovies = allMovies;
-            this.data.allCount = allMovies.length;
+            this.data.allBooks = allBooks;
+            this.data.allCount = allBooks.length;
 
-            const { markStatusMap, markDateMap, markRecordIdMap, watchedIds, wishIds, stats } = DataLoader.processMarks(marks, allMovies);
+            const { markStatusMap, markDateMap, markRecordIdMap, readIds, wishIds, stats } = DataLoader.processBookMarks(marks, allBooks);
 
             this.setData({
-                markStatusMap, markDateMap, markRecordIdMap, watchedIds, wishIds,
-                watchedCount: stats.watched, wishCount: stats.wish,
-                unwatchedCount: stats.unwatched, allCount: allMovies.length,
-                ...this.buildWatchedProgress(stats.watched, allMovies.length),
-                allMovies, movies: allMovies
+                markStatusMap, markDateMap, markRecordIdMap, readIds, wishIds,
+                readCount: stats.read, wishCount: stats.wish,
+                unreadCount: stats.unread, allCount: allBooks.length,
+                ...this.buildReadProgress(stats.read, allBooks.length),
+                allBooks, books: allBooks
             }, () => {
-                this.updateFilteredMovies();
+                this.updateFilteredBooks();
                 wx.hideNavigationBarLoading();
             });
         } catch (err) {
-            console.error('加载电影/标记数据失败:', err);
+            console.error('加载图书/标记数据失败:', err);
             this.setData({
-                allMovies: [],
-                movies: [],
+                allBooks: [],
+                books: [],
                 markStatusMap: {},
                 markDateMap: {},
                 markRecordIdMap: {},
-                watchedCount: 0,
+                readCount: 0,
                 wishCount: 0,
-                unwatchedCount: 0,
+                unreadCount: 0,
                 allCount: 0,
-                ...this.buildWatchedProgress(0, 0)
+                ...this.buildReadProgress(0, 0)
             });
             wx.showToast({ title: '暂无数据或加载失败', icon: 'none' });
             wx.hideNavigationBarLoading();
         }
     },
 
-    // ─── 仅刷新标记（登录后调用，不重复拉取电影列表）───
+    // ─── 仅刷新标记（登录后调用，不重复拉取图书列表）───
     async loadUserMarks() {
         const openid = this.getActiveOpenid();
         if (!openid) return;
         wx.showNavigationBarLoading();
         try {
             const { marks } = await DataLoader.loadMoviesData(this.data.theme, openid, false, queryOptionsFor(this.data.cfg));
-            const { markStatusMap, markDateMap, markRecordIdMap, watchedIds, wishIds, stats } = DataLoader.processMarks(marks, this.data.allMovies);
+            const { markStatusMap, markDateMap, markRecordIdMap, readIds, wishIds, stats } = DataLoader.processBookMarks(marks, this.data.allBooks);
             this.setData({
-                markStatusMap, markDateMap, markRecordIdMap, watchedIds, wishIds,
-                watchedCount: stats.watched, wishCount: stats.wish, unwatchedCount: stats.unwatched,
-                ...this.buildWatchedProgress(stats.watched, this.data.allMovies.length)
+                markStatusMap, markDateMap, markRecordIdMap, readIds, wishIds,
+                readCount: stats.read, wishCount: stats.wish, unreadCount: stats.unread,
+                ...this.buildReadProgress(stats.read, this.data.allBooks.length)
             }, () => {
-                this.updateFilteredMovies();
+                this.updateFilteredBooks();
                 wx.hideNavigationBarLoading();
             });
         } catch (err) {
@@ -362,104 +349,104 @@ Page({
         }
     },
 
-    updateFilteredMovies() {
-        const { allMovies, markStatusMap, activeTab } = this.data;
-        let movies = [];
-        if (activeTab === 0) movies = allMovies;
-        else if (activeTab === 1) movies = allMovies.filter(m => markStatusMap[m._id] === 'watched');
-        else if (activeTab === 2) movies = allMovies.filter(m => markStatusMap[m._id] === 'wish');
-        else if (activeTab === 3) movies = allMovies.filter(m => !markStatusMap[m._id]);
-        movies = movies.map(movie => ({ ...movie, checked: this.data.selectedMovieIds.includes(String(movie._id)) }));
-        this.setData({ movies });
+    updateFilteredBooks() {
+        const { allBooks, markStatusMap, activeTab } = this.data;
+        let books = [];
+        if (activeTab === 0) books = allBooks;
+        else if (activeTab === 1) books = allBooks.filter(b => markStatusMap[b._id] === 'read');
+        else if (activeTab === 2) books = allBooks.filter(b => markStatusMap[b._id] === 'wish');
+        else if (activeTab === 3) books = allBooks.filter(b => !markStatusMap[b._id]);
+        books = books.map(book => ({ ...book, checked: this.data.selectedBookIds.includes(String(book._id)) }));
+        this.setData({ books });
     },
 
     onTabChange(e) {
         const idx = Number(e.currentTarget.dataset.idx);
-        this.setData({ activeTab: idx, isBatchEditing: false, selectedMovieIds: [] }, this.updateFilteredMovies);
+        this.setData({ activeTab: idx, isBatchEditing: false, selectedBookIds: [] }, this.updateFilteredBooks);
     },
 
     recalculateMarkStats(markStatusMap) {
-        let watchedCount = 0;
+        let readCount = 0;
         let wishCount = 0;
-        const allCount = this.data.allMovies.length;
+        const allCount = this.data.allBooks.length;
 
-        Object.keys(markStatusMap).forEach(movieId => {
-            const status = markStatusMap[movieId];
-            if (status === 'watched') watchedCount++;
+        Object.keys(markStatusMap).forEach(bookId => {
+            const status = markStatusMap[bookId];
+            if (status === 'read') readCount++;
             else if (status === 'wish') wishCount++;
         });
 
         return {
-            watchedCount,
+            readCount,
             wishCount,
-            unwatchedCount: Math.max(0, allCount - watchedCount - wishCount),
-            watchedIds: Object.keys(markStatusMap).filter(movieId => markStatusMap[movieId] === 'watched'),
-            wishIds: Object.keys(markStatusMap).filter(movieId => markStatusMap[movieId] === 'wish')
+            unreadCount: Math.max(0, allCount - readCount - wishCount),
+            readIds: Object.keys(markStatusMap).filter(bookId => markStatusMap[bookId] === 'read'),
+            wishIds: Object.keys(markStatusMap).filter(bookId => markStatusMap[bookId] === 'wish')
         };
     },
 
-    applyBatchMarksLocally(movieIds, status) {
+    applyBatchMarksLocally(bookIds, status) {
         const markStatusMap = { ...this.data.markStatusMap };
         const markDateMap = { ...this.data.markDateMap };
         const now = this.formatMarkDate(new Date().toISOString());
 
-        movieIds.forEach(movieId => {
-            const normalizedMovieId = String(movieId);
-            if (status === 'unwatched') {
-                delete markStatusMap[normalizedMovieId];
-                delete markDateMap[normalizedMovieId];
+        bookIds.forEach(bookId => {
+            const normalizedBookId = String(bookId);
+            if (status === 'unread') {
+                delete markStatusMap[normalizedBookId];
+                delete markDateMap[normalizedBookId];
             } else {
-                markStatusMap[normalizedMovieId] = status;
-                markDateMap[normalizedMovieId] = now;
+                markStatusMap[normalizedBookId] = status;
+                markDateMap[normalizedBookId] = now;
             }
         });
 
-        const { watchedCount, wishCount, unwatchedCount, watchedIds, wishIds } = this.recalculateMarkStats(markStatusMap);
+        const { readCount, wishCount, unreadCount, readIds, wishIds } = this.recalculateMarkStats(markStatusMap);
 
         this.setData({
             markStatusMap,
             markDateMap,
-            watchedIds,
+            readIds,
             wishIds,
-            watchedCount,
+            readCount,
             wishCount,
-            unwatchedCount,
-            ...this.buildWatchedProgress(watchedCount, this.data.allMovies.length),
+            unreadCount,
+            ...this.buildReadProgress(readCount, this.data.allBooks.length),
             isBatchEditing: false,
-            selectedMovieIds: []
+            selectedBookIds: []
         }, () => {
-            this.updateFilteredMovies();
+            this.updateFilteredBooks();
         });
     },
 
-    applySingleMarkLocally(movieId, status, markedAt, recordId) {
+    applySingleMarkLocally(bookId, status, markedAt, recordId) {
         const markStatusMap = { ...this.data.markStatusMap };
         const markDateMap = { ...this.data.markDateMap };
         const markRecordIdMap = { ...this.data.markRecordIdMap };
-        const oldStatus = markStatusMap[movieId];
+        const oldStatus = markStatusMap[bookId];
 
-        markStatusMap[movieId] = status;
-        markDateMap[movieId] = this.formatMarkDate(markedAt);
+        markStatusMap[bookId] = status;
+        markDateMap[bookId] = this.formatMarkDate(markedAt);
         if (recordId) {
-            markRecordIdMap[movieId] = recordId;
+            markRecordIdMap[bookId] = recordId;
         }
 
-        let { watchedCount, wishCount, unwatchedCount } = this.data;
-        if (oldStatus === 'watched') watchedCount--;
+        let { readCount, wishCount, unreadCount } = this.data;
+        if (oldStatus === 'read') readCount--;
         else if (oldStatus === 'wish') wishCount--;
-        else unwatchedCount--;
+        else unreadCount--;
 
-        if (status === 'watched') watchedCount++;
+        if (status === 'read') readCount++;
         else if (status === 'wish') wishCount++;
 
         const nextData = {
             markStatusMap,
             markDateMap,
             markRecordIdMap,
-            watchedCount,
+            readCount,
             wishCount,
-            unwatchedCount,
-            ...this.buildWatchedProgress(watchedCount, this.data.allMovies.length)
+            unreadCount,
+            ...this.buildReadProgress(readCount, this.data.allBooks.length)
         };
 
         if (this.data.activeTab === 0) {
@@ -468,33 +455,33 @@ Page({
         }
 
         this.setData(nextData, () => {
-            this.refreshMoviesAfterMarkChange();
+            this.refreshBooksAfterMarkChange();
         });
     },
 
-    restoreSingleMarkLocally(movieId, snapshot) {
+    restoreSingleMarkLocally(bookId, snapshot) {
         const markStatusMap = { ...this.data.markStatusMap };
         const markDateMap = { ...this.data.markDateMap };
         const markRecordIdMap = { ...this.data.markRecordIdMap };
 
-        if (snapshot.status) markStatusMap[movieId] = snapshot.status;
-        else delete markStatusMap[movieId];
+        if (snapshot.status) markStatusMap[bookId] = snapshot.status;
+        else delete markStatusMap[bookId];
 
-        if (snapshot.date) markDateMap[movieId] = snapshot.date;
-        else delete markDateMap[movieId];
+        if (snapshot.date) markDateMap[bookId] = snapshot.date;
+        else delete markDateMap[bookId];
 
-        if (snapshot.recordId) markRecordIdMap[movieId] = snapshot.recordId;
-        else delete markRecordIdMap[movieId];
+        if (snapshot.recordId) markRecordIdMap[bookId] = snapshot.recordId;
+        else delete markRecordIdMap[bookId];
 
-        const { watchedCount, wishCount, unwatchedCount } = this.recalculateMarkStats(markStatusMap);
+        const { readCount, wishCount, unreadCount } = this.recalculateMarkStats(markStatusMap);
         const nextData = {
             markStatusMap,
             markDateMap,
             markRecordIdMap,
-            watchedCount,
+            readCount,
             wishCount,
-            unwatchedCount,
-            ...this.buildWatchedProgress(watchedCount, this.data.allMovies.length)
+            unreadCount,
+            ...this.buildReadProgress(readCount, this.data.allBooks.length)
         };
 
         if (this.data.activeTab === 0) {
@@ -503,7 +490,7 @@ Page({
         }
 
         this.setData(nextData, () => {
-            this.refreshMoviesAfterMarkChange();
+            this.refreshBooksAfterMarkChange();
         });
     },
 
@@ -528,47 +515,48 @@ Page({
             return;
         }
 
-        const movieId = String(e.currentTarget.dataset.id);
-        const type = e.currentTarget.dataset.type;
+        const bookId = String(e.currentTarget.dataset.id);
+        const type = e.currentTarget.dataset.type; // 'read' | 'wish'
+        const source = (this.data.cfg && this.data.cfg.source) || 'generic';
         const runOptimisticMark = () => {
             if (!this._pendingMarkMap) this._pendingMarkMap = {};
-            if (this._pendingMarkMap[movieId]) return;
+            if (this._pendingMarkMap[bookId]) return;
 
             const snapshot = {
-                status: this.data.markStatusMap[movieId] || '',
-                date: this.data.markDateMap[movieId] || '',
-                recordId: this.data.markRecordIdMap[movieId] || ''
+                status: this.data.markStatusMap[bookId] || '',
+                date: this.data.markDateMap[bookId] || '',
+                recordId: this.data.markRecordIdMap[bookId] || ''
             };
             const now = new Date().toISOString();
             const db = wx.cloud.database();
-            const existingRecordId = this.data.markRecordIdMap[movieId];
+            const existingRecordId = this.data.markRecordIdMap[bookId];
 
-            this._pendingMarkMap[movieId] = true;
-            this.applySingleMarkLocally(movieId, type, now, existingRecordId);
-            this.showCustomToast(type === 'watched' ? '✓ 已标记为已看' : '✓ 已标记为想看');
+            this._pendingMarkMap[bookId] = true;
+            this.applySingleMarkLocally(bookId, type, now, existingRecordId);
+            this.showCustomToast(type === 'read' ? '✓ 已标记为已读' : '✓ 已标记为想读');
 
             const persistMark = existingRecordId
-                ? db.collection('Marks').doc(existingRecordId).update({
-                    data: { status: type, marked_at: now }
+                ? db.collection('BookMarks').doc(existingRecordId).update({
+                    data: { status: type, marked_at: now, source }
                 })
-                : db.collection('Marks').add({
-                    data: { movieId, openid, status: type, marked_at: now }
+                : db.collection('BookMarks').add({
+                    data: { bookId, openid, status: type, marked_at: now, source }
                 });
 
             persistMark.then(res => {
                 if (!existingRecordId && res && res._id) {
-                    const markRecordIdMap = { ...this.data.markRecordIdMap, [movieId]: res._id };
+                    const markRecordIdMap = { ...this.data.markRecordIdMap, [bookId]: res._id };
                     this.setData({ markRecordIdMap });
                 }
             }).catch(err => {
                 console.error('标记失败:', err);
-                this.restoreSingleMarkLocally(movieId, snapshot);
+                this.restoreSingleMarkLocally(bookId, snapshot);
                 wx.showToast({ title: '标记失败，请重试', icon: 'none' });
             }).finally(() => {
-                delete this._pendingMarkMap[movieId];
+                delete this._pendingMarkMap[bookId];
             });
         };
-        if (!movieId || !type || !openid) {
+        if (!bookId || !type || !openid) {
             wx.showToast({ title: '数据不完整', icon: 'none' }); return;
         }
         runOptimisticMark();
@@ -593,71 +581,72 @@ Page({
 
     onStartBatchEdit() {
         if (!this.hasLogin()) { this.onGetUserProfile(); return; }
-        this.setData({ isBatchEditing: true, selectedMovieIds: [] });
-        this.updateFilteredMovies();
+        this.setData({ isBatchEditing: true, selectedBookIds: [] });
+        this.updateFilteredBooks();
     },
 
     onCancelBatchEdit() {
-        this.setData({ isBatchEditing: false, selectedMovieIds: [] });
-        this.updateFilteredMovies();
+        this.setData({ isBatchEditing: false, selectedBookIds: [] });
+        this.updateFilteredBooks();
     },
 
-    onMovieCheck(e) {
-        const movieId = e.currentTarget.dataset.movieId;
-        if (movieId === undefined || movieId === null) return;
+    onBookCheck(e) {
+        const bookId = e.currentTarget.dataset.bookId;
+        if (bookId === undefined || bookId === null) return;
 
-        let selectedMovieIds = this.data.selectedMovieIds;
-        const index = selectedMovieIds.indexOf(movieId);
+        let selectedBookIds = this.data.selectedBookIds;
+        const index = selectedBookIds.indexOf(bookId);
         let checked;
         if (index > -1) {
-            selectedMovieIds.splice(index, 1);
+            selectedBookIds.splice(index, 1);
             checked = false;
         } else {
-            selectedMovieIds = [...selectedMovieIds, movieId];
+            selectedBookIds = [...selectedBookIds, bookId];
             checked = true;
         }
 
-        const updatedMovies = this.data.movies.map(movie => {
-            if (String(movie._id) === String(movieId)) return { ...movie, checked };
-            return movie;
+        const updatedBooks = this.data.books.map(book => {
+            if (String(book._id) === String(bookId)) return { ...book, checked };
+            return book;
         });
-        this.setData({ selectedMovieIds, movies: updatedMovies });
+        this.setData({ selectedBookIds, books: updatedBooks });
     },
 
-    onBatchWatch() {
-        if (this.data.selectedMovieIds.length === 0) {
-            wx.showToast({ title: '请选择电影', icon: 'none' }); return;
+    onBatchRead() {
+        if (this.data.selectedBookIds.length === 0) {
+            wx.showToast({ title: '请选择图书', icon: 'none' }); return;
         }
-        this.batchUpdateMarks(this.data.selectedMovieIds, 'watched');
+        this.batchUpdateBookMarks(this.data.selectedBookIds, 'read');
     },
 
     onBatchWish() {
-        if (this.data.selectedMovieIds.length === 0) {
-            wx.showToast({ title: '请选择电影', icon: 'none' }); return;
+        if (this.data.selectedBookIds.length === 0) {
+            wx.showToast({ title: '请选择图书', icon: 'none' }); return;
         }
-        this.batchUpdateMarks(this.data.selectedMovieIds, 'wish');
+        this.batchUpdateBookMarks(this.data.selectedBookIds, 'wish');
     },
 
-    onBatchUnwatch() {
-        if (this.data.selectedMovieIds.length === 0) {
-            wx.showToast({ title: '请选择电影', icon: 'none' }); return;
+    onBatchUnread() {
+        if (this.data.selectedBookIds.length === 0) {
+            wx.showToast({ title: '请选择图书', icon: 'none' }); return;
         }
-        this.batchUpdateMarks(this.data.selectedMovieIds, 'unwatched');
+        this.batchUpdateBookMarks(this.data.selectedBookIds, 'unread');
     },
 
     // ─── 批量标记：一次云函数调用代替 N*2 次直接 DB 操作 ───
-    batchUpdateMarks(movieIds, status) {
+    batchUpdateBookMarks(bookIds, status) {
         const openid = this.getActiveOpenid();
         if (!openid) { wx.showToast({ title: '请先登录', icon: 'none' }); return; }
+        const source = (this.data.cfg && this.data.cfg.source) || 'generic';
 
         wx.showLoading({ title: '批量更新中...' });
         wx.cloud.callFunction({
-            name: 'batchUpdateMarks',
-            data: { movieIds, status, openid },
+            name: 'batchUpdateBookMarks',
+            data: { bookIds, status, openid, source },
             success: res => {
                 wx.hideLoading();
                 if (res.result && res.result.success) {
-                    this.applyBatchMarksLocally(movieIds, status);
+                    this.applyBatchMarksLocally(bookIds, status);
                     wx.showToast({ title: '批量标记成功', icon: 'success' });
                     setTimeout(() => { this.loadUserMarks(); }, 300);
                 } else {
@@ -673,42 +662,42 @@ Page({
     },
 
     onImageError(e) {
-        const movieId = e.currentTarget.dataset.movieId;
-        if (movieId) {
-            this.tryFallbackImage(movieId);
+        const bookId = e.currentTarget.dataset.bookId;
+        if (bookId) {
+            this.tryFallbackImage(bookId);
         }
     },
 
-    tryFallbackImage(movieId) {
-        const movie = this.data.movies.find(m => String(m._id) === String(movieId));
-        if (movie && movie.originalCover && movie.cover !== movie.originalCover) {
-            this.updateMovieImage(movieId, movie.originalCover);
+    tryFallbackImage(bookId) {
+        const book = this.data.books.find(b => String(b._id) === String(bookId));
+        if (book && book.originalCover && book.cover !== book.originalCover) {
+            this.updateBookImage(bookId, book.originalCover);
         } else {
-            this.updateMovieImage(movieId, 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQ1MCIgdmlld0JveD0iMCAwIDMwMCA0NTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iNDUwIiBmaWxsPSIjRjVGNUY1Ii8+CjxwYXRoIGQ9Ik0xNTAgMjAwTDEyMCAyNTBMMTUwIDMwMEwyMDAgMjUwTDE1MCAyMDBaIiBmaWxsPSIjQ0NDQ0NDIi8+Cjx0ZXh0IHg9IjE1MCIgeT0iMzUwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOTk5OTk5IiBmb250LXNpemU9IjE0Ij7lm77niYfmlrDpl7vnpL7kvJ08L3RleHQ+Cjwvc3ZnPgo=');
+            this.updateBookImage(bookId, 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQ1MCIgdmlld0JveD0iMCAwIDMwMCA0NTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iNDUwIiBmaWxsPSIjRjVGNUY1Ii8+CjxwYXRoIGQ9Ik0xNTAgMjAwTDEyMCAyNTBMMTUwIDMwMEwyMDAgMjUwTDE1MCAyMDBaIiBmaWxsPSIjQ0NDQ0NDIi8+Cjx0ZXh0IHg9IjE1MCIgeT0iMzUwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOTk5OTk5IiBmb250LXNpemU9IjE0Ij7lm77niYfmlrDpl7vnpL7kvJ08L3RleHQ+Cjwvc3ZnPgo=');
         }
     },
 
-    // 只对命中的下标做定点 setData，避免把 250 条电影数组整体回传给视图层
-    updateMovieImage(movieId, imageUrl) {
-        const targetId = String(movieId);
+    // 只对命中的下标做定点 setData，避免把整个图书数组整体回传给视图层
+    updateBookImage(bookId, imageUrl) {
+        const targetId = String(bookId);
         const updates = {};
-        const mIdx = this.data.movies.findIndex(m => String(m._id) === targetId);
-        if (mIdx >= 0) {
-            updates[`movies[${mIdx}].cover`] = imageUrl;
-            updates[`movies[${mIdx}].thumbCover`] = imageUrl;
+        const bIdx = this.data.books.findIndex(b => String(b._id) === targetId);
+        if (bIdx >= 0) {
+            updates[`books[${bIdx}].cover`] = imageUrl;
+            updates[`books[${bIdx}].thumbCover`] = imageUrl;
         }
-        const aIdx = this.data.allMovies.findIndex(m => String(m._id) === targetId);
+        const aIdx = this.data.allBooks.findIndex(b => String(b._id) === targetId);
         if (aIdx >= 0) {
-            updates[`allMovies[${aIdx}].cover`] = imageUrl;
-            updates[`allMovies[${aIdx}].thumbCover`] = imageUrl;
+            updates[`allBooks[${aIdx}].cover`] = imageUrl;
+            updates[`allBooks[${aIdx}].thumbCover`] = imageUrl;
         }
         if (Object.keys(updates).length) this.setData(updates);
     },
 
     onShareAppMessage() {
         return {
-            title: `${this.data.cfg.title} - 标记你的观影清单`,
-            path: `/pages/genericList/list/list?theme=${this.data.theme}`
+            title: `${this.data.cfg.title} - 记录你的阅读旅程`,
+            path: `/pages/genericBookList/list/list?theme=${this.data.theme}`
         };
     },
 

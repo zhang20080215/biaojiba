@@ -1,5 +1,6 @@
 var adConfig = require('../../utils/adConfig')
 var userStore = require('../../utils/userStore.js')
+var themeRegistry = require('../../utils/themeRegistry.js')
 
 // 每日主题横排块的图标/底色/文字色（按主题 id）—— 暖调协调配色
 var DAILY_BLOCK_META = {
@@ -20,8 +21,15 @@ var DYNAMIC_COVER_THEMES = [
   { id: 'palme_dor_movies', theme: 'palmeDor' },
   { id: 'oscar_screenplay_movies', theme: 'oscarScreenplay' },
   { id: 'oscar_foreign_movies', theme: 'oscarForeign' },
+  { id: 'oscar_director_movies', theme: 'oscarDirector' },
+  { id: 'oscar_vfx_movies', theme: 'oscarVFX' },
+  { id: 'oscar_actor_movies', theme: 'oscarActor' },
+  { id: 'oscar_actress_movies', theme: 'oscarActress' },
   { id: 'rt_action_movies', theme: 'rtAction' },
-  { id: 'letterboxd500_movies', theme: 'letterboxd500' }
+  { id: 'letterboxd500_movies', theme: 'letterboxd500' },
+  // collection 省略时默认 generic_theme_movies；读书通用主题（generic_theme_books）显式指定
+  { id: 'maodun_books', theme: 'maodun', collection: 'generic_theme_books' },
+  { id: 'newbery_books', theme: 'newbery', collection: 'generic_theme_books' }
 ];
 
 Page({
@@ -108,6 +116,78 @@ Page({
         isNew: true,
         wishFrom: 'Mi**',
         url: '/pages/genericList/list/list?theme=oscarScreenplay'
+      },
+      {
+        id: 'oscar_director_movies',
+        title: '历届奥斯卡最佳导演',
+        description: '奥斯卡最佳导演历届获奖，标记你看过的封神之作',
+        image: '',
+        tintClass: 'oscar-director',
+        userCount: 0,
+        tag: '奥斯卡',
+        category: 'oscar',
+        isNew: true,
+        url: '/pages/genericList/list/list?theme=oscarDirector'
+      },
+      {
+        id: 'oscar_vfx_movies',
+        title: '历届奥斯卡最佳视觉效果',
+        description: '奥斯卡最佳视觉效果历届获奖，大银幕的想象力天花板',
+        image: '',
+        tintClass: 'oscar-vfx',
+        userCount: 0,
+        tag: '奥斯卡',
+        category: 'oscar',
+        isNew: true,
+        url: '/pages/genericList/list/list?theme=oscarVFX'
+      },
+      {
+        id: 'oscar_actor_movies',
+        title: '历届奥斯卡最佳男主角',
+        description: '奥斯卡影帝历届获奖，标记你看过的封神演技',
+        image: '',
+        tintClass: 'oscar-actor',
+        userCount: 0,
+        tag: '奥斯卡',
+        category: 'oscar',
+        isNew: true,
+        url: '/pages/genericList/list/list?theme=oscarActor'
+      },
+      {
+        id: 'oscar_actress_movies',
+        title: '历届奥斯卡最佳女主角',
+        description: '奥斯卡影后历届获奖，标记你看过的高光时刻',
+        image: '',
+        tintClass: 'oscar-actress',
+        userCount: 0,
+        tag: '奥斯卡',
+        category: 'oscar',
+        isNew: true,
+        url: '/pages/genericList/list/list?theme=oscarActress'
+      },
+      {
+        id: 'maodun_books',
+        title: '历届茅盾文学奖',
+        description: '中国长篇小说最高荣誉，标记你读过的茅盾文学奖获奖作品',
+        image: '',
+        tintClass: 'maodun',
+        userCount: 0,
+        tag: '读书',
+        category: 'reading',
+        isNew: true,
+        url: '/pages/genericBookList/list/list?theme=maodun'
+      },
+      {
+        id: 'newbery_books',
+        title: '纽伯瑞儿童文学金奖',
+        description: '美国儿童文学最高荣誉，标记你读过的纽伯瑞金奖作品',
+        image: '',
+        tintClass: 'newbery',
+        userCount: 0,
+        tag: '读书',
+        category: 'reading',
+        isNew: true,
+        url: '/pages/genericBookList/list/list?theme=newbery'
       },
       {
         id: 'douban_movies',
@@ -338,24 +418,100 @@ Page({
       themeClass: savedTheme
     });
 
+    // 云端注册表：先用本地缓存的新主题即时合入卡片（无网络等待），稍后 loadCloudRegistry 再拉最新
+    this._mergeCloudThemes(themeRegistry.readAll());
+
     this.checkLoginStatus();
     this.buildDailyBlocks();
     this.filterThemes('all');
 
     // 非关键数据加载延迟到首屏渲染后，避免拉长 onLoad 长任务
     wx.nextTick(() => {
+      this.loadCloudRegistry();
       this.loadUserCounts();
       this.loadDynamicCovers();
       this.initAds();
     });
   },
 
+  // ── 云端主题注册表（不用发版上新书单/影单）──
+  // 拉取最新注册表 → 写本地缓存 → 合入卡片；失败则维持缓存/硬编码兜底，分类页照常。
+  async loadCloudRegistry() {
+    try {
+      const res = await wx.cloud.callFunction({ name: 'getThemeRegistry', data: {} });
+      const result = res && res.result;
+      if (!result || !result.success || !Array.isArray(result.themes)) return;
+      themeRegistry.writeAll(result.themes);
+      const added = this._mergeCloudThemes(result.themes);
+      if (added) {
+        // 新合入的云端主题补封面和参与人数
+        this.loadDynamicCovers();
+        this.loadUserCounts();
+      }
+    } catch (e) {
+      console.warn('加载云端主题注册表失败', e);
+    }
+  },
+
+  // 把注册表文档构建成卡片并「前插」进 this.data.themes（按 id 去重，重复调用幂等）。
+  // 返回是否有新卡片合入。云端主题文档同时缓存在 this._cloudThemeDocs 供封面/人数派生。
+  _mergeCloudThemes(docs) {
+    if (!Array.isArray(docs) || docs.length === 0) return false;
+    this._cloudThemeDocs = docs;
+    const existingIds = new Set((this.data.themes || []).map(t => t.id));
+    const newCards = docs
+      .filter(d => d && d.theme && d.cardId && !existingIds.has(d.cardId))
+      .sort((a, b) => (a.order || 0) - (b.order || 0))
+      .map(d => this._buildCloudCard(d));
+    if (newCards.length === 0) return false;
+    // 前插：新主题排在网格最前，利于曝光
+    const themes = newCards.concat(this.data.themes || []);
+    this.setData({ themes });
+    this.filterThemes(this.data.activeTab);
+    return true;
+  },
+
+  _buildCloudCard(d) {
+    const isBook = d.type === 'book';
+    const base = isBook ? '/pages/genericBookList/list/list?theme=' : '/pages/genericList/list/list?theme=';
+    const primary = d.brandPrimary || '#3B4252';
+    const soft = d.brandSoft || primary;
+    return {
+      id: d.cardId,
+      title: d.title || (isBook ? '主题书单' : '主题片单'),
+      description: d.description || '',
+      image: '',
+      tintClass: '',
+      // 云端主题没有对应 wxss class，配色走内联 style
+      tintStyle: `background: linear-gradient(135deg, ${soft}80 0%, ${primary}80 100%);`,
+      coverStyle: `background: linear-gradient(135deg, ${soft} 0%, ${primary} 100%);`,
+      placeholderEmoji: d.placeholderEmoji || (isBook ? '📖' : '🎬'),
+      userCount: 0,
+      userCountText: this.formatUserCount(0),
+      tag: d.tag || (isBook ? '读书' : '电影'),
+      category: d.category || (isBook ? 'reading' : 'movie'),
+      isNew: !!d.newBadge,
+      newBadge: !!d.newBadge,
+      wishFrom: d.wishFrom || '',
+      url: base + d.theme,
+      _cloud: true,
+      _theme: d.theme,
+      _collection: isBook ? 'generic_theme_books' : 'generic_theme_movies',
+      _source: d.source || d.theme
+    };
+  },
+
   // 没有静态设计封面的主题：拉一次各自榜单 rank=1 的封面，拼成卡片图
   async loadDynamicCovers() {
     const db = wx.cloud.database();
+    // 硬编码老主题 + 云端注册表新主题，都用各自榜单 rank=1 的封面做卡片图
+    const cloudDyn = (this._cloudThemeDocs || []).map(d => ({
+      id: d.cardId, theme: d.theme, collection: d.type === 'book' ? 'generic_theme_books' : 'generic_theme_movies'
+    }));
+    const dynList = DYNAMIC_COVER_THEMES.concat(cloudDyn);
     const results = await Promise.allSettled(
-      DYNAMIC_COVER_THEMES.map(cfg =>
-        db.collection('generic_theme_movies')
+      dynList.map(cfg =>
+        db.collection(cfg.collection || 'generic_theme_movies')
           .where({ theme: cfg.theme, rank: 1 })
           .field({ cover: true })
           .limit(1)
@@ -365,7 +521,7 @@ Page({
 
     const covers = {};
     results.forEach((result, i) => {
-      const cfg = DYNAMIC_COVER_THEMES[i];
+      const cfg = dynList[i];
       if (result.status !== 'fulfilled') return;
       const doc = result.value.data && result.value.data[0];
       if (!doc || !doc.cover) return; // 没匹配到就让占位符继续兜底
@@ -670,12 +826,28 @@ Page({
         { id: 'palme_dor_movies', collection: 'generic_theme_movies', theme: 'palmeDor', topFiltered: false },
         { id: 'oscar_screenplay_movies', collection: 'generic_theme_movies', theme: 'oscarScreenplay', topFiltered: false },
         { id: 'oscar_foreign_movies', collection: 'generic_theme_movies', theme: 'oscarForeign', topFiltered: false },
+        { id: 'oscar_director_movies', collection: 'generic_theme_movies', theme: 'oscarDirector', topFiltered: false },
+        { id: 'oscar_vfx_movies', collection: 'generic_theme_movies', theme: 'oscarVFX', topFiltered: false },
+        { id: 'oscar_actor_movies', collection: 'generic_theme_movies', theme: 'oscarActor', topFiltered: false },
+        { id: 'oscar_actress_movies', collection: 'generic_theme_movies', theme: 'oscarActress', topFiltered: false },
         { id: 'rt_action_movies', collection: 'generic_theme_movies', theme: 'rtAction', topFiltered: false },
         { id: 'letterboxd500_movies', collection: 'generic_theme_movies', theme: 'letterboxd500', topFiltered: false },
-        // 书线：marks 集合是 BookMarks，主键是 bookId，按 source 字段区分豆瓣/微信读书
+        // 书线：marks 集合是 BookMarks，主键是 bookId，按 source 字段区分豆瓣/微信读书/各通用读书主题
         { id: 'douban_books', collection: 'douban_books', topFiltered: true, marksCollection: 'BookMarks', idField: 'bookId', source: 'douban' },
-        { id: 'weread_books', collection: 'weread_books', topFiltered: true, marksCollection: 'BookMarks', idField: 'bookId', source: 'weread' }
+        { id: 'weread_books', collection: 'weread_books', topFiltered: true, marksCollection: 'BookMarks', idField: 'bookId', source: 'weread' },
+        { id: 'maodun_books', collection: 'generic_theme_books', theme: 'maodun', topFiltered: false, marksCollection: 'BookMarks', idField: 'bookId', source: 'maodun' },
+        { id: 'newbery_books', collection: 'generic_theme_books', theme: 'newbery', topFiltered: false, marksCollection: 'BookMarks', idField: 'bookId', source: 'newbery' }
       ];
+
+    // 云端注册表新主题：按 type 拼参与人数统计配置（电影走 Marks，书走 BookMarks）
+    (this._cloudThemeDocs || []).forEach(d => {
+      if (!d || !d.cardId || !d.theme) return;
+      if (d.type === 'book') {
+        themeConfigs.push({ id: d.cardId, collection: 'generic_theme_books', theme: d.theme, topFiltered: false, marksCollection: 'BookMarks', idField: 'bookId', source: d.source || d.theme });
+      } else {
+        themeConfigs.push({ id: d.cardId, collection: 'generic_theme_movies', theme: d.theme, topFiltered: false });
+      }
+    });
 
     // 按 id 收集统计增量，最后统一合并到 this.data.themes —— 不持有调用开始时的旧快照，
     // 避免跟 loadDynamicCovers() 并发写入时互相用过时快照覆盖对方刚写的字段
@@ -748,6 +920,10 @@ Page({
       } else if (config.source === 'douban') {
         // 兼容老 BookMarks 记录无 source 字段（视为 douban）
         m.source = _.or([_.eq('douban'), _.exists(false)]);
+      } else if (config.source) {
+        // 各通用读书主题（generic_theme_books）自己的 source 值，精确匹配即可——
+        // bookId 已按主题前缀天然隔离，这里加过滤只是让统计口径更严谨
+        m.source = config.source;
       }
       return m;
     };

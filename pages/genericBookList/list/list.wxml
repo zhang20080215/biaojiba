@@ -1,4 +1,4 @@
-<!-- 通用榜单列表页（?theme=xxx 决定主题），走 enrichThemeMovies/generic_theme_movies 流水线的新主题共用 -->
+<!-- 通用读书榜单列表页（?theme=xxx 决定主题），走 enrichThemeBooks/generic_theme_books 流水线的新读书主题共用 -->
 <view class="page-root" style="--brand-primary:{{cfg.brandPrimary}};--brand-soft:{{cfg.brandSoft}};--brand-rgb:{{cfg.shadowRgb}};--shadow-cta: 0 6rpx 14rpx rgba({{cfg.shadowRgb}}, 0.28);">
 
   <!-- Hero 区（与 category 保持一致） -->
@@ -9,11 +9,11 @@
         <text class="app-slogan">{{cfg.slogan}}</text>
         <view class="hero-progress">
           <view class="hero-progress-head">
-            <text class="hero-progress-label">已看进度</text>
-            <text class="hero-progress-percent">{{watchedProgressText}}</text>
+            <text class="hero-progress-label">已读进度</text>
+            <text class="hero-progress-percent">{{readProgressText}}</text>
           </view>
           <view class="hero-progress-bar">
-            <view class="hero-progress-fill" style="width: {{watchedProgressWidth}};"></view>
+            <view class="hero-progress-fill" style="width: {{readProgressWidth}};"></view>
           </view>
         </view>
       </view>
@@ -24,9 +24,9 @@
   <view class="sticky-top-group">
     <view class="tabs-bar">
       <view class="tab {{activeTab === 0 ? 'active' : ''}}" data-idx="0" bindtap="onTabChange">全部({{allCount}})</view>
-      <view class="tab {{activeTab === 1 ? 'active' : ''}}" data-idx="1" bindtap="onTabChange">已看({{watchedCount}})</view>
-      <view class="tab {{activeTab === 2 ? 'active' : ''}}" data-idx="2" bindtap="onTabChange">想看({{wishCount}})</view>
-      <view class="tab {{activeTab === 3 ? 'active' : ''}}" data-idx="3" bindtap="onTabChange">未看({{unwatchedCount}})</view>
+      <view class="tab {{activeTab === 1 ? 'active' : ''}}" data-idx="1" bindtap="onTabChange">已读({{readCount}})</view>
+      <view class="tab {{activeTab === 2 ? 'active' : ''}}" data-idx="2" bindtap="onTabChange">想读({{wishCount}})</view>
+      <view class="tab {{activeTab === 3 ? 'active' : ''}}" data-idx="3" bindtap="onTabChange">未读({{unreadCount}})</view>
     </view>
 
     <!-- 操作区域（吸顶） -->
@@ -37,31 +37,31 @@
             <view class="icon-btn batch-icon" bindtap="onStartBatchEdit">批量标记</view>
           </block>
           <block wx:elif="{{isBatchEditing}}">
-            <view class="icon-btn action-watched" bindtap="onBatchWatch">批量已看</view>
-            <view class="icon-btn action-wish" bindtap="onBatchWish">批量想看</view>
-            <view class="icon-btn action-unwatched" bindtap="onBatchUnwatch">批量未看</view>
+            <view class="icon-btn action-watched" bindtap="onBatchRead">批量已读</view>
+            <view class="icon-btn action-wish" bindtap="onBatchWish">批量想读</view>
+            <view class="icon-btn action-unwatched" bindtap="onBatchUnread">批量未读</view>
             <view class="icon-btn action-cancel" bindtap="onCancelBatchEdit">取消</view>
           </block>
         </view>
         <view class="generate-card-wrapper" bindtap="onShareTap" wx:if="{{!isBatchEditing}}">
-          <view class="generate-card-btn">生成观影海报</view>
+          <view class="generate-card-btn">生成读书海报</view>
         </view>
       </view>
     </view>
   </view>
 
-  <!-- 电影列表区 -->
+  <!-- 图书列表区 -->
   <view class="movie-list">
-    <block wx:for="{{movies}}" wx:key="_id">
+    <block wx:for="{{books}}" wx:key="_id">
       <view wx:if="{{infeedSlots[index]}}" class="ad-infeed-container">
         <ad-custom unit-id="{{adUnitIds.movielist_infeed}}" data-position="{{index}}" bindload="onInfeedAdLoad" binderror="onInfeedAdError"></ad-custom>
       </view>
-      <view class="movie-row" bindtap="{{isBatchEditing ? 'onMovieCheck' : ''}}" data-movie-id="{{item._id}}">
+      <view class="movie-row" bindtap="{{isBatchEditing ? 'onBookCheck' : ''}}" data-book-id="{{item._id}}">
         <view wx:if="{{isBatchEditing}}" class="batch-checkbox-wrap">
-          <checkbox class="batch-checkbox" value="{{item._id}}" checked="{{item.checked}}" catchtap="onMovieCheck" data-movie-id="{{item._id}}" />
+          <checkbox class="batch-checkbox" value="{{item._id}}" checked="{{item.checked}}" catchtap="onBookCheck" data-book-id="{{item._id}}" />
         </view>
         <view class="movie-content {{isBatchEditing ? 'batch-editing' : ''}}">
-          <image class="movie-thumb" src="{{item.thumbCover || item.cover}}" lazy-load="true" mode="aspectFill" binderror="onImageError" data-movie-id="{{item._id}}" show-menu-by-longpress="false" />
+          <image class="movie-thumb" src="{{item.thumbCover || item.cover}}" lazy-load="true" mode="aspectFill" binderror="onImageError" data-book-id="{{item._id}}" show-menu-by-longpress="false" />
           <view class="movie-info">
             <view class="movie-title">
               <text class="movie-title-text" wx:if="{{cfg.showEdition}}">{{item.title}}</text>
@@ -74,23 +74,21 @@
               <block wx:for="{{item.metaParts}}" wx:for-item="part" wx:for-index="partIdx" wx:key="type">
                 <text class="meta-dot" wx:if="{{partIdx > 0}}">·</text>
                 <text class="meta-edition" wx:if="{{part.type === 'edition'}}">{{part.text}}</text>
-                <text class="meta-winner" wx:if="{{part.type === 'winner'}}">🏆{{part.text}}</text>
-                <text class="meta-item" wx:if="{{part.type === 'director'}}">{{part.text}}</text>
-                <text class="country-tag" wx:if="{{part.type === 'country'}}" wx:for="{{part.tags}}" wx:for-item="country" wx:key="*this">{{country}}</text>
+                <text class="meta-item" wx:if="{{part.type === 'author'}}">{{part.text}}</text>
               </block>
             </view>
             <view class="movie-meta-row">
               <text class="movie-rating-star">豆瓣 {{item.rating}}</text>
               <view class="movie-action" wx:if="{{!isBatchEditing}}">
-                <block wx:if="{{markStatusMap[item._id] === 'watched'}}">
-                  <view class="mark-tag watched">{{markDateMap[item._id]}}已看</view>
+                <block wx:if="{{markStatusMap[item._id] === 'read'}}">
+                  <view class="mark-tag watched">{{markDateMap[item._id]}}已读</view>
                 </block>
                 <block wx:elif="{{markStatusMap[item._id] === 'wish'}}">
-                  <view class="mark-tag wish">{{markDateMap[item._id]}}想看</view>
+                  <view class="mark-tag wish">{{markDateMap[item._id]}}想读</view>
                 </block>
                 <block wx:else>
-                  <view class="mark-btn mark-btn-wish" data-id="{{item._id}}" data-type="wish" catchtap="onMarkTap">想看</view>
-                  <view class="mark-btn" data-id="{{item._id}}" data-type="watched" catchtap="onMarkTap">已看</view>
+                  <view class="mark-btn mark-btn-wish" data-id="{{item._id}}" data-type="wish" catchtap="onMarkTap">想读</view>
+                  <view class="mark-btn" data-id="{{item._id}}" data-type="read" catchtap="onMarkTap">读过</view>
                 </block>
               </view>
             </view>
@@ -119,7 +117,7 @@
           </view>
           <view class="share-option-info">
             <text class="share-option-name">海报墙</text>
-            <text class="share-option-desc">已看电影封面拼成海报墙</text>
+            <text class="share-option-desc">已读图书封面拼成海报墙</text>
           </view>
           <text class="share-option-arrow">›</text>
         </view>
@@ -129,7 +127,7 @@
           </view>
           <view class="share-option-info">
             <text class="share-option-name">文字卡片</text>
-            <text class="share-option-desc">全部电影标记状态一览</text>
+            <text class="share-option-desc">全部图书标记状态一览</text>
           </view>
           <text class="share-option-arrow">›</text>
         </view>
