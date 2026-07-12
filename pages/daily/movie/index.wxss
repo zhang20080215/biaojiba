@@ -739,6 +739,7 @@ page {
 /* 五角星（与添加页一致） */
 .edit-star-row {
   display: flex;
+  width: fit-content; /* 收缩到 5 星实际宽度(344rpx)，拖拽落点换算(starValueFromX)才准 */
   gap: 16rpx;
   padding: 4rpx 0;
 }
@@ -774,6 +775,16 @@ page {
   text-align: center;
   color: #F5C518;
 }
+/* 半星点按热区 */
+.star-hit {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  z-index: 2;
+}
+.star-hit-l { left: 0; }
+.star-hit-r { right: 0; }
 
 /* 心情网格 */
 .edit-mood-grid {
@@ -991,4 +1002,103 @@ page {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* ==================== 月/年 切换 + 年视图 ==================== */
+.period-toggle {
+  flex-shrink: 0;
+  display: inline-flex;
+  background: #EFE7D2;
+  border-radius: 18rpx;
+  padding: 4rpx;
+}
+.pt-item {
+  min-width: 64rpx;
+  height: 52rpx;
+  padding: 0 24rpx;
+  border-radius: 14rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6B6356;
+  font-size: 26rpx;
+  font-weight: 700;
+}
+.pt-item.active {
+  background: #FFFFFF;
+  color: #1A1A1A;
+}
+
+/* 年度电影墙：高度自适应、正常从上往下排（覆盖月墙的绝对贴底/wrap-reverse），按档位定尺寸 */
+.wall-box.year {
+  position: static;
+  height: auto;
+  overflow: visible;
+  margin-top: 24rpx;
+}
+.poster-wall.year {
+  position: static;
+  flex-wrap: wrap-reverse; /* 底排先排满、往上堆；不满的一排浮在顶部（配合 buildYearWall 的 ts 升序）*/
+  gap: 16rpx 12rpx;
+  padding-top: 8rpx;
+}
+.poster-wall.year.y5 .wall-item { width: 124rpx; height: 174rpx; }
+.poster-wall.year.y6 .wall-item { width: 102rpx; height: 143rpx; }
+.poster-wall.year.y7 .wall-item { width: 86rpx; height: 120rpx; }
+.poster-wall.year.y8 .wall-item { width: 74rpx; height: 104rpx; }
+.poster-wall.year.y9 .wall-item { width: 65rpx; height: 91rpx; }
+
+/* 年度日历：3×4 十二个月，每月九宫格 */
+.year-cal {
+  margin-top: 28rpx;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16rpx;
+}
+.year-cal-month {
+  background: #FFFFFF;
+  border: 2rpx solid #E8E0CC;
+  border-radius: 18rpx;
+  padding: 12rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+.year-cal-month.is-empty {
+  opacity: 0.5;
+}
+.ycm-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 4rpx;
+  height: 186rpx;
+}
+.ycm-cover {
+  width: 100%;
+  height: 100%;
+  border-radius: 6rpx;
+  background: #EFE7D2;
+}
+.ycm-empty {
+  position: absolute;
+  inset: 0;
+  border-radius: 8rpx;
+  background: #FAF6EB;
+}
+.ycm-foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.ycm-name {
+  font-size: 26rpx;
+  font-weight: 800;
+  color: #1A1A1A;
+}
+.ycm-count {
+  font-size: 20rpx;
+  color: #A89E8C;
+  font-weight: 600;
 }

@@ -105,12 +105,12 @@
           <text class="field-label">我的评分</text>
           <text class="rating-readout {{rating > 0 ? 'is-active' : ''}}">{{ratingLabel}}</text>
         </view>
-        <view class="star-row"
-              bindtouchstart="onStarTouchStart"
-              catchtouchmove="onStarTouchMove">
+        <view class="star-row" bindtouchstart="onStarTouchStart" catchtouchmove="onStarTouchMove">
           <view class="star" wx:for="{{stars}}" wx:key="index">
             <text class="star-base">★</text>
             <view class="star-fill star-{{item}}"><text class="star-glyph">★</text></view>
+            <view class="star-hit star-hit-l" catchtap="onStarTap" data-value="{{index + 0.5}}"></view>
+            <view class="star-hit star-hit-r" catchtap="onStarTap" data-value="{{index + 1}}"></view>
           </view>
         </view>
       </view>
