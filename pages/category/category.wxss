@@ -483,8 +483,14 @@
 .cover-tint.imdb { background: linear-gradient(135deg, rgba(224, 186, 64, 0.5) 0%, rgba(164, 132, 24, 0.5) 100%); }
 .cover-tint.boxoffice { background: linear-gradient(135deg, rgba(200, 94, 82, 0.5) 0%, rgba(154, 54, 46, 0.5) 100%); }
 .cover-tint.oscar-foreign { background: linear-gradient(135deg, rgba(160, 110, 124, 0.5) 0%, rgba(122, 59, 74, 0.5) 100%); }
+.cover-tint.oscar-director { background: linear-gradient(135deg, rgba(92, 155, 126, 0.5) 0%, rgba(47, 107, 79, 0.5) 100%); }
+.cover-tint.oscar-vfx { background: linear-gradient(135deg, rgba(79, 179, 204, 0.5) 0%, rgba(30, 122, 153, 0.5) 100%); }
+.cover-tint.oscar-actor { background: linear-gradient(135deg, rgba(201, 155, 94, 0.5) 0%, rgba(166, 118, 60, 0.5) 100%); }
+.cover-tint.oscar-actress { background: linear-gradient(135deg, rgba(208, 122, 160, 0.5) 0%, rgba(176, 71, 110, 0.5) 100%); }
 .cover-tint.rt-action { background: linear-gradient(135deg, rgba(100, 110, 128, 0.5) 0%, rgba(59, 66, 82, 0.5) 100%); }
 .cover-tint.letterboxd500 { background: linear-gradient(135deg, rgba(230, 150, 64, 0.5) 0%, rgba(200, 110, 20, 0.5) 100%); }
+.cover-tint.maodun { background: linear-gradient(135deg, rgba(181, 96, 92, 0.5) 0%, rgba(139, 46, 46, 0.5) 100%); }
+.cover-tint.newbery { background: linear-gradient(135deg, rgba(212, 169, 74, 0.5) 0%, rgba(184, 134, 11, 0.5) 100%); }
 
 /* 分类标签 — 封面左上角纯文字，不用胶囊底，靠文字阴影保证对比度 */
 .cover-tag-label {
@@ -592,16 +598,41 @@
 .cover-placeholder.oscar-foreign {
   background: linear-gradient(135deg, #A06E7C 0%, #7A3B4A 100%);
 }
+.cover-placeholder.oscar-director {
+  background: linear-gradient(135deg, #5C9B7E 0%, #2F6B4F 100%);
+}
+.cover-placeholder.oscar-vfx {
+  background: linear-gradient(135deg, #4FB3CC 0%, #1E7A99 100%);
+}
+.cover-placeholder.oscar-actor {
+  background: linear-gradient(135deg, #C99B5E 0%, #A6763C 100%);
+}
+.cover-placeholder.oscar-actress {
+  background: linear-gradient(135deg, #D07AA0 0%, #B0476E 100%);
+}
 .cover-placeholder.rt-action {
   background: linear-gradient(135deg, #5C6B7A 0%, #3B4252 100%);
 }
 .cover-placeholder.letterboxd500 {
   background: linear-gradient(135deg, #FF9933 0%, #E67300 100%);
 }
+.cover-placeholder.maodun {
+  background: linear-gradient(135deg, #B5605C 0%, #8B2E2E 100%);
+}
+.cover-placeholder.newbery {
+  background: linear-gradient(135deg, #D4A94A 0%, #B8860B 100%);
+}
 .cover-placeholder .placeholder-emoji {
   font-size: 56rpx;
   line-height: 1;
   margin-bottom: var(--space-1);
+}
+/* 云端注册表新主题占位卡：配色走内联 coverStyle，这里只保证文字为白 */
+.cover-placeholder.cloud .placeholder-text {
+  color: rgba(255, 255, 255, 0.95);
+}
+.cover-placeholder.cloud .placeholder-emoji {
+  filter: drop-shadow(0 1rpx 2rpx rgba(0, 0, 0, 0.2));
 }
 .cover-placeholder.rt-horror .placeholder-text,
 .cover-placeholder.rt-war .placeholder-text,
@@ -609,8 +640,14 @@
 .cover-placeholder.palme .placeholder-text,
 .cover-placeholder.oscar-screenplay .placeholder-text,
 .cover-placeholder.oscar-foreign .placeholder-text,
+.cover-placeholder.oscar-director .placeholder-text,
+.cover-placeholder.oscar-vfx .placeholder-text,
+.cover-placeholder.oscar-actor .placeholder-text,
+.cover-placeholder.oscar-actress .placeholder-text,
 .cover-placeholder.rt-action .placeholder-text,
-.cover-placeholder.letterboxd500 .placeholder-text {
+.cover-placeholder.letterboxd500 .placeholder-text,
+.cover-placeholder.maodun .placeholder-text,
+.cover-placeholder.newbery .placeholder-text {
   color: rgba(255, 255, 255, 0.95);
   font-weight: 600;
   letter-spacing: 2rpx;

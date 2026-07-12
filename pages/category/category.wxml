@@ -130,11 +130,11 @@
       <view class="card-cover">
         <block wx:if="{{item.image}}">
           <image class="cover-img" src="{{item.image}}" mode="{{item.imageMode || 'aspectFill'}}"></image>
-          <view class="cover-tint {{item.tintClass}}"></view>
+          <view class="cover-tint {{item.tintClass}}" style="{{item.tintStyle}}"></view>
         </block>
         <block wx:elif="{{item.dynamicCover}}">
           <image class="cover-img" src="{{item.dynamicCover.cover}}" mode="aspectFill"></image>
-          <view class="cover-tint {{item.tintClass}}"></view>
+          <view class="cover-tint {{item.tintClass}}" style="{{item.tintStyle}}"></view>
         </block>
         <view wx:elif="{{item.id === 'child_growth'}}" class="cover-placeholder growth">
           <view class="ruler-icon"></view>
@@ -174,6 +174,22 @@
           <text class="placeholder-emoji">🌍</text>
           <text class="placeholder-text">最佳外语片</text>
         </view>
+        <view wx:elif="{{item.id === 'oscar_director_movies'}}" class="cover-placeholder oscar-director">
+          <text class="placeholder-emoji">🎬</text>
+          <text class="placeholder-text">最佳导演</text>
+        </view>
+        <view wx:elif="{{item.id === 'oscar_vfx_movies'}}" class="cover-placeholder oscar-vfx">
+          <text class="placeholder-emoji">✨</text>
+          <text class="placeholder-text">最佳视觉效果</text>
+        </view>
+        <view wx:elif="{{item.id === 'oscar_actor_movies'}}" class="cover-placeholder oscar-actor">
+          <text class="placeholder-emoji">🎭</text>
+          <text class="placeholder-text">最佳男主角</text>
+        </view>
+        <view wx:elif="{{item.id === 'oscar_actress_movies'}}" class="cover-placeholder oscar-actress">
+          <text class="placeholder-emoji">👑</text>
+          <text class="placeholder-text">最佳女主角</text>
+        </view>
         <view wx:elif="{{item.id === 'rt_action_movies'}}" class="cover-placeholder rt-action">
           <text class="placeholder-emoji">💥</text>
           <text class="placeholder-text">动作电影</text>
@@ -182,9 +198,22 @@
           <text class="placeholder-emoji">🎞️</text>
           <text class="placeholder-text">Letterboxd Top 500</text>
         </view>
+        <view wx:elif="{{item.id === 'maodun_books'}}" class="cover-placeholder maodun">
+          <text class="placeholder-emoji">📚</text>
+          <text class="placeholder-text">茅盾文学奖</text>
+        </view>
+        <view wx:elif="{{item.id === 'newbery_books'}}" class="cover-placeholder newbery">
+          <text class="placeholder-emoji">🏅</text>
+          <text class="placeholder-text">纽伯瑞金奖</text>
+        </view>
+        <view wx:else class="cover-placeholder cloud" style="{{item.coverStyle}}">
+          <text class="placeholder-emoji">{{item.placeholderEmoji}}</text>
+          <text class="placeholder-text">{{item.title}}</text>
+        </view>
+        <!-- 上面 wx:else 是云端注册表新主题的封面兜底（无对应占位 class，配色走内联 coverStyle） -->
         <view class="cover-mask"></view>
         <text class="cover-tag-label">{{item.tag}}</text>
-        <view wx:if="{{item.id === 'palme_dor_movies' || item.id === 'oscar_screenplay_movies' || item.id === 'oscar_foreign_movies' || item.id === 'rt_action_movies' || item.id === 'letterboxd500_movies'}}" class="new-badge">
+        <view wx:if="{{item.id === 'palme_dor_movies' || item.id === 'oscar_screenplay_movies' || item.id === 'oscar_foreign_movies' || item.id === 'rt_action_movies' || item.id === 'letterboxd500_movies' || item.id === 'maodun_books' || item.id === 'newbery_books' || item.id === 'oscar_director_movies' || item.id === 'oscar_vfx_movies' || item.id === 'oscar_actor_movies' || item.id === 'oscar_actress_movies' || item.newBadge}}" class="new-badge">
           <text>NEW</text>
         </view>
         <view wx:if="{{item.wishFrom}}" class="wish-badge">
@@ -235,11 +264,11 @@
       <view class="card-cover">
         <block wx:if="{{item.image}}">
           <image class="cover-img" src="{{item.image}}" mode="{{item.imageMode || 'aspectFill'}}"></image>
-          <view class="cover-tint {{item.tintClass}}"></view>
+          <view class="cover-tint {{item.tintClass}}" style="{{item.tintStyle}}"></view>
         </block>
         <block wx:elif="{{item.dynamicCover}}">
           <image class="cover-img" src="{{item.dynamicCover.cover}}" mode="aspectFill"></image>
-          <view class="cover-tint {{item.tintClass}}"></view>
+          <view class="cover-tint {{item.tintClass}}" style="{{item.tintStyle}}"></view>
         </block>
         <view wx:elif="{{item.id === 'child_growth'}}" class="cover-placeholder growth">
           <view class="ruler-icon"></view>
@@ -279,6 +308,22 @@
           <text class="placeholder-emoji">🌍</text>
           <text class="placeholder-text">最佳外语片</text>
         </view>
+        <view wx:elif="{{item.id === 'oscar_director_movies'}}" class="cover-placeholder oscar-director">
+          <text class="placeholder-emoji">🎬</text>
+          <text class="placeholder-text">最佳导演</text>
+        </view>
+        <view wx:elif="{{item.id === 'oscar_vfx_movies'}}" class="cover-placeholder oscar-vfx">
+          <text class="placeholder-emoji">✨</text>
+          <text class="placeholder-text">最佳视觉效果</text>
+        </view>
+        <view wx:elif="{{item.id === 'oscar_actor_movies'}}" class="cover-placeholder oscar-actor">
+          <text class="placeholder-emoji">🎭</text>
+          <text class="placeholder-text">最佳男主角</text>
+        </view>
+        <view wx:elif="{{item.id === 'oscar_actress_movies'}}" class="cover-placeholder oscar-actress">
+          <text class="placeholder-emoji">👑</text>
+          <text class="placeholder-text">最佳女主角</text>
+        </view>
         <view wx:elif="{{item.id === 'rt_action_movies'}}" class="cover-placeholder rt-action">
           <text class="placeholder-emoji">💥</text>
           <text class="placeholder-text">动作电影</text>
@@ -287,9 +332,22 @@
           <text class="placeholder-emoji">🎞️</text>
           <text class="placeholder-text">Letterboxd Top 500</text>
         </view>
+        <view wx:elif="{{item.id === 'maodun_books'}}" class="cover-placeholder maodun">
+          <text class="placeholder-emoji">📚</text>
+          <text class="placeholder-text">茅盾文学奖</text>
+        </view>
+        <view wx:elif="{{item.id === 'newbery_books'}}" class="cover-placeholder newbery">
+          <text class="placeholder-emoji">🏅</text>
+          <text class="placeholder-text">纽伯瑞金奖</text>
+        </view>
+        <view wx:else class="cover-placeholder cloud" style="{{item.coverStyle}}">
+          <text class="placeholder-emoji">{{item.placeholderEmoji}}</text>
+          <text class="placeholder-text">{{item.title}}</text>
+        </view>
+        <!-- 上面 wx:else 是云端注册表新主题的封面兜底（无对应占位 class，配色走内联 coverStyle） -->
         <view class="cover-mask"></view>
         <text class="cover-tag-label">{{item.tag}}</text>
-        <view wx:if="{{item.id === 'palme_dor_movies' || item.id === 'oscar_screenplay_movies' || item.id === 'oscar_foreign_movies' || item.id === 'rt_action_movies' || item.id === 'letterboxd500_movies'}}" class="new-badge">
+        <view wx:if="{{item.id === 'palme_dor_movies' || item.id === 'oscar_screenplay_movies' || item.id === 'oscar_foreign_movies' || item.id === 'rt_action_movies' || item.id === 'letterboxd500_movies' || item.id === 'maodun_books' || item.id === 'newbery_books' || item.id === 'oscar_director_movies' || item.id === 'oscar_vfx_movies' || item.id === 'oscar_actor_movies' || item.id === 'oscar_actress_movies' || item.newBadge}}" class="new-badge">
           <text>NEW</text>
         </view>
         <view wx:if="{{item.wishFrom}}" class="wish-badge">

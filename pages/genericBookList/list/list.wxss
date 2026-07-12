@@ -1,7 +1,7 @@
-/* 通用榜单页：主题色由 list.wxml 内联 style（--brand-primary/--brand-soft/--brand-rgb）按 ?theme= 传入，
-   这里只放跟主题色搭配的通用规则，不再有各主题各一份的静态色块 */
+/* 通用读书榜单页：主题色由 list.wxml 内联 style（--brand-primary/--brand-soft/--brand-rgb）按 ?theme= 传入，
+   这里只放跟主题色搭配的通用规则，不再有各主题各一份的静态色块。整体样式镜像 pages/genericList/list/list.wxss（电影版）。 */
 
-/* 榜单额外信息行：届数/年份/导演/国家 —— 仅 cfg.showEdition 的主题渲染，尽量同排展示，空间不够才换行 */
+/* 榜单额外信息行：届数/年份/作者 —— 仅 cfg.showEdition 的主题渲染，尽量同排展示，空间不够才换行 */
 .movie-meta-line {
   display: flex;
   flex-wrap: wrap;
@@ -13,20 +13,8 @@
   line-height: 1.5;
 }
 .meta-edition { color: var(--brand-primary); font-weight: 600; }
-.meta-winner { color: var(--brand-primary); font-weight: 600; }
 .meta-item { color: var(--text-secondary); }
 .meta-dot { color: var(--text-muted); }
-.country-tag {
-  font-size: var(--font-mini);
-  color: var(--brand-primary);
-  background: rgba(var(--brand-rgb), 0.10);
-  border: 1rpx solid rgba(var(--brand-rgb), 0.28);
-  padding: 2rpx 14rpx;
-  border-radius: var(--radius-pill);
-  line-height: 1.6;
-}
-
-/* douban list — design system v2.2.0 */
 
 /* 填充导航栏底边与 hero-section 之间的 1px 渲染缝隙
    page / hero / setNavigationBarColor 三者统一为 brand-primary，消除色差 */
@@ -74,13 +62,6 @@ page {
   border-radius: 50%;
 }
 
-/* 装饰圆：按主题交叉配色 */
-.page-root.theme-gold .hero-section::before { background: var(--info); }
-.page-root.theme-gold .hero-section::after { background: var(--success); }
-
-.page-root.theme-green .hero-section::before { background: var(--warning); }
-.page-root.theme-green .hero-section::after { background: var(--info); }
-
 .header {
   position: relative;
   z-index: 1;
@@ -90,29 +71,6 @@ page {
 .header-left {
   display: flex;
   flex-direction: column;
-}
-
-/* 返回按钮 - 尺寸通过 inline style 与胶囊按钮一致 */
-.back-btn {
-  border-radius: 50%;
-  background: var(--bg-card);
-  box-shadow: var(--shadow-card);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: var(--space-2);
-  font-size: 36rpx;
-  font-weight: 700;
-  color: var(--text-primary);
-  text-align: center;
-  transition: transform 120ms ease-out;
-  flex-shrink: 0;
-  box-sizing: border-box;
-  padding-right: 2rpx;
-}
-
-.back-btn:active {
-  transform: scale(0.92);
 }
 
 .app-name {
@@ -135,32 +93,6 @@ page {
 
 .hero-progress {
   margin-top: var(--space-3);
-}
-
-.hero-subscribe-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12rpx;
-  margin-top: var(--space-3);
-}
-
-.hero-subscribe-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 8rpx 20rpx;
-  background: rgba(255, 255, 255, 0.18);
-  border: 1rpx solid rgba(255, 255, 255, 0.42);
-  border-radius: 999rpx;
-}
-
-.hero-subscribe-chip-hover {
-  background: rgba(255, 255, 255, 0.32);
-}
-
-.hero-subscribe-chip-text {
-  font-size: var(--font-caption);
-  color: #FFFFFF;
-  letter-spacing: 1rpx;
 }
 
 .hero-progress-head {
@@ -197,72 +129,6 @@ page {
   border-radius: 999rpx;
 }
 
-/* 用户卡片（登录前 & 登录后共用，与 category 一致） */
-.user-card {
-  display: flex;
-  align-items: center;
-  margin-top: var(--space-2);
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: var(--radius-lg);
-  padding: var(--space-3);
-  box-shadow: var(--shadow-card);
-  overflow: hidden;
-  transition: transform 120ms ease-out;
-}
-
-.user-card:active {
-  transform: scale(0.98);
-}
-
-.user-card-accent {
-  width: 8rpx;
-  height: 64rpx;
-  border-radius: 4rpx;
-  background: var(--brand-primary);
-  margin-right: var(--space-3);
-  flex-shrink: 0;
-}
-
-.user-card-avatar {
-  width: 72rpx;
-  height: 72rpx;
-  border-radius: var(--radius-md);
-  margin-right: var(--space-3);
-  flex-shrink: 0;
-}
-
-.user-card-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.user-card-title {
-  font-size: var(--font-body);
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1.3;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.user-card-sub {
-  font-size: var(--font-caption);
-  color: var(--text-muted);
-  margin-top: 4rpx;
-  line-height: 1.3;
-}
-
-.user-card-arrow {
-  font-size: 40rpx;
-  color: var(--text-muted);
-  margin-left: var(--space-2);
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
 /* ========== Tab 栏 — 圆角矩形选中 ========== */
 .tabs-bar {
   display: flex;
@@ -295,7 +161,6 @@ page {
 }
 
 /* ========== 吸顶操作栏 ========== */
-/* 性能优化：去除 backdrop-filter。吸顶元素滚动时的高斯模糊会触发合成层重算，是卡顿率/LCP 恶化的关键来源。改用不透明背景以保留遮挡效果。 */
 .sticky-top-group {
   position: sticky;
   top: 0;
@@ -386,13 +251,13 @@ page {
   overflow: hidden;
 }
 
-/* ========== 电影列表 ========== */
+/* ========== 图书列表 ========== */
 .movie-list {
   margin: var(--space-3) var(--space-3) 0;
   overflow: hidden;
 }
 
-/* 电影卡片行 */
+/* 图书卡片行 */
 .movie-row {
   display: flex;
   align-items: flex-start;
@@ -443,7 +308,7 @@ page {
   color: #fff;
 }
 
-/* ========== 电影封面 ========== */
+/* ========== 图书封面 ========== */
 .movie-thumb {
   width: 120rpx;
   height: 168rpx;
@@ -455,7 +320,7 @@ page {
   flex-shrink: 0;
 }
 
-/* ========== 电影信息 ========== */
+/* ========== 图书信息 ========== */
 .movie-info {
   flex: 1;
   display: flex;
@@ -504,7 +369,7 @@ page {
   opacity: 0.75;
 }
 
-/* 评分 + 标记按钮同行（标题独占第一行，对齐 weread 布局） */
+/* 评分 + 标记按钮同行 */
 .movie-meta-row {
   display: flex;
   align-items: center;

@@ -1,5 +1,7 @@
 // utils/dataLoader.js - 数据加载工具（含本地缓存优化）
 
+const themeRegistry = require('./themeRegistry.js');
+
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 小时缓存有效期
 
 // ─────────────────────────────────────────────
@@ -45,10 +47,20 @@ function invalidateMovieCache(theme) {
 
 // 走 enrichThemeMovies 灌入共享集合 generic_theme_movies 的新主题，注册到这里即可，
 // 读取改走 getThemeMovies；未注册的主题维持走 getMoviesData（老主题代码路径不受影响）。
-const GENERIC_THEMES = new Set(['oscarCinematography', 'rtHorror', 'rtWar', 'rtAnimation', 'palmeDor', 'oscarScreenplay', 'letterboxd500', 'oscarForeign', 'rtAction']);
+const GENERIC_THEMES = new Set(['oscarCinematography', 'rtHorror', 'rtWar', 'rtAnimation', 'palmeDor', 'oscarScreenplay', 'letterboxd500', 'oscarForeign', 'rtAction', 'oscarDirector', 'oscarVFX', 'oscarActor', 'oscarActress']);
+
+// 走 enrichThemeBooks 灌入共享集合 generic_theme_books 的新读书主题，注册到这里即可，
+// 读取改走 getThemeBooks；douban_books/weread 两个老主题不在此列，维持走 getMoviesData。
+const GENERIC_BOOK_THEMES = new Set(['maodun', 'newbery']);
 
 function cloudFnForTheme(theme) {
-  return GENERIC_THEMES.has(theme) ? 'getThemeMovies' : 'getMoviesData';
+  if (GENERIC_BOOK_THEMES.has(theme)) return 'getThemeBooks';
+  if (GENERIC_THEMES.has(theme)) return 'getThemeMovies';
+  // 未硬编码的主题：可能是走云端注册表新增的通用主题（不用发版）。
+  // 读本地注册表缓存判定类型；命中不了（缓存未写/纯深链首开）才落到 getMoviesData。
+  const reg = themeRegistry.find(theme);
+  if (reg) return reg.type === 'book' ? 'getThemeBooks' : 'getThemeMovies';
+  return 'getMoviesData';
 }
 
 // ─────────────────────────────────────────────

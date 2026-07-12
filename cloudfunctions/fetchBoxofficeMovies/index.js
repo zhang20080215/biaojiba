@@ -82,7 +82,7 @@ const BOXOFFICE_DATA = [
   { rank: 66, title: '霍比特人3：五军之战', originalTitle: 'The Hobbit: The Battle of the Five Armies', year: 2014, country: '新西兰/美国', boxOffice: 962749443, director: 'Peter Jackson' },
   { rank: 67, title: '勇敢者游戏：决战丛林', originalTitle: 'Jumanji: Welcome to the Jungle', year: 2017, country: '美国', boxOffice: 962544585, director: 'Jake Kasdan' },
   { rank: 68, title: '加勒比海盗3：世界的尽头', originalTitle: "Pirates of the Caribbean: At World's End", year: 2007, country: '美国', boxOffice: 961691209, director: 'Gore Verbinski' },
-  { rank: 69, title: 'Minecraft大电影', originalTitle: 'A Minecraft Movie', year: 2025, country: '美国', boxOffice: 961187780, director: 'Jared Hess' },
+  { rank: 69, title: 'Minecraft大电影', originalTitle: 'A Minecraft Movie', year: 2025, country: '美国', boxOffice: 961187780, director: 'Jared Hess', doubanId: '26149750' },
   { rank: 70, title: '哈利·波特与死亡圣器（上）', originalTitle: 'Harry Potter and the Deathly Hallows: Part 1', year: 2010, country: '英国/美国', boxOffice: 960858478, director: 'David Yates' },
   { rank: 71, title: '霍比特人2：史矛革之战', originalTitle: 'The Hobbit: The Desolation of Smaug', year: 2013, country: '新西兰/美国', boxOffice: 959079095, director: 'Peter Jackson' },
   { rank: 72, title: '奇异博士2：疯狂多元宇宙', originalTitle: 'Doctor Strange in the Multiverse of Madness', year: 2022, country: '美国', boxOffice: 955775804, director: 'Sam Raimi' },
@@ -190,6 +190,37 @@ async function fetchDoubanInfo(chineseTitle, originalTitle, year) {
 }
 
 /**
+ * 按 doubanId 直取豆瓣详情（人工在名单里核实过的正确条目，绕过搜索误配）
+ * 用 rexxar 详情接口取封面 + 评分
+ */
+async function fetchDoubanInfoById(doubanId) {
+    try {
+        const res = await axios.get(`https://m.douban.com/rexxar/api/v2/movie/${doubanId}`, {
+            timeout: 10000,
+            responseType: 'json',
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+                'Referer': 'https://m.douban.com/'
+            }
+        });
+        const j = (res && res.data) || {};
+        if (!j || !j.id) return null;
+        const coverUrl = (j.pic && (j.pic.large || j.pic.normal)) || j.cover_url || '';
+        if (!coverUrl) return null;
+        return {
+            doubanId,
+            coverUrl,
+            rating: j.rating && typeof j.rating.value === 'number' ? j.rating.value : 0
+        };
+    } catch (e) {
+        console.warn(`按 doubanId 取详情失败 ${doubanId}:`, e.message);
+        return null;
+    }
+}
+
+/**
  * 下载图片并上传到微信云存储
  */
 async function downloadAndUploadImage(imageUrl, movieId) {
@@ -264,6 +295,7 @@ exports.main = async (event = {}, context) => {
                     theme: 'boxoffice_movies',
                     updateTime: new Date()
                 };
+                if (movie.doubanId) doc.doubanId = movie.doubanId;
 
                 // 检查是否已存在
                 const existing = await db.collection(COLLECTION)
@@ -318,6 +350,8 @@ exports.main = async (event = {}, context) => {
             const TIME_LIMIT = 50000; // 50秒安全阈值（配置了600秒超时）
             const forceRefresh = event.forceRefresh || false;
             const startFrom = event.startFrom || 0;
+            // 只处理指定名次（用于单条订正，比如人工 pin 了 doubanId 后只重刷这一条）
+            const onlyRanks = Array.isArray(event.onlyRanks) && event.onlyRanks.length ? new Set(event.onlyRanks) : null;
 
             // 读取数据库全部记录
             const MAX_LIMIT = 100;
@@ -349,6 +383,10 @@ exports.main = async (event = {}, context) => {
                     skipped++;
                     continue;
                 }
+                if (onlyRanks && !onlyRanks.has(movie.rank)) {
+                    skipped++;
+                    continue;
+                }
 
                 // 超时保护
                 if (Date.now() - START_TIME > TIME_LIMIT) {
@@ -368,7 +406,16 @@ exports.main = async (event = {}, context) => {
 
                 console.log(`[${movie.rank}] 抓取封面: ${movie.title} (${movie.originalTitle}, ${movie.year})`);
 
-                const doubanInfo = await fetchDoubanInfo(movie.title, movie.originalTitle, movie.year);
+                // 名单里人工核实过的 doubanId 优先（DB 老记录可能没这字段，从 BOXOFFICE_DATA 兜底查）：
+                // 绕过豆瓣搜索误配，直接按 subject 取封面
+                const seedEntry = BOXOFFICE_DATA.find(m => m.originalTitle === movie.originalTitle && m.year === movie.year);
+                const manualDoubanId = movie.doubanId || (seedEntry && seedEntry.doubanId);
+                const doubanInfo = manualDoubanId
+                    ? await fetchDoubanInfoById(manualDoubanId)
+                    : await fetchDoubanInfo(movie.title, movie.originalTitle, movie.year);
+                if (manualDoubanId) {
+                    console.log(`  -> 使用名单手动指定的 doubanId=${manualDoubanId}`);
+                }
                 if (doubanInfo && doubanInfo.coverUrl) {
                     const cloudFileID = await downloadAndUploadImage(doubanInfo.coverUrl, `boxoffice_${doubanInfo.doubanId}`);
 
