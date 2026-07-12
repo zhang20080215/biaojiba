@@ -53,6 +53,19 @@ function buildStars(rating) {
   return arr;
 }
 
+// 拖拽评分：星条内落点 → 评分（间距感知，对齐视觉星，精确 0.5）。星条 5×56 + 4×16 = 344rpx，每星+间距 72rpx。
+function starValueFromX(clientX, rect) {
+  let frac = (clientX - rect.left) / rect.width;
+  if (frac < 0) frac = 0;
+  if (frac > 1) frac = 1;
+  const xRpx = frac * 344;
+  let i = Math.floor(xRpx / 72);
+  if (i > 4) i = 4;
+  const within = xRpx - i * 72;
+  const v = i + (within < 28 ? 0.5 : 1);
+  return v < 0.5 ? 0.5 : (v > 5 ? 5 : v);
+}
+
 Page({
   data: {
     toast: { show: false, text: '', icon: '' },
@@ -69,6 +82,16 @@ Page({
     loading: true,
 
     viewMode: 'calendar', // 'calendar' | 'wall' | 'timeline'
+    periodMode: 'month', // 'month' | 'year'
+
+    // 年视图
+    yearLabel: '',
+    canGoNextYear: false,
+    yearCalendar: [],   // 12 张月卡（1-12 月恒在）
+    yearWall: [],
+    yearWallCls: 'y5',  // 年度书墙密集档（y5/y6/y7/y8/y9）
+    yearTimeline: [],
+    yearStats: { total: 0, activeDays: 0, avgRating: '—', topMood: '—', topMovie: null }, // 年度书墙底部统计
 
     weekHeader: WD_MON,
     calendarCells: [],
@@ -127,11 +150,25 @@ Page({
   onShow() {
     const today = todayStr();
     if (today !== this.data.today) this.setData({ today });
-    if (!this.data.loading) this.fetchMonth();
+    if (this.data.loading) return;
+    // 从添加页返回等场景数据可能已变：刷新当前期间，并让对侧缓存作废（切过去时重取）
+    if (this.data.periodMode === 'year') {
+      this._lastDays = null;
+      this.fetchYear();
+    } else {
+      this._lastYearDays = null;
+      this.fetchMonth();
+    }
   },
 
   async onPullDownRefresh() {
-    await this.fetchMonth();
+    if (this.data.periodMode === 'year') {
+      this._lastDays = null;
+      await this.fetchYear();
+    } else {
+      this._lastYearDays = null;
+      await this.fetchMonth();
+    }
     wx.stopPullDownRefresh();
   },
 
@@ -153,7 +190,8 @@ Page({
   onViewTap(e) {
     const view = e.currentTarget.dataset.view;
     if (!view || view === this.data.viewMode) return;
-    if (view !== 'wall') {
+    // 年视图的书墙高度自适应，无需测量；月视图非书墙也直接切
+    if (this.data.periodMode === 'year' || view !== 'wall') {
       this.setData({ viewMode: view, swipedKey: '' });
       return;
     }
@@ -209,6 +247,138 @@ Page({
       swipedKey: ''
     });
     this.fetchMonth();
+  },
+
+  // ── 月/年 切换 ──
+  onPeriodTap(e) {
+    const period = e.currentTarget.dataset.period;
+    if (!period || period === this.data.periodMode) return;
+    const patch = { periodMode: period, swipedKey: '' };
+    if (period === 'year') patch.yearLabel = `${this.data.year}年`;
+    this.setData(patch);
+    if (period === 'year') {
+      if (this._lastYearDays) this.renderYear(this._lastYearDays);
+      else this.fetchYear();
+    } else {
+      if (this._lastDays) this.renderMonth(this._lastDays);
+      else this.fetchMonth();
+    }
+  },
+
+  onPrevPeriod() {
+    if (this.data.periodMode === 'year') this.onPrevYear();
+    else this.onPrevMonth();
+  },
+
+  onNextPeriod() {
+    if (this.data.periodMode === 'year') this.onNextYear();
+    else this.onNextMonth();
+  },
+
+  onPrevYear() {
+    this.setData({ year: this.data.year - 1 });
+    this.fetchYear();
+  },
+
+  onNextYear() {
+    if (!this.data.canGoNextYear) return;
+    this.setData({ year: this.data.year + 1 });
+    this.fetchYear();
+  },
+
+  // 点年度日历的月卡 → 切回该月的月历
+  onYearMonthTap(e) {
+    const month = Number(e.currentTarget.dataset.month);
+    if (!month) return;
+    const selectedDate = this._defaultSelected(this.data.year, month);
+    this.setData({
+      periodMode: 'month',
+      viewMode: 'calendar',
+      month,
+      monthLabel: formatMonthLabel(this.data.year, month),
+      selectedDate,
+      selectedDateText: formatDateCN(selectedDate),
+      swipedKey: ''
+    });
+    this.fetchMonth();
+  },
+
+  fetchYear() {
+    this.setData({ loading: true });
+    return new Promise(resolve => {
+      wx.cloud.callFunction({
+        name: 'syncDailyLog',
+        data: { action: 'getYear', theme: 'read', year: this.data.year },
+        success: res => {
+          const result = res && res.result;
+          if (!result || !result.success) {
+            toast.show(this, '加载失败');
+            this.setData({ loading: false });
+            resolve();
+            return;
+          }
+          this._lastYearDays = result.days || [];
+          this.renderYear(this._lastYearDays);
+          this.setData({ loading: false });
+          resolve();
+        },
+        fail: err => {
+          console.error('read getYear fail', err);
+          toast.show(this, '网络异常');
+          this.setData({ loading: false });
+          resolve();
+        }
+      });
+    });
+  },
+
+  renderYear(days) {
+    const wall = this.buildYearWall(days);
+    this.setData({
+      yearLabel: `${this.data.year}年`,
+      canGoNextYear: this.data.year < Number(this.data.today.slice(0, 4)),
+      yearCalendar: this.buildYearCalendar(days),
+      yearWall: wall.items,
+      yearWallCls: wall.cls,
+      yearTimeline: this.buildYearTimeline(days),
+      yearStats: this.buildMonthStats(days) // 复用月统计逻辑，按全年数据算
+    });
+  },
+
+  // 年度日历：12 张月卡，每月取前 9 张封面（ts 升序）排九宫格
+  buildYearCalendar(days) {
+    const byMonth = Array.from({ length: 12 }, () => []);
+    (days || []).forEach(d => {
+      const mIdx = Number(String(d.date).slice(5, 7)) - 1;
+      if (mIdx < 0 || mIdx > 11) return;
+      (d.entries || []).forEach(en => { byMonth[mIdx].push(normalizeBookEntry(en, d.date)); });
+    });
+    return byMonth.map((list, i) => {
+      const sorted = list.slice().sort((a, b) => (a.ts || 0) - (b.ts || 0));
+      const covers = sorted.slice(0, 9).map(m => m.posterThumb || '/images/default-movie.jpg');
+      return { month: i + 1, count: list.length, covers, hasMovies: list.length > 0 };
+    });
+  },
+
+  // 年度书墙：按 ts 升序 + CSS wrap-reverse → 最早的先落满最底排、往上堆，最近读的浮在最顶（与月墙一致）；数量越多单张越小
+  buildYearWall(days) {
+    const base = flattenBooks(days).sort((a, b) => (a.ts || 0) - (b.ts || 0));
+    const n = base.length;
+    const perRow = n <= 15 ? 5 : n <= 30 ? 6 : n <= 60 ? 7 : n <= 100 ? 8 : 9;
+    const items = base.map((m, i) => ({
+      ...m,
+      key: `${m.date}-${m.ts}`,
+      rotate: this.posterRotate(m),
+      fallFrom: 260,
+      delay: Math.min(i * 0.03, 1.5)
+    }));
+    return { items, cls: 'y' + perRow };
+  },
+
+  // 年度时间轴：复用月时间轴分组逻辑，跨全年；倒序（最近的天/条在最上）
+  buildYearTimeline(days) {
+    const groups = this.buildTimeline(days);
+    return groups.slice().reverse().map(g => ({ ...g, items: g.items.slice().reverse() }));
   },
 
   onSelectDay(e) {
@@ -475,32 +645,27 @@ Page({
     this.setData({ editModal: false });
   },
 
-  // 弹窗内五角星拖拽评分
-  onEditStarTouchStart(e) {
-    this._measureEditStarRow().then(() => this._applyEditStarTouch(e));
+  // 弹窗内半星点按评分（左半=X.5、右半=X.0）
+  onEditStarTap(e) {
+    let v = Number(e.currentTarget.dataset.value) || 0.5;
+    if (v < 0.5) v = 0.5;
+    if (v > 5) v = 5;
+    if (v === this.data.editRating) return;
+    this.setData({ editRating: v, editRatingLabel: `${v.toFixed(1)} 星`, editStars: buildStars(v) });
+  },
+
+  // 弹窗内拖拽评分：touchstart 测量，touchmove 实时改分（点按仍走 onEditStarTap）
+  onEditStarTouchStart() {
+    wx.createSelectorQuery().in(this).select('.edit-star-row').boundingClientRect(rect => {
+      if (rect && rect.width) this._editStarRect = rect;
+    }).exec();
   },
   onEditStarTouchMove(e) {
-    this._applyEditStarTouch(e);
-  },
-  _measureEditStarRow() {
-    return new Promise(resolve => {
-      wx.createSelectorQuery().in(this).select('.edit-star-row').boundingClientRect(rect => {
-        if (rect && rect.width) this._editStarRect = rect;
-        resolve();
-      }).exec();
-    });
-  },
-  _applyEditStarTouch(e) {
     const rect = this._editStarRect;
     if (!rect || !rect.width) return;
     const t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
     if (!t) return;
-    let ratio = (t.clientX - rect.left) / rect.width;
-    if (ratio < 0) ratio = 0;
-    if (ratio > 1) ratio = 1;
-    let v = Math.ceil(ratio * 10) / 2;
-    if (v < 0.5) v = 0.5;
-    if (v > 5) v = 5;
+    const v = starValueFromX(t.clientX, rect);
     if (v === this.data.editRating) return;
     this.setData({ editRating: v, editRatingLabel: `${v.toFixed(1)} 星`, editStars: buildStars(v) });
   },
@@ -545,6 +710,7 @@ Page({
           complete: () => {
             this.setData({ editSaving: false, editModal: false });
             toast.show(this, '已保存', { icon: 'success' });
+            this._lastYearDays = null; // 年缓存作废，切「年」时重取
             this.fetchMonth();
           }
         });
@@ -581,6 +747,7 @@ Page({
           return;
         }
         toast.show(this, '已删除', { icon: 'success' });
+        this._lastYearDays = null; // 年缓存作废，切「年」时重取
         this.fetchMonth();
       },
       fail: err => {

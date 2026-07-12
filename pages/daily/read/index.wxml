@@ -14,12 +14,17 @@
   </view>
 
   <view class="content" style="padding-top: {{navOffset}}px;">
-    <!-- 顶部控制：月份切换（左） + 视图切换（右），合并为一行 -->
+    <!-- 时间导航：‹ 年月/年 › 单独一行 -->
+    <view class="month-nav">
+      <view class="month-arrow" bindtap="onPrevPeriod" hover-class="tap-soft">‹</view>
+      <text class="month-label">{{periodMode === 'month' ? monthLabel : yearLabel}}</text>
+      <view class="month-arrow {{(periodMode === 'month' ? canGoNextMonth : canGoNextYear) ? '' : 'is-disabled'}}" bindtap="onNextPeriod" hover-class="tap-soft">›</view>
+    </view>
+    <!-- 时间筛选（月/年）+ 视图筛选（日历/书墙/时间轴）：同一行 -->
     <view class="top-controls">
-      <view class="month-nav">
-        <view class="month-arrow" bindtap="onPrevMonth" hover-class="tap-soft">‹</view>
-        <text class="month-label">{{monthLabel}}</text>
-        <view class="month-arrow {{canGoNextMonth ? '' : 'is-disabled'}}" bindtap="onNextMonth" hover-class="tap-soft">›</view>
+      <view class="period-toggle">
+        <view class="pt-item {{periodMode === 'month' ? 'active' : ''}}" data-period="month" bindtap="onPeriodTap">月</view>
+        <view class="pt-item {{periodMode === 'year' ? 'active' : ''}}" data-period="year" bindtap="onPeriodTap">年</view>
       </view>
       <view class="seg">
         <view class="seg-item {{viewMode === 'calendar' ? 'active' : ''}}" data-view="calendar" bindtap="onViewTap">日历</view>
@@ -28,7 +33,9 @@
       </view>
     </view>
 
-    <!-- ===== 电影墙：定高区块（与日历等高），海报压在底部，仿重力飘落 ===== -->
+    <!-- ==================== 月视图 ==================== -->
+    <block wx:if="{{periodMode === 'month'}}">
+    <!-- ===== 书墙：定高区块（与日历等高），海报压在底部，仿重力飘落 ===== -->
     <view wx:if="{{viewMode === 'wall'}}" class="wall-box" style="height: {{wallAreaH}}rpx;">
       <view wx:if="{{!loading && wallMovies.length === 0}}" class="wall-empty">
         <text class="empty-title">本月还没有读书记录</text>
@@ -232,6 +239,123 @@
           </view>
       </view>
     </block>
+    </block>
+
+    <!-- ==================== 年视图 ==================== -->
+    <block wx:else>
+      <!-- 年度书墙：全年书封按数量自动缩小，按阅读日期早→晚依次掉落 -->
+      <view wx:if="{{viewMode === 'wall'}}" class="wall-box year">
+        <view wx:if="{{!loading && yearWall.length === 0}}" class="wall-empty">
+          <text class="empty-title">这一年还没有读书记录</text>
+          <text class="empty-sub">切到「日历」选个月份添加</text>
+        </view>
+        <view wx:else class="poster-wall year {{yearWallCls}}">
+          <view class="wall-item"
+                wx:for="{{yearWall}}" wx:key="key"
+                style="--fall-from: -{{item.fallFrom}}rpx; animation-delay: {{item.delay}}s;">
+            <view class="wall-card" style="transform: rotate({{item.rotate}});">
+              <image class="wall-poster" src="{{item.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" lazy-load="true" />
+              <text wx:if="{{item.moodEmoji}}" class="wall-mood">{{item.moodEmoji}}</text>
+            </view>
+          </view>
+        </view>
+        <!-- 年度书墙底部：全年阅读统计 -->
+        <view wx:if="{{yearStats.total > 0}}" class="month-stats">
+          <text class="ms-title">{{year}}年阅读统计</text>
+          <view class="ms-grid">
+            <view class="ms-item">
+              <text class="ms-value">{{yearStats.total}}</text>
+              <text class="ms-label">共读(本)</text>
+            </view>
+            <view class="ms-item">
+              <text class="ms-value">{{yearStats.activeDays}}</text>
+              <text class="ms-label">活跃(天)</text>
+            </view>
+            <view class="ms-item">
+              <text class="ms-value">{{yearStats.avgRating}}</text>
+              <text class="ms-label">平均评分</text>
+            </view>
+            <view class="ms-item">
+              <text class="ms-value ms-emoji">{{yearStats.topMood}}</text>
+              <text class="ms-label">最多心情</text>
+            </view>
+          </view>
+          <view wx:if="{{yearStats.topMovie}}" class="ms-top">
+            <image class="ms-top-poster" src="{{yearStats.topMovie.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" lazy-load="true" />
+            <view class="ms-top-info">
+              <text class="ms-top-tag">年度最高分</text>
+              <text class="ms-top-title">{{yearStats.topMovie.title}}</text>
+              <view class="ms-top-meta">
+                <view class="stars">
+                  <text class="stars-bg">★★★★★</text>
+                  <text class="stars-fg" style="width: {{yearStats.topMovie.rating * 20}}%">★★★★★</text>
+                </view>
+                <text class="rating-score">{{yearStats.topMovie.score}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 年度时间轴：跨全年连续，最近在最上 -->
+      <view wx:elif="{{viewMode === 'timeline'}}" class="timeline-box">
+        <view wx:if="{{!loading && yearTimeline.length === 0}}" class="tl-empty">
+          <text class="empty-title">这一年还没有读书记录</text>
+          <text class="empty-sub">切到「日历」选个月份添加</text>
+        </view>
+        <view wx:else class="timeline">
+          <view class="tl-day" wx:for="{{yearTimeline}}" wx:key="date">
+            <view class="tl-rail">
+              <view class="tl-dot"></view>
+              <view class="tl-line"></view>
+            </view>
+            <view class="tl-day-main">
+              <view class="tl-day-head">
+                <text class="tl-date">{{item.dateLabel}}</text>
+                <text class="tl-weekday">{{item.weekday}}</text>
+                <text class="tl-day-count">{{item.count}} 本</text>
+              </view>
+              <view class="tl-card" wx:for="{{item.items}}" wx:for-item="mv" wx:key="key">
+                <image class="tl-poster" src="{{mv.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" lazy-load="true" />
+                <view class="tl-info">
+                  <view class="tl-title-row">
+                    <text class="tl-title">{{mv.title}}</text>
+                    <text wx:if="{{mv.year}}" class="tl-year">{{mv.year}}</text>
+                  </view>
+                  <view wx:if="{{mv.rating > 0}}" class="tl-rating">
+                    <view class="stars">
+                      <text class="stars-bg">★★★★★</text>
+                      <text class="stars-fg" style="width: {{mv.rating * 20}}%">★★★★★</text>
+                    </view>
+                    <text class="tl-score">{{mv.rating * 2}}分</text>
+                  </view>
+                  <view wx:if="{{mv.moodEmoji || mv.note}}" class="tl-extra">
+                    <text wx:if="{{mv.moodEmoji}}" class="tl-mood">{{mv.moodEmoji}}</text>
+                    <text wx:if="{{mv.note}}" class="tl-note">{{mv.note}}</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 年度日历：3×4 十二个月，每月九宫格最多 9 张书封，点月卡进该月月历 -->
+      <view wx:else class="year-cal">
+        <view class="year-cal-month {{item.hasMovies ? '' : 'is-empty'}}"
+              wx:for="{{yearCalendar}}" wx:key="month"
+              data-month="{{item.month}}" bindtap="onYearMonthTap" hover-class="tap-soft">
+          <view class="ycm-grid">
+            <image wx:for="{{item.covers}}" wx:for-item="cv" wx:key="index" class="ycm-cover" src="{{cv}}" mode="aspectFill" lazy-load="true" />
+            <view wx:if="{{!item.hasMovies}}" class="ycm-empty"></view>
+          </view>
+          <view class="ycm-foot">
+            <text class="ycm-name">{{item.month}}月</text>
+            <text class="ycm-count">{{item.count}} 本</text>
+          </view>
+        </view>
+      </view>
+    </block>
   </view>
 
   <!-- 轻编辑弹窗：只改 评分 / 心情 / 短评 -->
@@ -253,6 +377,8 @@
           <view class="star" wx:for="{{editStars}}" wx:key="index">
             <text class="star-base">★</text>
             <view class="star-fill star-{{item}}"><text class="star-glyph">★</text></view>
+            <view class="star-hit star-hit-l" catchtap="onEditStarTap" data-value="{{index + 0.5}}"></view>
+            <view class="star-hit star-hit-r" catchtap="onEditStarTap" data-value="{{index + 1}}"></view>
           </view>
         </view>
       </view>

@@ -34,6 +34,19 @@ function buildStars(rating) {
   return arr;
 }
 
+// 拖拽评分：星条内落点 → 评分（间距感知，对齐视觉星，精确 0.5）。星条 5×56 + 4×16 = 344rpx，每星+间距 72rpx。
+function starValueFromX(clientX, rect) {
+  let frac = (clientX - rect.left) / rect.width;
+  if (frac < 0) frac = 0;
+  if (frac > 1) frac = 1;
+  const xRpx = frac * 344;
+  let i = Math.floor(xRpx / 72);
+  if (i > 4) i = 4;
+  const within = xRpx - i * 72;
+  const v = i + (within < 28 ? 0.5 : 1);
+  return v < 0.5 ? 0.5 : (v > 5 ? 5 : v);
+}
+
 // 可见心情：始终包含当前选中项（选中项在隐藏区时顶到末位，避免选了却看不到）
 function computeVisibleMoods(all, selectedKey) {
   if (!selectedKey) return all.slice(0, VISIBLE_MOOD_COUNT);
@@ -173,33 +186,28 @@ Page({
     this.setData({ date, dateText: formatDateText(date) });
   },
 
-  // 五角星评分：支持点按 + 拖拽，按手指横向落点算分（0.5 步进，最少半颗）
-  onStarTouchStart(e) {
-    this._measureStarRow().then(() => this._applyStarTouch(e));
+  // 五角星评分：半星点按——每颗星左半热区=X.5、右半=X.0（data-value 已算好），一点即准
+  onStarTap(e) {
+    let v = Number(e.currentTarget.dataset.value) || 0.5;
+    if (v < 0.5) v = 0.5;
+    if (v > 5) v = 5;
+    if (v === this.data.rating) return;
+    this.setData({ rating: v, ratingLabel: `${v.toFixed(1)} 星`, stars: buildStars(v) });
+  },
+
+  // 拖拽评分：touchstart 只测量星条位置，touchmove 按落点实时改分（点按仍走 onStarTap，互不冲突）
+  onStarTouchStart() {
+    wx.createSelectorQuery().in(this).select('.star-row').boundingClientRect(rect => {
+      if (rect && rect.width) this._starRect = rect;
+    }).exec();
   },
   onStarTouchMove(e) {
-    this._applyStarTouch(e);
-  },
-  _measureStarRow() {
-    return new Promise(resolve => {
-      wx.createSelectorQuery().in(this).select('.star-row').boundingClientRect(rect => {
-        if (rect && rect.width) this._starRect = rect;
-        resolve();
-      }).exec();
-    });
-  },
-  _applyStarTouch(e) {
     const rect = this._starRect;
     if (!rect || !rect.width) return;
     const t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
     if (!t) return;
-    let ratio = (t.clientX - rect.left) / rect.width;
-    if (ratio < 0) ratio = 0;
-    if (ratio > 1) ratio = 1;
-    let v = Math.ceil(ratio * 10) / 2; // 10 个半颗档位
-    if (v < 0.5) v = 0.5;
-    if (v > 5) v = 5;
-    if (v === this.data.rating) return; // 拖拽中避免重复 setData
+    const v = starValueFromX(t.clientX, rect);
+    if (v === this.data.rating) return;
     this.setData({ rating: v, ratingLabel: `${v.toFixed(1)} 星`, stars: buildStars(v) });
   },
 

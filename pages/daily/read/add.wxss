@@ -405,6 +405,7 @@ page {
 /* 五角星评分（点左半=半颗，点右半=整颗） */
 .star-row {
   display: flex;
+  width: fit-content; /* 收缩到 5 星实际宽度(344rpx)，拖拽落点换算(starValueFromX)才准 */
   gap: 16rpx;
   padding: 4rpx 0;
 }
@@ -440,6 +441,16 @@ page {
   text-align: center;
   color: #F5C518;
 }
+/* 半星点按热区：每颗星左右各半，透明覆盖在星形之上 */
+.star-hit {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  z-index: 2;
+}
+.star-hit-l { left: 0; }
+.star-hit-r { right: 0; }
 
 /* 心情 emoji */
 .mood-grid {
