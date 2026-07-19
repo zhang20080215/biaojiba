@@ -100,10 +100,22 @@ async function cloudPosterFromSearched(doubanId) {
     } catch (e) { return ''; }
 }
 
+// 从 searched_books 取该书已转存的 cloud 封面（book_search_${doubanId}.cover，fetchBookFullInfo 写入）。
+// read 迁移的云→云镜像源，命中则不打豆瓣；未命中返回空。与 cloudPosterFromSearched 对称。
+async function cloudCoverFromSearchedBook(doubanId) {
+    if (!doubanId) return '';
+    try {
+        const r = await db.collection('searched_books').doc('book_search_' + String(doubanId)).get();
+        const c = r && r.data && r.data.cover;
+        return (typeof c === 'string' && /^cloud:\/\//i.test(c)) ? c : '';
+    } catch (e) { return ''; }
+}
+
 // ── 运维迁移（生产安全版）：把历史 DailyLogs 里的直链封面补镜像成 cloud://。 ──
 //   背景：早期（mirrorCover 加入前）或当时镜像失败的记录，meta.poster/cover 仍是豆瓣直链，
 //   canvas 分享海报无法 downloadFile 加载（域名白名单）。幂等：已是白名单 cloud 封面直接跳过。
 //   入参：{ action:'migrateCovers', theme?='movie', apply?=false, startAfter?='', maxDocs?, maxTransfers? }
+//     · theme='movie' 扫 meta.poster（云源 searched_movies）；theme='read' 扫 meta.cover（云源 searched_books）。
 //     · apply:false（默认）干跑：只扫描统计脏数据、不下载不写库，用于评估规模；maxDocs 默认 500。
 //     · apply:true 执行：每次最多处理 maxDocs 文档 / maxTransfers 次转存后停下，返回 nextStartAfter；
 //       反复用 nextStartAfter 续跑至 done=true（分批，避免 60s 超时）。maxDocs 默认 50、maxTransfers 默认 40。
@@ -145,10 +157,14 @@ async function migrateCovers(event) {
                 if (samples.length < 20) samples.push({ id: doc._id, title: meta.title || '', field, before: String(meta[field]).slice(0, 48) });
                 if (!apply) continue;
                 if (capReached()) { stoppedForCap = true; break; }
-                // 镜像源：优先 searched_movies 云封面（云→云，不打豆瓣）；否则用直链（打豆瓣，限流）
+                // 镜像源：优先已转存的云封面（云→云，不打豆瓣）—— movie 走 searched_movies.poster，
+                // read 走 searched_books.cover；均未命中才用直链（打豆瓣，限流）
                 let source = meta[field];
                 if (field === 'poster') {
                     const c = await cloudPosterFromSearched(meta.doubanId);
+                    if (c) source = c;
+                } else if (field === 'cover') {
+                    const c = await cloudCoverFromSearchedBook(meta.doubanId);
                     if (c) source = c;
                 }
                 if (/doubanio\.com/i.test(String(source))) {
