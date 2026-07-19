@@ -1,0 +1,52 @@
+<view class="page-root">
+  <view class="top-toast {{toast.show ? 'is-show' : ''}}">
+    <text class="top-toast-icon" wx:if="{{toast.icon === 'success'}}">✓</text>
+    <text class="top-toast-text">{{toast.text}}</text>
+  </view>
+
+  <view class="custom-nav" style="height: {{navOffset}}px; padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-btn nav-btn-left" bindtap="onBack" hover-class="nav-btn-active">
+        <text class="nav-chev">‹</text>
+      </view>
+      <text class="nav-title">分享观影卡片</text>
+    </view>
+  </view>
+
+  <!-- canvas 原生组件无法用 opacity 隐藏：backing store = 导出分辨率（computeSize），CSS 缩放到 previewW×previewH 显示，
+       屏幕上这块 canvas 即预览图；导出的临时文件仅供「保存到相册」。 -->
+  <view class="content" style="padding-top: {{navOffset}}px;">
+    <view class="preview-slot" style="height: {{slotH}}px;">
+      <view class="preview-wrap" style="width: {{previewW}}px; height: {{previewH}}px;">
+        <canvas type="2d" id="movieCard" class="poster-canvas" style="width: {{previewW}}px; height: {{previewH}}px;"></canvas>
+      </view>
+    </view>
+    <text class="preview-tip">{{ready ? '点下方「保存到相册」即可保存这张观影海报' : (loading ? '加载记录中…' : '生成海报中…')}}</text>
+
+    <view class="mode-row" wx:if="{{!loading && singleMovie}}">
+      <view class="mode-tab {{posterMode === 'xhs' ? 'is-active' : ''}}" bindtap="onPickMode" data-mode="xhs">小红书</view>
+      <view class="mode-tab {{posterMode === 'raw' ? 'is-active' : ''}}" bindtap="onPickMode" data-mode="raw">原始海报</view>
+    </view>
+
+    <view class="douban-row" wx:if="{{!loading && singleMovie && hasRatings}}" bindtap="onToggleRatings">
+      <view class="douban-switch {{hideRatings ? 'is-on' : ''}}"><view class="douban-knob"></view></view>
+      <text class="douban-label">隐藏评分</text>
+    </view>
+
+    <view class="theme-row" wx:if="{{!loading && !singleMovie}}">
+      <view wx:for="{{themes}}" wx:key="id"
+            class="theme-dot {{themeId === item.id ? 'is-active' : ''}}"
+            style="background: {{item.swatch}};"
+            bindtap="onPickTheme" data-id="{{item.id}}">
+        <text wx:if="{{themeId === item.id}}" class="theme-check">✓</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="action-bar">
+    <button class="save-btn" bindtap="saveImage" disabled="{{isGenerating || !ready}}" loading="{{isGenerating}}">
+      {{isGenerating ? '保存中...' : '保存到相册'}}
+    </button>
+    <text wx:if="{{needRewardedAd && ready}}" class="save-sub">需观看广告后保存</text>
+  </view>
+</view>

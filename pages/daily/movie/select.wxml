@@ -1,0 +1,69 @@
+<view class="page-root">
+  <view class="top-toast {{toast.show ? 'is-show' : ''}}">
+    <text class="top-toast-icon" wx:if="{{toast.icon === 'success'}}">✓</text>
+    <text class="top-toast-text">{{toast.text}}</text>
+  </view>
+
+  <view class="custom-nav" style="height: {{navOffset}}px; padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-btn nav-btn-left" bindtap="onBack" hover-class="nav-btn-active">
+        <text class="nav-chev">‹</text>
+      </view>
+      <text class="nav-title">选择电影</text>
+      <view class="nav-btn nav-btn-right" style="right: {{navRightInset}}px;" bindtap="onToggleAll" hover-class="nav-btn-active" wx:if="{{!loading && total > 0}}">
+        <text class="nav-all">{{allSelected ? '取消' : '全选'}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="content" style="padding-top: {{navOffset}}px;">
+    <view wx:if="{{loading}}" class="state-text">加载记录中…</view>
+
+    <view wx:elif="{{total === 0}}" class="empty">
+      <text class="empty-title">还没有观影记录</text>
+      <text class="empty-sub">先去记录几部看过的电影，再来生成海报吧</text>
+    </view>
+
+    <block wx:else>
+      <view class="hint">选择要放进海报的电影，可多选</view>
+
+      <view class="tl-group" wx:for="{{groups}}" wx:for-item="g" wx:key="date">
+        <view class="tl-rail">
+          <view class="tl-dot"></view>
+          <view class="tl-line"></view>
+        </view>
+        <view class="tl-body">
+          <view class="tl-date">
+            <text class="tl-date-main">{{g.dateLabel}}</text>
+            <text class="tl-date-week">{{g.weekLabel}}</text>
+          </view>
+
+          <view class="pick-card {{m.selected ? 'is-picked' : ''}}"
+                wx:for="{{g.movies}}" wx:for-item="m" wx:key="key"
+                data-key="{{m.key}}" bindtap="onToggle" hover-class="tap-soft">
+            <image class="pick-poster" src="{{m.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" lazy-load="true" />
+            <view class="pick-info">
+              <view class="pick-title-row">
+                <text class="pick-title">{{m.title}}</text>
+                <text wx:if="{{m.year}}" class="pick-year">{{m.year}}</text>
+              </view>
+              <view class="pick-sub">
+                <text class="pick-rating">{{m.ratingText}}</text>
+                <text wx:if="{{m.moodEmoji}}" class="pick-mood">{{m.moodEmoji}} {{m.moodLabel}}</text>
+              </view>
+            </view>
+            <view class="pick-check {{m.selected ? 'on' : ''}}">
+              <text wx:if="{{m.selected}}">✓</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </block>
+  </view>
+
+  <view class="action-bar" wx:if="{{!loading && total > 0}}">
+    <button class="gen-btn" bindtap="onGenerate" disabled="{{selectedCount === 0}}">
+      生成海报（{{selectedCount}}）
+    </button>
+  </view>
+</view>

@@ -156,7 +156,7 @@ class SportPosterDrawer {
     if (hasIllus) this._drawIllus(illus);
 
     // ---- 底部：标签式水印（左下角） ----
-    this._drawWatermarkTag(84, h - 64, '小程序-标记吧 · 每日运动打卡');
+    this._drawWatermarkTag(84, h - 64, '小程序：标记吧，免费制作同款图');
 
     ctx.textAlign = 'left';
   }

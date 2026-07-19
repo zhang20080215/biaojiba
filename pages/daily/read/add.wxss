@@ -537,6 +537,37 @@ page {
   grid-template-columns: repeat(4, 1fr);
   gap: 12rpx;
 }
+/* 阅读进度：当前页输入框 + / + 总页数（总页数未知时只留输入框和「页」） */
+.progress-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12rpx;
+}
+.page-input {
+  width: 150rpx;
+  height: 72rpx;
+  padding: 0 20rpx;
+  box-sizing: border-box;
+  border-radius: 16rpx;
+  background: #FAF6EB;
+  border: 2rpx solid #E8E0CC;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #1A1A1A;
+  text-align: center;
+  line-height: 72rpx;
+}
+.page-sep,
+.page-total {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #A89E8C;
+}
+.page-unit {
+  font-size: 24rpx;
+  color: #A89E8C;
+}
+
 .note {
   width: 100%;
   min-height: 170rpx;

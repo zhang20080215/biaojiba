@@ -471,6 +471,39 @@ page {
   color: #6B6356;
 }
 
+/* 阅读进度：已读页数 + 进度条 + 百分比（无总页数时只有页数文字） */
+.read-progress {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  margin-top: 8rpx;
+}
+.rp-label {
+  flex-shrink: 0;
+  font-size: 22rpx;
+  color: #8A6A00;
+  font-weight: 700;
+}
+.rp-bar {
+  flex: 1;
+  min-width: 40rpx;
+  height: 8rpx;
+  border-radius: 4rpx;
+  background: #F0E6C8;
+  overflow: hidden;
+}
+.rp-fill {
+  height: 100%;
+  border-radius: 4rpx;
+  background: #F5C518;
+}
+.rp-pct {
+  flex-shrink: 0;
+  font-size: 20rpx;
+  color: #A89E8C;
+  font-weight: 700;
+}
+
 /* 全平台评分小标签：四个一行，不换行 */
 .plat-row {
   display: flex;
@@ -652,6 +685,14 @@ page {
   text-align: center;
   line-height: 30rpx;
   font-size: 20rpx;
+}
+/* 阅读进度环：右下角，与左下角的心情/日期错开 */
+.cal-ring {
+  position: absolute;
+  right: 6rpx;
+  bottom: 6rpx;
+  width: 34rpx;
+  height: 34rpx;
 }
 
 /* ===== 轻编辑弹窗 ===== */
@@ -944,12 +985,31 @@ page {
 .tl-card:last-child {
   margin-bottom: 0;
 }
+.tl-poster-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 88rpx;
+  height: 124rpx;
+}
 .tl-poster {
   width: 88rpx;
   height: 124rpx;
   border-radius: 10rpx;
   background: #EFE7D2;
-  flex-shrink: 0;
+}
+/* 书封右下角进度环 */
+.tl-ring {
+  position: absolute;
+  right: -6rpx;
+  bottom: -6rpx;
+  width: 44rpx;
+  height: 44rpx;
+}
+/* 具体进度文字（已读 X/Y 页） */
+.tl-progress {
+  font-size: 22rpx;
+  color: #8A6A00;
+  font-weight: 700;
 }
 .tl-info {
   flex: 1;
@@ -1029,18 +1089,10 @@ page {
   color: #1A1A1A;
 }
 
-/* 年度书墙：高度自适应、正常从上往下排（覆盖月墙的绝对贴底/wrap-reverse），按档位定尺寸 */
-.wall-box.year {
-  position: static;
-  height: auto;
-  overflow: visible;
-  margin-top: 24rpx;
-}
+/* 年度书墙与月度同构：沿用 .wall-box（定高、相对定位）+ .poster-wall（绝对沉底、wrap-reverse），
+   这里只按档位定海报尺寸、微调间距，定位/掉落行为继承 base（不再覆盖）。 */
 .poster-wall.year {
-  position: static;
-  flex-wrap: wrap-reverse; /* 底排先排满、往上堆；不满的一排浮在顶部（配合 buildYearWall 的 ts 升序）*/
   gap: 16rpx 12rpx;
-  padding-top: 8rpx;
 }
 .poster-wall.year.y5 .wall-item { width: 124rpx; height: 174rpx; }
 .poster-wall.year.y6 .wall-item { width: 102rpx; height: 143rpx; }
@@ -1048,12 +1100,12 @@ page {
 .poster-wall.year.y8 .wall-item { width: 74rpx; height: 104rpx; }
 .poster-wall.year.y9 .wall-item { width: 65rpx; height: 91rpx; }
 
-/* 年度日历：3×4 十二个月，每月九宫格 */
+/* 年度日历：每行 3 个月，每月九宫格（3 列 × 3 行，最多 9 本，去重） */
 .year-cal {
   margin-top: 28rpx;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16rpx;
+  gap: 14rpx;
 }
 .year-cal-month {
   background: #FFFFFF;

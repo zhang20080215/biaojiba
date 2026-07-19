@@ -37,11 +37,11 @@ Create a Xiaohongshu (Little Red Book) style infographic following these guideli
 
 ## Content
 - Position: Ending (page 5 of 5)
-- Core message: 搜「标记吧」小程序就能查全平台评分
-- IMPORTANT: Do NOT include the word 「微信」 or any WeChat logo/wording anywhere in the image. Only mention 「标记吧」小程序.
+- Core message: 这几个评分，你更相信哪个？
+- IMPORTANT: Do not include platform names, QR codes, links, contact details, search instructions, or calls to leave the current platform.
 
 - Central illustration: a hand-drawn rounded mini-program card / phone screen showing a search bar with the words 「标记吧」 inside, a small movie clapperboard 🎬 and a magnifying glass doodle beside it
-- Big CTA line above or below: 「搜『标记吧』小程序」
+- Big discussion line above or below: 「这几个评分，你更相信哪个？」
 - Sub line: 全平台电影评分，一搜就有
 - Small friendly doodles: a waving stick-figure, sparkles, a heart
 - Highlight 「标记吧」 with pastel-yellow highlighter

@@ -89,7 +89,9 @@ function isGated(openid) {
 function refreshHint(page) {
   if (!page || typeof page.setData !== 'function') return
   awaitOpenid(page, 1500).then(function (openid) {
-    if (!page || typeof page.setData !== 'function') return
+    // page._destroyed：页面若已 onUnload，此处 setData 会让渲染层往已销毁的父节点插节点
+    // （insertTextView:fail parent not found）。未定义该字段的页面不受影响。
+    if (!page || page._destroyed || typeof page.setData !== 'function') return
     const needRewardedAd = isGated(openid)
     if (page.data.needRewardedAd !== needRewardedAd) {
       page.setData({ needRewardedAd })

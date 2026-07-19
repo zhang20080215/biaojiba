@@ -9,6 +9,7 @@ const {
   dayOfWeekMon,
   formatMonthLabel,
   formatDateCN,
+  progressRingUri,
   normalizeBookEntry,
   flattenBooks,
   getReadThemeView
@@ -341,11 +342,12 @@ Page({
       yearWall: wall.items,
       yearWallCls: wall.cls,
       yearTimeline: this.buildYearTimeline(days),
-      yearStats: this.buildMonthStats(days) // 复用月统计逻辑，按全年数据算
+      yearStats: this.buildMonthStats(days), // 复用统计逻辑（共读本数按书去重，同一本只算一本）
+      wallAreaH: this.calcWallAreaH()  // 年度书墙与月度同构：固定高度区域，海报沉底，统计卡在下方
     });
   },
 
-  // 年度日历：12 张月卡，每月取前 9 张封面（ts 升序）排九宫格
+  // 年度日历：12 张月卡（每行 3 张），每月九宫格最多 9 本封面（去重、ts 升序）；右下角计数同为去重本数
   buildYearCalendar(days) {
     const byMonth = Array.from({ length: 12 }, () => []);
     (days || []).forEach(d => {
@@ -354,15 +356,26 @@ Page({
       (d.entries || []).forEach(en => { byMonth[mIdx].push(normalizeBookEntry(en, d.date)); });
     });
     return byMonth.map((list, i) => {
-      const sorted = list.slice().sort((a, b) => (a.ts || 0) - (b.ts || 0));
-      const covers = sorted.slice(0, 9).map(m => m.posterThumb || '/images/default-movie.jpg');
-      return { month: i + 1, count: list.length, covers, hasMovies: list.length > 0 };
+      const deduped = this.dedupeWallBooks(list).sort((a, b) => (a.ts || 0) - (b.ts || 0));
+      const covers = deduped.slice(0, 9).map(m => m.posterThumb || '/images/default-movie.jpg');
+      return { month: i + 1, count: deduped.length, covers, hasMovies: list.length > 0 };
     });
+  },
+
+  // 书墙去重：同一本书（doubanId 缺失退回书名）只保留一张海报，取 ts 最大的那条（最近一次记录，心情/封面为最新状态）
+  dedupeWallBooks(list) {
+    const map = new Map();
+    (list || []).forEach(m => {
+      const k = m.doubanId || m.title;
+      const prev = map.get(k);
+      if (!prev || (m.ts || 0) > (prev.ts || 0)) map.set(k, m);
+    });
+    return Array.from(map.values());
   },
 
   // 年度书墙：按 ts 升序 + CSS wrap-reverse → 最早的先落满最底排、往上堆，最近读的浮在最顶（与月墙一致）；数量越多单张越小
   buildYearWall(days) {
-    const base = flattenBooks(days).sort((a, b) => (a.ts || 0) - (b.ts || 0));
+    const base = this.dedupeWallBooks(flattenBooks(days)).sort((a, b) => (a.ts || 0) - (b.ts || 0));
     const n = base.length;
     const perRow = n <= 15 ? 5 : n <= 30 ? 6 : n <= 60 ? 7 : n <= 100 ? 8 : 9;
     const items = base.map((m, i) => ({
@@ -446,7 +459,9 @@ Page({
         const items = (d.entries || [])
           .map(en => {
             const m = normalizeBookEntry(en, d.date);
-            return { ...m, key: `${m.date}-${m.ts}` };
+            // 进度环压在书封角上（不带数字，具体进度由 progressLabel 文字给出）；仅在算得出百分比时
+            const progressRing = m.progressPct > 0 ? progressRingUri(m.progressPct, { text: false }) : '';
+            return { ...m, key: `${m.date}-${m.ts}`, progressRing };
           })
           .sort((a, b) => (a.ts || 0) - (b.ts || 0));
         return { date: d.date, dateLabel: labels.dateLabel, weekday: labels.weekday, count: items.length, items };
@@ -455,10 +470,11 @@ Page({
     return out;
   },
 
-  // 当月观影统计（电影墙视图下方展示）
+  // 阅读统计（书墙视图下方展示）。共读本数按书去重（同一本跨天多次记录只算一本），与书墙一致
   buildMonthStats(days) {
     const movies = flattenBooks(days);
-    const total = movies.length;
+    // 共读本数：同一本书只计一次（按 doubanId，缺失退回书名），与书墙去重口径一致
+    const total = new Set(movies.map(m => m.doubanId || m.title)).size;
     const activeDays = (days || []).filter(d => (d.entries || []).length > 0).length;
     const rated = movies.map(m => Number(m.rating)).filter(n => Number.isFinite(n) && n > 0);
     // 10 分制：5 星制评分 ×2
@@ -492,7 +508,7 @@ Page({
   // fallFrom：每张海报到自己落点上方约 160rpx 起落（落点越靠下下落越远 → 仿重力一路掉到最底）
   // delay：按顺序错开，越靠底越先落（瀑布式由下往上堆）
   buildWall(days, areaH) {
-    const base = flattenBooks(days).sort((a, b) => (a.ts || 0) - (b.ts || 0));
+    const base = this.dedupeWallBooks(flattenBooks(days)).sort((a, b) => (a.ts || 0) - (b.ts || 0));
     // 超过 15 部 → 密集模式：每行 6 张、海报更小（与 .poster-wall.dense 的 CSS 尺寸一致）
     const dense = base.length > 15;
     const PER_ROW = dense ? 6 : 5;     // 内容区约 686rpx：5×108 或 6×100（含 14rpx 列间距）
@@ -535,11 +551,11 @@ Page({
       const item = map[date] || { date, entries: [] };
       const movies = (item.entries || []).map(entry => normalizeBookEntry(entry, date));
       const covers = movies.slice(0, 4).map(m => m.posterThumb || '/images/default-movie.jpg');
-      // 多部电影只取最新一部（ts 最大）的心情 emoji
-      const latestMood = movies
-        .slice()
-        .sort((a, b) => (b.ts || 0) - (a.ts || 0))
-        .find(m => m.moodEmoji);
+      const byTsDesc = movies.slice().sort((a, b) => (b.ts || 0) - (a.ts || 0));
+      // 多本书只取最新一本（ts 最大）的心情 emoji
+      const latestMood = byTsDesc.find(m => m.moodEmoji);
+      // 进度环也取当天最新一本；仅在算得出百分比（有当前页+总页数）时显示
+      const latestProgress = byTsDesc.length ? byTsDesc[0].progressPct : 0;
       cells.push({
         empty: false,
         day,
@@ -550,7 +566,8 @@ Page({
         isToday: date === this.data.today,
         isSelected: date === this.data.selectedDate,
         hasMovies: movies.length > 0,
-        moodEmoji: latestMood ? latestMood.moodEmoji : ''
+        moodEmoji: latestMood ? latestMood.moodEmoji : '',
+        progressRing: latestProgress > 0 ? progressRingUri(latestProgress, { text: false }) : ''
       });
     }
     return cells;

@@ -122,9 +122,11 @@
 
     <!-- ===== 日历视图底部：添加按钮 + 选中日记录 ===== -->
     <block wx:if="{{viewMode === 'calendar'}}">
-    <view class="add-record-btn" bindtap="onOpenAdd" hover-class="tap-soft">
-      <text class="add-plus">＋</text>
-      <text>添加观影记录</text>
+    <view class="record-btn-row">
+      <view class="add-record-btn" bindtap="onOpenAdd" hover-class="tap-soft">
+        <text class="add-plus">＋</text>
+        <text>添加观影记录</text>
+      </view>
     </view>
 
     <!-- 选中日期的观影记录 -->
@@ -168,9 +170,19 @@
             <view class="movie-info">
               <view class="title-row">
                 <text class="movie-title">{{movie.title}}</text>
-                <text wx:if="{{movie.year}}" class="movie-year">{{movie.year}}</text>
+                <!-- 单部分享：直接进单张海报页（selection 只放这一部） -->
+                <view class="card-share-btn"
+                      catchtap="onShareMovie"
+                      data-key="{{movie.key}}"
+                      hover-class="tap-soft">
+                  <text class="card-share-ico">🎬</text>
+                  <text>分享</text>
+                </view>
               </view>
-              <text wx:if="{{movie.director}}" class="movie-meta">导演：{{movie.director}}</text>
+              <view wx:if="{{movie.year || movie.director}}" class="meta-row">
+                <text wx:if="{{movie.year}}" class="movie-year">{{movie.year}}</text>
+                <text wx:if="{{movie.director}}" class="movie-meta">导演：{{movie.director}}</text>
+              </view>
 
               <!-- 全平台评分（客观，有则展示） -->
               <view wx:if="{{movie.platformRatings.length}}" class="plat-row">
@@ -194,7 +206,9 @@
                 <text wx:if="{{movie.note}}" class="mine-note">{{movie.note}}</text>
               </view>
             </view>
-            <text class="movie-time">{{movie.timeText}}</text>
+            <view class="card-side">
+              <text class="movie-time">{{movie.timeText}}</text>
+            </view>
           </view>
         </view>
       </block>
