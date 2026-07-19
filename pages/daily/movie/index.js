@@ -1,6 +1,7 @@
 const toast = require('../../../utils/dailyToast.js');
 const {
   WD_MON,
+  getWindowInfoCompat,
   getNavMetrics,
   todayStr,
   monthRange,
@@ -122,7 +123,7 @@ Page({
 
   onLoad(options) {
     const nav = getNavMetrics();
-    this.winW = (wx.getSystemInfoSync && wx.getSystemInfoSync().windowWidth) || 375;
+    this.winW = getWindowInfoCompat().windowWidth || 375;
     const today = todayStr();
     const parts = today.split('-').map(Number);
     const targetDate = options && options.date ? options.date : today;
@@ -597,6 +598,17 @@ Page({
   onLongPressMovie(e) {
     const { date, ts, title } = e.currentTarget.dataset;
     this.confirmDelete(date, Number(ts), title);
+  },
+
+  // 条目「分享」：只把这一部放进 selection → 分享页按单部渲染成单张海报
+  onShareMovie(e) {
+    const key = e.currentTarget.dataset.key;
+    if (this.data.swipedKey) this.setData({ swipedKey: '' });
+    const movie = (this.data.selectedMovies || []).find(m => m.key === key);
+    if (!movie) { toast.show(this, '记录不存在'); return; }
+    const app = getApp();
+    if (app && app.globalData) app.globalData.moviePosterSelection = [movie];
+    wx.navigateTo({ url: '/pages/daily/movie/share' });
   },
 
   onSwipeDelete(e) {

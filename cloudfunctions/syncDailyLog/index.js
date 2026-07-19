@@ -10,7 +10,7 @@
 //   DailySettings: openid + theme 复合索引（唯一）
 //
 // 入参约定（所有 action 都必填 theme）：
-//   action: 'getToday' | 'addEntry' | 'removeEntry' | 'updateEntry' | 'reorderEntries' | 'setGoal' | 'setPresets' | 'getRange' | 'getYear'
+//   action: 'getToday' | 'addEntry' | 'removeEntry' | 'updateEntry' | 'reorderEntries' | 'setGoal' | 'setPresets' | 'getRange' | 'getYear' | 'getAll'
 //   theme:  'water' | 'milktea' | ...
 
 const cloud = require('wx-server-sdk');
@@ -80,6 +80,112 @@ async function mirrorMetaCovers(meta, openid) {
     return meta;
 }
 
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// 封面值是否「需要迁移」：非空、且不是已被线上 <image> 白名单认可的 cloud 封面。
+function needsMirror(v) {
+    if (!v || typeof v !== 'string') return false;
+    if (/^cloud:\/\//i.test(v)) return !SAFE_CLOUD_TOKENS.some(t => v.includes(t));
+    return true; // http(s) 直链
+}
+
+// 从 searched_movies 取该电影已转存的 cloud 封面（movie_search_${doubanId}.poster）。
+// 命中则作为镜像源（云→云拷贝，不打豆瓣）；未命中返回空。
+async function cloudPosterFromSearched(doubanId) {
+    if (!doubanId) return '';
+    try {
+        const r = await db.collection('searched_movies').doc('movie_search_' + String(doubanId)).get();
+        const p = r && r.data && r.data.poster;
+        return (typeof p === 'string' && /^cloud:\/\//i.test(p)) ? p : '';
+    } catch (e) { return ''; }
+}
+
+// ── 运维迁移（生产安全版）：把历史 DailyLogs 里的直链封面补镜像成 cloud://。 ──
+//   背景：早期（mirrorCover 加入前）或当时镜像失败的记录，meta.poster/cover 仍是豆瓣直链，
+//   canvas 分享海报无法 downloadFile 加载（域名白名单）。幂等：已是白名单 cloud 封面直接跳过。
+//   入参：{ action:'migrateCovers', theme?='movie', apply?=false, startAfter?='', maxDocs?, maxTransfers? }
+//     · apply:false（默认）干跑：只扫描统计脏数据、不下载不写库，用于评估规模；maxDocs 默认 500。
+//     · apply:true 执行：每次最多处理 maxDocs 文档 / maxTransfers 次转存后停下，返回 nextStartAfter；
+//       反复用 nextStartAfter 续跑至 done=true（分批，避免 60s 超时）。maxDocs 默认 50、maxTransfers 默认 40。
+//   生产安全要点：
+//     · 按 _id 游标分批可续跑，不用 skip（大偏移慢/易漏）。
+//     · 优先复用 searched_movies 的 cloud 封面（云→云），仅未命中才打豆瓣、且每次 sleep 300ms 限流，避免风控。
+//     · 慢转存先做，随后「重读该文档→按 ts 回填→写回」，竞态窗口与 upsertDay 同级，不整体覆盖旧 entries。
+async function migrateCovers(event) {
+    const theme = event.theme || 'movie';
+    const apply = event.apply === true;       // 执行需显式 apply:true，默认干跑
+    const startAfter = event.startAfter || '';
+    // 云 DB 单次 get 服务端上限 1000：超过会被静默截断，导致 done=docs.length<maxDocs 永远为真、游标卡在 1000。
+    const maxDocs = Math.min(Number(event.maxDocs) || (apply ? 50 : 500), 1000);
+    const maxTransfers = Number(event.maxTransfers) || 20;
+    // 挂钟时间预算：默认 15s 就收手返回游标，避免被云函数超时（可能仅 20s）强杀
+    const timeBudgetMs = Number(event.timeBudgetMs) || 15000;
+    const t0 = Date.now();
+    const capReached = () => apply && (transfers >= maxTransfers || Date.now() - t0 > timeBudgetMs);
+    const coll = db.collection('DailyLogs');
+
+    const where = startAfter ? { theme, _id: _.gt(startAfter) } : { theme };
+    const res = await coll.where(where).orderBy('_id', 'asc').limit(maxDocs).get();
+    const docs = res.data || [];
+
+    let scannedDocs = 0, dirtyEntries = 0, mirrored = 0, changedDocs = 0, transfers = 0, doubanHits = 0;
+    let cursor = startAfter, stoppedForCap = false;
+    const samples = [];
+
+    for (const doc of docs) {
+        if (capReached()) { stoppedForCap = true; break; }
+        scannedDocs++;
+        const patches = []; // { ts, field, newVal }
+        for (const e of (doc.entries || [])) {
+            const meta = e && e.meta;
+            if (!meta || typeof meta !== 'object') continue;
+            for (const field of ['poster', 'cover']) {
+                if (!needsMirror(meta[field])) continue;
+                dirtyEntries++;
+                if (samples.length < 20) samples.push({ id: doc._id, title: meta.title || '', field, before: String(meta[field]).slice(0, 48) });
+                if (!apply) continue;
+                if (capReached()) { stoppedForCap = true; break; }
+                // 镜像源：优先 searched_movies 云封面（云→云，不打豆瓣）；否则用直链（打豆瓣，限流）
+                let source = meta[field];
+                if (field === 'poster') {
+                    const c = await cloudPosterFromSearched(meta.doubanId);
+                    if (c) source = c;
+                }
+                if (/doubanio\.com/i.test(String(source))) {
+                    // 兜底直链多为 s_/m_ratio_poster 小图，升级成 l_ratio_poster 大图再下（海报墙放大不糊）
+                    source = String(source).replace(/\/[sm]_ratio_poster\//, '/l_ratio_poster/');
+                    doubanHits++;
+                    await sleep(300);
+                }
+                const after = await mirrorCover(source, doc.openid);
+                transfers++;
+                if (after && !needsMirror(after)) patches.push({ ts: e.ts, field, newVal: after });
+            }
+            if (stoppedForCap) break;
+        }
+        // 写回：重读该文档→按 ts 回填→写（慢转存已在上面完成，此处窗口极小）
+        if (apply && patches.length) {
+            try {
+                const fresh = await coll.doc(doc._id).get();
+                const fe = (fresh.data && fresh.data.entries) || [];
+                let touched = false;
+                for (const p of patches) {
+                    const t = fe.find(x => x.ts === p.ts);
+                    if (t && t.meta && needsMirror(t.meta[p.field])) { t.meta[p.field] = p.newVal; touched = true; mirrored++; }
+                }
+                if (touched) { await coll.doc(doc._id).update({ data: { entries: fe } }); changedDocs++; }
+            } catch (err) {
+                console.warn('migrateCovers 写回失败', doc._id, err && err.message);
+            }
+        }
+        if (stoppedForCap) break;   // 因上限中断：不推进游标，下次续跑重扫本文档（幂等）
+        cursor = doc._id;           // 本文档处理完毕
+    }
+
+    const done = !stoppedForCap && docs.length < maxDocs;
+    return { success: true, theme, apply, done, nextStartAfter: done ? '' : cursor, scannedDocs, dirtyEntries, mirrored, changedDocs, transfers, doubanHits, samples };
+}
+
 // 主题默认值（与前端 utils/dailyThemes.js 保持一致；这里只放最小集合，用于无设置时兜底）
 const THEME_DEFAULTS = {
     water:   { unit: 'ml',  daily_goal: 2000, presets: [200, 350, 500] },
@@ -128,6 +234,26 @@ async function getYearDays(openid, theme, year) {
     const to = `${year}-12-31`;
     const query = db.collection('DailyLogs')
         .where({ openid, theme, date: _.gte(from).and(_.lte(to)) })
+        .orderBy('date', 'asc');
+    const countRes = await query.count();
+    const total = countRes.total || 0;
+    if (!total) return [];
+
+    const batchTimes = Math.ceil(total / 100);
+    const tasks = [];
+    for (let i = 0; i < batchTimes; i++) {
+        tasks.push(query.skip(i * 100).limit(100).get());
+    }
+    const results = await Promise.all(tasks);
+    let days = [];
+    results.forEach(r => { days = days.concat(r.data || []); });
+    return days;
+}
+
+// 拉取某用户某主题的「全部」打卡日（不限日期），MAX_LIMIT=100 分页循环。个人日记量级很小，一次拉完即可。
+async function getAllDays(openid, theme) {
+    const query = db.collection('DailyLogs')
+        .where({ openid, theme })
         .orderBy('date', 'asc');
     const countRes = await query.count();
     const total = countRes.total || 0;
@@ -209,9 +335,20 @@ async function upsertDay(openid, theme, date, mutate) {
 exports.main = async (event, context) => {
     const wxContext = cloud.getWXContext();
     const openid = wxContext.OPENID;
+    const action = event.action;
+
+    // 一次性运维迁移：扫全量补齐云存储封面，无需 openid（从云函数控制台执行）
+    if (action === 'migrateCovers') {
+        try {
+            return await migrateCovers(event);
+        } catch (err) {
+            console.error('migrateCovers error', err);
+            return { success: false, error: err && err.message };
+        }
+    }
+
     // 缺 openid 直接拒绝：理论上小程序调用必给，留作开发态/服务端测试调用兜底
     if (!openid) return { success: false, error: 'NO_OPENID' };
-    const action = event.action;
     const theme = event.theme || 'water';
 
     try {
@@ -367,6 +504,16 @@ exports.main = async (event, context) => {
                 getSettings(openid, theme)
             ]);
             return { success: true, theme, year: y, days, settings };
+        }
+
+        // 全部记录（跨年）—— 用于「海报分享」时间轴多选页拉取该用户某主题的所有打卡日。
+        // 只返回有记录的日子（不 gap-fill），MAX_LIMIT=100 分页循环，按 date 升序。响应结构与 getYear 对齐。
+        if (action === 'getAll') {
+            const [days, settings] = await Promise.all([
+                getAllDays(openid, theme),
+                getSettings(openid, theme)
+            ]);
+            return { success: true, theme, days, settings };
         }
 
         return { success: false, error: '未知 action: ' + action };

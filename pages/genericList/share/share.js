@@ -10,7 +10,7 @@ function queryOptionsFor(cfg) {
     return { orderByField: 'rank', orderDirection: (cfg && cfg.orderDirection) || 'asc' };
 }
 
-const FOOTER_TEXT = '搜索小程序：标记吧，免费制作同款图片';
+const FOOTER_TEXT = '小程序：标记吧，免费制作同款图';
 const FIXED_CANVAS_WIDTH = 1242;
 const FIXED_CANVAS_HEIGHT = 1660;
 // 紧凑画布：文字卡片（胶囊/列表）在电影较少时优先尝试的更小画布——画布本身缩小 + 字号绝对值
@@ -63,7 +63,7 @@ Page({
             unwatched: '未看',
             emptyPoster: '暂无已看电影',
             emptyMovie: '暂无电影数据',
-            watermark: '搜索小程序：标记吧，免费制作同款图片',
+            watermark: '小程序：标记吧，免费制作同款图',
             saving: '生成中...',
             saveButton: '保存图片到相册',
             loadingShare: '正在生成分享图...'

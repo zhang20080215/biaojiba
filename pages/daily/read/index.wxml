@@ -72,12 +72,16 @@
               <text class="tl-day-count">{{item.count}} 本</text>
             </view>
             <view class="tl-card" wx:for="{{item.items}}" wx:for-item="mv" wx:key="key">
-              <image class="tl-poster" src="{{mv.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" lazy-load="true" />
+              <view class="tl-poster-wrap">
+                <image class="tl-poster" src="{{mv.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" lazy-load="true" />
+                <image wx:if="{{mv.progressRing}}" class="tl-ring" src="{{mv.progressRing}}" mode="aspectFit" />
+              </view>
               <view class="tl-info">
                 <view class="tl-title-row">
                   <text class="tl-title">{{mv.title}}</text>
                   <text wx:if="{{mv.year}}" class="tl-year">{{mv.year}}</text>
                 </view>
+                <text wx:if="{{mv.progressLabel}}" class="tl-progress">{{mv.progressLabel}}</text>
                 <view wx:if="{{mv.rating > 0}}" class="tl-rating">
                   <view class="stars">
                     <text class="stars-bg">★★★★★</text>
@@ -112,6 +116,8 @@
               <image wx:for="{{item.covers}}" wx:for-item="cv" wx:key="index" class="cal-poster" src="{{cv}}" mode="aspectFill" lazy-load="true" />
             </view>
             <view wx:else class="cal-placeholder"></view>
+            <!-- 阅读进度环（当天最新一本；仅当算得出百分比时） -->
+            <image wx:if="{{item.progressRing}}" class="cal-ring" src="{{item.progressRing}}" mode="aspectFit" />
             <!-- 有心情则显示 emoji；无电影记录才显示日期数字；有电影但无心情则两者都不显示 -->
             <text wx:if="{{item.moodEmoji}}" class="cal-mood">{{item.moodEmoji}}</text>
             <text wx:elif="{{!item.hasMovies}}" class="cal-day">{{item.day}}</text>
@@ -171,6 +177,15 @@
                 <text wx:if="{{movie.year}}" class="movie-year">{{movie.year}}</text>
               </view>
               <text wx:if="{{movie.author}}" class="movie-meta">作者：{{movie.author}}</text>
+
+              <!-- 阅读进度：已读页数（+ 有分母时的进度条/百分比） -->
+              <view wx:if="{{movie.progressLabel}}" class="read-progress">
+                <text class="rp-label">{{movie.progressLabel}}</text>
+                <view wx:if="{{movie.progressPct}}" class="rp-bar">
+                  <view class="rp-fill" style="width: {{movie.progressPct}}%"></view>
+                </view>
+                <text wx:if="{{movie.progressPct}}" class="rp-pct">{{movie.progressPct}}%</text>
+              </view>
 
               <!-- 全平台评分（客观，有则展示） -->
               <view wx:if="{{movie.platformRatings.length}}" class="plat-row">
@@ -243,8 +258,9 @@
 
     <!-- ==================== 年视图 ==================== -->
     <block wx:else>
-      <!-- 年度书墙：全年书封按数量自动缩小，按阅读日期早→晚依次掉落 -->
-      <view wx:if="{{viewMode === 'wall'}}" class="wall-box year">
+      <!-- 年度书墙：与月度书墙同构 —— 定高区块，海报沉底掉落；统计卡在书墙下方 -->
+      <block wx:if="{{viewMode === 'wall'}}">
+      <view class="wall-box" style="height: {{wallAreaH}}rpx;">
         <view wx:if="{{!loading && yearWall.length === 0}}" class="wall-empty">
           <text class="empty-title">这一年还没有读书记录</text>
           <text class="empty-sub">切到「日历」选个月份添加</text>
@@ -259,43 +275,45 @@
             </view>
           </view>
         </view>
-        <!-- 年度书墙底部：全年阅读统计 -->
-        <view wx:if="{{yearStats.total > 0}}" class="month-stats">
-          <text class="ms-title">{{year}}年阅读统计</text>
-          <view class="ms-grid">
-            <view class="ms-item">
-              <text class="ms-value">{{yearStats.total}}</text>
-              <text class="ms-label">共读(本)</text>
-            </view>
-            <view class="ms-item">
-              <text class="ms-value">{{yearStats.activeDays}}</text>
-              <text class="ms-label">活跃(天)</text>
-            </view>
-            <view class="ms-item">
-              <text class="ms-value">{{yearStats.avgRating}}</text>
-              <text class="ms-label">平均评分</text>
-            </view>
-            <view class="ms-item">
-              <text class="ms-value ms-emoji">{{yearStats.topMood}}</text>
-              <text class="ms-label">最多心情</text>
-            </view>
+      </view>
+
+      <!-- 年度书墙底部：全年阅读统计（与月度同为独立块） -->
+      <view wx:if="{{yearStats.total > 0}}" class="month-stats">
+        <text class="ms-title">{{year}}年阅读统计</text>
+        <view class="ms-grid">
+          <view class="ms-item">
+            <text class="ms-value">{{yearStats.total}}</text>
+            <text class="ms-label">共读(本)</text>
           </view>
-          <view wx:if="{{yearStats.topMovie}}" class="ms-top">
-            <image class="ms-top-poster" src="{{yearStats.topMovie.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" lazy-load="true" />
-            <view class="ms-top-info">
-              <text class="ms-top-tag">年度最高分</text>
-              <text class="ms-top-title">{{yearStats.topMovie.title}}</text>
-              <view class="ms-top-meta">
-                <view class="stars">
-                  <text class="stars-bg">★★★★★</text>
-                  <text class="stars-fg" style="width: {{yearStats.topMovie.rating * 20}}%">★★★★★</text>
-                </view>
-                <text class="rating-score">{{yearStats.topMovie.score}}</text>
+          <view class="ms-item">
+            <text class="ms-value">{{yearStats.activeDays}}</text>
+            <text class="ms-label">活跃(天)</text>
+          </view>
+          <view class="ms-item">
+            <text class="ms-value">{{yearStats.avgRating}}</text>
+            <text class="ms-label">平均评分</text>
+          </view>
+          <view class="ms-item">
+            <text class="ms-value ms-emoji">{{yearStats.topMood}}</text>
+            <text class="ms-label">最多心情</text>
+          </view>
+        </view>
+        <view wx:if="{{yearStats.topMovie}}" class="ms-top">
+          <image class="ms-top-poster" src="{{yearStats.topMovie.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" lazy-load="true" />
+          <view class="ms-top-info">
+            <text class="ms-top-tag">年度最高分</text>
+            <text class="ms-top-title">{{yearStats.topMovie.title}}</text>
+            <view class="ms-top-meta">
+              <view class="stars">
+                <text class="stars-bg">★★★★★</text>
+                <text class="stars-fg" style="width: {{yearStats.topMovie.rating * 20}}%">★★★★★</text>
               </view>
+              <text class="rating-score">{{yearStats.topMovie.score}}</text>
             </view>
           </view>
         </view>
       </view>
+      </block>
 
       <!-- 年度时间轴：跨全年连续，最近在最上 -->
       <view wx:elif="{{viewMode === 'timeline'}}" class="timeline-box">
@@ -316,12 +334,16 @@
                 <text class="tl-day-count">{{item.count}} 本</text>
               </view>
               <view class="tl-card" wx:for="{{item.items}}" wx:for-item="mv" wx:key="key">
-                <image class="tl-poster" src="{{mv.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" lazy-load="true" />
+                <view class="tl-poster-wrap">
+                  <image class="tl-poster" src="{{mv.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" lazy-load="true" />
+                  <image wx:if="{{mv.progressRing}}" class="tl-ring" src="{{mv.progressRing}}" mode="aspectFit" />
+                </view>
                 <view class="tl-info">
                   <view class="tl-title-row">
                     <text class="tl-title">{{mv.title}}</text>
                     <text wx:if="{{mv.year}}" class="tl-year">{{mv.year}}</text>
                   </view>
+                  <text wx:if="{{mv.progressLabel}}" class="tl-progress">{{mv.progressLabel}}</text>
                   <view wx:if="{{mv.rating > 0}}" class="tl-rating">
                     <view class="stars">
                       <text class="stars-bg">★★★★★</text>

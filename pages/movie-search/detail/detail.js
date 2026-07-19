@@ -10,7 +10,7 @@ const rewardedSaveGate = require('../../../utils/rewardedSaveGate.js');
 // 海报固定尺寸 1080×1440（3:4，与详情页一致比例）
 const POSTER_W = 1080;
 const POSTER_H = 1440;
-const FOOTER_TEXT = '标记吧小程序 · 制作同款图';
+const FOOTER_TEXT = '小程序：标记吧，免费制作同款图';
 
 function getNavMetrics() {
   const fallback = { statusBarHeight: 20, navBarHeight: 44, navOffset: 64 };

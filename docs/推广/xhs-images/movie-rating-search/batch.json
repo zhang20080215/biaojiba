@@ -32,9 +32,9 @@
       "ref": ["01-cover-bilei.png"]
     },
     {
-      "id": "05-cta",
+      "id": "05-ending-question",
       "promptFiles": ["prompts/05-ending-cta.md"],
-      "image": "05-ending-cta.png",
+      "image": "05-ending-question.png",
       "provider": "openrouter",
       "model": "google/gemini-3-pro-image-preview",
       "ar": "3:4",

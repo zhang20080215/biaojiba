@@ -803,7 +803,7 @@ Page({
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillStyle = 'rgba(200, 200, 200, 0.6)';
-        ctx.fillText('搜索小程序：标记吧  免费制作同款图片', width / 2, textCenterY + 4);
+        ctx.fillText('小程序：标记吧，免费制作同款图', width / 2, textCenterY + 4);
         ctx.restore();
 
         return textCenterY + 20;

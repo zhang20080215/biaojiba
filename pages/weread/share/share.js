@@ -24,7 +24,7 @@ function simplifyTitle(title) {
         .replace(/\s+/g, ' ')
         .trim();
 }
-const FOOTER_TEXT = '搜索小程序：标记吧，免费制作同款图片';
+const FOOTER_TEXT = '小程序：标记吧，免费制作同款图';
 const FIXED_CANVAS_WIDTH = 1242;
 const FIXED_CANVAS_HEIGHT = 1660;
 const MAX_POSTER_CANVAS_HEIGHT = 4200;
@@ -72,7 +72,7 @@ Page({
             unread: '未读',
             emptyPoster: '暂无已读图书',
             emptyBooks: '暂无图书数据',
-            watermark: '搜索小程序：标记吧，免费制作同款图片',
+            watermark: '小程序：标记吧，免费制作同款图',
             saving: '生成中...',
             saveButton: '保存图片到相册',
             loadingShare: '正在生成分享图...'

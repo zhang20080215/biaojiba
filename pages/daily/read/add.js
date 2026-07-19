@@ -89,6 +89,9 @@ Page({
 
     date: '',
     dateText: '',
+    totalPages: 0,        // 0 = 未知（详情没给页数）
+    currentPage: '',      // 输入框原文，空串 = 未填
+    progressText: '',     // 「当前页/总页数」都有时才显示的百分比
     rating: 0,
     ratingLabel: '未评分',
     stars: buildStars(0),
@@ -158,17 +161,73 @@ Page({
     }
   },
 
-  // 选中：直接用搜索时已富化的候选，不再二次查询豆瓣
+  // 选中：先用搜索结果即时渲染，再拉一次详情补齐出版社/总页数（搜索结果页 HTML 没有页数）。
+  // 只在选中时查一次，不对每个候选查——否则一次搜索就是 N 次回源。
   onSelectMovie(e) {
     const doubanId = e.currentTarget.dataset.doubanId;
     const selected = this.data.candidates.find(item => String(item.doubanId) === String(doubanId));
     if (!selected) return;
-    this.setData({ selected });
+    this.setData({
+      selected: Object.assign({}, selected, {
+        publisherText: selected.publisher || '',
+        pagesText: '加载中…'
+      }),
+      totalPages: 0,
+      currentPage: '',
+      progressText: ''
+    });
+    this._fetchBookDetail(doubanId);
+  },
+
+  // 详情补齐。用 seq 作令牌：加载途中用户改选/退回时，丢弃过期响应。
+  _fetchBookDetail(doubanId) {
+    const seq = (this._detailSeq || 0) + 1;
+    this._detailSeq = seq;
+    wx.cloud.callFunction({
+      name: 'fetchBookFullInfo',
+      // skipUserQuery：这里只借用它的详情能力，不该污染「电影/图书评分查询」的个人历史
+      data: { doubanId, skipUserQuery: true },
+      success: res => {
+        if (seq !== this._detailSeq || !this.data.selected) return;
+        const result = res && res.result;
+        const book = result && result.success && result.book;
+        if (!book) { this._applyDetailFallback(); return; }
+        const totalPages = Number(book.pages) || 0;
+        const patch = {
+          totalPages,
+          'selected.publisherText': book.publisher || this.data.selected.publisher || '',
+          'selected.pagesText': totalPages ? `${totalPages} 页` : '未知'
+        };
+        // 云存储封面（fetchBookFullInfo 已转存）：微信可缓存、不 418，比豆瓣直链稳。
+        // 只认 cloud:// 地址，落库时优先用它（豆瓣直链仅兜底）。
+        if (typeof book.cover === 'string' && book.cover.indexOf('cloud://') === 0) {
+          patch['selected.cloudCover'] = book.cover;
+        }
+        this.setData(patch);
+        this._syncProgress();
+      },
+      fail: err => {
+        if (seq !== this._detailSeq || !this.data.selected) return;
+        console.error('daily read detail fail', err);
+        this._applyDetailFallback();
+      }
+    });
+  },
+
+  // 详情拿不到：出版社退回搜索结果的值，总页数标未知（此时进度只记当前页，无分母）
+  _applyDetailFallback() {
+    this.setData({
+      totalPages: 0,
+      'selected.publisherText': (this.data.selected && this.data.selected.publisher) || '',
+      'selected.pagesText': '未知'
+    });
+    this._syncProgress();
   },
 
   // 重新选择：退回候选列表，保留已有搜索结果
   onReselect() {
-    this.setData({ selected: null });
+    this._detailSeq = (this._detailSeq || 0) + 1;   // 作废在途的详情请求
+    this.setData({ selected: null, totalPages: 0, currentPage: '', progressText: '' });
   },
 
   // 豆瓣封面有防盗链（小程序直连返回 418），加载失败退回占位图
@@ -230,6 +289,29 @@ Page({
     this.setData({ mood, moodModal: false, visibleMoods: computeVisibleMoods(MOOD_OPTIONS, mood) });
   },
 
+  // 当前页数：只留数字；已知总页数时上限即总页数（输超了直接夹到总页数）
+  onCurrentPageInput(e) {
+    const digits = String(e.detail.value || '').replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+    let currentPage = digits;
+    const total = Number(this.data.totalPages) || 0;
+    if (total && digits && Number(digits) > total) currentPage = String(total);
+    this.setData({ currentPage });
+    this._syncProgress();
+    return currentPage;   // 返回值回写 input，越界时输入框即时纠正
+  },
+
+  // 进度读数：仅在「当前页 + 总页数」都有时给百分比
+  _syncProgress() {
+    const total = Number(this.data.totalPages) || 0;
+    const cur = Number(this.data.currentPage) || 0;
+    if (!total || !cur) {
+      if (this.data.progressText) this.setData({ progressText: '' });
+      return;
+    }
+    const pct = Math.min(100, Math.round(cur / total * 100));
+    this.setData({ progressText: `${pct}%` });
+  },
+
   onNoteInput(e) {
     const note = e.detail.value || '';
     this.setData({ note, noteCount: note.length });
@@ -243,14 +325,20 @@ Page({
       return;
     }
     const moodOpt = MOOD_OPTIONS.find(m => m.key === this.data.mood);
+    const totalPages = Number(this.data.totalPages) || 0;
+    const currentPage = Number(this.data.currentPage) || 0;
     const meta = {
       doubanId: selected.doubanId,
       title: selected.title || '',
       year: selected.year || '',
-      cover: selected.posterUrl || selected.posterThumb || '',
+      // 封面优先用云存储地址（稳、可缓存、不 418）；详情未回或转存失败时兜底豆瓣直链
+      cover: selected.cloudCover || selected.posterUrl || selected.posterThumb || '',
       author: selected.author || '',
-      publisher: selected.publisher || '',
+      // 出版社优先用详情返回的（搜索页解析出的那个可能串位）
+      publisher: selected.publisherText || selected.publisher || '',
       pubDate: selected.year || '',
+      totalPages,      // 0 = 未知
+      currentPage,     // 0 = 未填
       rating: Number(this.data.rating) || 0,
       mood: this.data.mood || '',
       moodEmoji: moodOpt ? moodOpt.emoji : '',

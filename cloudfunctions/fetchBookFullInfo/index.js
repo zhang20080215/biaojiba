@@ -49,6 +49,19 @@ function buildRexxarUrl(doubanId) {
   return `https://m.douban.com/rexxar/api/v2/book/${doubanId}`;
 }
 
+// rexxar 的 press / pubdate / pages / price 都是字符串数组（如 pages: ["97"]），取首项转标量。
+function firstOf(v) {
+  if (Array.isArray(v)) return v.length ? String(v[0]).trim() : '';
+  return v == null ? '' : String(v).trim();
+}
+
+// 总页数："97" / "97页" 都取到 97；缺失或非法返回 null（电子书等确实可能没有）
+function parsePages(v) {
+  const m = firstOf(v).match(/\d+/);
+  const n = m ? Number(m[0]) : NaN;
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
 function buildMobileDetailUrl(doubanId) {
   return `https://m.douban.com/book/subject/${doubanId}/`;
 }
@@ -120,17 +133,16 @@ async function scrapeDoubanBookDetail(doubanId) {
   const html = typeof (htmlRes && htmlRes.data) === 'string' ? htmlRes.data : '';
 
   const title = j.title || '';
-  const year = j.pubdate
-    ? String(j.pubdate).slice(0, 4)
-    : (j.year || '');
   const coverUrl = j.cover_url || (j.pic && (j.pic.large || j.pic.normal)) || '';
   const authors = Array.isArray(j.author) ? j.author.filter(Boolean)
     : (j.author ? [String(j.author)] : []);
   const translators = Array.isArray(j.translator) ? j.translator.filter(Boolean) : [];
-  const publisher = j.press || j.publisher || '';
-  const pubDate = j.pubdate || '';
+  const publisher = firstOf(j.press) || firstOf(j.publisher);
+  const pubDate = firstOf(j.pubdate);
+  const year = pubDate ? pubDate.slice(0, 4) : firstOf(j.year);
+  const pages = parsePages(j.pages);
   const intro = j.intro || (j.abstract || '');
-  const isbn = j.isbn13 || j.isbn || '';
+  const isbn = firstOf(j.isbn13) || firstOf(j.isbn);
 
   let rating = j.rating && j.rating.value != null ? Number(j.rating.value) : null;
   let votes = j.rating && j.rating.count != null ? Number(j.rating.count) : null;
@@ -150,6 +162,7 @@ async function scrapeDoubanBookDetail(doubanId) {
     translators,
     publisher,
     pubDate,
+    pages,
     isbn,
     intro,
     douban: {
@@ -200,6 +213,10 @@ exports.main = async (event, context) => {
       } catch (e) { /* 文档/集合不存在 */ }
     }
 
+    // pages 是后加的字段：老缓存文档没有它（publisher 也可能是历史遗留的数组），
+    // 视为未命中重抓一次补齐。抓到后必写 pages（无页数时为 null），不会反复回源。
+    if (existing && existing.pages === undefined) existing = null;
+
     const nowMs = Date.now();
     if (!bypassCache && existing) {
       const updatedMs = existing.updatedAt ? new Date(existing.updatedAt).getTime() : 0;
@@ -231,6 +248,7 @@ exports.main = async (event, context) => {
       translators: detail.translators,
       publisher: detail.publisher,
       pubDate: detail.pubDate,
+      pages: detail.pages,
       isbn: detail.isbn,
       intro: detail.intro,
       cover: cloudCover || detail.coverUrl,

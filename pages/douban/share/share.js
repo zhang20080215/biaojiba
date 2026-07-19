@@ -7,7 +7,7 @@ const rewardedSaveGate = require('../../../utils/rewardedSaveGate.js');
 const userStore = require('../../../utils/userStore.js');
 
 const TITLE = '豆瓣电影TOP250观影海报';
-const FOOTER_TEXT = '搜索小程序：标记吧，免费制作同款图片';
+const FOOTER_TEXT = '小程序：标记吧，免费制作同款图';
 const FIXED_CANVAS_WIDTH = 1242;
 const FIXED_CANVAS_HEIGHT = 1660;
 const MAX_POSTER_CANVAS_HEIGHT = 4200;
@@ -55,7 +55,7 @@ Page({
             unwatched: '未看',
             emptyPoster: '暂无已看电影',
             emptyMovie: '暂无电影数据',
-            watermark: '搜索小程序：标记吧，免费制作同款图片',
+            watermark: '小程序：标记吧，免费制作同款图',
             saving: '生成中...',
             saveButton: '保存图片到相册',
             loadingShare: '正在生成分享图...'

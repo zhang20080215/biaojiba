@@ -3,19 +3,34 @@ const imageCache = require('../../../utils/imageCacheManager.js');
 
 const WD_MON = ['一', '二', '三', '四', '五', '六', '日'];
 
+// wx.getSystemInfoSync 已废弃：优先用 wx.getWindowInfo（含 statusBarHeight / windowWidth），
+// 回退兼容旧基础库。返回对象供 getNavMetrics / 页面取 windowWidth 用。
+function getWindowInfoCompat() {
+  try { if (wx.getWindowInfo) return wx.getWindowInfo(); } catch (e) { /* ignore */ }
+  try { if (wx.getSystemInfoSync) return wx.getSystemInfoSync(); } catch (e) { /* ignore */ }
+  return {};
+}
+
 function getNavMetrics() {
-  const fallback = { statusBarHeight: 20, navBarHeight: 48, navOffset: 68 };
+  // navRightInset：右侧控件需避开右上角胶囊的安全内边距（px）
+  const fallback = { statusBarHeight: 20, navBarHeight: 48, navOffset: 68, navRightInset: 96 };
   try {
-    const systemInfo = wx.getSystemInfoSync ? wx.getSystemInfoSync() : {};
+    const systemInfo = getWindowInfoCompat();
     const statusBarHeight = systemInfo.statusBarHeight || fallback.statusBarHeight;
+    const screenW = systemInfo.windowWidth || systemInfo.screenWidth || 375;
     let navBarHeight = fallback.navBarHeight;
+    let navRightInset = fallback.navRightInset;
     if (wx.getMenuButtonBoundingClientRect) {
       const menu = wx.getMenuButtonBoundingClientRect();
       if (menu && menu.top && menu.height) {
         navBarHeight = (menu.top - statusBarHeight) * 2 + menu.height;
       }
+      if (menu && menu.left) {
+        // 右内边距 = 屏宽 - 胶囊左缘 + 8px 间隙，让右侧按钮落在胶囊左边
+        navRightInset = Math.round(screenW - menu.left + 8);
+      }
     }
-    return { statusBarHeight, navBarHeight, navOffset: statusBarHeight + navBarHeight };
+    return { statusBarHeight, navBarHeight, navOffset: statusBarHeight + navBarHeight, navRightInset };
   } catch (e) {
     return fallback;
   }
@@ -102,6 +117,7 @@ function normalizeMovieEntry(entry, date) {
     poster,
     posterThumb: imageCache.getThumbnailUrl(poster, 'list'),
     director: meta.director || '',
+    genres: Array.isArray(meta.genres) ? meta.genres : [],
     rating: Number(meta.rating) || 0,
     ratingText: ratingText(meta.rating),
     mood: meta.mood || '',
@@ -135,6 +151,7 @@ function getMovieThemeView() {
 
 module.exports = {
   WD_MON,
+  getWindowInfoCompat,
   getNavMetrics,
   todayStr,
   parseDate,

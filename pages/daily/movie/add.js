@@ -218,7 +218,8 @@ Page({
       ratingCells: [],
       movieFull: null
     });
-    this._fetchFullRatings(selected.doubanId);
+    // 保存在飞的 Promise：提交时若云封面还没就绪，onSubmit 会 await 它
+    this._fullInfoPromise = this._fetchFullRatings(selected.doubanId);
   },
 
   // 拉取全平台评分（豆瓣/IMDb/新鲜度/爆米花），首次约 10s，命中缓存秒回
@@ -311,21 +312,42 @@ Page({
     this.setData({ note, noteCount: note.length });
   },
 
-  onSubmit() {
+  async onSubmit() {
     if (this.data.submitting) return;
     const selected = this.data.selected;
     if (!selected) {
       toast.show(this, '请先选择电影');
       return;
     }
-    const full = this.data.movieFull || {};
+    this.setData({ submitting: true });
+
+    // 保证封面尽量落 cloud://（canvas 分享只认云存储封面）：
+    // 若全平台信息还在飞，先等它把已转存的 cloud:// 封面拿回来再存。
+    const isCloud = p => typeof p === 'string' && p.indexOf('cloud://') === 0;
+    let full = this.data.movieFull || {};
+    if (!isCloud(full.poster) && this._fullInfoPromise) {
+      try { await this._fullInfoPromise; } catch (e) {}
+      // 期间用户可能已重选/离开
+      if (!this.data.selected || String(this.data.selected.doubanId) !== String(selected.doubanId)) {
+        this.setData({ submitting: false });
+        return;
+      }
+      full = this.data.movieFull || {};
+    }
+
     const moodOpt = MOOD_OPTIONS.find(m => m.key === this.data.mood);
+    // poster 优先 cloud://（供 canvas 海报）；拿不到再退豆瓣直链（仅供列表 <image> 展示）。
+    // originalPoster 存豆瓣原图，供迁移/重试转存云存储时使用。
+    const cloudPoster = isCloud(full.poster) ? full.poster : '';
+    const rawPoster = full.originalPoster || selected.posterUrl || '';
     const meta = {
       doubanId: selected.doubanId,
       title: selected.title || '',
       year: full.year || selected.year || '',
-      poster: full.poster || full.originalPoster || selected.posterUrl || '',
+      poster: cloudPoster || rawPoster,
+      originalPoster: rawPoster,
       director: full.directorText || selected.director || '',
+      genres: Array.isArray(full.genres) ? full.genres.slice(0, 4) : [],
       rating: Number(this.data.rating) || 0,
       mood: this.data.mood || '',
       moodEmoji: moodOpt ? moodOpt.emoji : '',
@@ -339,7 +361,6 @@ Page({
       },
       note: (this.data.note || '').trim()
     };
-    this.setData({ submitting: true });
     wx.cloud.callFunction({
       name: 'syncDailyLog',
       data: { action: 'addEntry', theme: 'movie', date: this.data.date, value: 1, meta },

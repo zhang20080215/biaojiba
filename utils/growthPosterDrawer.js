@@ -307,7 +307,7 @@ class GrowthPosterDrawer {
     y += 36;
     ctx.font = 'bold 28px sans-serif';
     ctx.fillStyle = '#9ca3af';
-    ctx.fillText('小程序「标记吧」· 免费使用', w / 2, y);
+    ctx.fillText('小程序：标记吧，免费制作同款图', w / 2, y);
   }
 
   _drawCard(x, y, w, h, r) {

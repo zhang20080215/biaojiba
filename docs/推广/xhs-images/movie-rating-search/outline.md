@@ -48,6 +48,6 @@ language: zh-CN
 
 ## P5 Ending （共用收尾）
 **Type**: ending
-**Message**: 微信搜一搜『标记吧』就能查
+**Message**: 这几个评分，你更相信哪个？
 **Visual**: 简洁收尾，中央"标记吧"字样 + 一个小搜索/电影图标，引导文字
 **Layout**: sparse

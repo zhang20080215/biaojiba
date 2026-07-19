@@ -1,0 +1,203 @@
+page {
+  min-height: 100vh;
+  background: #F4EEE2;
+}
+.page-root {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #FBF7EF 0%, #F1E9DA 55%, #EBE1CF 100%);
+  color: #2A2620;
+  font-family: -apple-system, "PingFang SC", system-ui;
+  box-sizing: border-box;
+}
+.top-toast {
+  position: fixed;
+  top: 22%;
+  left: 50%;
+  transform: translate(-50%, -8rpx);
+  z-index: 1000;
+  background: rgba(42, 38, 32, 0.9);
+  color: #fff;
+  padding: 18rpx 32rpx;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+.top-toast.is-show { opacity: 1; transform: translate(-50%, 0); }
+
+.custom-nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 20;
+  background: #FBF7EF;
+  box-sizing: border-box;
+}
+.nav-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.nav-title { font-size: 34rpx; font-weight: 700; color: #2A2620; }
+.nav-btn {
+  position: absolute;
+  top: 50%;
+  width: 76rpx;
+  height: 76rpx;
+  margin-top: -38rpx;
+  border-radius: 22rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.nav-btn-left { left: 22rpx; }
+.nav-btn-active { background: rgba(42, 38, 32, 0.06); }
+.nav-chev { font-size: 56rpx; font-weight: 300; line-height: 1; color: #2A2620; }
+
+.content {
+  min-height: 100vh;
+  padding: 32rpx 32rpx 260rpx;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.preview-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.preview-wrap {
+  border-radius: 24rpx;
+  background: #FFFFFF;
+  box-shadow: 0 16rpx 48rpx rgba(42, 38, 32, 0.16);
+}
+.poster-canvas { display: block; }
+.preview-tip {
+  display: block;
+  margin-top: 22rpx;
+  text-align: center;
+  font-size: 23rpx;
+  color: #9A9184;
+}
+
+.mode-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16rpx;
+  margin-top: 28rpx;
+}
+.mode-tab {
+  padding: 12rpx 30rpx;
+  border-radius: 999rpx;
+  font-size: 25rpx;
+  color: #8C8474;
+  background: #F0EADD;
+  border: 1rpx solid transparent;
+  transition: all 160ms ease;
+}
+.mode-tab.is-active {
+  color: #B8873B;
+  background: #FFFFFF;
+  border-color: rgba(184, 135, 59, 0.5);
+  font-weight: 600;
+  box-shadow: 0 4rpx 12rpx rgba(42, 38, 32, 0.10);
+}
+
+.douban-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14rpx;
+  margin-top: 26rpx;
+}
+.douban-switch {
+  position: relative;
+  width: 72rpx;
+  height: 40rpx;
+  border-radius: 999rpx;
+  background: #D8CFBE;
+  transition: background 160ms ease;
+}
+.douban-switch.is-on { background: #B8873B; }
+.douban-knob {
+  position: absolute;
+  top: 4rpx;
+  left: 4rpx;
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 50%;
+  background: #FFFFFF;
+  box-shadow: 0 2rpx 6rpx rgba(42, 38, 32, 0.25);
+  transition: transform 160ms ease;
+}
+.douban-switch.is-on .douban-knob { transform: translateX(32rpx); }
+.douban-label { font-size: 25rpx; color: #8C8474; }
+
+.theme-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 30rpx;
+  margin-top: 32rpx;
+}
+.theme-dot {
+  position: relative;
+  width: 58rpx;
+  height: 58rpx;
+  border-radius: 50%;
+  box-shadow: 0 6rpx 16rpx rgba(42, 38, 32, 0.18);
+  transition: transform 160ms ease;
+}
+.theme-dot.is-active {
+  transform: scale(1.12);
+  box-shadow: 0 0 0 6rpx #FFFFFF, 0 0 0 9rpx rgba(42, 38, 32, 0.18);
+}
+.theme-check {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #FFFFFF;
+  font-size: 30rpx;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.action-bar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 50;
+  padding: 16rpx 32rpx calc(16rpx + env(safe-area-inset-bottom));
+  background: rgba(251, 247, 239, 0.94);
+  box-shadow: 0 -8rpx 24rpx rgba(42, 38, 32, 0.06);
+  box-sizing: border-box;
+}
+.save-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 92rpx;
+  line-height: 1;
+  border-radius: 26rpx;
+  background: #1A1A1A;
+  color: #FFFFFF;
+  font-size: 30rpx;
+  font-weight: 800;
+  box-shadow: 0 14rpx 30rpx rgba(0, 0, 0, 0.2);
+}
+.save-btn[disabled] {
+  opacity: 0.55;
+  color: #FFFFFF;
+  background: #1A1A1A;
+}
+.save-sub {
+  display: block;
+  margin-top: 12rpx;
+  text-align: center;
+  font-size: 22rpx;
+  color: #9A9184;
+}

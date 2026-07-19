@@ -83,7 +83,9 @@
             <text wx:if="{{selected.votesText}}" class="cand-votes">{{selected.votesText}}</text>
           </view>
           <text wx:if="{{selected.author}}" class="candidate-meta">作者：{{selected.author}}</text>
-          <text wx:if="{{selected.pubText}}" class="candidate-meta">{{selected.pubText}}</text>
+          <text wx:if="{{selected.publisherText}}" class="candidate-meta">出版社：{{selected.publisherText}}</text>
+          <text wx:if="{{selected.year}}" class="candidate-meta">出版年：{{selected.year}}</text>
+          <text class="candidate-meta">总页数：{{selected.pagesText}}</text>
         </view>
         <view class="del-btn" bindtap="onReselect" hover-class="tap-soft">✕</view>
       </view>
@@ -103,6 +105,26 @@
             <view class="star-hit star-hit-l" catchtap="onStarTap" data-value="{{index + 0.5}}"></view>
             <view class="star-hit star-hit-r" catchtap="onStarTap" data-value="{{index + 1}}"></view>
           </view>
+        </view>
+      </view>
+
+      <!-- 阅读进度：当前页可输入，总页数来自豆瓣详情（未知时只记当前页、不显示分母） -->
+      <view class="field">
+        <view class="field-head">
+          <text class="field-label">阅读进度</text>
+          <text wx:if="{{progressText}}" class="rating-readout is-active">{{progressText}}</text>
+        </view>
+        <view class="progress-row">
+          <input class="page-input"
+                 type="number"
+                 value="{{currentPage}}"
+                 placeholder="0"
+                 placeholder-class="placeholder"
+                 maxlength="5"
+                 bindinput="onCurrentPageInput" />
+          <text wx:if="{{totalPages}}" class="page-sep">/</text>
+          <text wx:if="{{totalPages}}" class="page-total">{{totalPages}}</text>
+          <text class="page-unit">页</text>
         </view>
       </view>
 

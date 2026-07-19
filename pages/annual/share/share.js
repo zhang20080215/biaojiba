@@ -408,7 +408,7 @@ Page({
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillStyle = 'rgba(80, 80, 80, 0.85)';
-        ctx.fillText('搜索小程序：标记吧  免费制作同款图片', width / 2, footerY);
+        ctx.fillText('小程序：标记吧，免费制作同款图', width / 2, footerY);
         ctx.restore();
 
         return footerY + 30;
