@@ -2,6 +2,10 @@ var adConfig = require('../../utils/adConfig')
 var userStore = require('../../utils/userStore.js')
 var themeRegistry = require('../../utils/themeRegistry.js')
 
+// 用户对分类页的本地偏好（跨会话保留）：置顶主题 id 列表 + 卡片展示模式
+var PIN_STORAGE_KEY = 'categoryPinnedIds';
+var VIEW_MODE_STORAGE_KEY = 'categoryViewMode';
+
 // 每日主题横排块的图标/底色/文字色（按主题 id）—— 暖调协调配色
 var DAILY_BLOCK_META = {
   daily_movie: { emoji: '🎬', color: '#F6DED5', label: '#B05B43' }, // 暖陶土
@@ -45,6 +49,13 @@ Page({
     dailyBlocks: [],
     themeClass: '',
     showThemePicker: false,
+    // 卡片展示模式：'cover'（封面网格，默认）| 'list'（列表）——用户上次选择本地保留
+    viewMode: 'cover',
+    // 置顶主题 id（按展示先后排序）——用户上次选择本地保留
+    pinnedIds: [],
+    // 置顶管理面板
+    showPinManager: false,
+    pinManagerList: [],
     statusBarHeight: 20,
     headerPadTop: 0,
     // 骞垮憡鐩稿叧
@@ -412,10 +423,15 @@ Page({
     const headerPadTop = menuBtn.top;
     this._firstShow = true;
     const savedTheme = getApp().globalData.theme || 'theme-green';
+    // 读取本地保留的展示模式 / 置顶配置（无则用默认）
+    const savedViewMode = wx.getStorageSync(VIEW_MODE_STORAGE_KEY) === 'list' ? 'list' : 'cover';
+    const savedPinned = wx.getStorageSync(PIN_STORAGE_KEY);
     this.setData({
       statusBarHeight: windowInfo.statusBarHeight || 20,
       headerPadTop,
-      themeClass: savedTheme
+      themeClass: savedTheme,
+      viewMode: savedViewMode,
+      pinnedIds: Array.isArray(savedPinned) ? savedPinned : []
     });
 
     // 云端注册表：先用本地缓存的新主题即时合入卡片（无网络等待），稍后 loadCloudRegistry 再拉最新
@@ -651,11 +667,74 @@ Page({
       filtered = themes.filter(t => t.category === tab);
     }
     // 纭繚 userCountText 瀛樺湪
+    const pinnedIds = this.data.pinnedIds || [];
+    const pinnedSet = new Set(pinnedIds);
     filtered = filtered.map(t => ({
       ...t,
+      pinned: pinnedSet.has(t.id),
       userCountText: t.userCountText || this.formatUserCount(t.userCount)
     }));
+    // 置顶排序：置顶主题按 pinnedIds 顺序排最前，其余保持原顺序（手动稳定分区，不依赖 sort 稳定性）
+    if (pinnedSet.size > 0) {
+      const pinnedItems = [];
+      pinnedIds.forEach(id => {
+        const item = filtered.find(t => t.id === id);
+        if (item) pinnedItems.push(item);
+      });
+      const restItems = filtered.filter(t => !pinnedSet.has(t.id));
+      filtered = pinnedItems.concat(restItems);
+    }
     this.setData({ filteredThemes: filtered });
+  },
+
+  // ── 展示模式切换（封面 / 列表）——本地保留 ──
+  onSwitchViewMode(e) {
+    const mode = e.currentTarget.dataset.mode === 'list' ? 'list' : 'cover';
+    if (mode === this.data.viewMode) return;
+    this.setData({ viewMode: mode });
+    wx.setStorageSync(VIEW_MODE_STORAGE_KEY, mode);
+  },
+
+  // ── 批量置顶管理 ──
+  onOpenPinManager() {
+    const pinnedIds = this.data.pinnedIds || [];
+    const pinnedSet = new Set(pinnedIds);
+    const all = (this.data.themes || []).filter(t => t.category !== 'daily');
+    // 已置顶的按 pinnedIds 顺序排在管理列表前面，方便查看/取消；其余保持网格原顺序
+    const pinnedItems = [];
+    pinnedIds.forEach(id => {
+      const item = all.find(t => t.id === id);
+      if (item) pinnedItems.push(item);
+    });
+    const rest = all.filter(t => !pinnedSet.has(t.id));
+    const list = pinnedItems.concat(rest).map(t => ({
+      id: t.id, title: t.title, tag: t.tag, pinned: pinnedSet.has(t.id)
+    }));
+    this.setData({ showPinManager: true, pinManagerList: list });
+  },
+
+  onClosePinManager() {
+    this.setData({ showPinManager: false });
+  },
+
+  // 置顶面板打开时拦截 touchmove，防止手势穿透带动整页滚动（内部 scroll-view 照常滚动）
+  onNoop() {},
+
+  onTogglePinItem(e) {
+    const id = e.currentTarget.dataset.id;
+    const list = this.data.pinManagerList.map(it =>
+      it.id === id ? { ...it, pinned: !it.pinned } : it
+    );
+    this.setData({ pinManagerList: list });
+  },
+
+  onSavePin() {
+    // 选中的 id 按管理列表顺序收集（已置顶的在前）作为展示先后
+    const pinnedIds = this.data.pinManagerList.filter(it => it.pinned).map(it => it.id);
+    wx.setStorageSync(PIN_STORAGE_KEY, pinnedIds);
+    this.setData({ pinnedIds, showPinManager: false });
+    this.filterThemes(this.data.activeTab);
+    wx.showToast({ title: pinnedIds.length ? '已更新置顶' : '已取消置顶', icon: 'success' });
   },
 
   // 妫€鏌ョ櫥褰曠姸鎬?

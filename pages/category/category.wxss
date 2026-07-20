@@ -352,6 +352,124 @@
   padding: 0 var(--space-3);
 }
 
+/* ========== 列表展示模式 ========== */
+/* 单列横向排布：左侧缩略封面 + 右侧信息；沿用同一套 DOM，仅靠此 class 重排 */
+.card-grid.list-mode {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.list-mode .theme-card {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+.list-mode .card-cover {
+  width: 120rpx;
+  height: 120rpx;      /* 1:1 方形封面 */
+  padding-top: 0;      /* 覆盖封面模式的 62% 纵横比占位 */
+  flex-shrink: 0;
+}
+.list-mode .card-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--space-1) var(--space-3);   /* 收紧上下内边距，压低行高 */
+}
+.list-mode .card-title {
+  margin-bottom: 6rpx;
+}
+/* 缩略封面上的角标/占位文字在小尺寸下会打架，列表模式统一收起，只保留纯封面/占位色块 */
+.list-mode .cover-tag-label,
+.list-mode .wish-badge,
+.list-mode .new-badge,
+.list-mode .oscar-icon,
+.list-mode .cover-mask {
+  display: none;
+}
+.list-mode .placeholder-emoji {
+  font-size: 44rpx;
+  margin-bottom: 2rpx;
+}
+.list-mode .placeholder-text {
+  font-size: 18rpx;
+  letter-spacing: 0;
+}
+.list-mode .bottle-mini,
+.list-mode .ruler-icon {
+  transform: scale(0.62);
+  margin-bottom: 0;
+}
+
+/* ========== 区块标题工具行（置顶 + 展示模式切换） ========== */
+.section-head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.section-head-title {
+  font-size: var(--font-h2);
+  font-weight: 700;
+  color: var(--category-card-title);
+  line-height: 1.2;
+  letter-spacing: 1rpx;
+}
+.grid-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.grid-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4rpx;
+  height: 52rpx;
+  padding: 0 20rpx;
+  border-radius: var(--radius-pill);
+  background: var(--bg-section);
+  transition: transform 120ms ease-out;
+}
+.grid-tool-hover {
+  transform: scale(0.94);
+}
+.grid-tool-icon {
+  font-size: 24rpx;
+  line-height: 1;
+}
+.grid-tool-text {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: var(--category-filter-text);
+  line-height: 1;
+}
+.view-toggle {
+  display: inline-flex;
+  align-items: center;
+  height: 52rpx;
+  padding: 4rpx;
+  border-radius: var(--radius-pill);
+  background: var(--bg-section);
+}
+.vt-opt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44rpx;
+  padding: 0 20rpx;
+  border-radius: var(--radius-pill);
+  font-size: 24rpx;
+  font-weight: 600;
+  color: var(--category-filter-text);
+  transition: all 160ms ease-out;
+}
+.vt-opt.active {
+  background: var(--brand-primary);
+  color: var(--category-filter-active-text);
+  box-shadow: var(--shadow-cta);
+}
+
 /* ========== 区块标题 ========== */
 .section-head {
   padding: var(--space-3) var(--space-3) 0;
@@ -1137,4 +1255,113 @@
   font-size: var(--font-caption);
   color: var(--text-muted);
   margin: var(--space-1) 0 var(--space-3);
+}
+
+/* ========== 批量置顶管理面板 ========== */
+.pin-sheet {
+  position: fixed;
+  top: 0; right: 0; bottom: 0; left: 0;
+  z-index: 998;
+}
+.pin-sheet-mask {
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  background: rgba(0, 0, 0, 0.25);
+}
+.pin-sheet-body {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  padding: var(--space-5) var(--space-4) calc(var(--space-4) + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  max-height: 78vh;
+  overflow: hidden;   /* 面板整体不外溢，滚动交给内部 scroll-view */
+  box-sizing: border-box;
+}
+.pin-sheet-head {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: var(--space-3);
+}
+.pin-sheet-title {
+  font-size: var(--font-h2);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.pin-sheet-sub {
+  font-size: var(--font-caption);
+  color: var(--text-muted);
+  margin-top: 6rpx;
+}
+.pin-list {
+  flex: 1;
+  min-height: 0;
+  /* scroll-view 需要一个明确的滚动上界才能内部滚动，否则内容撑高、下拉会带动整页 */
+  max-height: 56vh;
+}
+.pin-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+  background: var(--bg-section);
+  margin-bottom: var(--space-2);
+  transition: transform 120ms ease-out;
+}
+.pin-item-hover {
+  transform: scale(0.98);
+}
+.pin-item.on {
+  background: var(--category-meta-bg);
+}
+.pin-item-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.pin-item-title {
+  font-size: var(--font-body);
+  font-weight: 600;
+  color: var(--category-card-title);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pin-item-tag {
+  font-size: var(--font-mini);
+  color: var(--category-tag-text);
+  margin-top: 4rpx;
+}
+.pin-check {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  border: 2rpx solid var(--category-meta-arrow-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-left: var(--space-2);
+  box-sizing: border-box;
+}
+.pin-check.on {
+  background: var(--brand-primary);
+  border-color: var(--brand-primary);
+}
+.pin-check text {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: var(--category-filter-active-text);
+  line-height: 1;
+}
+.pin-actions {
+  display: flex;
+  width: 100%;
+  margin-top: var(--space-3);
 }

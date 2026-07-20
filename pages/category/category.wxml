@@ -63,7 +63,18 @@
   </view>
 
   <!-- 主题标记 -->
-  <view class="section-head">主题标记</view>
+  <view class="section-head section-head-row">
+    <text class="section-head-title">主题标记</text>
+    <view class="grid-tools">
+      <view class="grid-tool-btn" bindtap="onOpenPinManager" hover-class="grid-tool-hover">
+        <text class="grid-tool-icon">📌</text><text class="grid-tool-text">置顶</text>
+      </view>
+      <view class="view-toggle">
+        <view class="vt-opt {{viewMode === 'cover' ? 'active' : ''}}" data-mode="cover" bindtap="onSwitchViewMode">封面</view>
+        <view class="vt-opt {{viewMode === 'list' ? 'active' : ''}}" data-mode="list" bindtap="onSwitchViewMode">列表</view>
+      </view>
+    </view>
+  </view>
 
   <!-- 分类筛选 -->
   <view class="filter-bar">
@@ -115,7 +126,7 @@
   </view>
 
   <!-- 主题卡片网格（两列）：前两张 → 广告 → 剩余，确保广告在首屏可见 -->
-  <view class="card-grid">
+  <view class="card-grid {{viewMode === 'list' ? 'list-mode' : ''}}">
     <!-- 第一行（前2张） -->
     <navigator
       wx:for="{{filteredThemes}}"
@@ -230,7 +241,7 @@
       <!-- 信息区：回到封面下方独立白底区（静态设计封面图本身带文字，叠在图上会跟原图文字打架，
            这个位置能保证在任何封面上都清晰）；分类标签改成纯文字，不用胶囊底 -->
       <view class="card-body">
-        <text class="card-title">{{item.title}}</text>
+        <text class="card-title">{{item.pinned ? '📌 ' : ''}}{{item.title}}</text>
         <view class="card-meta">
           <view wx:if="{{item.userCount > 0}}" class="meta-count">
             <text class="meta-count-number">{{item.userCountText}}</text>
@@ -250,7 +261,7 @@
   </view>
 
   <!-- 剩余卡片（第3张起） -->
-  <view class="card-grid">
+  <view class="card-grid {{viewMode === 'list' ? 'list-mode' : ''}}">
     <navigator
       wx:for="{{filteredThemes}}"
       wx:for-index="idx"
@@ -364,7 +375,7 @@
       <!-- 信息区：回到封面下方独立白底区（静态设计封面图本身带文字，叠在图上会跟原图文字打架，
            这个位置能保证在任何封面上都清晰）；分类标签改成纯文字，不用胶囊底 -->
       <view class="card-body">
-        <text class="card-title">{{item.title}}</text>
+        <text class="card-title">{{item.pinned ? '📌 ' : ''}}{{item.title}}</text>
         <view class="card-meta">
           <view wx:if="{{item.userCount > 0}}" class="meta-count">
             <text class="meta-count-number">{{item.userCountText}}</text>
@@ -435,6 +446,37 @@
       <view class="modal-actions">
         <button class="action-btn secondary" bindtap="onCancelAuth">取消</button>
         <button class="action-btn primary" bindtap="onConfirmAuth">保存</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 批量置顶管理面板 -->
+  <view class="pin-sheet" hidden="{{!showPinManager}}" catchtouchmove="onNoop">
+    <view class="pin-sheet-mask" bindtap="onClosePinManager"></view>
+    <view class="pin-sheet-body">
+      <view class="pin-sheet-head">
+        <text class="pin-sheet-title">管理置顶</text>
+        <text class="pin-sheet-sub">勾选要置顶到最前面的主题，可多选</text>
+      </view>
+      <scroll-view scroll-y class="pin-list" enhanced show-scrollbar="{{false}}">
+        <view
+          wx:for="{{pinManagerList}}"
+          wx:key="id"
+          class="pin-item {{item.pinned ? 'on' : ''}}"
+          data-id="{{item.id}}"
+          bindtap="onTogglePinItem"
+          hover-class="pin-item-hover"
+        >
+          <view class="pin-item-info">
+            <text class="pin-item-title">{{item.title}}</text>
+            <text class="pin-item-tag">{{item.tag}}</text>
+          </view>
+          <view class="pin-check {{item.pinned ? 'on' : ''}}"><text wx:if="{{item.pinned}}">✓</text></view>
+        </view>
+      </scroll-view>
+      <view class="pin-actions">
+        <button class="action-btn secondary" bindtap="onClosePinManager">取消</button>
+        <button class="action-btn primary" bindtap="onSavePin">保存</button>
       </view>
     </view>
   </view>
