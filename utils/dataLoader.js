@@ -53,7 +53,11 @@ const GENERIC_THEMES = new Set(['oscarCinematography', 'rtHorror', 'rtWar', 'rtA
 // 读取改走 getThemeBooks；douban_books/weread 两个老主题不在此列，维持走 getMoviesData。
 const GENERIC_BOOK_THEMES = new Set(['maodun', 'newbery']);
 
+// 旅游主题（专属集合 scenic_5a），读取走 getScenicSpots；标记复用 Marks（去过=watched、想去=wish）。
+const GENERIC_SCENIC_THEMES = new Set(['scenic5a']);
+
 function cloudFnForTheme(theme) {
+  if (GENERIC_SCENIC_THEMES.has(theme)) return 'getScenicSpots';
   if (GENERIC_BOOK_THEMES.has(theme)) return 'getThemeBooks';
   if (GENERIC_THEMES.has(theme)) return 'getThemeMovies';
   // 未硬编码的主题：可能是走云端注册表新增的通用主题（不用发版）。

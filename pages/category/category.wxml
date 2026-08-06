@@ -107,6 +107,13 @@
       <text>读书</text>
     </view>
     <view
+      class="filter-chip {{activeTab === 'travel' ? 'active' : ''}}"
+      data-tab="travel" bindtap="onTabTap"
+    >
+      <view class="chip-dot" wx:if="{{activeTab === 'travel'}}"></view>
+      <text>旅行</text>
+    </view>
+    <view
       class="filter-chip {{activeTab === 'parenting' ? 'active' : ''}}"
       data-tab="parenting" bindtap="onTabTap"
     >
@@ -217,6 +224,10 @@
           <text class="placeholder-emoji">🏅</text>
           <text class="placeholder-text">纽伯瑞金奖</text>
         </view>
+        <view wx:elif="{{item.id === 'scenic_5a'}}" class="cover-placeholder scenic">
+          <text class="placeholder-emoji">🏞️</text>
+          <text class="placeholder-text">5A景区</text>
+        </view>
         <view wx:else class="cover-placeholder cloud" style="{{item.coverStyle}}">
           <text class="placeholder-emoji">{{item.placeholderEmoji}}</text>
           <text class="placeholder-text">{{item.title}}</text>
@@ -224,7 +235,7 @@
         <!-- 上面 wx:else 是云端注册表新主题的封面兜底（无对应占位 class，配色走内联 coverStyle） -->
         <view class="cover-mask"></view>
         <text class="cover-tag-label">{{item.tag}}</text>
-        <view wx:if="{{item.id === 'palme_dor_movies' || item.id === 'oscar_screenplay_movies' || item.id === 'oscar_foreign_movies' || item.id === 'rt_action_movies' || item.id === 'letterboxd500_movies' || item.id === 'maodun_books' || item.id === 'newbery_books' || item.id === 'oscar_director_movies' || item.id === 'oscar_vfx_movies' || item.id === 'oscar_actor_movies' || item.id === 'oscar_actress_movies' || item.newBadge}}" class="new-badge">
+        <view wx:if="{{item.id === 'palme_dor_movies' || item.id === 'oscar_screenplay_movies' || item.id === 'oscar_foreign_movies' || item.id === 'rt_action_movies' || item.id === 'letterboxd500_movies' || item.id === 'maodun_books' || item.id === 'newbery_books' || item.id === 'oscar_director_movies' || item.id === 'oscar_vfx_movies' || item.id === 'oscar_actor_movies' || item.id === 'oscar_actress_movies' || item.id === 'scenic_5a' || item.newBadge}}" class="new-badge">
           <text>NEW</text>
         </view>
         <view wx:if="{{item.wishFrom}}" class="wish-badge">
@@ -351,6 +362,10 @@
           <text class="placeholder-emoji">🏅</text>
           <text class="placeholder-text">纽伯瑞金奖</text>
         </view>
+        <view wx:elif="{{item.id === 'scenic_5a'}}" class="cover-placeholder scenic">
+          <text class="placeholder-emoji">🏞️</text>
+          <text class="placeholder-text">5A景区</text>
+        </view>
         <view wx:else class="cover-placeholder cloud" style="{{item.coverStyle}}">
           <text class="placeholder-emoji">{{item.placeholderEmoji}}</text>
           <text class="placeholder-text">{{item.title}}</text>
@@ -358,7 +373,7 @@
         <!-- 上面 wx:else 是云端注册表新主题的封面兜底（无对应占位 class，配色走内联 coverStyle） -->
         <view class="cover-mask"></view>
         <text class="cover-tag-label">{{item.tag}}</text>
-        <view wx:if="{{item.id === 'palme_dor_movies' || item.id === 'oscar_screenplay_movies' || item.id === 'oscar_foreign_movies' || item.id === 'rt_action_movies' || item.id === 'letterboxd500_movies' || item.id === 'maodun_books' || item.id === 'newbery_books' || item.id === 'oscar_director_movies' || item.id === 'oscar_vfx_movies' || item.id === 'oscar_actor_movies' || item.id === 'oscar_actress_movies' || item.newBadge}}" class="new-badge">
+        <view wx:if="{{item.id === 'palme_dor_movies' || item.id === 'oscar_screenplay_movies' || item.id === 'oscar_foreign_movies' || item.id === 'rt_action_movies' || item.id === 'letterboxd500_movies' || item.id === 'maodun_books' || item.id === 'newbery_books' || item.id === 'oscar_director_movies' || item.id === 'oscar_vfx_movies' || item.id === 'oscar_actor_movies' || item.id === 'oscar_actress_movies' || item.id === 'scenic_5a' || item.newBadge}}" class="new-badge">
           <text>NEW</text>
         </view>
         <view wx:if="{{item.wishFrom}}" class="wish-badge">

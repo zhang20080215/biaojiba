@@ -33,7 +33,9 @@ var DYNAMIC_COVER_THEMES = [
   { id: 'letterboxd500_movies', theme: 'letterboxd500' },
   // collection 省略时默认 generic_theme_movies；读书通用主题（generic_theme_books）显式指定
   { id: 'maodun_books', theme: 'maodun', collection: 'generic_theme_books' },
-  { id: 'newbery_books', theme: 'newbery', collection: 'generic_theme_books' }
+  { id: 'newbery_books', theme: 'newbery', collection: 'generic_theme_books' },
+  // 旅游主题（专属集合 scenic_5a），卡片图用 rank=1 景区封面
+  { id: 'scenic_5a', theme: 'scenic5a', collection: 'scenic_5a' }
 ];
 
 Page({
@@ -64,6 +66,18 @@ Page({
       category_native: adConfig.getAdUnitId('category_native') || '',
     },
     themes: [
+      {
+        id: 'scenic_5a',
+        title: '全国5A旅游景区',
+        description: '打卡你走过的山河，攒成专属旅行足迹',
+        image: '',
+        tintClass: 'scenic',
+        userCount: 0,
+        tag: '旅行',
+        category: 'travel',
+        isNew: true,
+        url: '/pages/scenic/list/list'
+      },
       {
         id: 'oscar_foreign_movies',
         title: '历届奥斯卡最佳外语片',
@@ -915,7 +929,9 @@ Page({
         { id: 'douban_books', collection: 'douban_books', topFiltered: true, marksCollection: 'BookMarks', idField: 'bookId', source: 'douban' },
         { id: 'weread_books', collection: 'weread_books', topFiltered: true, marksCollection: 'BookMarks', idField: 'bookId', source: 'weread' },
         { id: 'maodun_books', collection: 'generic_theme_books', theme: 'maodun', topFiltered: false, marksCollection: 'BookMarks', idField: 'bookId', source: 'maodun' },
-        { id: 'newbery_books', collection: 'generic_theme_books', theme: 'newbery', topFiltered: false, marksCollection: 'BookMarks', idField: 'bookId', source: 'newbery' }
+        { id: 'newbery_books', collection: 'generic_theme_books', theme: 'newbery', topFiltered: false, marksCollection: 'BookMarks', idField: 'bookId', source: 'newbery' },
+        // 旅游：专属集合 scenic_5a，标记复用 Marks（movieId=景区_id）
+        { id: 'scenic_5a', collection: 'scenic_5a', topFiltered: false }
       ];
 
     // 云端注册表新主题：按 type 拼参与人数统计配置（电影走 Marks，书走 BookMarks）

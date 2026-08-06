@@ -53,6 +53,16 @@ Each tracking theme (douban/imdb/oscar/doubanBooks/weread + the pack-excluded on
 - `pages/category/category.js`'s `_countThemeUsers` `themeConfigs` row needs `marksCollection: 'BookMarks'`, `idField: 'bookId'`, and `source` in addition to `collection`/`theme`; `DYNAMIC_COVER_THEMES` needs `collection: 'generic_theme_books'` (the field defaults to `generic_theme_movies` when omitted).
 - `douban_books`/`weread` (the two pre-existing book themes) are **not** on this pipeline — they keep their own dedicated `fetchDoubanBooks`/`fetchWereadBooks` cloud functions and `pages/doubanBooks/`/`pages/weread/` page sets (direct full-list scrapes, not search-matched seeding, and predate the generic pipeline). Only new book themes added going forward use `enrichThemeBooks`/`pages/genericBookList`.
 
+### Scenic 5A Theme (`pages/scenic`, 全国5A旅游景区)
+First **travel** theme — not a Douban-matched movie/book list, so it has its own dedicated pipeline (not the generic movie/book one), but reuses the `Marks` collection, `batchUpdateMarks`, `dataLoader.processMarks`, `canvasHelper`, and `rewardedSaveGate`.
+- **Data source:** Baidu Baike starmap `collectinfo` paginated API (国家AAAAA级旅游景区 词条聚合, lemmaId 3575094), 359 spots. Fields extracted: `lemmaTitle`→name, `desc`("所处位置：浙江")→province, `lemmaDesc`("浙江省舟山市的…")→city (parsed, ~354/359 hit; province fallback), `coverPic`→cover.
+- `cloudfunctions/fetchScenic5A` — scrapes 8 pages, parses name/province/city, mirrors covers to cloud storage under `scenic5a_covers/` (forces `f_jpg` to avoid iOS webp blank), upserts `scenic_5a` (`_id=scenic5a_<lemmaId>`, `rank`/`name`/`province`/`city`/`location`/`cover`/`originalCover`). Resumable via `startFrom`/`autoContinue` (same pattern as `enrichThemeMovies`); accepts optional `spotList` seed if server-side scraping is ever blocked.
+- `cloudfunctions/getScenicSpots` — read-side, `scenic_5a` by `rank` + `Marks`, response shaped like `getThemeMovies` (`{success, movies, marks, listVersion:null}`).
+- `utils/dataLoader.js` `GENERIC_SCENIC_THEMES` Set routes theme `scenic5a` → `getScenicSpots`; frontend reuses `loadMoviesData`+`processMarks`.
+- **Marking:** 去过/想去 — stored in `Marks` as `watched`/`wish` (same as movies, relabeled in UI). scenic `_id`s are theme-prefixed so they coexist in `Marks` with movie marks.
+- Frontend: `pages/scenic/list` (tabs 全部/去过/想去/未去 + **省份筛选条** + 批量标记, 山水青绿配色) and `pages/scenic/share` (「旅行足迹」3×3 照片墙海报, canvas-as-preview, footer 署名 "标记吧 · 全国5A旅游景区", no QR/link).
+- Category integration: new `travel` category + 旅行 filter tab; dynamic card cover = `scenic_5a` rank=1 spot's cover.
+
 ### Movie Rating Search (`pages/movie-search`)
 Standalone feature, **not** part of the Top-N tracking pattern. Three pages: `input/` (search box + history cards), `list/`, `detail/`.
 - `cloudfunctions/searchMovieByTitle` — calls Douban `j/subject_suggest`, filters `type=movie`, returns lightweight candidates (director parsed from `sub_title` 4th segment, often empty)
@@ -126,6 +136,7 @@ WeChat subscribe-message framework — adding a new push topic is a config-row e
 - `getMoviesData` — read-side aggregator across movie/book collections; supports `marksOnly` flag for lightweight mark refresh
 - `batchUpdateMarks` / `batchUpdateBookMarks` — atomic upsert of multiple `(itemId, openid)` marks
 - **Generic theme pipelines** (see Generic Theme Pipelines above): `enrichThemeMovies`/`getThemeMovies`/`checkDoubanTitles`/`checkThemeRankGaps` (movies, `generic_theme_movies`) and `enrichThemeBooks`/`getThemeBooks` (books, `generic_theme_books`)
+- **Scenic (travel) theme** (see Scenic 5A Theme below): `fetchScenic5A` (scrape Baidu Baike starmap → `scenic_5a`) / `getScenicSpots` (read-side)
 - `syncDailyLog` — single endpoint for daily check-in (see Daily Check-In Theme above)
 - `fetchMovies` — timer-triggered Douban TOP250 daily auto-refresh into `movies` (drift detection, soft-delete rollback, `MIN_ACCEPT_COUNT` guard, emits `push_events`/`rank_history`)
 - `fetchImdbMovies` / `fetchOscarMovies` / `fetchOscarAnimeMovies` / `fetchDoubanBooks` / `fetchWereadBooks` / `fetchBoxofficeMovies` / `fetchAnnualMovies` / `fetchChineseMovies` / `fetchAwardMovies` — data scraping/enrichment per theme. `fetchOscarAnimeMovies` mirrors `fetchOscarMovies` (rank=届数, year=film release year, built-in 中文名+英文原名, douban only for cover/rating) → `oscar_anime_movies`; 最佳动画长篇 starts at 第74届(2001).

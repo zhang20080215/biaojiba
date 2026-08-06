@@ -609,6 +609,7 @@
 .cover-tint.letterboxd500 { background: linear-gradient(135deg, rgba(230, 150, 64, 0.5) 0%, rgba(200, 110, 20, 0.5) 100%); }
 .cover-tint.maodun { background: linear-gradient(135deg, rgba(181, 96, 92, 0.5) 0%, rgba(139, 46, 46, 0.5) 100%); }
 .cover-tint.newbery { background: linear-gradient(135deg, rgba(212, 169, 74, 0.5) 0%, rgba(184, 134, 11, 0.5) 100%); }
+.cover-tint.scenic { background: linear-gradient(135deg, rgba(95, 184, 156, 0.5) 0%, rgba(46, 139, 114, 0.5) 100%); }
 
 /* 分类标签 — 封面左上角纯文字，不用胶囊底，靠文字阴影保证对比度 */
 .cover-tag-label {
@@ -739,6 +740,9 @@
 }
 .cover-placeholder.newbery {
   background: linear-gradient(135deg, #D4A94A 0%, #B8860B 100%);
+}
+.cover-placeholder.scenic {
+  background: linear-gradient(135deg, #5FB89C 0%, #2E8B72 100%);
 }
 .cover-placeholder .placeholder-emoji {
   font-size: 56rpx;

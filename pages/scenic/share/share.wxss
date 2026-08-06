@@ -1,0 +1,95 @@
+.share-page {
+  min-height: 100vh;
+  background: #2E8B72;
+  box-sizing: border-box;
+}
+
+/* 自定义导航 */
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #2E8B72;
+}
+.nav-back {
+  position: absolute;
+  left: 20rpx;
+  bottom: 0;
+  width: 64rpx;
+  height: 64rpx;
+  line-height: 60rpx;
+  text-align: center;
+  font-size: 56rpx;
+  color: #FFFFFF;
+}
+.nav-title {
+  color: #FFFFFF;
+  font-size: 34rpx;
+  font-weight: 700;
+  align-self: flex-end;
+  padding-bottom: 8rpx;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-bottom: 60rpx;
+}
+
+.loading-tip {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 28rpx;
+  margin: 40rpx 0 20rpx;
+}
+
+.poster-wrap {
+  margin-top: 40rpx;
+  border-radius: 24rpx;
+  overflow: hidden;
+  box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.25);
+  background: #F5FBF8;
+}
+.poster-canvas {
+  display: block;
+}
+
+.save-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 48rpx;
+  width: 100%;
+}
+.save-btn {
+  width: 60%;
+  height: 88rpx;
+  line-height: 88rpx;
+  text-align: center;
+  background: #FFFFFF;
+  color: #2E8B72;
+  font-size: 32rpx;
+  font-weight: 700;
+  border-radius: 999rpx;
+  box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.18);
+}
+.save-btn[disabled] {
+  opacity: 0.6;
+  color: #8FB8AC;
+}
+.save-btn::after { border: none; }
+.save-sub {
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 24rpx;
+  margin-top: 16rpx;
+}
+.save-hint {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 24rpx;
+  margin-top: 16rpx;
+}

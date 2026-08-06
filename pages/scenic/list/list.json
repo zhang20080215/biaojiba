@@ -1,0 +1,8 @@
+{
+  "backgroundColor": "#FFFFFF",
+  "backgroundTextStyle": "light",
+  "enablePullDownRefresh": true,
+  "navigationBarTitleText": "全国5A旅游景区",
+  "navigationBarBackgroundColor": "#2E8B72",
+  "navigationBarTextStyle": "white"
+}

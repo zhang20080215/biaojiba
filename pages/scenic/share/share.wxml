@@ -1,0 +1,33 @@
+<!-- 全国5A旅游景区「旅行足迹」分享海报 -->
+<view class="share-page">
+
+  <!-- 自定义导航 -->
+  <view class="nav" style="padding-top: {{statusBarHeight}}px; height: {{navBarHeight}}px;">
+    <view class="nav-back" bindtap="onBack">‹</view>
+    <text class="nav-title">旅行足迹</text>
+  </view>
+
+  <view class="content" style="padding-top: {{navOffset}}px;">
+
+    <view wx:if="{{loading}}" class="loading-tip">正在生成海报…</view>
+
+    <!-- canvas 直接作预览图（backing 1080×1440，CSS 缩放显示） -->
+    <view class="poster-wrap" style="width: {{previewW}}px; height: {{previewH}}px;">
+      <canvas
+        type="2d"
+        id="scenicCard"
+        class="poster-canvas"
+        style="width: {{previewW}}px; height: {{previewH}}px;"
+      ></canvas>
+    </view>
+
+    <view class="save-area">
+      <button class="save-btn" bindtap="saveImage" disabled="{{!ready || isGenerating}}">
+        {{isGenerating ? '保存中...' : '保存到相册'}}
+      </button>
+      <text wx:if="{{needRewardedAd}}" class="save-sub">需观看广告后保存</text>
+      <text class="save-hint">保存后可分享到小红书 / 朋友圈</text>
+    </view>
+
+  </view>
+</view>
