@@ -41,7 +41,7 @@
         <text class="empty-title">本月还没有观影记录</text>
         <text class="empty-sub">切到「日历」即可添加看过的电影</text>
       </view>
-      <view wx:else class="poster-wall {{wallDense ? 'dense' : ''}}">
+      <view wx:else class="poster-wall {{wallCls}}">
         <view class="wall-item"
               wx:for="{{wallMovies}}" wx:key="key"
               style="--fall-from: -{{item.fallFrom}}rpx; animation-delay: {{item.delay}}s;">
@@ -72,12 +72,16 @@
               <text class="tl-day-count">{{item.count}} 部</text>
             </view>
             <view class="tl-card" wx:for="{{item.items}}" wx:for-item="mv" wx:key="key">
-              <image class="tl-poster" src="{{mv.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" lazy-load="true" />
+              <view class="tl-poster-wrap">
+                <image class="tl-poster" src="{{mv.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" lazy-load="true" />
+                <image wx:if="{{mv.progressRing}}" class="tl-ring" src="{{mv.progressRing}}" mode="aspectFit" />
+              </view>
               <view class="tl-info">
                 <view class="tl-title-row">
                   <text class="tl-title">{{mv.title}}</text>
                   <text wx:if="{{mv.year}}" class="tl-year">{{mv.year}}</text>
                 </view>
+                <text wx:if="{{mv.epProgressLabel}}" class="tl-progress">{{mv.epProgressLabel}}</text>
                 <view wx:if="{{mv.rating > 0}}" class="tl-rating">
                   <view class="stars">
                     <text class="stars-bg">★★★★★</text>
@@ -115,6 +119,8 @@
             <!-- 有心情则显示 emoji；无电影记录才显示日期数字；有电影但无心情则两者都不显示 -->
             <text wx:if="{{item.moodEmoji}}" class="cal-mood">{{item.moodEmoji}}</text>
             <text wx:elif="{{!item.hasMovies}}" class="cal-day">{{item.day}}</text>
+            <!-- 剧集观看进度环（右下角，与左下角心情/日期错开） -->
+            <image wx:if="{{item.progressRing}}" class="cal-ring" src="{{item.progressRing}}" mode="aspectFit" />
           </view>
         </block>
       </view>
@@ -187,6 +193,15 @@
               <!-- 全平台评分（客观，有则展示） -->
               <view wx:if="{{movie.platformRatings.length}}" class="plat-row">
                 <text wx:for="{{movie.platformRatings}}" wx:for-item="pr" wx:key="label" class="plat-chip">{{pr.label}} {{pr.value}}</text>
+              </view>
+
+              <!-- 剧集观看进度：看到 X/Y 集（有分母时带进度条/百分比） -->
+              <view wx:if="{{movie.epProgressLabel}}" class="ep-progress">
+                <text class="ep-label">{{movie.epProgressLabel}}</text>
+                <view wx:if="{{movie.epProgressPct}}" class="ep-bar">
+                  <view class="ep-fill" style="width: {{movie.epProgressPct}}%"></view>
+                </view>
+                <text wx:if="{{movie.epProgressPct}}" class="ep-pct">{{movie.epProgressPct}}%</text>
               </view>
 
               <!-- 我的记录：评分 + 心情 + 短评 统一归到「我的」块，与上方平台评分区分 -->
@@ -330,12 +345,16 @@
                 <text class="tl-day-count">{{item.count}} 部</text>
               </view>
               <view class="tl-card" wx:for="{{item.items}}" wx:for-item="mv" wx:key="key">
-                <image class="tl-poster" src="{{mv.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" lazy-load="true" />
+                <view class="tl-poster-wrap">
+                  <image class="tl-poster" src="{{mv.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" lazy-load="true" />
+                  <image wx:if="{{mv.progressRing}}" class="tl-ring" src="{{mv.progressRing}}" mode="aspectFit" />
+                </view>
                 <view class="tl-info">
                   <view class="tl-title-row">
                     <text class="tl-title">{{mv.title}}</text>
                     <text wx:if="{{mv.year}}" class="tl-year">{{mv.year}}</text>
                   </view>
+                  <text wx:if="{{mv.epProgressLabel}}" class="tl-progress">{{mv.epProgressLabel}}</text>
                   <view wx:if="{{mv.rating > 0}}" class="tl-rating">
                     <view class="stars">
                       <text class="stars-bg">★★★★★</text>

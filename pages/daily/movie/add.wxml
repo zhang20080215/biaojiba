@@ -72,6 +72,23 @@
       </view>
     </view>
 
+    <!-- 继续观看：有未看完的电视剧才展示；点击带入表单，预填上次看到的集数 -->
+    <view wx:if="{{!selected && !candidates.length && continueList.length}}" class="card">
+      <view class="card-title">继续观看</view>
+      <scroll-view scroll-x class="continue-scroll" enhanced="{{true}}" show-scrollbar="{{false}}">
+        <view class="continue-item"
+              wx:for="{{continueList}}"
+              wx:key="doubanId"
+              data-douban-id="{{item.doubanId}}"
+              bindtap="onContinueWatch"
+              hover-class="tap-soft">
+          <image class="continue-poster" src="{{item.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" lazy-load="true" />
+          <text class="continue-title">{{item.title}}</text>
+          <text class="continue-progress">看到 {{item.lastEpisode}}/{{item.totalEpisodes}} 集</text>
+        </view>
+      </scroll-view>
+    </view>
+
     <!-- 选中电影：电影信息 + 全平台评分 + 我的评分 + 短评，同一张卡片 -->
     <view wx:if="{{selected}}" class="card">
       <view class="movie-head">
@@ -112,6 +129,26 @@
             <view class="star-hit star-hit-l" catchtap="onStarTap" data-value="{{index + 0.5}}"></view>
             <view class="star-hit star-hit-r" catchtap="onStarTap" data-value="{{index + 1}}"></view>
           </view>
+        </view>
+      </view>
+
+      <!-- 剧集进度：仅电视剧展示，当前集可输入，总集数来自豆瓣详情（未知时只记当前集、不显示分母） -->
+      <view wx:if="{{hasEpisodes}}" class="field">
+        <view class="field-head">
+          <text class="field-label">看到第几集</text>
+          <text wx:if="{{episodeProgressText}}" class="rating-readout is-active">{{episodeProgressText}}</text>
+        </view>
+        <view class="progress-row">
+          <input class="page-input"
+                 type="number"
+                 value="{{currentEpisode}}"
+                 placeholder="0"
+                 placeholder-class="placeholder"
+                 maxlength="4"
+                 bindinput="onCurrentEpisodeInput" />
+          <text wx:if="{{totalEpisodes}}" class="page-sep">/</text>
+          <text wx:if="{{totalEpisodes}}" class="page-total">{{totalEpisodes}}</text>
+          <text class="page-unit">集</text>
         </view>
       </view>
 
