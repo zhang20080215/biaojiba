@@ -110,6 +110,8 @@ Page({
     searched: false,
     error: '',
     candidates: [],
+    // 继续观看：未看完的电视剧（已知总集数且看到集数 < 总集数），点击带入表单预填
+    continueList: [],
     selected: null,
 
     // 选中后展示
@@ -119,6 +121,12 @@ Page({
     ratingsError: '',
     ratingCells: [],
     movieFull: null,
+
+    // 剧集进度（仅电视剧展示）：hasEpisodes 决定是否显示「看到第几集」输入
+    hasEpisodes: false,
+    totalEpisodes: 0,        // 豆瓣返回的总集数，0=未知
+    currentEpisode: '',      // 输入框原文，空串=未填
+    episodeProgressText: '', // 「当前集/总集数」都有时才显示的百分比
 
     date: '',
     dateText: '',
@@ -146,6 +154,93 @@ Page({
     });
     wx.setNavigationBarColor({ frontColor: '#000000', backgroundColor: '#FAF6EB' });
     wx.setNavigationBarTitle({ title: '添加电影' });
+    this._loadContinueWatching();
+  },
+
+  // 拉取该用户所有观影记录，派生「未看完的电视剧」列表（静默失败，不影响添加）
+  _loadContinueWatching() {
+    wx.cloud.callFunction({
+      name: 'syncDailyLog',
+      data: { action: 'getAll', theme: 'movie' },
+      success: res => {
+        const days = (res && res.result && res.result.days) || [];
+        this.setData({ continueList: this._deriveContinue(days) });
+      },
+      fail: () => {}
+    });
+  },
+
+  // 按 doubanId 归并全部记录：仅电视剧(subtype==='tv' 或 总集数>1) + 已知总集数，
+  // 取最大已看集数；未看完(1 <= 最大已看 < 总集数)才进列表，最近看的在前，展示用最新一条 meta
+  _deriveContinue(days) {
+    const byId = {};
+    (days || []).forEach(d => {
+      (d.entries || []).forEach(en => {
+        const m = en.meta || {};
+        const id = m.doubanId;
+        const total = Number(m.totalEpisodes) || 0;
+        const isTv = m.subtype === 'tv' || total > 1;
+        if (!id || !isTv || total <= 0) return;
+        const cur = Number(m.currentEpisode) || 0;
+        const rec = byId[id] || { maxEp: 0, total: 0, latestTs: 0, meta: m };
+        if (cur > rec.maxEp) rec.maxEp = cur;
+        if (total > rec.total) rec.total = total;
+        if ((en.ts || 0) >= rec.latestTs) { rec.latestTs = en.ts || 0; rec.meta = m; }
+        byId[id] = rec;
+      });
+    });
+    return Object.keys(byId)
+      .map(id => byId[id])
+      .filter(r => r.maxEp >= 1 && r.maxEp < r.total)
+      .sort((a, b) => b.latestTs - a.latestTs)
+      .map(r => {
+        const m = r.meta;
+        const poster = m.poster || m.originalPoster || '';
+        return {
+          doubanId: m.doubanId,
+          title: m.title || '未命名电影',
+          year: m.year || '',
+          director: m.director || '',
+          poster,
+          originalPoster: m.originalPoster || '',
+          posterThumb: imageCache.getThumbnailUrl(poster, 'list'),
+          lastEpisode: r.maxEp,
+          totalEpisodes: r.total
+        };
+      });
+  },
+
+  // 点击「继续观看」：把该剧带入添加表单（跳过搜索），预填上次看到的集数
+  onContinueWatch(e) {
+    const doubanId = e.currentTarget.dataset.doubanId;
+    const item = this.data.continueList.find(x => String(x.doubanId) === String(doubanId));
+    if (!item) return;
+    const selected = {
+      doubanId: item.doubanId,
+      title: item.title,
+      year: item.year,
+      director: item.director,
+      posterUrl: item.originalPoster || item.poster,
+      posterThumb: item.posterThumb
+    };
+    this.setData({
+      candidates: [],
+      searched: false,
+      error: '',
+      selected,
+      posterSrc: item.posterThumb || item.poster || '/images/default-movie.jpg',
+      movieMeta: buildMeta(item.year, item.director),
+      ratingsLoading: true,
+      ratingsError: '',
+      ratingCells: [],
+      movieFull: null,
+      hasEpisodes: true,
+      totalEpisodes: item.totalEpisodes,
+      currentEpisode: String(item.lastEpisode || ''),
+      episodeProgressText: ''
+    });
+    this._syncEpisodeProgress();
+    this._fullInfoPromise = this._fetchFullRatings(item.doubanId);
   },
 
   onBack() {
@@ -165,7 +260,11 @@ Page({
       ratingsLoading: false,
       ratingsError: '',
       ratingCells: [],
-      movieFull: null
+      movieFull: null,
+      hasEpisodes: false,
+      totalEpisodes: 0,
+      currentEpisode: '',
+      episodeProgressText: ''
     });
   },
 
@@ -216,7 +315,11 @@ Page({
       ratingsLoading: true,
       ratingsError: '',
       ratingCells: [],
-      movieFull: null
+      movieFull: null,
+      hasEpisodes: false,
+      totalEpisodes: 0,
+      currentEpisode: '',
+      episodeProgressText: ''
     });
     // 保存在飞的 Promise：提交时若云封面还没就绪，onSubmit 会 await 它
     this._fullInfoPromise = this._fetchFullRatings(selected.doubanId);
@@ -238,14 +341,21 @@ Page({
         return;
       }
       const mv = decorateMovie(result.movie);
+      // 剧集判定：subtype==='tv' 视为电视剧 → 允许填「看到第几集」；总集数作分母（0=未知）。
+      // 「继续观看」带入时已预置 total/hasEpisodes，若这次抓取无集数（老缓存）则沿用预置值，不下调。
+      const totalEpisodes = (Number(mv.episodesCount) || 0) || (Number(this.data.totalEpisodes) || 0);
+      const hasEpisodes = mv.subtype === 'tv' || totalEpisodes > 1 || this.data.hasEpisodes;
       this.setData({
         ratingsLoading: false,
         ratingsError: '',
         ratingCells: buildRatingCells(mv),
         movieFull: mv,
+        hasEpisodes,
+        totalEpisodes,
         posterSrc: mv.poster || this.data.posterSrc,
         movieMeta: buildMeta(mv.year || this.data.selected.year, mv.directorText || this.data.selected.director)
       });
+      this._syncEpisodeProgress();
     } catch (e) {
       console.error('daily movie full info fail', e);
       if (!this.data.selected || String(this.data.selected.doubanId) !== String(doubanId)) return;
@@ -312,6 +422,29 @@ Page({
     this.setData({ note, noteCount: note.length });
   },
 
+  // 看到第几集：只留数字、去前导零；已知总集数则钳制到上限（返回自纠正后的值回写输入框）
+  // 镜像每日读书 onCurrentPageInput
+  onCurrentEpisodeInput(e) {
+    const digits = String(e.detail.value || '').replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+    let currentEpisode = digits;
+    const total = Number(this.data.totalEpisodes) || 0;
+    if (total && digits && Number(digits) > total) currentEpisode = String(total);
+    this.setData({ currentEpisode });
+    this._syncEpisodeProgress();
+    return currentEpisode;
+  },
+
+  _syncEpisodeProgress() {
+    const total = Number(this.data.totalEpisodes) || 0;
+    const cur = Number(this.data.currentEpisode) || 0;
+    if (!total || !cur) {
+      if (this.data.episodeProgressText) this.setData({ episodeProgressText: '' });
+      return;
+    }
+    const pct = Math.min(100, Math.round(cur / total * 100));
+    this.setData({ episodeProgressText: `${pct}%` });
+  },
+
   async onSubmit() {
     if (this.data.submitting) return;
     const selected = this.data.selected;
@@ -348,6 +481,10 @@ Page({
       originalPoster: rawPoster,
       director: full.directorText || selected.director || '',
       genres: Array.isArray(full.genres) ? full.genres.slice(0, 4) : [],
+      // 剧集进度：subtype 标记电视剧，totalEpisodes 0=未知，currentEpisode 0=未填
+      subtype: full.subtype || '',
+      totalEpisodes: this.data.hasEpisodes ? (Number(this.data.totalEpisodes) || 0) : 0,
+      currentEpisode: this.data.hasEpisodes ? (Number(this.data.currentEpisode) || 0) : 0,
       rating: Number(this.data.rating) || 0,
       mood: this.data.mood || '',
       moodEmoji: moodOpt ? moodOpt.emoji : '',

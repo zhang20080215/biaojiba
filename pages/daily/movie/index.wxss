@@ -140,11 +140,12 @@ page {
   height: 152rpx;
   animation: wall-fall 880ms backwards;
 }
-/* 密集模式：当月 > 15 部，海报缩小，每行 6 张（6×100 + 5×14 = 670 ≤ 686rpx） */
-.poster-wall.dense .wall-item {
-  width: 100rpx;
-  height: 140rpx;
-}
+/* 分档：数量越多每行越多、封面越小，铺满内容宽 686rpx（列间距 14rpx），不裁不滚动 */
+.poster-wall.w5 .wall-item { width: 108rpx; height: 152rpx; }  /* ≤15：5×108+4×14=596 */
+.poster-wall.w6 .wall-item { width: 100rpx; height: 140rpx; }  /* ≤30：6×100+5×14=670 */
+.poster-wall.w7 .wall-item { width: 86rpx;  height: 120rpx; }  /* ≤60：7×86+6×14=686 */
+.poster-wall.w8 .wall-item { width: 73rpx;  height: 102rpx; }  /* ≤100：8×73+7×14=682 */
+.poster-wall.w9 .wall-item { width: 63rpx;  height: 88rpx;  }  /* >100：9×63+8×14=679 */
 .wall-card {
   position: relative;
   width: 100%;
@@ -534,6 +535,39 @@ page {
   line-height: 1.7;
 }
 
+/* 剧集观看进度：看到 X/Y 集 + 进度条（镜像每日读书 .read-progress） */
+.ep-progress {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  margin-top: 8rpx;
+}
+.ep-label {
+  flex-shrink: 0;
+  font-size: 22rpx;
+  color: #8A6A00;
+  font-weight: 700;
+}
+.ep-bar {
+  flex: 1;
+  min-width: 40rpx;
+  height: 8rpx;
+  border-radius: 4rpx;
+  background: #F0E6C8;
+  overflow: hidden;
+}
+.ep-fill {
+  height: 100%;
+  border-radius: 4rpx;
+  background: #F5C518;
+}
+.ep-pct {
+  flex-shrink: 0;
+  font-size: 20rpx;
+  color: #A89E8C;
+  font-weight: 700;
+}
+
 /* 「我的」块：评分 + 心情 + 短评，与上方平台评分视觉区分 */
 .mine-block {
   margin-top: 12rpx;
@@ -696,6 +730,14 @@ page {
   text-align: center;
   line-height: 30rpx;
   font-size: 20rpx;
+}
+/* 剧集观看进度环：右下角，与左下角的心情/日期错开 */
+.cal-ring {
+  position: absolute;
+  right: 6rpx;
+  bottom: 6rpx;
+  width: 34rpx;
+  height: 34rpx;
 }
 
 /* ===== 轻编辑弹窗 ===== */
@@ -988,12 +1030,32 @@ page {
 .tl-card:last-child {
   margin-bottom: 0;
 }
+.tl-poster-wrap {
+  position: relative;
+  width: 88rpx;
+  height: 124rpx;
+  flex-shrink: 0;
+}
 .tl-poster {
   width: 88rpx;
   height: 124rpx;
   border-radius: 10rpx;
   background: #EFE7D2;
   flex-shrink: 0;
+}
+/* 剧集进度环：压在海报右下角 */
+.tl-ring {
+  position: absolute;
+  right: -6rpx;
+  bottom: -6rpx;
+  width: 44rpx;
+  height: 44rpx;
+}
+/* 剧集进度文字：看到 X/Y 集 */
+.tl-progress {
+  font-size: 22rpx;
+  color: #8A6A00;
+  font-weight: 700;
 }
 .tl-info {
   flex: 1;
@@ -1032,7 +1094,7 @@ page {
 }
 .tl-extra {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10rpx;
 }
 .tl-mood {
@@ -1040,12 +1102,15 @@ page {
   line-height: 1;
   flex-shrink: 0;
 }
+/* 评论完整展示：多行换行、不省略 */
 .tl-note {
+  flex: 1;
+  min-width: 0;
   font-size: 23rpx;
+  line-height: 1.5;
   color: #6B6356;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
 }
 
 /* ==================== 月/年 切换 + 年视图 ==================== */

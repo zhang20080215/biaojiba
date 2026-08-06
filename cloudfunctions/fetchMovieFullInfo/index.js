@@ -166,6 +166,15 @@ async function scrapeDoubanDetail(doubanId) {
   const aka = Array.isArray(j.aka) ? j.aka : [];
   const originalTitle = j.original_title || '';
 
+  // 类型与集数：subtype 'movie'|'tv'（enrichThemeMovies 已证明 rexxar 带此字段）；
+  // 电视剧集数——rexxar 对剧集返回 episodes_count（可能是字符串），兼容几个候选键，取不到记 0（未知）
+  const subtype = j.subtype || '';
+  const episodesCount = Number(
+    j.episodes_count != null ? j.episodes_count
+      : (j.episode_count != null ? j.episode_count
+        : (j.episodes != null && !Array.isArray(j.episodes) ? j.episodes : 0))
+  ) || 0;
+
   return {
     title,
     originalTitle,
@@ -178,6 +187,8 @@ async function scrapeDoubanDetail(doubanId) {
     durations,
     intro,
     aka,
+    subtype,
+    episodesCount,
     imdbId,
     douban: {
       rating: !isNaN(rating) ? rating : null,
@@ -715,6 +726,8 @@ exports.main = async (event, context) => {
       durations: detail.durations,
       intro: detail.intro,
       aka: detail.aka,
+      subtype: detail.subtype,          // 'movie' | 'tv'，供每日电影判断是否为剧集
+      episodesCount: detail.episodesCount, // 电视剧总集数（0=未知），供集数进度分母
       poster: cloudPoster || detail.posterUrl,
       originalPoster: detail.posterUrl,
       douban: {

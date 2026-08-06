@@ -11,7 +11,9 @@ const {
   formatDateCN,
   normalizeMovieEntry,
   flattenMovies,
-  getMovieThemeView
+  dedupeMovies,
+  getMovieThemeView,
+  progressRingUri
 } = require('./common.js');
 
 // 心情选项（与添加页保持一致），编辑弹窗复用
@@ -97,8 +99,8 @@ Page({
     calendarCells: [],
     timeline: [],
     wallMovies: [],
-    wallAreaH: 644, // 电影墙区域高度(rpx)，按当月日历周数估算，与日历等高
-    wallDense: false, // 当月电影 > 15 部时改为每行 6 张
+    wallAreaH: 260, // 电影墙区域高度(rpx)，按当月海报实际堆叠高度自适应
+    wallCls: 'w5', // 每行张数档位 w5..w9：数量越多每行越多、封面越小（铺满不裁、不滚动）
     monthStats: { total: 0, activeDays: 0, avgRating: '—', topMood: '—', topMovie: null }, // 电影墙视图下方的当月观影统计
 
     selectedDate: '',
@@ -190,28 +192,13 @@ Page({
   onViewTap(e) {
     const view = e.currentTarget.dataset.view;
     if (!view || view === this.data.viewMode) return;
-    // 年视图的电影墙高度自适应，无需测量；月视图非电影墙也直接切
-    if (this.data.periodMode === 'year' || view !== 'wall') {
-      this.setData({ viewMode: view, swipedKey: '' });
-      return;
-    }
-    // 切到电影墙前，量一下当前日历的真实高度，让电影墙与之等高（最稳的等高方式）
-    wx.createSelectorQuery().in(this).select('#calBlock').boundingClientRect(rect => {
-      const data = { viewMode: 'wall', swipedKey: '' };
-      if (rect && rect.height) {
-        const hRpx = Math.round(rect.height * 750 / (this.winW || 375));
-        const wallMovies = this.buildWall(this._lastDays || [], hRpx);
-        data.wallAreaH = hRpx;
-        data.wallMovies = wallMovies;
-        data.wallDense = wallMovies.length > 15;
-      }
-      this.setData(data);
-    }).exec();
+    // 电影墙高度已由 buildWall 按内容自适应算好（renderMonth 时写入），切视图直接展示即可
+    this.setData({ viewMode: view, swipedKey: '' });
   },
 
   onOpenAdd() {
-    if (this.data.selectedMovies.length >= 4) {
-      toast.show(this, '每天最多记录 4 部');
+    if (this.data.selectedMovies.length >= 8) {
+      toast.show(this, '每天最多记录 8 部');
       return;
     }
     const date = this.data.selectedDate || this.data.today;
@@ -346,6 +333,7 @@ Page({
   },
 
   // 年度日历：12 张月卡，每月取前 9 张封面（ts 升序）排九宫格
+  // 部数与封面均按电影去重（同片当月多次记录只算/只展示一次），与电影墙/统计口径一致
   buildYearCalendar(days) {
     const byMonth = Array.from({ length: 12 }, () => []);
     (days || []).forEach(d => {
@@ -354,15 +342,16 @@ Page({
       (d.entries || []).forEach(en => { byMonth[mIdx].push(normalizeMovieEntry(en, d.date)); });
     });
     return byMonth.map((list, i) => {
-      const sorted = list.slice().sort((a, b) => (a.ts || 0) - (b.ts || 0));
-      const covers = sorted.slice(0, 9).map(m => m.posterThumb || '/images/default-movie.jpg');
-      return { month: i + 1, count: list.length, covers, hasMovies: list.length > 0 };
+      const uniq = dedupeMovies(list).sort((a, b) => (a.ts || 0) - (b.ts || 0));
+      const covers = uniq.slice(0, 9).map(m => m.posterThumb || '/images/default-movie.jpg');
+      return { month: i + 1, count: uniq.length, covers, hasMovies: uniq.length > 0 };
     });
   },
 
   // 年度电影墙：按 ts 升序 + CSS wrap-reverse → 最早的先落满最底排、往上堆，最近看的浮在最顶（与月墙一致）；数量越多单张越小
   buildYearWall(days) {
-    const base = flattenMovies(days).sort((a, b) => (a.ts || 0) - (b.ts || 0));
+    // 同一部电影只展示一次（取最近一次观看），与月墙一致
+    const base = dedupeMovies(flattenMovies(days)).sort((a, b) => (a.ts || 0) - (b.ts || 0));
     const n = base.length;
     const perRow = n <= 15 ? 5 : n <= 30 ? 6 : n <= 60 ? 7 : n <= 100 ? 8 : 9;
     const items = base.map((m, i) => ({
@@ -423,16 +412,15 @@ Page({
   },
 
   renderMonth(days) {
-    const areaH = this.calcWallAreaH();
-    const wallMovies = this.buildWall(days, areaH);
+    const wall = this.buildWall(days);
     this.setData({
       canGoNextMonth: `${this.data.year}-${String(this.data.month).padStart(2, '0')}` < this.data.today.slice(0, 7),
       calendarCells: this.buildCalendar(days),
       selectedMovies: this.buildSelected(days),
       timeline: this.buildTimeline(days),
-      wallAreaH: areaH,
-      wallMovies,
-      wallDense: wallMovies.length > 15,
+      wallAreaH: wall.areaH,
+      wallMovies: wall.items,
+      wallCls: wall.wallCls,
       monthStats: this.buildMonthStats(days)
     });
   },
@@ -446,7 +434,12 @@ Page({
         const items = (d.entries || [])
           .map(en => {
             const m = normalizeMovieEntry(en, d.date);
-            return { ...m, key: `${m.date}-${m.ts}` };
+            return {
+              ...m,
+              key: `${m.date}-${m.ts}`,
+              // 剧集进度环：有集数分母才画（text:false 只画环不写数字）
+              progressRing: m.epProgressPct > 0 ? progressRingUri(m.epProgressPct, { text: false }) : ''
+            };
           })
           .sort((a, b) => (a.ts || 0) - (b.ts || 0));
         return { date: d.date, dateLabel: labels.dateLabel, weekday: labels.weekday, count: items.length, items };
@@ -455,9 +448,9 @@ Page({
     return out;
   },
 
-  // 当月观影统计（电影墙视图下方展示）
+  // 当月观影统计（电影墙视图下方展示）——「共看部数/评分/心情」按电影去重（同片只算一次）
   buildMonthStats(days) {
-    const movies = flattenMovies(days);
+    const movies = dedupeMovies(flattenMovies(days));
     const total = movies.length;
     const activeDays = (days || []).filter(d => (d.entries || []).length > 0).length;
     const rated = movies.map(m => Number(m.rating)).filter(n => Number.isFinite(n) && n > 0);
@@ -479,33 +472,31 @@ Page({
     };
   },
 
-  // 估算电影墙区域高度（= 日历区域高度，rpx）：周历头(~26) + 网格上边距(14) + 网格高
-  calcWallAreaH() {
-    const range = monthRange(this.data.year, this.data.month);
-    const calRows = Math.ceil((dayOfWeekMon(range.fromDate) + range.lastDay) / 7);
-    const CELL_W = (750 - 64 - 48) / 7;      // 内容宽 686rpx，7 列，列间距 8rpx
-    const CELL_H = CELL_W * 1.22;            // 日历格宽高比 1 / 1.22
-    return Math.round(40 + calRows * CELL_H + (calRows - 1) * 12);
-  },
+  // 每档每行张数对应的海报高度(rpx)。宽度在 CSS .poster-wall.w5..w9 里定义（内容宽 686rpx、列间距 14rpx）
+  WALL_POSTER_H: { 5: 152, 6: 140, 7: 120, 8: 102, 9: 88 },
 
   // 电影墙：当月全部电影，按时间排序，海报在区域底部由下往上堆（满排沉底，剩下的浮在顶上，靠 wrap-reverse 实现）
-  // fallFrom：每张海报到自己落点上方约 160rpx 起落（落点越靠下下落越远 → 仿重力一路掉到最底）
-  // delay：按顺序错开，越靠底越先落（瀑布式由下往上堆）
-  buildWall(days, areaH) {
-    const base = flattenMovies(days).sort((a, b) => (a.ts || 0) - (b.ts || 0));
-    // 超过 15 部 → 密集模式：每行 6 张、海报更小（与 .poster-wall.dense 的 CSS 尺寸一致）
-    const dense = base.length > 15;
-    const PER_ROW = dense ? 6 : 5;     // 内容区约 686rpx：5×108 或 6×100（含 14rpx 列间距）
-    const POSTER_H = dense ? 140 : 152;
+  // 区域高度按实际堆叠高度自适应（少不留白、多不裁切）：数量越多每行越多、封面越小（w5→w9），铺满不滚动
+  // 返回 { items, areaH, wallCls }；fallFrom/delay 用于仿重力错峰飘落动画
+  buildWall(days) {
+    // 同一部电影只展示一次（取最近一次观看），再按时间排序堆叠
+    const base = dedupeMovies(flattenMovies(days)).sort((a, b) => (a.ts || 0) - (b.ts || 0));
+    const n = base.length;
+    // 分档：与年度墙一致的阈值，数量越多每行越多
+    const perRow = n <= 15 ? 5 : n <= 30 ? 6 : n <= 60 ? 7 : n <= 100 ? 8 : 9;
+    const POSTER_H = this.WALL_POSTER_H[perRow];
     const ROW_GAP = 18;                // 行间距
     const ROW_H = POSTER_H + ROW_GAP;
+    const TOP_PAD = 24;                // 海报块顶部呼吸留白
+    const MIN_AREA = 260;              // 空/稀疏月的最小高度（保证空状态文案有空间）
 
-    const totalRows = Math.ceil(base.length / PER_ROW) || 1;
+    const totalRows = Math.ceil(n / perRow) || 1;
     const blockH = totalRows * POSTER_H + (totalRows - 1) * ROW_GAP;
-    const topOfBlock = areaH - blockH;       // 底对齐：海报块顶到区域顶的距离（可能为负 = 溢出，由 overflow 裁剪）
+    const areaH = Math.max(MIN_AREA, blockH + TOP_PAD);
+    const topOfBlock = areaH - blockH;       // 底对齐：>= TOP_PAD，正常不再为负（不裁切）
 
-    return base.map((m, i) => {
-      const fillRow = Math.floor(i / PER_ROW);
+    const items = base.map((m, i) => {
+      const fillRow = Math.floor(i / perRow);
       const visualRow = totalRows - 1 - fillRow;   // wrap-reverse：填充第 0 行落在视觉最底
       const restingTop = topOfBlock + visualRow * ROW_H;
       return {
@@ -516,6 +507,7 @@ Page({
         delay: Math.min(i * 0.04, 1.2)
       };
     });
+    return { items, areaH, wallCls: 'w' + perRow };
   },
 
   posterRotate(movie) {
@@ -534,12 +526,13 @@ Page({
       const date = `${range.year}-${String(range.month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       const item = map[date] || { date, entries: [] };
       const movies = (item.entries || []).map(entry => normalizeMovieEntry(entry, date));
-      const covers = movies.slice(0, 4).map(m => m.posterThumb || '/images/default-movie.jpg');
+      // 日历格只展示最近添加的 4 部（按 ts 降序，最新在前）——每日上限 8 部，格子仍最多 4 张
+      const recent = movies.slice().sort((a, b) => (b.ts || 0) - (a.ts || 0));
+      const covers = recent.slice(0, 4).map(m => m.posterThumb || '/images/default-movie.jpg');
       // 多部电影只取最新一部（ts 最大）的心情 emoji
-      const latestMood = movies
-        .slice()
-        .sort((a, b) => (b.ts || 0) - (a.ts || 0))
-        .find(m => m.moodEmoji);
+      const latestMood = recent.find(m => m.moodEmoji);
+      // 剧集进度环：取最新一部的观看进度（有集数分母才算得出百分比），右下角展示
+      const latestEpPct = recent.length ? (recent[0].epProgressPct || 0) : 0;
       cells.push({
         empty: false,
         day,
@@ -550,7 +543,8 @@ Page({
         isToday: date === this.data.today,
         isSelected: date === this.data.selectedDate,
         hasMovies: movies.length > 0,
-        moodEmoji: latestMood ? latestMood.moodEmoji : ''
+        moodEmoji: latestMood ? latestMood.moodEmoji : '',
+        progressRing: latestEpPct > 0 ? progressRingUri(latestEpPct, { text: false }) : ''
       });
     }
     return cells;
