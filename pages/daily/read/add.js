@@ -85,6 +85,8 @@ Page({
     searched: false,
     error: '',
     candidates: [],
+    // 继续阅读：未读完的书（已知总页数且已读 < 总页数），点击带入表单预填上次页数
+    continueList: [],
     selected: null,
 
     date: '',
@@ -116,6 +118,95 @@ Page({
     });
     wx.setNavigationBarColor({ frontColor: '#000000', backgroundColor: '#FAF6EB' });
     wx.setNavigationBarTitle({ title: '添加图书' });
+    this._loadContinueReading();
+  },
+
+  // 拉取该用户所有读书记录，派生「未读完的书」列表（静默失败，不影响添加）
+  _loadContinueReading() {
+    wx.cloud.callFunction({
+      name: 'syncDailyLog',
+      data: { action: 'getAll', theme: 'read' },
+      success: res => {
+        const days = (res && res.result && res.result.days) || [];
+        this.setData({ continueList: this._deriveContinue(days) });
+      },
+      fail: () => {}
+    });
+  },
+
+  // 按 doubanId 归并全部记录：仅已知总页数的书，取最大已读页；未读完(1 <= 已读 < 总页数)才进列表，
+  // 最近读的在前，展示用最新一条 meta
+  _deriveContinue(days) {
+    const byId = {};
+    (days || []).forEach(d => {
+      (d.entries || []).forEach(en => {
+        const m = en.meta || {};
+        const id = m.doubanId;
+        const total = Number(m.totalPages) || 0;
+        if (!id || total <= 0) return;
+        const cur = Number(m.currentPage) || 0;
+        const rec = byId[id] || { maxPage: 0, total: 0, latestTs: 0, meta: m };
+        if (cur > rec.maxPage) rec.maxPage = cur;
+        if (total > rec.total) rec.total = total;
+        if ((en.ts || 0) >= rec.latestTs) { rec.latestTs = en.ts || 0; rec.meta = m; }
+        byId[id] = rec;
+      });
+    });
+    return Object.keys(byId)
+      .map(id => byId[id])
+      .filter(r => r.maxPage >= 1 && r.maxPage < r.total)
+      .sort((a, b) => b.latestTs - a.latestTs)
+      .map(r => {
+        const m = r.meta;
+        const cover = m.cover || m.poster || m.posterUrl || '';
+        return {
+          doubanId: m.doubanId,
+          title: m.title || '未命名书籍',
+          year: m.year || '',
+          author: m.author || '',
+          publisher: m.publisher || '',
+          doubanRating: (m.platform && m.platform.douban) || '',
+          cover,
+          posterThumb: imageCache.getThumbnailUrl(cover, 'list'),
+          lastPage: r.maxPage,
+          totalPages: r.total
+        };
+      });
+  },
+
+  // 点击「继续阅读」：把该书带入添加表单（跳过搜索），预填上次读到的页数
+  onContinueRead(e) {
+    const doubanId = e.currentTarget.dataset.doubanId;
+    const item = this.data.continueList.find(x => String(x.doubanId) === String(doubanId));
+    if (!item) return;
+    const isCloud = p => typeof p === 'string' && p.indexOf('cloud://') === 0;
+    const score = item.doubanRating ? Number(item.doubanRating) : 0;
+    const selected = {
+      doubanId: item.doubanId,
+      title: item.title,
+      year: item.year,
+      author: item.author,
+      publisher: item.publisher,
+      publisherText: item.publisher || '',
+      pagesText: item.totalPages ? `${item.totalPages} 页` : '未知',
+      posterUrl: item.cover,
+      posterThumb: item.posterThumb,
+      cloudCover: isCloud(item.cover) ? item.cover : '',
+      rating: item.doubanRating || '',
+      ratingText: score ? score.toFixed(1) : '',
+      votesText: ''
+    };
+    this.setData({
+      candidates: [],
+      searched: false,
+      error: '',
+      selected,
+      totalPages: item.totalPages,
+      currentPage: String(item.lastPage || ''),
+      progressText: ''
+    });
+    this._syncProgress();
+    this._fetchBookDetail(item.doubanId);
   },
 
   onBack() {
@@ -192,7 +283,8 @@ Page({
         const result = res && res.result;
         const book = result && result.success && result.book;
         if (!book) { this._applyDetailFallback(); return; }
-        const totalPages = Number(book.pages) || 0;
+        // 「继续阅读」带入时已预置总页数；若这次详情无页数则沿用预置值，不下调为未知
+        const totalPages = (Number(book.pages) || 0) || (Number(this.data.totalPages) || 0);
         const patch = {
           totalPages,
           'selected.publisherText': book.publisher || this.data.selected.publisher || '',
@@ -216,10 +308,12 @@ Page({
 
   // 详情拿不到：出版社退回搜索结果的值，总页数标未知（此时进度只记当前页，无分母）
   _applyDetailFallback() {
+    // 保留已预置的总页数（「继续阅读」带入场景）；普通搜索选中时它本就是 0 → 显示未知
+    const totalPages = Number(this.data.totalPages) || 0;
     this.setData({
-      totalPages: 0,
+      totalPages,
       'selected.publisherText': (this.data.selected && this.data.selected.publisher) || '',
-      'selected.pagesText': '未知'
+      'selected.pagesText': totalPages ? `${totalPages} 页` : '未知'
     });
     this._syncProgress();
   },
