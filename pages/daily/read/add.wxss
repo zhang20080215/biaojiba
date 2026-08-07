@@ -123,6 +123,44 @@ page {
   margin-bottom: 22rpx;
 }
 
+/* 继续阅读：横向滚动的未读完书卡片 */
+.continue-scroll {
+  width: 100%;
+  white-space: nowrap;
+}
+.continue-item {
+  display: inline-flex;
+  flex-direction: column;
+  width: 132rpx;
+  margin-right: 18rpx;
+  vertical-align: top;
+}
+.continue-item:last-child {
+  margin-right: 0;
+}
+.continue-poster {
+  width: 132rpx;
+  height: 184rpx;
+  border-radius: 12rpx;
+  background: #EFE7D2;
+}
+.continue-title {
+  margin-top: 8rpx;
+  max-width: 132rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+  color: #1A1A1A;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.continue-progress {
+  margin-top: 2rpx;
+  font-size: 20rpx;
+  font-weight: 700;
+  color: #8A6A00;
+}
+
 /* 选中电影头部 */
 .movie-head {
   display: flex;

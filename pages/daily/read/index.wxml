@@ -41,7 +41,7 @@
         <text class="empty-title">本月还没有读书记录</text>
         <text class="empty-sub">切到「日历」即可添加读过的书</text>
       </view>
-      <view wx:else class="poster-wall {{wallDense ? 'dense' : ''}}">
+      <view wx:else class="poster-wall {{wallCls}}">
         <view class="wall-item"
               wx:for="{{wallMovies}}" wx:key="key"
               style="--fall-from: -{{item.fallFrom}}rpx; animation-delay: {{item.delay}}s;">

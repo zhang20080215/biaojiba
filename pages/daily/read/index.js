@@ -98,8 +98,8 @@ Page({
     calendarCells: [],
     timeline: [],
     wallMovies: [],
-    wallAreaH: 644, // 电影墙区域高度(rpx)，按当月日历周数估算，与日历等高
-    wallDense: false, // 当月电影 > 15 部时改为每行 6 张
+    wallAreaH: 644, // 书墙区域高度(rpx)：月墙按内容自适应，年墙仍按日历估算
+    wallCls: 'w5', // 月墙每行张数档位 w5..w9：数量越多每行越多、封面越小（铺满不裁、不滚动）
     monthStats: { total: 0, activeDays: 0, avgRating: '—', topMood: '—', topMovie: null }, // 电影墙视图下方的当月观影统计
 
     selectedDate: '',
@@ -191,28 +191,13 @@ Page({
   onViewTap(e) {
     const view = e.currentTarget.dataset.view;
     if (!view || view === this.data.viewMode) return;
-    // 年视图的书墙高度自适应，无需测量；月视图非书墙也直接切
-    if (this.data.periodMode === 'year' || view !== 'wall') {
-      this.setData({ viewMode: view, swipedKey: '' });
-      return;
-    }
-    // 切到电影墙前，量一下当前日历的真实高度，让电影墙与之等高（最稳的等高方式）
-    wx.createSelectorQuery().in(this).select('#calBlock').boundingClientRect(rect => {
-      const data = { viewMode: 'wall', swipedKey: '' };
-      if (rect && rect.height) {
-        const hRpx = Math.round(rect.height * 750 / (this.winW || 375));
-        const wallMovies = this.buildWall(this._lastDays || [], hRpx);
-        data.wallAreaH = hRpx;
-        data.wallMovies = wallMovies;
-        data.wallDense = wallMovies.length > 15;
-      }
-      this.setData(data);
-    }).exec();
+    // 书墙高度已由 buildWall(月) / calcWallAreaH(年) 算好并写入，切视图直接展示即可
+    this.setData({ viewMode: view, swipedKey: '' });
   },
 
   onOpenAdd() {
-    if (this.data.selectedMovies.length >= 4) {
-      toast.show(this, '每天最多记录 4 本');
+    if (this.data.selectedMovies.length >= 8) {
+      toast.show(this, '每天最多记录 8 本');
       return;
     }
     const date = this.data.selectedDate || this.data.today;
@@ -436,16 +421,15 @@ Page({
   },
 
   renderMonth(days) {
-    const areaH = this.calcWallAreaH();
-    const wallMovies = this.buildWall(days, areaH);
+    const wall = this.buildWall(days);
     this.setData({
       canGoNextMonth: `${this.data.year}-${String(this.data.month).padStart(2, '0')}` < this.data.today.slice(0, 7),
       calendarCells: this.buildCalendar(days),
       selectedMovies: this.buildSelected(days),
       timeline: this.buildTimeline(days),
-      wallAreaH: areaH,
-      wallMovies,
-      wallDense: wallMovies.length > 15,
+      wallAreaH: wall.areaH,
+      wallMovies: wall.items,
+      wallCls: wall.wallCls,
       monthStats: this.buildMonthStats(days)
     });
   },
@@ -504,24 +488,29 @@ Page({
     return Math.round(40 + calRows * CELL_H + (calRows - 1) * 12);
   },
 
-  // 电影墙：当月全部电影，按时间排序，海报在区域底部由下往上堆（满排沉底，剩下的浮在顶上，靠 wrap-reverse 实现）
-  // fallFrom：每张海报到自己落点上方约 160rpx 起落（落点越靠下下落越远 → 仿重力一路掉到最底）
-  // delay：按顺序错开，越靠底越先落（瀑布式由下往上堆）
-  buildWall(days, areaH) {
+  // 每档每行张数对应的封面高度(rpx)。宽度在 CSS .poster-wall.w5..w9 里定义（内容宽 686rpx、列间距 14rpx）
+  WALL_POSTER_H: { 5: 152, 6: 140, 7: 120, 8: 102, 9: 88 },
+
+  // 月书墙：当月全部书（已去重），按时间排序，海报在区域底部由下往上堆（wrap-reverse 满排沉底）
+  // 区域高度按实际堆叠高度自适应（少不留白、多不裁切）：数量越多每行越多、封面越小（w5→w9），铺满不滚动
+  // 返回 { items, areaH, wallCls }；fallFrom/delay 用于仿重力错峰飘落动画
+  buildWall(days) {
     const base = this.dedupeWallBooks(flattenBooks(days)).sort((a, b) => (a.ts || 0) - (b.ts || 0));
-    // 超过 15 部 → 密集模式：每行 6 张、海报更小（与 .poster-wall.dense 的 CSS 尺寸一致）
-    const dense = base.length > 15;
-    const PER_ROW = dense ? 6 : 5;     // 内容区约 686rpx：5×108 或 6×100（含 14rpx 列间距）
-    const POSTER_H = dense ? 140 : 152;
+    const n = base.length;
+    const perRow = n <= 15 ? 5 : n <= 30 ? 6 : n <= 60 ? 7 : n <= 100 ? 8 : 9;
+    const POSTER_H = this.WALL_POSTER_H[perRow];
     const ROW_GAP = 18;                // 行间距
     const ROW_H = POSTER_H + ROW_GAP;
+    const TOP_PAD = 24;                // 海报块顶部呼吸留白
+    const MIN_AREA = 260;              // 空/稀疏月的最小高度（保证空状态文案有空间）
 
-    const totalRows = Math.ceil(base.length / PER_ROW) || 1;
+    const totalRows = Math.ceil(n / perRow) || 1;
     const blockH = totalRows * POSTER_H + (totalRows - 1) * ROW_GAP;
-    const topOfBlock = areaH - blockH;       // 底对齐：海报块顶到区域顶的距离（可能为负 = 溢出，由 overflow 裁剪）
+    const areaH = Math.max(MIN_AREA, blockH + TOP_PAD);
+    const topOfBlock = areaH - blockH;       // 底对齐：>= TOP_PAD，正常不再为负（不裁切）
 
-    return base.map((m, i) => {
-      const fillRow = Math.floor(i / PER_ROW);
+    const items = base.map((m, i) => {
+      const fillRow = Math.floor(i / perRow);
       const visualRow = totalRows - 1 - fillRow;   // wrap-reverse：填充第 0 行落在视觉最底
       const restingTop = topOfBlock + visualRow * ROW_H;
       return {
@@ -532,6 +521,7 @@ Page({
         delay: Math.min(i * 0.04, 1.2)
       };
     });
+    return { items, areaH, wallCls: 'w' + perRow };
   },
 
   posterRotate(movie) {
@@ -550,8 +540,9 @@ Page({
       const date = `${range.year}-${String(range.month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       const item = map[date] || { date, entries: [] };
       const movies = (item.entries || []).map(entry => normalizeBookEntry(entry, date));
-      const covers = movies.slice(0, 4).map(m => m.posterThumb || '/images/default-movie.jpg');
       const byTsDesc = movies.slice().sort((a, b) => (b.ts || 0) - (a.ts || 0));
+      // 日历格只展示最近添加的 4 本（按 ts 降序，最新在前）——每日上限 8 本，格子仍最多 4 张
+      const covers = byTsDesc.slice(0, 4).map(m => m.posterThumb || '/images/default-movie.jpg');
       // 多本书只取最新一本（ts 最大）的心情 emoji
       const latestMood = byTsDesc.find(m => m.moodEmoji);
       // 进度环也取当天最新一本；仅在算得出百分比（有当前页+总页数）时显示
