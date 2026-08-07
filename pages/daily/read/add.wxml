@@ -72,6 +72,23 @@
       </view>
     </view>
 
+    <!-- 继续阅读：有未读完的书才展示；点击带入表单，预填上次读到的页数 -->
+    <view wx:if="{{!selected && !candidates.length && continueList.length}}" class="card">
+      <view class="card-title">继续阅读</view>
+      <scroll-view scroll-x class="continue-scroll" enhanced="{{true}}" show-scrollbar="{{false}}">
+        <view class="continue-item"
+              wx:for="{{continueList}}"
+              wx:key="doubanId"
+              data-douban-id="{{item.doubanId}}"
+              bindtap="onContinueRead"
+              hover-class="tap-soft">
+          <image class="continue-poster" src="{{item.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" lazy-load="true" />
+          <text class="continue-title">{{item.title}}</text>
+          <text class="continue-progress">读到 {{item.lastPage}}/{{item.totalPages}} 页</text>
+        </view>
+      </scroll-view>
+    </view>
+
     <!-- 选中书籍：与搜索结果同款排版（封面 + 书名 + 豆瓣评分/人数 + 作者 + 出版社·年份） -->
     <view wx:if="{{selected}}" class="card">
       <view class="selected-head">

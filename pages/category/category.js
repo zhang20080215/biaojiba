@@ -688,16 +688,25 @@ Page({
       pinned: pinnedSet.has(t.id),
       userCountText: t.userCountText || this.formatUserCount(t.userCount)
     }));
-    // 置顶排序：置顶主题按 pinnedIds 顺序排最前，其余保持原顺序（手动稳定分区，不依赖 sort 稳定性）
-    if (pinnedSet.size > 0) {
-      const pinnedItems = [];
-      pinnedIds.forEach(id => {
-        const item = filtered.find(t => t.id === id);
-        if (item) pinnedItems.push(item);
-      });
-      const restItems = filtered.filter(t => !pinnedSet.has(t.id));
-      filtered = pinnedItems.concat(restItems);
-    }
+    // 排序分区（手动稳定分区，不依赖 sort 稳定性）：
+    //   1) 用户置顶主题：按 pinnedIds 顺序排最前
+    //   2) 固定前置主题：豆瓣电影TOP250 / IMDB电影TOP250 紧随其后（用户置顶仍在其之上；若被用户置顶则归入①、不重复）
+    //   3) 其余主题：保持原顺序
+    const FRONT_IDS = ['douban_movies', 'imdb_movies'];
+    const pinnedItems = [];
+    pinnedIds.forEach(id => {
+      const item = filtered.find(t => t.id === id);
+      if (item) pinnedItems.push(item);
+    });
+    const nonPinned = filtered.filter(t => !pinnedSet.has(t.id));
+    const frontSet = new Set(FRONT_IDS);
+    const frontItems = [];
+    FRONT_IDS.forEach(id => {
+      const item = nonPinned.find(t => t.id === id);
+      if (item) frontItems.push(item);
+    });
+    const restItems = nonPinned.filter(t => !frontSet.has(t.id));
+    filtered = pinnedItems.concat(frontItems, restItems);
     this.setData({ filteredThemes: filtered });
   },
 

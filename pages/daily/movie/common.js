@@ -97,6 +97,52 @@ function ratingText(rating) {
   return `${n.toFixed(1)} 星`;
 }
 
+// 集数进度环（SVG data URI，供 <image> 用）。压在海报上，自带深色底盘保证任意封面上可读。
+// pct: 0~100。opts.text=false 时不画中间数字（格子小时用）。镜像每日读书的 progressRingUri。
+const RING_ACCENT = ACCENT_HEX[getTheme('movie').accent] || ACCENT_HEX.yellow || '#F5C518';
+function progressRingUri(pct, opts) {
+  const o = opts || {};
+  const p = Math.max(0, Math.min(100, Math.round(Number(pct) || 0)));
+  const R = 15, C = 2 * Math.PI * R;         // viewBox 40，半径 15，周长
+  const dash = (p / 100 * C).toFixed(2);
+  const showText = o.text !== false;
+  const label = showText
+    ? `<text x="20" y="20" text-anchor="middle" dominant-baseline="central" ` +
+      `font-family="sans-serif" font-size="13" font-weight="700" fill="#fff">${p}</text>`
+    : '';
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">` +
+    `<circle cx="20" cy="20" r="19" fill="rgba(0,0,0,0.5)"/>` +
+    `<circle cx="20" cy="20" r="${R}" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="4"/>` +
+    `<circle cx="20" cy="20" r="${R}" fill="none" stroke="${RING_ACCENT}" stroke-width="4" ` +
+    `stroke-linecap="round" stroke-dasharray="${dash} ${(C - dash).toFixed(2)}" ` +
+    `transform="rotate(-90 20 20)"/>` +
+    label +
+    `</svg>`;
+  return 'data:image/svg+xml,' + encodeURIComponent(svg);
+}
+
+// 从 meta 归一化剧集观看进度，返回 { totalEpisodes, currentEpisode, epProgressPct, epProgressLabel }
+// 仅电视剧有意义（meta.subtype==='tv'）。epProgressLabel：有分母→「看到 8/12 集」，只有当前集→「看到 8 集」，都没有→''
+// 镜像每日读书 buildProgress（totalPages/currentPage）
+function buildEpisodeProgress(meta) {
+  const totalEpisodes = Number(meta && meta.totalEpisodes) || 0;
+  const currentEpisode = Number(meta && meta.currentEpisode) || 0;
+  const hasPct = totalEpisodes > 0 && currentEpisode > 0;
+  let epProgressLabel = '';
+  if (currentEpisode > 0) {
+    epProgressLabel = totalEpisodes > 0
+      ? `看到 ${currentEpisode}/${totalEpisodes} 集`
+      : `看到 ${currentEpisode} 集`;
+  }
+  return {
+    totalEpisodes,
+    currentEpisode,
+    epProgressPct: hasPct ? Math.min(100, Math.round(currentEpisode / totalEpisodes * 100)) : 0,
+    epProgressLabel
+  };
+}
+
 function normalizeMovieEntry(entry, date) {
   const meta = (entry && entry.meta) || {};
   const poster = meta.poster || meta.posterUrl || '';
@@ -124,6 +170,8 @@ function normalizeMovieEntry(entry, date) {
     moodEmoji: meta.moodEmoji || '',
     moodLabel: meta.moodLabel || '',
     platformRatings,
+    // 剧集观看进度：仅电视剧写入 totalEpisodes/currentEpisode，非剧集时字段为 0、label 为空
+    ...buildEpisodeProgress(meta),
     note: meta.note || '',
     timeText: formatTime(entry && entry.ts)
   };
@@ -137,6 +185,18 @@ function flattenMovies(days) {
     });
   });
   return list;
+}
+
+// 同一部电影（doubanId）只保留一条：取最近一次观看（ts 最大）。
+// 电影墙/统计按「部」去重用——一部剧多天多次记录只算/只展示一次。无 doubanId 的老记录按 ts 各自独立。
+function dedupeMovies(list) {
+  const byId = {};
+  (list || []).forEach(m => {
+    const key = m.doubanId || ('_ts_' + (m.ts || 0));
+    const prev = byId[key];
+    if (!prev || (m.ts || 0) > (prev.ts || 0)) byId[key] = m;
+  });
+  return Object.keys(byId).map(k => byId[k]);
 }
 
 function getMovieThemeView() {
@@ -162,7 +222,10 @@ module.exports = {
   formatMonthLabel,
   formatDateCN,
   ratingText,
+  progressRingUri,
+  buildEpisodeProgress,
   normalizeMovieEntry,
   flattenMovies,
+  dedupeMovies,
   getMovieThemeView
 };
