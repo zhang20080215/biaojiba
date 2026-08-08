@@ -526,9 +526,9 @@ Page({
       const date = `${range.year}-${String(range.month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       const item = map[date] || { date, entries: [] };
       const movies = (item.entries || []).map(entry => normalizeMovieEntry(entry, date));
-      // 日历格只展示最近添加的 4 部（按 ts 降序，最新在前）——每日上限 8 部，格子仍最多 4 张
+      // 日历格展示最近添加的最多 8 部（按 ts 降序，最新在前）
       const recent = movies.slice().sort((a, b) => (b.ts || 0) - (a.ts || 0));
-      const covers = recent.slice(0, 4).map(m => m.posterThumb || '/images/default-movie.jpg');
+      const covers = recent.slice(0, 8).map(m => m.posterThumb || '/images/default-movie.jpg');
       // 多部电影只取最新一部（ts 最大）的心情 emoji
       const latestMood = recent.find(m => m.moodEmoji);
       // 剧集进度环：取最新一部的观看进度（有集数分母才算得出百分比），右下角展示
@@ -585,8 +585,11 @@ Page({
     }
   },
 
-  onTapMovieCard() {
-    if (this.data.swipedKey) this.setData({ swipedKey: '' });
+  onTapMovieCard(e) {
+    // 有卡片处于左滑露出状态时，点击先收起，不误触编辑
+    if (this.data.swipedKey) { this.setData({ swipedKey: '' }); return; }
+    const { date, ts, title } = e.currentTarget.dataset;
+    this.openEditModal(date, Number(ts), title);
   },
 
   onLongPressMovie(e) {
@@ -611,11 +614,12 @@ Page({
     this.confirmDelete(date, Number(ts), title);
   },
 
-  // ── 轻编辑：左滑「编辑」打开弹窗，只改 评分 / 心情 / 短评 ──
-  onSwipeEdit(e) {
-    const { date, ts, title } = e.currentTarget.dataset;
-    const tsNum = Number(ts);
-    const day = (this._lastDays || []).find(d => d.date === date);
+  // ── 轻编辑：打开弹窗，只改 评分 / 心情 / 短评（左滑「编辑」或直接点条目触发）──
+  openEditModal(date, tsNum, title) {
+    if (!date || !tsNum) return;
+    // 月视图查 _lastDays，年视图查 _lastYearDays
+    const pool = (this.data.periodMode === 'year' ? this._lastYearDays : this._lastDays) || [];
+    const day = pool.find(d => d.date === date);
     const raw = day && (day.entries || []).find(en => en.ts === tsNum);
     if (!raw) { toast.show(this, '记录不存在'); return; }
     this._editRawMeta = { ...(raw.meta || {}) };
@@ -635,6 +639,17 @@ Page({
       editNote: note,
       editNoteCount: note.length
     });
+  },
+
+  onSwipeEdit(e) {
+    const { date, ts, title } = e.currentTarget.dataset;
+    this.openEditModal(date, Number(ts), title);
+  },
+
+  // 点击时间轴/日历条目直接编辑
+  onEditEntry(e) {
+    const { date, ts, title } = e.currentTarget.dataset;
+    this.openEditModal(date, Number(ts), title);
   },
 
   onCloseEdit() {
@@ -707,8 +722,10 @@ Page({
           complete: () => {
             this.setData({ editSaving: false, editModal: false });
             toast.show(this, '已保存', { icon: 'success' });
-            this._lastYearDays = null; // 年缓存作废，切「年」时重取
-            this.fetchMonth();
+            this._lastYearDays = null;   // 年缓存作废
+            // 按当前时间维度刷新（年视图从年编辑保存后刷年，否则刷月）
+            if (this.data.periodMode === 'year') this.fetchYear();
+            else this.fetchMonth();
           }
         });
       },
@@ -744,13 +761,25 @@ Page({
           return;
         }
         toast.show(this, '已删除', { icon: 'success' });
-        this._lastYearDays = null; // 年缓存作废，切「年」时重取
-        this.fetchMonth();
+        this._lastYearDays = null;   // 年缓存作废
+        if (this.data.periodMode === 'year') this.fetchYear();
+        else this.fetchMonth();
       },
       fail: err => {
         console.error('movie removeEntry fail', err);
         toast.show(this, '网络异常');
       }
     });
+  },
+
+  // 编辑弹窗内「删除」：关弹窗 → 走已有二次确认 → 删除
+  onEditDelete() {
+    if (this.data.editSaving) return;
+    const date = this.data.editDate;
+    const ts = Number(this.data.editTs);
+    const title = this.data.editTitle;
+    if (!date || !ts) return;
+    this.setData({ editModal: false });
+    this.confirmDelete(date, ts, title);
   }
 });
