@@ -1,24 +1,26 @@
-// pages/scenic/share/share.js —— 全国5A旅游景区「旅行足迹」分享海报
-// 「瓦片格子地图」：31 个省按地理区位紧凑连续镶嵌（贴合无间距），每格用点阵展示该省全部
-// 5A 景区，去过点亮绿点、未去灰点，格头标「去过/总数」。头部为打卡进度英雄数字，页脚署名。
-// 纯 canvas 线条填充，零网络图片依赖（规避 iOS webp 白图 + 加载慢）。
-// canvas 直接当预览图显示（backing 1242×1660 + CSS 缩放），导出临时文件供保存到相册；
-// 保存走 rewardedSaveGate。署名无二维码/外链（合规）。
+// pages/scenic/share/share.js —— 全国5A旅游景区「旅行足迹」海报预览页
+// 框架参考电影海报预览页（顶部返回+版式切换+配色选择+底部保存），预览用 canvas 当图（backing
+// 1242×1660 + CSS 缩放），导出临时文件供保存到相册；纯 canvas 线条/文字绘制，零网络图片依赖
+// （规避 iOS webp 白图 + 加载慢）。保存走 rewardedSaveGate；署名无二维码/外链（合规）。
+//
+// 两种版式：
+//   map  「足迹地图」—— 31 省瓦片格子地图，点阵展示各省 5A、去过点亮。
+//   list 「景区清单」—— 按省份列出全部 5A 景区（简称），去过高亮、未去灰显。
+// 多套配色：THEMES（青山/黛蓝/霞橙/水墨），切换即重绘，本地记住上次选择。
 const CanvasHelper = require('../../../utils/canvasHelper.js');
 const DataLoader = require('../../../utils/dataLoader.js');
 const rewardedSaveGate = require('../../../utils/rewardedSaveGate.js');
 const userStore = require('../../../utils/userStore.js');
+const scenicShortName = require('../../../utils/scenicShortName.js').scenicShortName;
 
 const THEME = 'scenic5a';
 const CANVAS_W = 1242;
 const CANVAS_H = 1660;
-const BRAND = '#2E8B72';
-const BRAND_SOFT = '#5FB89C';
-const DOT_VISITED = BRAND;
-const DOT_UNVISITED = '#CBD9D3';
 
-// 省份瓦片布局 [col,row]，6×6 紧凑连续镶嵌（贴合无间距、无内部空洞），按地理区位
-// （西→东、北→南，不严格面积）。含港澳台（无 5A，格内显示「暂无 5A」）；两角留空。
+// 省份展示顺序（与列表页一致，地理向）
+const PROVINCE_ORDER = ['北京', '天津', '河北', '山西', '内蒙古', '辽宁', '吉林', '黑龙江', '上海', '江苏', '浙江', '安徽', '福建', '江西', '山东', '河南', '湖北', '湖南', '广东', '广西', '海南', '重庆', '四川', '贵州', '云南', '西藏', '陕西', '甘肃', '青海', '宁夏', '新疆'];
+
+// 瓦片布局 [col,row]，6×6 紧凑连续镶嵌，含港澳台（无 5A）
 const COLS = 6, ROWS = 6;
 const TILE_LAYOUT = {
     '新疆': [0, 0], '内蒙古': [1, 0], '北京': [2, 0], '辽宁': [3, 0], '吉林': [4, 0], '黑龙江': [5, 0],
@@ -29,23 +31,57 @@ const TILE_LAYOUT = {
     '海南': [1, 5], '广东': [2, 5], '香港': [3, 5], '澳门': [4, 5]
 };
 
+// 配色主题：完全采用「豆瓣电影TOP250」海报的 3 套背景渐变（粉蓝/暖金/青雾）。
+// 只切背景渐变；文字/元素颜色固定用 PALETTE（与电影海报一致的配色语言）。
+const BG_THEMES = [
+    { key: 'pinkBlue', name: '粉蓝', start: '#FDECEC', end: '#D2F1FE' },
+    { key: 'goldSand', name: '暖金', start: '#FEEFBF', end: '#F8F3E7' },
+    { key: 'greenMist', name: '青雾', start: '#E1E6D1', end: '#EAF0F9' }
+];
+const PALETTE = {
+    title: '#2D2D2B',
+    provPillText: '#4A4A46',
+    pillBg: 'rgba(255,255,255,0.55)',
+    pillBorder: 'rgba(255,255,255,0.72)',
+    visited: '#6F8244',       // 去过文字（深橄榄，加粗）——对齐电影 watched
+    unvisited: '#A7A498',     // 未去文字（灰）
+    dotVisited: '#9AAB65',
+    dotUnvisited: '#D2CEC3',
+    tileVisited: 'rgba(255,255,255,0.50)',
+    tileHas: 'rgba(255,255,255,0.28)',
+    tileNone: 'rgba(255,255,255,0.14)',
+    tileStroke: 'rgba(255,255,255,0.85)',
+    hairline: 'rgba(45,45,43,0.20)',
+    legendText: '#6F6F68',
+    sig: 'rgba(45,45,43,0.70)'
+};
+const THEME_STORAGE_KEY = 'scenicShareTheme';
+
+function getTheme(key) {
+    return BG_THEMES.find(t => t.key === key) || BG_THEMES[0];
+}
+
 Page({
     data: {
         statusBarHeight: 20,
-        navBarHeight: 48,
-        navOffset: 68,
+        navBarHeight: 44,
         previewW: 300,
         previewH: 400,
         loading: true,
         ready: false,
         isGenerating: false,
-        needRewardedAd: false
+        needRewardedAd: false,
+        shareType: 'map',           // 'map' | 'list'
+        activeThemeKey: 'pinkBlue',
+        theme: BG_THEMES[0],
+        themeChips: BG_THEMES       // {key,name,start,end}，色卡点用 start→end 渐变
     },
 
     posterData: null,
     _ready: false,
-    _rendered: false,
     _destroyed: false,
+    _previewTemp: null,
+    _rendering: false,
 
     safeSetData(obj) {
         if (this._destroyed) return;
@@ -59,13 +95,18 @@ Page({
         const menu = wx.getMenuButtonBoundingClientRect();
         const statusBarHeight = win.statusBarHeight || 20;
         const navBarHeight = (menu.top - statusBarHeight) * 2 + menu.height;
-        const navOffset = statusBarHeight + navBarHeight;
         const screenW = win.windowWidth || 375;
-        const previewW = Math.min(Math.round(screenW * 0.84), 340);
+        // 预览尽量占满内容宽（左右各 space-3≈screenW*24/750），减少四周留白
+        const previewW = Math.round(screenW * (1 - 48 / 750));
         const previewH = Math.round(previewW * CANVAS_H / CANVAS_W);
-        this.setData({ statusBarHeight, navBarHeight, navOffset, previewW, previewH });
-        wx.setNavigationBarColor({ frontColor: '#ffffff', backgroundColor: BRAND });
-        wx.setNavigationBarTitle({ title: '旅行足迹' });
+
+        // 恢复上次选择的配色
+        let themeKey = 'pinkBlue';
+        try { themeKey = wx.getStorageSync(THEME_STORAGE_KEY) || 'pinkBlue'; } catch (e) {}
+        const theme = getTheme(themeKey);
+
+        this.setData({ statusBarHeight, navBarHeight, previewW, previewH, activeThemeKey: theme.key, theme });
+        wx.setNavigationBarTitle({ title: '海报预览' });
         rewardedSaveGate.refreshHint(this);
         this.fetchData();
     },
@@ -100,7 +141,7 @@ Page({
             const allSpots = movies.map(m => ({ ...m, _id: String(m._id) }));
             const { markStatusMap } = DataLoader.processMarks(marks, allSpots);
 
-            // 按省份统计「该省全部 5A 数」与「去过数」；只统计有瓦片布局的省份
+            // 瓦片地图用的省级统计（只统计有瓦片布局的省份）
             const provStats = {};
             let visitedTotal = 0;
             allSpots.forEach(s => {
@@ -113,13 +154,29 @@ Page({
                 if (watched) provStats[p].visited++;
             });
 
-            if (!visitedTotal) {
-                wx.showModal({
-                    title: '还没有足迹',
-                    content: '先去打卡去过的5A景区吧',
-                    showCancel: false,
-                    success: () => this.onBack()
+            // 景区清单用的分省分组（按 PROVINCE_ORDER，组内按 rank）
+            const byProv = {};
+            allSpots.forEach(s => {
+                const p = (s.province || '').trim();
+                if (!p) return;
+                if (!byProv[p]) byProv[p] = [];
+                byProv[p].push({
+                    name: s.shortName || scenicShortName(s.name),
+                    rank: s.rank || 0,
+                    visited: markStatusMap[s._id] === 'watched'
                 });
+            });
+            const groups = [];
+            PROVINCE_ORDER.forEach(p => {
+                const arr = byProv[p];
+                if (!arr || !arr.length) return;
+                // 每省内：去过的排最前（组内再按 rank），未去在后
+                arr.sort((a, b) => (b.visited - a.visited) || (a.rank - b.rank));
+                groups.push({ prov: p, total: arr.length, visited: arr.filter(x => x.visited).length, spots: arr });
+            });
+
+            if (!visitedTotal) {
+                wx.showModal({ title: '还没有足迹', content: '先去打卡去过的5A景区吧', showCancel: false, success: () => this.onBack() });
                 return;
             }
 
@@ -127,11 +184,11 @@ Page({
             const userInfo = userStore.getUserInfo() || {};
             this.posterData = {
                 nickname: userInfo.nickName || '旅行者',
-                avatar: userInfo.avatarUrl || '',
                 visitedCount: visitedTotal,
                 totalCount: allSpots.length,
                 provinceCount: litProvinces,
-                provStats
+                provStats,
+                groups
             };
             this.safeSetData({ loading: false });
             this.maybeGenerate();
@@ -142,14 +199,35 @@ Page({
         }
     },
 
+    // ── 交互：切版式 / 切配色 ──
+    onTypeTap(e) {
+        const type = e.currentTarget.dataset.type;
+        if (type === this.data.shareType) return;
+        this.setData({ shareType: type, ready: false }, () => this.regenerate());
+    },
+
+    onThemeTap(e) {
+        const key = e.currentTarget.dataset.key;
+        if (key === this.data.activeThemeKey) return;
+        const theme = getTheme(key);
+        try { wx.setStorageSync(THEME_STORAGE_KEY, key); } catch (err) {}
+        this.setData({ activeThemeKey: key, theme, ready: false }, () => this.regenerate());
+    },
+
     maybeGenerate() {
-        if (this._rendered || this._destroyed) return;
+        if (this._destroyed) return;
         if (!this._ready || !this.posterData) return;
-        this._rendered = true;
+        this.generatePoster();
+    },
+
+    regenerate() {
+        if (this._destroyed || !this._ready || !this.posterData) return;
         this.generatePoster();
     },
 
     async generatePoster() {
+        if (this._rendering) { this._pendingRender = true; return; }
+        this._rendering = true;
         try {
             const canvas = await new Promise((resolve, reject) => {
                 wx.createSelectorQuery().in(this).select('#scenicCard').fields({ node: true, size: true }).exec(res => {
@@ -163,12 +241,18 @@ Page({
             const ctx = canvas.getContext('2d');
             const helper = new CanvasHelper(canvas, ctx, { width: CANVAS_W, height: CANVAS_H });
 
-            await this.drawPoster(canvas, ctx, helper, this.posterData);
+            const theme = this.data.theme;
+            this.drawBackground(ctx, theme);
+            this.drawHeader(ctx, helper, this.posterData, theme);
+            if (this.data.shareType === 'list') {
+                this.drawListPoster(ctx, helper, this.posterData, theme);
+            } else {
+                this.drawTiles(ctx, helper, this.posterData.provStats, theme);
+            }
+            this.drawFooter(ctx, theme);
             if (this._destroyed) return;
 
-            await new Promise(resolve => {
-                canvas.requestAnimationFrame(() => canvas.requestAnimationFrame(resolve));
-            });
+            await new Promise(resolve => { canvas.requestAnimationFrame(() => canvas.requestAnimationFrame(resolve)); });
             if (this._destroyed) return;
             const res = await wx.canvasToTempFilePath({ canvas, fileType: 'png', quality: 1 });
             if (this._destroyed) return;
@@ -176,79 +260,99 @@ Page({
             this.safeSetData({ ready: true });
         } catch (err) {
             console.error('scenic share render fail', err);
-            this._rendered = false;
             if (!this._destroyed) wx.showToast({ title: '生成失败', icon: 'none' });
+        } finally {
+            this._rendering = false;
+            if (this._pendingRender && !this._destroyed) { this._pendingRender = false; this.generatePoster(); }
         }
     },
 
-    async drawPoster(canvas, ctx, helper, data) {
+    // ── 通用：背景 / 头部 / 图例 / 页脚 ──
+    drawBackground(ctx, theme) {
         const W = CANVAS_W, H = CANVAS_H;
-
-        // ── 背景 ──
-        const bg = ctx.createLinearGradient(0, 0, 0, H);
-        bg.addColorStop(0, '#E7F5EF');
-        bg.addColorStop(0.4, '#F3FAF7');
-        bg.addColorStop(1, '#FFFFFF');
+        // 对角渐变 start→end（与电影海报卡片一致）
+        const bg = ctx.createLinearGradient(0, 0, W, H);
+        bg.addColorStop(0, theme.start);
+        bg.addColorStop(1, theme.end);
         ctx.fillStyle = bg;
         ctx.fillRect(0, 0, W, H);
-        ctx.fillStyle = 'rgba(95, 184, 156, 0.14)';
-        ctx.beginPath(); ctx.arc(W - 30, 60, 180, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = 'rgba(46, 139, 114, 0.08)';
-        ctx.beginPath(); ctx.arc(50, H - 70, 140, 0, Math.PI * 2); ctx.fill();
-
-        // ── 标题 ──
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'alphabetic';
-        ctx.fillStyle = BRAND;
-        ctx.font = 'bold 68px sans-serif';
-        ctx.fillText('我的5A旅行足迹', W / 2, 134);
-
-        // ── 英雄数字：打卡 N / 359 个 5A 景区 ──
-        const spots = data.visitedCount;
-        const totalSpots = data.totalCount || 0;
-        const litProv = data.provinceCount;
-        ctx.fillStyle = BRAND;
-        ctx.font = 'bold 88px sans-serif';
-        ctx.textAlign = 'right';
-        ctx.fillText(String(spots), W / 2 - 10, 228);
-        ctx.textAlign = 'left';
-        ctx.fillStyle = '#9AA9A3';
-        ctx.font = '40px sans-serif';
-        ctx.fillText(`/ ${totalSpots} 个 5A 景区`, W / 2 + 10, 228);
-        ctx.textAlign = 'center';
-        ctx.fillStyle = '#5A6B64';
-        ctx.font = '34px sans-serif';
-        const cover = totalSpots ? Math.round(spots / totalSpots * 100) : 0;
-        ctx.fillText(`已点亮 ${litProv} 个省份 · 覆盖 ${cover}%`, W / 2, 284);
-
-        // ── 瓦片格子地图 ──
-        this.drawTiles(ctx, helper, data.provStats);
-
-        // ── 图例（居中一行：● 去过   ● 未去）──
-        ctx.textBaseline = 'alphabetic';
-        ctx.font = '28px sans-serif';
-        const ly = 1560;
-        const legItems = [[DOT_VISITED, '去过'], [DOT_UNVISITED, '未去']];
-        let legW = 0;
-        legItems.forEach(it => { legW += 22 + 10 + ctx.measureText(it[1]).width + 40; });
-        let lgx = (W - legW) / 2;
-        legItems.forEach(it => {
-            ctx.fillStyle = it[0]; ctx.beginPath(); ctx.arc(lgx + 11, ly - 9, 11, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = '#6A7B74'; ctx.textAlign = 'left'; ctx.fillText(it[1], lgx + 11 + 22, ly);
-            lgx += 22 + 10 + ctx.measureText(it[1]).width + 40;
-        });
-
-        // ── 页脚署名（无二维码/外链）──
-        ctx.textAlign = 'center';
-        ctx.fillStyle = BRAND;
-        ctx.font = 'bold 32px sans-serif';
-        ctx.fillText('标记吧 · 全国5A旅游景区', W / 2, 1624);
     },
 
-    // 瓦片格子地图：每省一格（按 TILE_LAYOUT 区位），贴合无间距、白色细缝分隔；
-    // 格内点阵=该省全部 5A，前 vis 个点亮绿点、其余灰点；港澳台无 5A 显示「暂无 5A」
-    drawTiles(ctx, helper, provStats) {
-        const marginX = 28, gy0 = 324, gridW = CANVAS_W - marginX * 2, gridH = 1176;
+    // 紧凑头部：标题 + 一行三个胶囊统计（打卡/点亮/覆盖）
+    drawHeader(ctx, helper, data, theme) {
+        const W = CANVAS_W;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = PALETTE.title;
+        ctx.font = 'bold 60px sans-serif';
+        ctx.fillText('全国5A景区旅行打卡', W / 2, 106);
+
+        const total = data.totalCount || 0;
+        const cover = total ? Math.round(data.visitedCount / total * 100) : 0;
+        const labels = [`打卡 ${data.visitedCount}/${total}`, `点亮 ${data.provinceCount} 省`, `覆盖 ${cover}%`];
+        const fontPx = 34, pillH = 62, padX = 30, gap = 20, radius = 31;
+        ctx.font = `600 ${fontPx}px sans-serif`;
+        const widths = labels.map(t => ctx.measureText(t).width + padX * 2);
+        const totalW = widths.reduce((a, b) => a + b, 0) + gap * 2;
+        let px = (W - totalW) / 2;
+        const py = 142;
+        labels.forEach((t, i) => {
+            const w = widths[i];
+            helper.drawRoundRectPath(px, py, w, pillH, radius);
+            ctx.fillStyle = PALETTE.pillBg; ctx.fill();
+            ctx.lineWidth = 2; ctx.strokeStyle = PALETTE.pillBorder; ctx.stroke();
+            ctx.fillStyle = PALETTE.title; ctx.font = `600 ${fontPx}px sans-serif`;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(t, px + w / 2, py + pillH / 2 + 1);
+            px += w + gap;
+        });
+        ctx.textBaseline = 'alphabetic';
+    },
+
+    // 紧凑页脚：发丝渐变分隔线 + 一行（图例 · 署名）
+    drawFooter(ctx, theme) {
+        const W = CANVAS_W;
+        // 发丝分隔线（两端淡出）
+        const hy = 1588, inset = 210;
+        const hg = ctx.createLinearGradient(inset, 0, W - inset, 0);
+        hg.addColorStop(0, 'rgba(0,0,0,0)');
+        hg.addColorStop(0.5, PALETTE.hairline);
+        hg.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.strokeStyle = hg; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(inset, hy); ctx.lineTo(W - inset, hy); ctx.stroke();
+
+        // 一行：● 去过  ● 未去   ·   标记吧 · 全国5A旅游景区
+        const y = 1636, dotR = 10, dotGap = 12, itemGap = 30;
+        const legFont = '28px sans-serif';
+        const sig = '搜索标记吧小程序 · 制作同款图';
+        const sigFont = '600 28px sans-serif';
+        const sepText = '   ·   ';
+        ctx.textBaseline = 'middle';
+        ctx.font = legFont;
+        const w1 = dotR * 2 + dotGap + ctx.measureText('去过').width;
+        const w2 = dotR * 2 + dotGap + ctx.measureText('未去').width;
+        const wsep = ctx.measureText(sepText).width;
+        ctx.font = sigFont;
+        const wsig = ctx.measureText(sig).width;
+        const totalW = w1 + itemGap + w2 + wsep + wsig;
+        let x = (W - totalW) / 2;
+
+        const drawLeg = (color, label) => {
+            ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x + dotR, y, dotR, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = PALETTE.legendText; ctx.font = legFont; ctx.textAlign = 'left';
+            ctx.fillText(label, x + dotR * 2 + dotGap, y);
+            x += dotR * 2 + dotGap + ctx.measureText(label).width;
+        };
+        drawLeg(PALETTE.dotVisited, '去过'); x += itemGap;
+        drawLeg(PALETTE.dotUnvisited, '未去');
+        ctx.fillStyle = PALETTE.legendText; ctx.font = legFont; ctx.textAlign = 'left'; ctx.fillText(sepText, x, y); x += wsep;
+        ctx.fillStyle = PALETTE.sig; ctx.font = sigFont; ctx.textAlign = 'left'; ctx.fillText(sig, x, y);
+        ctx.textBaseline = 'alphabetic';
+    },
+
+    // ── 版式一：瓦片格子地图 ──
+    drawTiles(ctx, helper, provStats, theme) {
+        const marginX = 28, gy0 = 228, gridW = CANVAS_W - marginX * 2, gridH = 1332;
         const cw = gridW / COLS, ch = gridH / ROWS;
         const gx0 = marginX;
 
@@ -259,30 +363,25 @@ Page({
             const has5A = total > 0;
             const cx = gx0 + pos[0] * cw, cy = gy0 + pos[1] * ch;
 
-            // 底色（贴合，无内边距）+ 白色细缝分隔
-            ctx.fillStyle = vis > 0 ? 'rgba(46,139,114,.09)' : (has5A ? 'rgba(125,140,133,.07)' : 'rgba(125,140,133,.04)');
+            ctx.fillStyle = vis > 0 ? PALETTE.tileVisited : (has5A ? PALETTE.tileHas : PALETTE.tileNone);
             ctx.fillRect(cx, cy, cw, ch);
-            ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 2;
+            ctx.strokeStyle = PALETTE.tileStroke; ctx.lineWidth = 2;
             ctx.strokeRect(cx + 1, cy + 1, cw - 2, ch - 2);
 
-            // 省名
             ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-            ctx.fillStyle = has5A ? '#37473F' : '#9DAAA4'; ctx.font = 'bold 27px sans-serif';
+            ctx.fillStyle = has5A ? PALETTE.provPillText : '#B7B4AA'; ctx.font = 'bold 27px sans-serif';
             ctx.fillText(prov, cx + 16, cy + 40);
 
-            // 港澳台等无 5A 的：居中「暂无 5A」，不画点阵
             if (!has5A) {
-                ctx.textAlign = 'center'; ctx.fillStyle = '#B4C0BB'; ctx.font = '24px sans-serif';
+                ctx.textAlign = 'center'; ctx.fillStyle = '#C3C0B6'; ctx.font = '24px sans-serif';
                 ctx.fillText('暂无 5A', cx + cw / 2, cy + ch / 2 + 16);
                 return;
             }
 
-            // 计数
             ctx.textAlign = 'right';
-            ctx.fillStyle = vis > 0 ? BRAND : '#9DAAA4'; ctx.font = '22px sans-serif';
+            ctx.fillStyle = vis > 0 ? PALETTE.visited : '#A7A498'; ctx.font = '22px sans-serif';
             ctx.fillText(vis + '/' + total, cx + cw - 14, cy + 39);
 
-            // 点阵：该省全部 5A（前 vis 个点亮）
             const n = total;
             const areaX = cx + 16, areaY = cy + 56;
             const areaW = cw - 32, areaH = ch - 70;
@@ -294,10 +393,97 @@ Page({
                 const r = Math.floor(i / dcols), c = i % dcols;
                 const px = areaX + pitchX * (c + 0.5), py = areaY + pitchY * (r + 0.5);
                 ctx.beginPath(); ctx.arc(px, py, rad, 0, Math.PI * 2);
-                ctx.fillStyle = i < vis ? DOT_VISITED : DOT_UNVISITED;
+                ctx.fillStyle = i < vis ? PALETTE.dotVisited : PALETTE.dotUnvisited;
                 ctx.fill();
             }
         });
+    },
+
+    // ── 版式二：景区清单（紧凑分区式）──
+    // 每省另起一行，行首一个主题色圆角「省名 去过/总数」胶囊，其后流排该省全部景区简称
+    // （去过=主色加粗、未去=灰）；双列、字号自适应；用行中线基线对齐胶囊与文字。
+    drawListPoster(ctx, helper, data, theme) {
+        const groups = data.groups || [];
+        const BODY_TOP = 224, BODY_BOT = 1560, MARGIN = 44, COLGAP = 44;
+        const COLW = (CANVAS_W - MARGIN * 2 - COLGAP) / 2;
+        const colLeft = i => MARGIN + i * (COLW + COLGAP);
+
+        const attempt = (fs, doDraw) => {
+            const lh = Math.round(fs * 1.42);
+            const secGap = Math.round(fs * 0.7);
+            const space = Math.round(fs * 0.46);
+            const pillPadX = Math.round(fs * 0.5);
+            const pillH = Math.round(fs * 1.5);
+            const nameFont = fs + 'px sans-serif';
+            const nameFontB = 'bold ' + fs + 'px sans-serif';
+            const pillFont = 'bold ' + Math.round(fs * 0.94) + 'px sans-serif';
+            const half = Math.round(lh / 2);
+
+            let col = 0;
+            let x = colLeft(0);
+            let y = BODY_TOP + half;   // y = 当前行中线
+            let atColTop = true;
+
+            const nextColIfNeeded = () => {
+                if (y + half > BODY_BOT) {
+                    col++;
+                    if (col > 1) return false;
+                    x = colLeft(col); y = BODY_TOP + half; atColTop = true;
+                }
+                return true;
+            };
+
+            for (let gi = 0; gi < groups.length; gi++) {
+                const g = groups[gi];
+                if (!atColTop) { y += lh + secGap; x = colLeft(col); }
+                if (!nextColIfNeeded()) return false;
+
+                // 省名胶囊
+                ctx.font = pillFont;
+                const label = g.prov + ' ' + g.visited + '/' + g.total;
+                const pillW = ctx.measureText(label).width + pillPadX * 2;
+                if (doDraw) {
+                    helper.drawRoundRectPath(x, y - pillH / 2, pillW, pillH, Math.round(pillH / 2));
+                    ctx.fillStyle = PALETTE.pillBg; ctx.fill();
+                    ctx.lineWidth = 2; ctx.strokeStyle = PALETTE.pillBorder; ctx.stroke();
+                    ctx.fillStyle = PALETTE.provPillText; ctx.font = pillFont;
+                    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+                    ctx.fillText(label, x + pillPadX, y + 1);
+                }
+                x += pillW + space * 1.4;
+                atColTop = false;
+
+                // 景区简称
+                for (let si = 0; si < g.spots.length; si++) {
+                    const sp = g.spots[si];
+                    const f = sp.visited ? nameFontB : nameFont;
+                    ctx.font = f;
+                    const w = ctx.measureText(sp.name).width;
+                    if (x + w > colLeft(col) + COLW) {
+                        y += lh; x = colLeft(col);
+                        if (!nextColIfNeeded()) return false;
+                    }
+                    if (doDraw) {
+                        ctx.font = f;
+                        ctx.fillStyle = sp.visited ? PALETTE.visited : PALETTE.unvisited;
+                        ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+                        ctx.fillText(sp.name, x, y);
+                    }
+                    x += w + space;
+                    atColTop = false;
+                }
+            }
+            return true;
+        };
+
+        // 字号自适应：从大到小取首个放得下的（实测落在 20）
+        const SIZES = [24, 22, 20, 18, 16];
+        let chosen = SIZES[SIZES.length - 1];
+        for (let i = 0; i < SIZES.length; i++) {
+            if (attempt(SIZES[i], false)) { chosen = SIZES[i]; break; }
+        }
+        attempt(chosen, true);
+        ctx.textBaseline = 'alphabetic';
     },
 
     async saveImage() {
@@ -312,10 +498,7 @@ Page({
         } catch (err) {
             console.error('scenic share save fail', err);
             if (err.errMsg && err.errMsg.includes('auth deny')) {
-                wx.showModal({
-                    title: '权限提示', content: '需要授权保存图片到相册', confirmText: '去设置',
-                    success: r => { if (r.confirm) wx.openSetting(); }
-                });
+                wx.showModal({ title: '权限提示', content: '需要授权保存图片到相册', confirmText: '去设置', success: r => { if (r.confirm) wx.openSetting(); } });
             } else {
                 wx.showToast({ title: '保存失败', icon: 'none' });
             }

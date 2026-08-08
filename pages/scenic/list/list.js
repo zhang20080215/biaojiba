@@ -5,9 +5,11 @@ import DataLoader from '../../../utils/dataLoader';
 import imageCacheManager from '../../../utils/imageCacheManager';
 var adConfig = require('../../../utils/adConfig');
 var userStore = require('../../../utils/userStore.js');
+var scenicShortName = require('../../../utils/scenicShortName.js').scenicShortName;
 
 const THEME = 'scenic5a';
 const TOTAL = 359;
+const PAGE_SIZE = 24;   // 分批渲染每页条数（首屏只渲染一页，上拉自动追加）
 // 省份筛选固定顺序（与数据源 desc 省份短名一致）
 const PROVINCE_ORDER = ['北京', '天津', '河北', '山西', '内蒙古', '辽宁', '吉林', '黑龙江', '上海', '江苏', '浙江', '安徽', '福建', '江西', '山东', '河南', '湖北', '湖南', '广东', '广西', '海南', '重庆', '四川', '贵州', '云南', '西藏', '陕西', '甘肃', '青海', '宁夏', '新疆'];
 
@@ -20,6 +22,7 @@ Page({
         spots: [],
         provinces: [],           // 数据里出现过的省份（按 PROVINCE_ORDER 排序）
         currentProvince: '',     // '' = 全部省份
+        searchKeyword: '',       // 搜索关键词（匹配名称/简称/省市）
         markStatusMap: {},
         markDateMap: {},
         markRecordIdMap: {},
@@ -33,6 +36,11 @@ Page({
         isBatchEditing: false,
         selectedIds: [],
         loading: false,
+        dataLoaded: false,       // 首屏数据是否已到位（区分「加载中」与「真的没有」）
+        hasMore: false,          // 当前筛选下是否还有未渲染的下一页
+        markSheetVisible: false, // 标记纠正弹窗
+        markSheetId: '',
+        markSheetStatus: '',
         showAuthModal: false,
         customToast: '',
         customToastVisible: false,
@@ -122,6 +130,8 @@ Page({
             const allSpots = movies.map(m => ({
                 ...m,
                 _id: String(m._id),
+                // 简称：优先用库里的 shortName 字段（灌库已写入时），否则前端即时提取
+                shortName: m.shortName || scenicShortName(m.name),
                 thumbCover: imageCacheManager.getThumbnailUrl(m.cover || m.originalCover, 'list')
             }));
 
@@ -129,6 +139,8 @@ Page({
             const present = new Set(allSpots.map(s => s.province).filter(Boolean));
             const provinces = PROVINCE_ORDER.filter(p => present.has(p));
 
+            // allSpots 只用于本地筛选/统计，WXML 从不渲染它 —— 直接挂到 data 上，
+            // 不走 setData，省掉一次 359 条的跨线程传输（真正渲染的是分页后的 spots）。
             this.data.allSpots = allSpots;
 
             const { markStatusMap, markDateMap, markRecordIdMap, stats } = DataLoader.processMarks(marks, allSpots);
@@ -136,18 +148,21 @@ Page({
             this.setData({
                 markStatusMap, markDateMap, markRecordIdMap,
                 visitedCount: stats.watched, wishCount: stats.wish, unvisitedCount: stats.unwatched,
-                allCount: allSpots.length, provinces,
-                ...this.buildProgress(stats.watched, allSpots.length),
-                allSpots
+                allCount: allSpots.length, provinces, dataLoaded: true,
+                ...this.buildProgress(stats.watched, allSpots.length)
             }, () => {
                 this.updateFilteredSpots();
                 wx.hideNavigationBarLoading();
             });
         } catch (err) {
             console.error('加载景区数据失败:', err);
+            this.data.allSpots = [];
+            this._filtered = [];
+            this._renderedCount = 0;
             this.setData({
-                allSpots: [], spots: [], markStatusMap: {}, markDateMap: {}, markRecordIdMap: {},
+                spots: [], markStatusMap: {}, markDateMap: {}, markRecordIdMap: {},
                 visitedCount: 0, wishCount: 0, unvisitedCount: 0, allCount: 0,
+                dataLoaded: true, hasMore: false,
                 ...this.buildProgress(0, 0)
             });
             wx.showToast({ title: '暂无数据或加载失败', icon: 'none' });
@@ -167,7 +182,7 @@ Page({
                 visitedCount: stats.watched, wishCount: stats.wish, unvisitedCount: stats.unwatched,
                 ...this.buildProgress(stats.watched, this.data.allSpots.length)
             }, () => {
-                this.updateFilteredSpots();
+                this.updateFilteredSpots({ preserve: true });
                 wx.hideNavigationBarLoading();
             });
         } catch (err) {
@@ -176,26 +191,85 @@ Page({
         }
     },
 
-    updateFilteredSpots() {
-        const { allSpots, markStatusMap, activeTab, currentProvince, selectedIds } = this.data;
-        let list = allSpots;
-        if (currentProvince) list = list.filter(s => s.province === currentProvince);
+    // 计算当前筛选后的完整列表（存到 this._filtered，不进 setData），再分页渲染。
+    // opts.preserve=true：保持已渲染的条数（标记更新后重算时用，避免列表回弹到首页）。
+    updateFilteredSpots(opts) {
+        const preserve = opts && opts.preserve;
+        const { allSpots, markStatusMap, activeTab, currentProvince, searchKeyword } = this.data;
+        let list = allSpots || [];
+        const kw = (searchKeyword || '').trim().toLowerCase();
+        if (kw) {
+            list = list.filter(s => {
+                const hay = `${s.name || ''} ${s.shortName || ''} ${s.province || ''} ${s.city || ''} ${s.location || ''}`.toLowerCase();
+                return hay.indexOf(kw) >= 0;
+            });
+        } else if (currentProvince) {
+            list = list.filter(s => s.province === currentProvince);
+        }
         if (activeTab === 1) list = list.filter(s => markStatusMap[s._id] === 'watched');
         else if (activeTab === 2) list = list.filter(s => markStatusMap[s._id] === 'wish');
         else if (activeTab === 3) list = list.filter(s => !markStatusMap[s._id]);
-        list = list.map(s => ({ ...s, checked: selectedIds.includes(String(s._id)) }));
-        this.setData({ spots: list });
+        this._filtered = list;
+
+        const target = preserve
+            ? Math.min(Math.max(this._renderedCount || PAGE_SIZE, PAGE_SIZE), list.length)
+            : PAGE_SIZE;
+        this._renderedCount = 0;
+        this.renderUpTo(target);
+    },
+
+    // 从头渲染到第 count 条（整段替换 spots，用于筛选切换/重算）
+    renderUpTo(count) {
+        const all = this._filtered || [];
+        const { selectedIds } = this.data;
+        const target = Math.min(count, all.length);
+        const slice = all.slice(0, target).map(s => ({ ...s, checked: selectedIds.includes(String(s._id)) }));
+        this._renderedCount = target;
+        this.setData({ spots: slice, hasMore: target < all.length });
+    },
+
+    // 上拉追加下一页：只把新增的一批按下标追加进 spots，不整段重传
+    loadMoreSpots() {
+        const all = this._filtered || [];
+        const start = this._renderedCount || 0;
+        if (start >= all.length) return;
+        const end = Math.min(all.length, start + PAGE_SIZE);
+        const { selectedIds } = this.data;
+        const updates = { hasMore: end < all.length };
+        for (let i = start; i < end; i++) {
+            const s = all[i];
+            updates[`spots[${i}]`] = { ...s, checked: selectedIds.includes(String(s._id)) };
+        }
+        this._renderedCount = end;
+        this.setData(updates);
+    },
+
+    onReachBottom() {
+        this.loadMoreSpots();
     },
 
     onTabChange(e) {
         const idx = Number(e.currentTarget.dataset.idx);
-        this.setData({ activeTab: idx, isBatchEditing: false, selectedIds: [] }, this.updateFilteredSpots);
+        this.setData({ activeTab: idx, isBatchEditing: false, selectedIds: [] }, () => this.updateFilteredSpots());
     },
 
     onProvinceTap(e) {
         const p = e.currentTarget.dataset.province || '';
-        if (p === this.data.currentProvince) return;
-        this.setData({ currentProvince: p, isBatchEditing: false, selectedIds: [] }, this.updateFilteredSpots);
+        if (p === this.data.currentProvince && !this.data.searchKeyword) return;
+        // 选省份时清空搜索（两者互斥，避免冲突）
+        this.setData({ currentProvince: p, searchKeyword: '', isBatchEditing: false, selectedIds: [] }, () => this.updateFilteredSpots());
+    },
+
+    // 搜索：输入即过滤；有关键词时清空省份筛选（搜索跨全部省份）
+    onSearchInput(e) {
+        const v = e.detail.value || '';
+        const patch = { searchKeyword: v, isBatchEditing: false, selectedIds: [] };
+        if (v.trim()) patch.currentProvince = '';
+        this.setData(patch, () => this.updateFilteredSpots());
+    },
+
+    onSearchClear() {
+        this.setData({ searchKeyword: '' }, () => this.updateFilteredSpots());
     },
 
     recalcStats(markStatusMap) {
@@ -223,7 +297,7 @@ Page({
             ...this.buildProgress(visited, this.data.allSpots.length)
         };
         if (this.data.activeTab === 0) this.setData(nextData);
-        else this.setData(nextData, () => this.updateFilteredSpots());
+        else this.setData(nextData, () => this.updateFilteredSpots({ preserve: true }));
     },
 
     restoreSingleMarkLocally(id, snapshot) {
@@ -241,7 +315,7 @@ Page({
             ...this.buildProgress(visited, this.data.allSpots.length)
         };
         if (this.data.activeTab === 0) this.setData(nextData);
-        else this.setData(nextData, () => this.updateFilteredSpots());
+        else this.setData(nextData, () => this.updateFilteredSpots({ preserve: true }));
     },
 
     formatMarkDate(dateStr) {
@@ -253,8 +327,41 @@ Page({
         } catch (e) { return ''; }
     },
 
-    // 单点标记（去过=watched / 想去=wish），乐观更新 + 写 Marks
+    // 快捷按钮（未标记时的 想去/去过）→ 直接标记
     onMarkTap(e) {
+        const id = String(e.currentTarget.dataset.id);
+        const type = e.currentTarget.dataset.type;
+        if (!id || !type) { wx.showToast({ title: '数据不完整', icon: 'none' }); return; }
+        this.setMark(id, type);
+    },
+
+    // 点击已标记的标签 → 打开纠正弹窗（去过/想去/没去过）
+    onOpenMarkSheet(e) {
+        if (!this.getActiveOpenid()) {
+            wx.showModal({
+                title: '提示', content: '请登录后再进行标记', confirmText: '去登录',
+                success: (res) => { if (res.confirm) this.onGetUserProfile(); }
+            });
+            return;
+        }
+        const id = String(e.currentTarget.dataset.id);
+        if (!id) return;
+        this.setData({ markSheetVisible: true, markSheetId: id, markSheetStatus: this.data.markStatusMap[id] || '' });
+    },
+
+    onMarkSheetPick(e) {
+        const status = e.currentTarget.dataset.status || '';   // 'watched' | 'wish' | '' (没去过)
+        const id = this.data.markSheetId;
+        this.setData({ markSheetVisible: false });
+        if (id) this.setMark(id, status);
+    },
+
+    onCloseMarkSheet() {
+        this.setData({ markSheetVisible: false });
+    },
+
+    // 统一标记入口：targetStatus 为 'watched'|'wish'|''（''=没去过=取消标记）。乐观更新 + 写 Marks
+    setMark(id, targetStatus) {
         const openid = this.getActiveOpenid();
         if (!openid) {
             wx.showModal({
@@ -263,29 +370,46 @@ Page({
             });
             return;
         }
-        const id = String(e.currentTarget.dataset.id);
-        const type = e.currentTarget.dataset.type;
-        if (!id || !type) { wx.showToast({ title: '数据不完整', icon: 'none' }); return; }
+        id = String(id);
+        if (!id) return;
+        const currentStatus = this.data.markStatusMap[id] || '';
+        if (currentStatus === targetStatus) return;   // 选了当前状态，无变化
 
         if (!this._pendingMarkMap) this._pendingMarkMap = {};
         if (this._pendingMarkMap[id]) return;
 
         const snapshot = {
-            status: this.data.markStatusMap[id] || '',
+            status: currentStatus,
             date: this.data.markDateMap[id] || '',
             recordId: this.data.markRecordIdMap[id] || ''
         };
-        const now = new Date().toISOString();
         const db = wx.cloud.database();
         const existingRecordId = this.data.markRecordIdMap[id];
-
         this._pendingMarkMap[id] = true;
-        this.applySingleMarkLocally(id, type, now, existingRecordId);
-        this.showCustomToast(type === 'watched' ? '✓ 已标记为去过' : '✓ 已标记为想去');
+
+        // 没去过 → 取消标记
+        if (!targetStatus) {
+            this.clearSingleMarkLocally(id);
+            this.showCustomToast('已取消标记');
+            const persist = existingRecordId
+                ? db.collection('Marks').doc(existingRecordId).remove()
+                : db.collection('Marks').where({ movieId: id, openid }).remove();
+            persist.catch(err => {
+                console.error('取消标记失败:', err);
+                this.restoreSingleMarkLocally(id, snapshot);
+                wx.showToast({ title: '取消失败，请重试', icon: 'none' });
+            }).finally(() => { delete this._pendingMarkMap[id]; });
+            return;
+        }
+
+        // 设为 / 切换到 targetStatus
+        const now = new Date().toISOString();
+        this.applySingleMarkLocally(id, targetStatus, now, existingRecordId);
+        this.showCustomToast(targetStatus === 'watched' ? '✓ 已标记为去过' : '✓ 已标记为想去');
 
         const persist = existingRecordId
-            ? db.collection('Marks').doc(existingRecordId).update({ data: { status: type, marked_at: now } })
-            : db.collection('Marks').add({ data: { movieId: id, openid, status: type, marked_at: now } });
+            ? db.collection('Marks').doc(existingRecordId).update({ data: { status: targetStatus, marked_at: now } })
+            : db.collection('Marks').add({ data: { movieId: id, openid, status: targetStatus, marked_at: now } });
 
         persist.then(res => {
             if (!existingRecordId && res && res._id) {
@@ -300,6 +424,25 @@ Page({
         });
     },
 
+    // 本地清除单个标记（取消标记用）
+    clearSingleMarkLocally(id) {
+        const markStatusMap = { ...this.data.markStatusMap };
+        const markDateMap = { ...this.data.markDateMap };
+        const markRecordIdMap = { ...this.data.markRecordIdMap };
+        delete markStatusMap[id];
+        delete markDateMap[id];
+        delete markRecordIdMap[id];
+
+        const { visited, wish, unvisited } = this.recalcStats(markStatusMap);
+        const nextData = {
+            markStatusMap, markDateMap, markRecordIdMap,
+            visitedCount: visited, wishCount: wish, unvisitedCount: unvisited,
+            ...this.buildProgress(visited, this.data.allSpots.length)
+        };
+        if (this.data.activeTab === 0) this.setData(nextData);
+        else this.setData(nextData, () => this.updateFilteredSpots({ preserve: true }));
+    },
+
     showCustomToast(msg) {
         if (this._toastTimer) clearTimeout(this._toastTimer);
         this.setData({ customToast: msg, customToastVisible: true });
@@ -310,12 +453,12 @@ Page({
     onStartBatchEdit() {
         if (!this.hasLogin()) { this.onGetUserProfile(); return; }
         this.setData({ isBatchEditing: true, selectedIds: [] });
-        this.updateFilteredSpots();
+        this.updateFilteredSpots({ preserve: true });
     },
 
     onCancelBatchEdit() {
         this.setData({ isBatchEditing: false, selectedIds: [] });
-        this.updateFilteredSpots();
+        this.updateFilteredSpots({ preserve: true });
     },
 
     onSpotCheck(e) {
@@ -377,7 +520,7 @@ Page({
             visitedCount: visited, wishCount: wish, unvisitedCount: unvisited,
             ...this.buildProgress(visited, this.data.allSpots.length),
             isBatchEditing: false, selectedIds: []
-        }, () => this.updateFilteredSpots());
+        }, () => this.updateFilteredSpots({ preserve: true }));
     },
 
     // ─── 分享 ───
