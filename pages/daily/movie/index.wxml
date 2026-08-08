@@ -71,7 +71,8 @@
               <text class="tl-weekday">{{item.weekday}}</text>
               <text class="tl-day-count">{{item.count}} 部</text>
             </view>
-            <view class="tl-card" wx:for="{{item.items}}" wx:for-item="mv" wx:key="key">
+            <view class="tl-card" wx:for="{{item.items}}" wx:for-item="mv" wx:key="key"
+                  bindtap="onEditEntry" data-date="{{mv.date}}" data-ts="{{mv.ts}}" data-title="{{mv.title}}" hover-class="tap-soft">
               <view class="tl-poster-wrap">
                 <image class="tl-poster" src="{{mv.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" lazy-load="true" />
                 <image wx:if="{{mv.progressRing}}" class="tl-ring" src="{{mv.progressRing}}" mode="aspectFit" />
@@ -344,7 +345,8 @@
                 <text class="tl-weekday">{{item.weekday}}</text>
                 <text class="tl-day-count">{{item.count}} 部</text>
               </view>
-              <view class="tl-card" wx:for="{{item.items}}" wx:for-item="mv" wx:key="key">
+              <view class="tl-card" wx:for="{{item.items}}" wx:for-item="mv" wx:key="key"
+                  bindtap="onEditEntry" data-date="{{mv.date}}" data-ts="{{mv.ts}}" data-title="{{mv.title}}" hover-class="tap-soft">
                 <view class="tl-poster-wrap">
                   <image class="tl-poster" src="{{mv.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" lazy-load="true" />
                   <image wx:if="{{mv.progressRing}}" class="tl-ring" src="{{mv.progressRing}}" mode="aspectFit" />
@@ -443,6 +445,7 @@
       </view>
 
       <view class="edit-actions">
+        <view class="edit-btn edit-delete {{editSaving ? 'disabled' : ''}}" bindtap="onEditDelete">删除</view>
         <view class="edit-btn edit-cancel" bindtap="onCloseEdit">取消</view>
         <view class="edit-btn edit-save {{editSaving ? 'disabled' : ''}}" bindtap="onEditSave">{{editSaving ? '保存中...' : '保存'}}</view>
       </view>
