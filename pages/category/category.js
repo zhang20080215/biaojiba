@@ -5,6 +5,7 @@ var themeRegistry = require('../../utils/themeRegistry.js')
 // 用户对分类页的本地偏好（跨会话保留）：置顶主题 id 列表 + 卡片展示模式
 var PIN_STORAGE_KEY = 'categoryPinnedIds';
 var VIEW_MODE_STORAGE_KEY = 'categoryViewMode';
+var DYN_COVER_STORAGE_KEY = 'categoryDynCovers';  // 动态封面 URL 本地缓存 { [themeId]: coverUrl }
 
 // 每日主题横排块的图标/底色/文字色（按主题 id）—— 暖调协调配色
 var DAILY_BLOCK_META = {
@@ -76,6 +77,7 @@ Page({
         tag: '旅行',
         category: 'travel',
         isNew: true,
+        wishFrom: '卡**琳',
         url: '/pages/scenic/list/list'
       },
       {
@@ -423,6 +425,7 @@ Page({
       }
     ],
     filteredThemes: [],
+    scenicFeature: null,        // 每日标记下方「旅行打卡」专属推荐卡（仅 5A 景区）
     // 片单/书单需求收集弹窗
     showRequestModal: false,
     requestType: 'movie',
@@ -450,6 +453,8 @@ Page({
 
     // 云端注册表：先用本地缓存的新主题即时合入卡片（无网络等待），稍后 loadCloudRegistry 再拉最新
     this._mergeCloudThemes(themeRegistry.readAll());
+    // 动态封面：先用本地缓存的封面 URL 即时渲染（避免"占位图标→真图"闪烁），loadDynamicCovers 再刷新
+    this._seedDynCoversFromCache();
 
     this.checkLoginStatus();
     this.buildDailyBlocks();
@@ -531,6 +536,42 @@ Page({
     };
   },
 
+  // 用本地缓存的封面 URL 立即回填 dynamicCover（首屏秒显真实封面，不闪占位）
+  _seedDynCoversFromCache() {
+    let cache;
+    try { cache = wx.getStorageSync(DYN_COVER_STORAGE_KEY); } catch (e) { cache = null; }
+    if (!cache || typeof cache !== 'object') return;
+    let changed = false;
+    const themes = (this.data.themes || []).map(t => {
+      if (!t.dynamicCover && cache[t.id]) { changed = true; return { ...t, dynamicCover: { cover: cache[t.id] } }; }
+      return t;
+    });
+    if (changed) this.setData({ themes });
+  },
+
+  // 把最新拉到的动态封面 URL 写入本地缓存（与已有条目合并，避免丢失本次未覆盖的主题）
+  _writeDynCoverCache(covers) {
+    try {
+      const prev = wx.getStorageSync(DYN_COVER_STORAGE_KEY);
+      const next = (prev && typeof prev === 'object') ? { ...prev } : {};
+      Object.keys(covers).forEach(id => { if (covers[id] && covers[id].cover) next[id] = covers[id].cover; });
+      wx.setStorageSync(DYN_COVER_STORAGE_KEY, next);
+    } catch (e) { /* 缓存失败不影响功能 */ }
+  },
+
+  // 封面加载失败（缓存 URL 过期/失效等）→ 退回占位符，并清掉该条缓存，避免持续裂图
+  onCoverError(e) {
+    const id = e.currentTarget.dataset.id;
+    if (!id) return;
+    const themes = (this.data.themes || []).map(t => t.id === id ? { ...t, dynamicCover: null } : t);
+    this.setData({ themes });
+    this.filterThemes(this.data.activeTab);
+    try {
+      const cache = wx.getStorageSync(DYN_COVER_STORAGE_KEY);
+      if (cache && typeof cache === 'object' && cache[id]) { delete cache[id]; wx.setStorageSync(DYN_COVER_STORAGE_KEY, cache); }
+    } catch (err) { /* ignore */ }
+  },
+
   // 没有静态设计封面的主题：拉一次各自榜单 rank=1 的封面，拼成卡片图
   async loadDynamicCovers() {
     const db = wx.cloud.database();
@@ -558,6 +599,9 @@ Page({
       covers[cfg.id] = { cover: doc.cover };
     });
     if (Object.keys(covers).length === 0) return;
+
+    // 回写本地缓存，供下次进页面首屏秒显
+    this._writeDynCoverCache(covers);
 
     // 现读 this.data.themes 再合并，而不是用调用开始时的旧快照 —— 避免跟 loadUserCounts()
     // 并发写入时互相用过时快照覆盖对方刚写的字段（比如把这里刚写的 dynamicCover 冲掉）
@@ -707,7 +751,14 @@ Page({
     });
     const restItems = nonPinned.filter(t => !frontSet.has(t.id));
     filtered = pinnedItems.concat(frontItems, restItems);
-    this.setData({ filteredThemes: filtered });
+
+    // 「旅行打卡」专属推荐卡：仅 5A 景区（不随分类 tab 变化，始终展示）
+    const scenic = (this.data.themes || []).find(t => t.id === 'scenic_5a');
+    const scenicFeature = scenic
+      ? { ...scenic, userCountText: scenic.userCountText || this.formatUserCount(scenic.userCount) }
+      : null;
+
+    this.setData({ filteredThemes: filtered, scenicFeature });
   },
 
   // ── 展示模式切换（封面 / 列表）——本地保留 ──

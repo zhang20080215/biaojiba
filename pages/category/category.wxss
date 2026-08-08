@@ -663,6 +663,76 @@
   z-index: 2;
 }
 
+/* 旅行打卡专属推荐卡（每日标记下方，仅 5A 景区）——横排卡：左封面 + 右信息 */
+.feature-section {
+  padding: var(--space-2) var(--space-3) 0;   /* 与 section-head 左右对齐 + 与标题留间距 */
+  margin-bottom: var(--space-2);
+}
+.feature-card {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  height: 120rpx;                              /* 与主题标记「列表」行高一致 */
+  background: #FFFFFF;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 6rpx 20rpx rgba(46, 139, 114, 0.14);
+  border: 1rpx solid rgba(46, 139, 114, 0.12);
+}
+.feature-card-hover { opacity: 0.94; }
+.feature-cover {
+  position: relative;
+  width: 120rpx;                               /* 1:1 方形小封面 */
+  height: 100%;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #5FB89C 0%, #2E8B72 100%);
+}
+.feature-cover-img { width: 100%; height: 100%; display: block; }
+.feature-cover-ph {
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.feature-cover-emoji { font-size: 48rpx; line-height: 1; }
+.feature-body {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.feature-title {
+  font-size: var(--font-title);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8rpx;
+}
+.feature-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.feature-count {
+  font-size: var(--font-mini);
+  color: #2E8B72;
+  background: rgba(46, 139, 114, 0.10);
+  padding: 4rpx 12rpx;
+  border-radius: var(--radius-pill);
+}
+.feature-wish {
+  font-size: var(--font-mini);
+  color: var(--text-muted);
+}
+/* 浅色卡右上角 NEW：需深色底才清晰（覆盖默认 new-badge 的半透明白底） */
+.feature-new {
+  background: rgba(46, 139, 114, 0.92);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
 /* 奥斯卡 badge */
 .oscar-icon {
   position: absolute;

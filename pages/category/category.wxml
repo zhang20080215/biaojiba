@@ -62,6 +62,25 @@
     </view>
   </view>
 
+  <!-- 旅行打卡（专属推荐：仅全国5A景区） -->
+  <view wx:if="{{scenicFeature}}" class="section-head">旅行打卡</view>
+  <view wx:if="{{scenicFeature}}" class="feature-section">
+    <navigator class="feature-card" url="{{scenicFeature.url}}" hover-class="feature-card-hover">
+      <view class="feature-cover">
+        <image wx:if="{{scenicFeature.dynamicCover}}" class="feature-cover-img" src="{{scenicFeature.dynamicCover.cover}}" mode="aspectFill" binderror="onCoverError" data-id="scenic_5a"></image>
+        <view wx:else class="feature-cover-ph"><text class="feature-cover-emoji">🏞️</text></view>
+      </view>
+      <view class="feature-body">
+        <text class="feature-title">全国5A景区旅游打卡</text>
+        <view class="feature-meta">
+          <text wx:if="{{scenicFeature.userCountText}}" class="feature-count">{{scenicFeature.userCountText}}</text>
+          <text wx:if="{{scenicFeature.wishFrom}}" class="feature-wish">来自用户{{scenicFeature.wishFrom}}的许愿</text>
+        </view>
+      </view>
+      <view class="new-badge feature-new"><text>NEW</text></view>
+    </navigator>
+  </view>
+
   <!-- 主题标记 -->
   <view class="section-head section-head-row">
     <text class="section-head-title">主题标记</text>
@@ -151,7 +170,7 @@
           <view class="cover-tint {{item.tintClass}}" style="{{item.tintStyle}}"></view>
         </block>
         <block wx:elif="{{item.dynamicCover}}">
-          <image class="cover-img" src="{{item.dynamicCover.cover}}" mode="aspectFill"></image>
+          <image class="cover-img" src="{{item.dynamicCover.cover}}" mode="aspectFill" binderror="onCoverError" data-id="{{item.id}}"></image>
           <view class="cover-tint {{item.tintClass}}" style="{{item.tintStyle}}"></view>
         </block>
         <view wx:elif="{{item.id === 'child_growth'}}" class="cover-placeholder growth">
@@ -289,7 +308,7 @@
           <view class="cover-tint {{item.tintClass}}" style="{{item.tintStyle}}"></view>
         </block>
         <block wx:elif="{{item.dynamicCover}}">
-          <image class="cover-img" src="{{item.dynamicCover.cover}}" mode="aspectFill"></image>
+          <image class="cover-img" src="{{item.dynamicCover.cover}}" mode="aspectFill" binderror="onCoverError" data-id="{{item.id}}"></image>
           <view class="cover-tint {{item.tintClass}}" style="{{item.tintStyle}}"></view>
         </block>
         <view wx:elif="{{item.id === 'child_growth'}}" class="cover-placeholder growth">
