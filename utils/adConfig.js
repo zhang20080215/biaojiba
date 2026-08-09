@@ -30,7 +30,7 @@ const adConfig = {
   },
 
   grayRollout: {
-    save_image_rewarded: 20,
+    save_image_rewarded: 100,
   },
 
   grayForceIn: {
