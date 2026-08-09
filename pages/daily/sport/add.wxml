@@ -25,39 +25,43 @@
       </picker>
     </view>
 
-    <!-- 类型选择 -->
+    <!-- 类型选择：左「运动类型」竖排大类 + 右「运动明细」具体动作 -->
     <view class="card">
-      <view class="card-title">运动类型</view>
+      <view class="type-layout">
+        <!-- 左：大类竖排 -->
+        <view class="cat-rail">
+          <view class="rail-title">运动类型</view>
+          <view wx:for="{{categories}}" wx:key="id"
+                class="cat-tab {{activeCategory === item.id ? 'active' : ''}}"
+                data-category="{{item.id}}"
+                bindtap="onCategoryTap">
+            <view class="cat-tab-icon" style="background-image: url('{{item.iconUri}}');"></view>
+            <text class="cat-tab-name">{{item.name}}</text>
+          </view>
+        </view>
 
-      <!-- 大类 -->
-      <view class="category-group">
-        <view wx:for="{{categories}}" wx:key="id"
-              class="category-btn {{activeCategory === item.id ? 'active' : ''}}"
-              data-category="{{item.id}}"
-              bindtap="onCategoryTap">
-          <view class="category-icon" style="background-image: url('{{item.iconUri}}');"></view>
-          <text class="category-name">{{item.name}}</text>
+        <!-- 右：具体动作(按分组，力量按身体部位) -->
+        <view class="type-panel">
+          <view class="rail-title">运动明细</view>
+          <block wx:for="{{categories}}" wx:key="id">
+            <block wx:if="{{item.id === activeCategory}}">
+              <block wx:for="{{item.groups}}" wx:for-item="grp" wx:key="part">
+                <view wx:if="{{grp.part}}" class="part-label">{{grp.part}}</view>
+                <view class="type-grid">
+                  <view wx:for="{{grp.types}}" wx:for-item="type" wx:key="name"
+                        class="type-item {{selectedType === type.name ? 'active' : ''}}"
+                        data-type="{{type.name}}"
+                        data-icon="{{type.icon}}"
+                        bindtap="onTypeTap">
+                    <view class="type-icon" style="background-image: url('{{type.iconUri}}');"></view>
+                    <text class="type-name">{{type.name}}</text>
+                  </view>
+                </view>
+              </block>
+            </block>
+          </block>
         </view>
       </view>
-
-      <!-- 子类型：按分组(力量按身体部位)渲染 -->
-      <block wx:for="{{categories}}" wx:key="id">
-        <block wx:if="{{item.id === activeCategory}}">
-          <block wx:for="{{item.groups}}" wx:for-item="grp" wx:key="part">
-            <view wx:if="{{grp.part}}" class="part-label">{{grp.part}}</view>
-            <view class="type-grid">
-              <view wx:for="{{grp.types}}" wx:for-item="type" wx:key="name"
-                    class="type-item {{selectedType === type.name ? 'active' : ''}}"
-                    data-type="{{type.name}}"
-                    data-icon="{{type.icon}}"
-                    bindtap="onTypeTap">
-                <view class="type-icon" style="background-image: url('{{type.iconUri}}');"></view>
-                <text class="type-name">{{type.name}}</text>
-              </view>
-            </view>
-          </block>
-        </block>
-      </block>
     </view>
 
     <!-- 已加入清单的动作 -->

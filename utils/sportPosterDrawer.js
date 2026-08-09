@@ -360,7 +360,7 @@ class SportPosterDrawer {
     if (cat === 'cardio') {
       if (Number(e.duration) > 0) items.push({ icon: 'clock', color: this.C.primary, text: `${tidyNum(e.duration)}分钟` });
       if (Number(e.distance) > 0) items.push({ icon: 'pin', color: this.C.primary, text: `${tidyNum(e.distance)}${(e.distanceUnit || 'km').toUpperCase()}` });
-    } else if (cat === 'flexibility') {
+    } else if (cat === 'flexibility' || cat === 'ball') {
       if (Number(e.duration) > 0) items.push({ icon: 'clock', color: this.C.primary, text: `${tidyNum(e.duration)}分钟` });
     } else {
       if (Number(e.sets) > 0 && Number(e.reps) > 0) {

@@ -126,46 +126,77 @@ page {
   margin-bottom: 22rpx;
 }
 
-/* 大类 */
-.category-group {
+/* 左右布局：左「运动类型」竖排 + 右「运动明细」 */
+.type-layout {
   display: flex;
-  gap: 14rpx;
-  margin-bottom: 24rpx;
+  align-items: flex-start;
+  gap: 0;
 }
-.category-btn {
-  flex: 1;
-  height: 84rpx;
-  border-radius: 22rpx;
-  background: #F3F5FC;
-  border: 2rpx solid transparent;
+
+/* 小列头 */
+.rail-title {
+  font-size: 24rpx;
+  font-weight: 800;
+  color: #838BA0;
+  margin-bottom: 16rpx;
+  padding-left: 2rpx;
+}
+
+/* 左：大类竖排（实心主色选中，作为主导航） */
+.cat-rail {
+  width: 168rpx;
+  flex-shrink: 0;
+  padding-right: 20rpx;
+  border-right: 2rpx solid #EAEEF7;
+  box-sizing: border-box;
+}
+.cat-tab {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10rpx;
+  gap: 8rpx;
+  height: 108rpx;
+  border-radius: 20rpx;
+  background: #F3F5FC;
+  border: 2rpx solid transparent;
+  margin-bottom: 14rpx;
 }
-.category-btn.active {
-  background: #ECF1FF;
+.cat-tab.active {
+  background: #3D6BFF;
   border-color: #3D6BFF;
+  box-shadow: 0 8rpx 18rpx rgba(61, 107, 255, 0.28);
 }
-.category-icon {
-  width: 40rpx;
-  height: 40rpx;
+.cat-tab-icon {
+  width: 44rpx;
+  height: 44rpx;
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
 }
-.category-name {
-  font-size: 28rpx;
+/* 选中态实心蓝底：把深色线性图标反白 */
+.cat-tab.active .cat-tab-icon {
+  filter: brightness(0) invert(1);
+}
+.cat-tab-name {
+  font-size: 26rpx;
   font-weight: 700;
   color: #838BA0;
 }
-.category-btn.active .category-name {
-  color: #3D6BFF;
+.cat-tab.active .cat-tab-name {
+  color: #FFFFFF;
+}
+
+/* 右：运动明细（淡蓝描边选中，作为次级选择） */
+.type-panel {
+  flex: 1;
+  min-width: 0;
+  padding-left: 20rpx;
 }
 
 /* 身体部位分组标签 */
 .part-label {
-  margin: 22rpx 2rpx 12rpx;
+  margin: 20rpx 2rpx 12rpx;
   padding-left: 16rpx;
   border-left: 6rpx solid #3D6BFF;
   font-size: 24rpx;
@@ -173,11 +204,14 @@ page {
   color: #454E66;
   line-height: 1.1;
 }
+.part-label:first-of-type {
+  margin-top: 0;
+}
 
 /* 子类型网格 */
 .type-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 12rpx;
 }
 .type-item {
