@@ -129,6 +129,32 @@ const categories = [
     ]
   },
   {
+    id: 'ball',
+    name: '球类',
+    icon: '🏀',
+    groups: [
+      {
+        part: '',
+        types: [
+          { name: '篮球', icon: '🏀' },
+          { name: '足球', icon: '⚽' },
+          { name: '羽毛球', icon: '🏸' },
+          { name: '乒乓球', icon: '🏓' },
+          { name: '网球', icon: '🎾' },
+          { name: '排球', icon: '🏐' },
+          { name: '台球', icon: '🎱' },
+          { name: '保龄球', icon: '🎳' },
+          { name: '高尔夫', icon: '⛳' },
+          { name: '棒球', icon: '⚾' },
+          { name: '橄榄球', icon: '🏉' },
+          { name: '壁球', icon: '🎾' },
+          { name: '手球', icon: '🤾' },
+          { name: '飞盘', icon: '🥏' }
+        ]
+      }
+    ]
+  },
+  {
     id: 'flexibility',
     name: '拉伸·柔韧',
     icon: '🧘',
@@ -172,8 +198,8 @@ function findCategoryId(typeName) {
 function getFieldConfig(typeName) {
   const categoryId = findCategoryId(typeName);
 
-  // 拉伸·柔韧：只记时长
-  if (categoryId === 'flexibility') {
+  // 拉伸·柔韧 / 球类：只记时长
+  if (categoryId === 'flexibility' || categoryId === 'ball') {
     return {
       showDuration: true,
       showDistance: false,

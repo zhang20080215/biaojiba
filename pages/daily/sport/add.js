@@ -134,7 +134,7 @@ Page({
       activeCategory: cat,
       selectedType: '',
       selectedIcon: '',
-      showDuration: cat === 'cardio',
+      showDuration: cat === 'cardio' || cat === 'ball',
       showDistance: false,
       distanceUnit: 'km',
       showStrength: false,
@@ -229,7 +229,7 @@ Page({
     this.setData({
       selectedType: '',
       selectedIcon: '',
-      showDuration: this.data.activeCategory === 'cardio',
+      showDuration: this.data.activeCategory === 'cardio' || this.data.activeCategory === 'ball',
       showDistance: false,
       distanceUnit: 'km',
       showStrength: false,
