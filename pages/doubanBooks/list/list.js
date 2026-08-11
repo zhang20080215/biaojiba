@@ -684,6 +684,10 @@ Page({
         };
     },
 
+    onShareTimeline() {
+        return { title: '豆瓣读书TOP250 - 记录你的阅读旅程', query: '' };
+    },
+
     // ========== 广告 ==========
     initAds() {
         if (!this.data.adUnitIds.movielist_infeed) return;

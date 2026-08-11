@@ -709,6 +709,10 @@ Page({
         };
     },
 
+    onShareTimeline() {
+        return { title: '全球电影票房榜 - 见证影史商业传奇', query: '' };
+    },
+
     initAds() {
         if (!this.data.adUnitIds.movielist_infeed) return;
         var slots = {};

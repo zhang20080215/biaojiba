@@ -679,6 +679,10 @@ Page({
         };
     },
 
+    onShareTimeline() {
+        return { title: '微信读书TOP200总榜 - 记录你的阅读旅程', query: '' };
+    },
+
     // ========== 广告 ==========
     initAds() {
         if (!this.data.adUnitIds.movielist_infeed) return;

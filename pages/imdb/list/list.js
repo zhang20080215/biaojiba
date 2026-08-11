@@ -684,6 +684,10 @@ Page({
         };
     },
 
+    onShareTimeline() {
+        return { title: 'IMDB电影TOP250 - 标记你的全球佳片', query: '' };
+    },
+
     initAds() {
         if (!this.data.adUnitIds.movielist_infeed) return;
         var slots = {};

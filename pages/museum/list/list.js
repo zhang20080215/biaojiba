@@ -1,16 +1,15 @@
-// pages/scenic/list/list.js —— 全国5A旅游景区列表页
-// 数据走 getScenicSpots（专属集合 scenic_5a），标记复用 Marks（去过=watched、想去=wish）+ batchUpdateMarks，
-// 交互骨架借鉴 pages/genericList/list，去掉电影专属（评分/届数/导演），新增省份筛选 + 旅游化文案。
+// pages/museum/list/list.js —— 中国国家一级博物馆列表页
+// 数据走 getMuseums（专属集合 museum_grade1），标记复用 Marks（参观过=watched、想去=wish）+ batchUpdateMarks，
+// 交互骨架借鉴 pages/scenic/list，新增批次徽标 + 省份筛选 + 文博化文案。
 import DataLoader from '../../../utils/dataLoader';
 import imageCacheManager from '../../../utils/imageCacheManager';
 var adConfig = require('../../../utils/adConfig');
 var userStore = require('../../../utils/userStore.js');
-var scenicShortName = require('../../../utils/scenicShortName.js').scenicShortName;
+var museumShortName = require('../../../utils/museumShortName.js').museumShortName;
 
-const THEME = 'scenic5a';
-const TOTAL = 359;
+const THEME = 'museum';
 const PAGE_SIZE = 24;   // 分批渲染每页条数（首屏只渲染一页，上拉自动追加）
-// 省份筛选固定顺序（与数据源 desc 省份短名一致）
+// 省份筛选固定顺序（与数据源省份短名一致）
 const PROVINCE_ORDER = ['北京', '天津', '河北', '山西', '内蒙古', '辽宁', '吉林', '黑龙江', '上海', '江苏', '浙江', '安徽', '福建', '江西', '山东', '河南', '湖北', '湖南', '广东', '广西', '海南', '重庆', '四川', '贵州', '云南', '西藏', '陕西', '甘肃', '青海', '宁夏', '新疆'];
 
 Page({
@@ -46,13 +45,13 @@ Page({
         customToastVisible: false,
         tempAvatar: '',
         tempNickname: '',
-        // 旅游主题配色（山水青绿）
+        // 文博主题配色（青铜金褐）
         cfg: {
-            title: '全国5A旅游景区',
-            slogan: '打卡你走过的山河，攒成专属旅行足迹',
-            brandPrimary: '#2E8B72',
-            brandSoft: '#5FB89C',
-            shadowRgb: '46, 139, 114'
+            title: '中国国家一级博物馆',
+            slogan: '打卡你走过的博物馆，收藏一整部文明史',
+            brandPrimary: '#8C6239',
+            brandSoft: '#B98E56',
+            shadowRgb: '140, 98, 57'
         },
         infeedSlots: {},
         adUnitIds: {
@@ -131,7 +130,7 @@ Page({
                 ...m,
                 _id: String(m._id),
                 // 简称：优先用库里的 shortName 字段（灌库已写入时），否则前端即时提取
-                shortName: m.shortName || scenicShortName(m.name),
+                shortName: m.shortName || museumShortName(m.name),
                 thumbCover: imageCacheManager.getThumbnailUrl(m.cover || m.originalCover, 'list')
             }));
 
@@ -140,7 +139,7 @@ Page({
             const provinces = PROVINCE_ORDER.filter(p => present.has(p));
 
             // allSpots 只用于本地筛选/统计，WXML 从不渲染它 —— 直接挂到 data 上，
-            // 不走 setData，省掉一次 359 条的跨线程传输（真正渲染的是分页后的 spots）。
+            // 不走 setData，省掉一次全量的跨线程传输（真正渲染的是分页后的 spots）。
             this.data.allSpots = allSpots;
 
             const { markStatusMap, markDateMap, markRecordIdMap, stats } = DataLoader.processMarks(marks, allSpots);
@@ -155,7 +154,7 @@ Page({
                 wx.hideNavigationBarLoading();
             });
         } catch (err) {
-            console.error('加载景区数据失败:', err);
+            console.error('加载博物馆数据失败:', err);
             this.data.allSpots = [];
             this._filtered = [];
             this._renderedCount = 0;
@@ -327,7 +326,7 @@ Page({
         } catch (e) { return ''; }
     },
 
-    // 快捷按钮（未标记时的 想去/去过）→ 直接标记
+    // 快捷按钮（未标记时的 想去/参观过）→ 直接标记
     onMarkTap(e) {
         const id = String(e.currentTarget.dataset.id);
         const type = e.currentTarget.dataset.type;
@@ -335,7 +334,7 @@ Page({
         this.setMark(id, type);
     },
 
-    // 点击已标记的标签 → 打开纠正弹窗（去过/想去/没去过）
+    // 点击已标记的标签 → 打开纠正弹窗（参观过/想去/没去过）
     onOpenMarkSheet(e) {
         if (!this.getActiveOpenid()) {
             wx.showModal({
@@ -405,7 +404,7 @@ Page({
         // 设为 / 切换到 targetStatus
         const now = new Date().toISOString();
         this.applySingleMarkLocally(id, targetStatus, now, existingRecordId);
-        this.showCustomToast(targetStatus === 'watched' ? '✓ 已标记为去过' : '✓ 已标记为想去');
+        this.showCustomToast(targetStatus === 'watched' ? '✓ 已标记为参观过' : '✓ 已标记为想去');
 
         const persist = existingRecordId
             ? db.collection('Marks').doc(existingRecordId).update({ data: { status: targetStatus, marked_at: now } })
@@ -478,7 +477,7 @@ Page({
     onBatchUnvisited() { this._batch('unwatched'); },
 
     _batch(status) {
-        if (this.data.selectedIds.length === 0) { wx.showToast({ title: '请选择景区', icon: 'none' }); return; }
+        if (this.data.selectedIds.length === 0) { wx.showToast({ title: '请选择博物馆', icon: 'none' }); return; }
         const ids = this.data.selectedIds;
         const openid = this.getActiveOpenid();
         if (!openid) { wx.showToast({ title: '请先登录', icon: 'none' }); return; }
@@ -531,10 +530,10 @@ Page({
             return;
         }
         if (this.data.visitedCount === 0) {
-            wx.showToast({ title: '先打卡去过的景区吧', icon: 'none' });
+            wx.showToast({ title: '先打卡参观过的博物馆吧', icon: 'none' });
             return;
         }
-        wx.navigateTo({ url: '/pages/scenic/share/share' });
+        wx.navigateTo({ url: '/pages/museum/share/share' });
     },
 
     // ─── 登录 ───
@@ -624,11 +623,11 @@ Page({
     },
 
     onShareAppMessage() {
-        return { title: '全国5A旅游景区 - 打卡你走过的山河', path: '/pages/scenic/list/list' };
+        return { title: '中国国家一级博物馆 - 打卡你走过的博物馆', path: '/pages/museum/list/list' };
     },
 
     onShareTimeline() {
-        return { title: '全国5A旅游景区 - 打卡你走过的山河', query: '' };
+        return { title: '中国国家一级博物馆 - 打卡你走过的博物馆', query: '' };
     },
 
     // ========== 广告 ==========

@@ -56,7 +56,11 @@ const GENERIC_BOOK_THEMES = new Set(['maodun', 'newbery']);
 // 旅游主题（专属集合 scenic_5a），读取走 getScenicSpots；标记复用 Marks（去过=watched、想去=wish）。
 const GENERIC_SCENIC_THEMES = new Set(['scenic5a']);
 
+// 博物馆主题（专属集合 museum_grade1），读取走 getMuseums；标记复用 Marks（参观过=watched、想去=wish）。
+const GENERIC_MUSEUM_THEMES = new Set(['museum']);
+
 function cloudFnForTheme(theme) {
+  if (GENERIC_MUSEUM_THEMES.has(theme)) return 'getMuseums';
   if (GENERIC_SCENIC_THEMES.has(theme)) return 'getScenicSpots';
   if (GENERIC_BOOK_THEMES.has(theme)) return 'getThemeBooks';
   if (GENERIC_THEMES.has(theme)) return 'getThemeMovies';

@@ -1,0 +1,9 @@
+{
+  "backgroundColor": "#FFFFFF",
+  "backgroundTextStyle": "light",
+  "enablePullDownRefresh": true,
+  "onReachBottomDistance": 200,
+  "navigationBarTitleText": "中国国家一级博物馆",
+  "navigationBarBackgroundColor": "#8C6239",
+  "navigationBarTextStyle": "white"
+}

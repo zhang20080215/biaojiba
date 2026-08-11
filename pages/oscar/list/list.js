@@ -461,6 +461,10 @@ Page({
         };
     },
 
+    onShareTimeline() {
+        return { title: '历届奥斯卡最佳影片 - 每年一部经典', query: '' };
+    },
+
     // ========== 广告 ==========
     initAds() {
         if (!this.data.adUnitIds.movielist_infeed) return;

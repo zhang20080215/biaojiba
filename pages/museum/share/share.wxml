@@ -1,0 +1,61 @@
+<!-- 中国国家一级博物馆「参观足迹」海报预览页（框架/配色对齐豆瓣电影海报页） -->
+<view class="share-page">
+
+  <!-- 顶部：返回 + 标题 + 版式/配色面板 -->
+  <view class="immersive-top" style="padding-top: {{statusBarHeight}}px;">
+    <view class="top-bar" style="height: {{navBarHeight}}px;">
+      <view class="back-btn" bindtap="onBack">‹</view>
+      <text class="top-title">海报预览</text>
+      <view class="top-right"></view>
+    </view>
+
+    <!-- 版式切换 -->
+    <view class="bg-panel">
+      <text class="bg-panel-label">版式</text>
+      <view class="style-toggle">
+        <view class="style-chip {{shareType === 'map' ? 'active' : ''}}" data-type="map" bindtap="onTypeTap">
+          <text class="style-chip-label">足迹地图</text>
+        </view>
+        <view class="style-chip {{shareType === 'list' ? 'active' : ''}}" data-type="list" bindtap="onTypeTap">
+          <text class="style-chip-label">博物馆清单</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 配色选择 -->
+    <view class="bg-panel">
+      <text class="bg-panel-label">配色</text>
+      <scroll-view class="theme-scroll" scroll-x enable-flex>
+        <view
+          wx:for="{{themeChips}}"
+          wx:key="key"
+          class="theme-chip {{activeThemeKey === item.key ? 'active' : ''}}"
+          data-key="{{item.key}}"
+          bindtap="onThemeTap"
+        >
+          <view class="theme-dot" style="background: linear-gradient(135deg, {{item.start}}, {{item.end}});"></view>
+          <text class="theme-label">{{item.name}}</text>
+          <text wx:if="{{activeThemeKey === item.key}}" class="theme-check">✓</text>
+        </view>
+      </scroll-view>
+    </view>
+  </view>
+
+  <!-- 预览区（近满宽） -->
+  <view class="content-wrap">
+    <view wx:if="{{loading}}" class="loading-tip">正在生成海报…</view>
+    <view class="poster-wrap {{ready ? 'shown' : ''}}" style="width: {{previewW}}px; height: {{previewH}}px;">
+      <canvas type="2d" id="museumCard" class="poster-canvas" style="width: {{previewW}}px; height: {{previewH}}px;"></canvas>
+      <view wx:if="{{!ready && !loading}}" class="poster-mask">生成中…</view>
+    </view>
+  </view>
+
+  <!-- 底部保存栏 -->
+  <view class="save-btn-container">
+    <button class="save-btn" bindtap="saveImage" disabled="{{!ready || isGenerating}}">
+      <text class="save-btn-main">{{isGenerating ? '保存中...' : '保存到相册'}}</text>
+      <text class="save-btn-sub" wx:if="{{needRewardedAd && !isGenerating}}">需观看广告后保存</text>
+    </button>
+  </view>
+
+</view>

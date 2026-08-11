@@ -36,7 +36,9 @@ var DYNAMIC_COVER_THEMES = [
   { id: 'maodun_books', theme: 'maodun', collection: 'generic_theme_books' },
   { id: 'newbery_books', theme: 'newbery', collection: 'generic_theme_books' },
   // 旅游主题（专属集合 scenic_5a），卡片图用 rank=1 景区封面
-  { id: 'scenic_5a', theme: 'scenic5a', collection: 'scenic_5a' }
+  { id: 'scenic_5a', theme: 'scenic5a', collection: 'scenic_5a' },
+  // 博物馆主题（专属集合 museum_grade1），卡片图用 rank=1 博物馆封面
+  { id: 'museum_grade1', theme: 'museum', collection: 'museum_grade1' }
 ];
 
 Page({
@@ -79,6 +81,18 @@ Page({
         isNew: true,
         wishFrom: '卡**琳',
         url: '/pages/scenic/list/list'
+      },
+      {
+        id: 'museum_grade1',
+        title: '中国国家一级博物馆',
+        description: '打卡你走过的博物馆，收藏一整部文明史',
+        image: '',
+        tintClass: 'museum',
+        userCount: 0,
+        tag: '旅行',
+        category: 'travel',
+        isNew: true,
+        url: '/pages/museum/list/list'
       },
       {
         id: 'oscar_foreign_movies',
@@ -425,7 +439,7 @@ Page({
       }
     ],
     filteredThemes: [],
-    scenicFeature: null,        // 每日标记下方「旅行打卡」专属推荐卡（仅 5A 景区）
+    travelFeatures: [],         // 「旅行打卡」专属推荐区（5A 景区 + 国家一级博物馆并排）
     // 片单/书单需求收集弹窗
     showRequestModal: false,
     requestType: 'movie',
@@ -752,13 +766,18 @@ Page({
     const restItems = nonPinned.filter(t => !frontSet.has(t.id));
     filtered = pinnedItems.concat(frontItems, restItems);
 
-    // 「旅行打卡」专属推荐卡：仅 5A 景区（不随分类 tab 变化，始终展示）
-    const scenic = (this.data.themes || []).find(t => t.id === 'scenic_5a');
-    const scenicFeature = scenic
-      ? { ...scenic, userCountText: scenic.userCountText || this.formatUserCount(scenic.userCount) }
-      : null;
+    // 「旅行打卡」专属推荐区：5A 景区 + 国家一级博物馆并排（不随分类 tab 变化，始终展示）
+    const TRAVEL_FEATURE_DEFS = [
+      { id: 'scenic_5a', emoji: '🏞️', featureTitle: '全国5A景区' },
+      { id: 'museum_grade1', emoji: '🏛️', featureTitle: '全国博物馆' }
+    ];
+    const travelFeatures = TRAVEL_FEATURE_DEFS.map(def => {
+      const t = (this.data.themes || []).find(x => x.id === def.id);
+      if (!t) return null;
+      return { ...t, emoji: def.emoji, featureTitle: def.featureTitle, userCountText: t.userCountText || this.formatUserCount(t.userCount) };
+    }).filter(Boolean);
 
-    this.setData({ filteredThemes: filtered, scenicFeature });
+    this.setData({ filteredThemes: filtered, travelFeatures });
   },
 
   // ── 展示模式切换（封面 / 列表）——本地保留 ──
@@ -991,7 +1010,9 @@ Page({
         { id: 'maodun_books', collection: 'generic_theme_books', theme: 'maodun', topFiltered: false, marksCollection: 'BookMarks', idField: 'bookId', source: 'maodun' },
         { id: 'newbery_books', collection: 'generic_theme_books', theme: 'newbery', topFiltered: false, marksCollection: 'BookMarks', idField: 'bookId', source: 'newbery' },
         // 旅游：专属集合 scenic_5a，标记复用 Marks（movieId=景区_id）
-        { id: 'scenic_5a', collection: 'scenic_5a', topFiltered: false }
+        { id: 'scenic_5a', collection: 'scenic_5a', topFiltered: false },
+        // 博物馆：专属集合 museum_grade1，标记复用 Marks（movieId=博物馆_id）
+        { id: 'museum_grade1', collection: 'museum_grade1', theme: 'museum', topFiltered: false }
       ];
 
     // 云端注册表新主题：按 type 拼参与人数统计配置（电影走 Marks，书走 BookMarks）

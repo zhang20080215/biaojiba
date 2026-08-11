@@ -1,7 +1,6 @@
 const { evaluate, formatAge } = require('../../../utils/growthCalculator.js');
 const GrowthPosterDrawer = require('../../../utils/growthPosterDrawer.js');
 var adConfig = require('../../../utils/adConfig');
-var adManager = require('../../../utils/adManager');
 const rewardedSaveGate = require('../../../utils/rewardedSaveGate.js');
 
 Page({
@@ -86,14 +85,12 @@ Page({
       return;
     }
 
-    // 灰度命中：必须看完激励广告才能保存；否则走原有插屏广告
+    // 命中激励门（现 100% 灰度）：必须看完激励视频才能保存；无 openid 的少数用户直接放行
     const app = getApp();
     const openid = (app && app.globalData && app.globalData.openid) || '';
     if (rewardedSaveGate.isGated(openid)) {
       const hasGrant = await rewardedSaveGate.ensureGrant(this);
       if (!hasGrant) return;
-    } else {
-      await adManager.showInterstitial('growth_result_interstitial');
     }
 
     try {

@@ -701,6 +701,10 @@ Page({
         };
     },
 
+    onShareTimeline() {
+        return { title: `${this.data.cfg.title} - 记录你的阅读旅程`, query: `theme=${this.data.theme}` };
+    },
+
     // ========== 广告 ==========
     initAds() {
         if (!this.data.adUnitIds.movielist_infeed) return;
