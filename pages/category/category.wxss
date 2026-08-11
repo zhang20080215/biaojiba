@@ -610,6 +610,7 @@
 .cover-tint.maodun { background: linear-gradient(135deg, rgba(181, 96, 92, 0.5) 0%, rgba(139, 46, 46, 0.5) 100%); }
 .cover-tint.newbery { background: linear-gradient(135deg, rgba(212, 169, 74, 0.5) 0%, rgba(184, 134, 11, 0.5) 100%); }
 .cover-tint.scenic { background: linear-gradient(135deg, rgba(95, 184, 156, 0.5) 0%, rgba(46, 139, 114, 0.5) 100%); }
+.cover-tint.museum { background: linear-gradient(135deg, rgba(185, 142, 86, 0.5) 0%, rgba(140, 98, 57, 0.5) 100%); }
 
 /* 分类标签 — 封面左上角纯文字，不用胶囊底，靠文字阴影保证对比度 */
 .cover-tag-label {
@@ -667,9 +668,13 @@
 .feature-section {
   padding: var(--space-2) var(--space-3) 0;   /* 与 section-head 左右对齐 + 与标题留间距 */
   margin-bottom: var(--space-2);
+  display: flex;                              /* 两张卡并排：5A 景区 + 国家一级博物馆 */
+  gap: var(--space-2);
 }
 .feature-card {
   position: relative;
+  flex: 1;                                    /* 两卡等分 */
+  min-width: 0;
   display: flex;
   align-items: stretch;
   height: 120rpx;                              /* 与主题标记「列表」行高一致 */
@@ -709,6 +714,12 @@
   font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 8rpx;
+  /* 半宽卡：标题最多两行，超出省略（"国家一级博物馆"不被截断） */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  line-height: 1.25;
 }
 .feature-meta {
   display: flex;
@@ -732,6 +743,12 @@
   background: rgba(46, 139, 114, 0.92);
   border-color: rgba(255, 255, 255, 0.5);
 }
+
+/* 博物馆卡青铜金褐变体（景区卡沿用上面的青绿基色） */
+.feature-card.museum { box-shadow: 0 6rpx 20rpx rgba(140, 98, 57, 0.14); }
+.feature-cover.museum { background: linear-gradient(135deg, #B98E56 0%, #8C6239 100%); }
+.feature-count.museum { color: #8C6239; background: rgba(140, 98, 57, 0.10); }
+.feature-new.museum { background: rgba(140, 98, 57, 0.92); }
 
 /* 奥斯卡 badge */
 .oscar-icon {
@@ -813,6 +830,9 @@
 }
 .cover-placeholder.scenic {
   background: linear-gradient(135deg, #5FB89C 0%, #2E8B72 100%);
+}
+.cover-placeholder.museum {
+  background: linear-gradient(135deg, #B98E56 0%, #8C6239 100%);
 }
 .cover-placeholder .placeholder-emoji {
   font-size: 56rpx;

@@ -1,0 +1,15 @@
+{
+  "name": "getmuseums",
+  "version": "1.0.0",
+  "description": "Read-side aggregator for museum_grade1 (China National First-Grade Museums) list + user Marks, response shape aligned with getScenicSpots",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "wx-server-sdk": "^3.0.1"
+  }
+}

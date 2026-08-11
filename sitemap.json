@@ -31,6 +31,32 @@
       "params": ["gender", "ageMonths", "weight", "height"]
     },
     {
+      "action": "allow",
+      "page": "pages/doubanBooks/list/list"
+    },
+    {
+      "action": "allow",
+      "page": "pages/weread/list/list"
+    },
+    {
+      "action": "allow",
+      "page": "pages/scenic/list/list"
+    },
+    {
+      "action": "allow",
+      "page": "pages/museum/list/list"
+    },
+    {
+      "action": "allow",
+      "page": "pages/genericList/list/list",
+      "params": ["theme"]
+    },
+    {
+      "action": "allow",
+      "page": "pages/genericBookList/list/list",
+      "params": ["theme"]
+    },
+    {
       "action": "disallow",
       "page": "*"
     }

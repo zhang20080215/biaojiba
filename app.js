@@ -1,7 +1,13 @@
 // app.js
 var adConfig = require('./utils/adConfig')
+var { track } = require('./utils/track')
 
 App({
+  onShow(options) {
+    // 每次启动/回到前台埋点场景值（1007/1008 会话、1044 朋友圈、1047 扫码等），用于分享/回流来源分析
+    track('app_open', { scene: (options && options.scene) || 0 })
+  },
+
   onLaunch() {
     if (!wx.cloud) {
       console.error('请使用 2.2.3 或以上的基础库以使用云能力')

@@ -1,4 +1,9 @@
 const { getPlacement } = require('./adConfig')
+const { track } = require('./track')
+
+function _routeOf(page) {
+  return (page && page.route) || ''
+}
 
 // 激励视频广告管理
 // 约束：wx.createRewardedVideoAd 返回的实例是「页面作用域」的——页面 A
@@ -91,7 +96,11 @@ function show(placementName, page) {
     ad = _createInstance(placementName)
     if (ad) _setPageAd(page, placementName, ad)
   }
-  if (!ad) return Promise.resolve(true)
+  if (!ad) {
+    // 无广告位/不支持：直接放行，记为无实例（无收入）
+    track('ad_rewarded', { route: _routeOf(page), result: 'noinstance' })
+    return Promise.resolve(true)
+  }
 
   var promise = new Promise(function (resolve) {
     var settled = false
@@ -113,9 +122,11 @@ function show(placementName, page) {
 
     var handleClose = function (res) {
       if (res === undefined || (res && res.isEnded)) {
+        track('ad_rewarded', { route: _routeOf(page), result: 'watched' })
         finish(true)
         return
       }
+      track('ad_rewarded', { route: _routeOf(page), result: 'abandoned' })
       wx.showToast({ title: '未完整观看广告，暂无法保存', icon: 'none' })
       finish(false)
     }
@@ -137,9 +148,11 @@ function show(placementName, page) {
       // 1004=无合适广告 / 1005=广告组件未显示 —— 属于广告平台侧问题，
       // 非用户过错。放行保存并按已完播处理，避免阻塞正常业务。
       if (code === 1004 || code === 1005) {
+        track('ad_rewarded', { route: _routeOf(page), result: 'nofill' })
         finish(true)
         return
       }
+      track('ad_rewarded', { route: _routeOf(page), result: 'showfail' })
       wx.showToast({ title: '广告加载失败，请稍后重试', icon: 'none' })
       finish(false)
     })

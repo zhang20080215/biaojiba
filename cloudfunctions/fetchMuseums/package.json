@@ -1,0 +1,16 @@
+{
+  "name": "fetchmuseums",
+  "version": "1.0.0",
+  "description": "Scrape Baidu Baike starmap (China National First-Grade Museums, lemmaId=1372604), province-by-province, parse name/batch/city/cover, mirror covers to cloud storage, upsert into museum_grade1 collection",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.27.2",
+    "wx-server-sdk": "^3.0.1"
+  }
+}

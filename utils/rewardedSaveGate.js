@@ -21,9 +21,9 @@
 const adConfig = require('./adConfig')
 const grayBucket = require('./grayBucket')
 const rewardedAdManager = require('./rewardedAdManager')
+const { track } = require('./track')
 
 const PLACEMENT = 'save_image_rewarded'
-const KEY_PREFIX = 'rewarded_save_grant_date_'
 
 function getCurrentOpenid(page) {
   const app = getApp()
@@ -53,23 +53,6 @@ function awaitOpenid(page, timeoutMs) {
   })
 }
 
-function getTodayISO() {
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
-function grantKey(openid) {
-  return `${KEY_PREFIX}${openid}`
-}
-
-function hasTodayGrant(openid) {
-  if (!openid) return false
-  return wx.getStorageSync(grantKey(openid)) === getTodayISO()
-}
-
 function isGated(openid) {
   if (!openid) return false
   const forced = adConfig.isForcedIntoGray(PLACEMENT, openid)
@@ -78,7 +61,8 @@ function isGated(openid) {
     if (percentage <= 0) return false
     if (!grayBucket.isInBucket(openid, percentage)) return false
   }
-  return !hasTodayGrant(openid)
+  // 每次保存都需观看激励广告：命中灰度即每次都闸，不再按天授权放行
+  return true
 }
 
 /**
@@ -88,6 +72,8 @@ function isGated(openid) {
  */
 function refreshHint(page) {
   if (!page || typeof page.setData !== 'function') return
+  // 打开海报页即埋一次“查看海报”；与 poster_save 组成漏斗：poster_view − poster_save = 看了海报但没保存
+  track('poster_view', { route: (page && page.route) || '' })
   awaitOpenid(page, 1500).then(function (openid) {
     // page._destroyed：页面若已 onUnload，此处 setData 会让渲染层往已销毁的父节点插节点
     // （insertTextView:fail parent not found）。未定义该字段的页面不受影响。
@@ -110,15 +96,15 @@ async function ensureGrant(page) {
   // 等 openid 到位再判灰度；冷启动窗口期 openid 为空时直接放行会绕过闸门。
   // 超时兜底仍放行，避免 cloud 异常时阻塞正常保存——极端 case，不是灰度用户预期路径。
   const openid = await awaitOpenid(page, 1500)
-  if (!isGated(openid)) return true
+  const gated = isGated(openid)
+  // 每次保存尝试都埋点：gated=1 表示本次需看广告，用于观察“每次看广告”改动对保存量的影响
+  track('poster_save', { route: (page && page.route) || '', gated: gated ? 1 : 0 })
+  if (!gated) return true
 
   const watched = await rewardedAdManager.show(PLACEMENT, page)
   if (!watched) return false
 
-  wx.setStorageSync(grantKey(openid), getTodayISO())
-  if (page && page.data && page.data.needRewardedAd) {
-    page.setData({ needRewardedAd: false })
-  }
+  // 每次保存都需观看广告：不写当天授权，下次保存仍会触发闸门，needRewardedAd 保持为 true
   return true
 }
 

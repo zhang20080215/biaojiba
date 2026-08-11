@@ -712,6 +712,10 @@ Page({
         };
     },
 
+    onShareTimeline() {
+        return { title: `${this.data.cfg.title} - 标记你的观影清单`, query: `theme=${this.data.theme}` };
+    },
+
     // ========== 广告 ==========
     initAds() {
         if (!this.data.adUnitIds.movielist_infeed) return;

@@ -62,22 +62,23 @@
     </view>
   </view>
 
-  <!-- 旅行打卡（专属推荐：仅全国5A景区） -->
-  <view wx:if="{{scenicFeature}}" class="section-head">旅行打卡</view>
-  <view wx:if="{{scenicFeature}}" class="feature-section">
-    <navigator class="feature-card" url="{{scenicFeature.url}}" hover-class="feature-card-hover">
-      <view class="feature-cover">
-        <image wx:if="{{scenicFeature.dynamicCover}}" class="feature-cover-img" src="{{scenicFeature.dynamicCover.cover}}" mode="aspectFill" binderror="onCoverError" data-id="scenic_5a"></image>
-        <view wx:else class="feature-cover-ph"><text class="feature-cover-emoji">🏞️</text></view>
-      </view>
+  <!-- 旅行打卡（专属推荐：5A 景区 + 国家一级博物馆并排） -->
+  <view wx:if="{{travelFeatures.length}}" class="section-head">旅行打卡</view>
+  <view wx:if="{{travelFeatures.length}}" class="feature-section">
+    <navigator
+      wx:for="{{travelFeatures}}"
+      wx:key="id"
+      class="feature-card {{item.tintClass}}"
+      url="{{item.url}}"
+      hover-class="feature-card-hover"
+    >
       <view class="feature-body">
-        <text class="feature-title">全国5A景区旅游打卡</text>
+        <text class="feature-title">{{item.featureTitle}}</text>
         <view class="feature-meta">
-          <text wx:if="{{scenicFeature.userCountText}}" class="feature-count">{{scenicFeature.userCountText}}</text>
-          <text wx:if="{{scenicFeature.wishFrom}}" class="feature-wish">来自用户{{scenicFeature.wishFrom}}的许愿</text>
+          <text wx:if="{{item.userCountText}}" class="feature-count {{item.tintClass}}">{{item.userCountText}}</text>
         </view>
       </view>
-      <view class="new-badge feature-new"><text>NEW</text></view>
+      <view wx:if="{{item.isNew}}" class="new-badge feature-new {{item.tintClass}}"><text>NEW</text></view>
     </navigator>
   </view>
 
@@ -247,6 +248,10 @@
           <text class="placeholder-emoji">🏞️</text>
           <text class="placeholder-text">5A景区</text>
         </view>
+        <view wx:elif="{{item.id === 'museum_grade1'}}" class="cover-placeholder museum">
+          <text class="placeholder-emoji">🏛️</text>
+          <text class="placeholder-text">一级博物馆</text>
+        </view>
         <view wx:else class="cover-placeholder cloud" style="{{item.coverStyle}}">
           <text class="placeholder-emoji">{{item.placeholderEmoji}}</text>
           <text class="placeholder-text">{{item.title}}</text>
@@ -384,6 +389,10 @@
         <view wx:elif="{{item.id === 'scenic_5a'}}" class="cover-placeholder scenic">
           <text class="placeholder-emoji">🏞️</text>
           <text class="placeholder-text">5A景区</text>
+        </view>
+        <view wx:elif="{{item.id === 'museum_grade1'}}" class="cover-placeholder museum">
+          <text class="placeholder-emoji">🏛️</text>
+          <text class="placeholder-text">一级博物馆</text>
         </view>
         <view wx:else class="cover-placeholder cloud" style="{{item.coverStyle}}">
           <text class="placeholder-emoji">{{item.placeholderEmoji}}</text>

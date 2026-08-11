@@ -21,12 +21,15 @@ const adConfig = {
   placements: {
     category_native: { unitId: 'adunit-0210c68397d60f88', type: 'native', enabled: true },
     category_banner: { unitId: 'adunit-991294f7567bd2b8', type: 'banner', enabled: false },
-    movielist_infeed: { unitId: 'adunit-72684185bc7251e5', type: 'native', enabled: true },
+    // 已下线：40天数据 eCPM 仅 1.27、CTR 0.1%（占 52% 曝光却是垃圾流量），砍掉后整体 eCPM 显著上抬且改善体验
+    movielist_infeed: { unitId: 'adunit-72684185bc7251e5', type: 'native', enabled: false },
     share_interstitial: { unitId: 'adunit-76c494953122488c', type: 'interstitial', enabled: true },
     share_banner: { unitId: 'adunit-d9b45d20a77f545e', type: 'banner', enabled: true },
     save_image_rewarded: { unitId: 'adunit-16f5506ef74be138', type: 'rewarded', enabled: true },
-    growth_result_native: { unitId: 'adunit-a0fdcfcd4703f705', type: 'native', enabled: true },
-    growth_result_interstitial: { unitId: 'adunit-6028748f3e257f56', type: 'interstitial', enabled: true },
+    // 已下线：育儿结果页曝光近乎为零（40天仅98次、eCPM 1.02），且该页漏斗本就需减负
+    growth_result_native: { unitId: 'adunit-a0fdcfcd4703f705', type: 'native', enabled: false },
+    // 已下线：仅在未命中激励门（无 openid）的少数用户触发，价值极低；育儿保存统一走激励视频门
+    growth_result_interstitial: { unitId: 'adunit-6028748f3e257f56', type: 'interstitial', enabled: false },
   },
 
   grayRollout: {

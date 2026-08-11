@@ -740,6 +740,10 @@ Page({
         };
     },
 
+    onShareTimeline() {
+        return { title: '豆瓣电影TOP250 - 记录你的观影旅程', query: '' };
+    },
+
     // ========== 广告 ==========
     initAds() {
         if (!this.data.adUnitIds.movielist_infeed) return;
