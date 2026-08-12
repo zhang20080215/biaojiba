@@ -58,8 +58,20 @@ async function mirrorCover(url, openid) {
                 }
             });
             buffer = Buffer.from(resp.data);
+        } else if (/^https?:\/\/[^/]*\bmtime\.cn/i.test(url)) {
+            // 时光网封面（豆瓣搜不到的正片走时光网兜底）：带 Referer 下载后同样镜像到云存储，
+            // 否则停留在 http 直链 → canvas 分享绘制器只认 cloud://，会画不出海报背景。
+            const resp = await axios.get(url, {
+                responseType: 'arraybuffer',
+                timeout: 12000,
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1',
+                    'Referer': 'https://film.mtime.com/'
+                }
+            });
+            buffer = Buffer.from(resp.data);
         } else {
-            return url; // 非豆瓣的普通 URL：交给前端原样渲染
+            return url; // 其它普通 URL：交给前端原样渲染
         }
 
         if (!buffer) return url;

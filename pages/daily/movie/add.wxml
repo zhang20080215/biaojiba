@@ -53,8 +53,8 @@
       <view wx:if="{{!selected && candidates.length > 0}}" class="candidate-list">
         <view class="candidate-card"
               wx:for="{{candidates}}"
-              wx:key="doubanId"
-              data-douban-id="{{item.doubanId}}"
+              wx:key="key"
+              data-key="{{item.key}}"
               bindtap="onSelectMovie"
               hover-class="tap-soft">
           <image class="candidate-poster" src="{{item.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" lazy-load="true" />
@@ -66,7 +66,8 @@
             </view>
             <text wx:if="{{item.year}}" class="candidate-meta">{{item.year}}</text>
             <text wx:if="{{item.director}}" class="candidate-meta">导演：{{item.director}}</text>
-            <text wx:if="{{item.subtype && !item.director}}" class="candidate-meta">{{item.subtype}}</text>
+            <text wx:if="{{item.movieType && !item.director}}" class="candidate-meta">{{item.movieType}}</text>
+            <text wx:elif="{{item.subtype && !item.director}}" class="candidate-meta">{{item.subtype}}</text>
           </view>
         </view>
       </view>
