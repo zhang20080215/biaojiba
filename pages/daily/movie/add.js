@@ -76,13 +76,17 @@ function addThousandSep(n) {
   return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
-// 候选视图模型：搜索页已带豆瓣评分/人数时直接展示，无则留空
+// 候选视图模型：豆瓣候选带评分/人数直接展示；时光网候选（source==='mtime'）无评分。
+// 时光网候选对用户不做视觉区分，与豆瓣候选一致展示。
 function decorateCandidate(item) {
+  const isMtime = item.source === 'mtime';
   return {
     ...item,
+    // 无 key（旧云函数）时用 doubanId 兜底，保证列表 wx:key / 选中定位可用
+    key: item.key || (isMtime ? `mt${item.mtimeId}` : `db${item.doubanId}`),
     posterThumb: imageCache.getThumbnailUrl(item.posterUrl, 'list'),
-    ratingText: item.rating ? Number(item.rating).toFixed(1) : '',
-    votesText: item.ratingCount ? `${addThousandSep(item.ratingCount)}人评价` : ''
+    ratingText: (!isMtime && item.rating) ? Number(item.rating).toFixed(1) : '',
+    votesText: (!isMtime && item.ratingCount) ? `${addThousandSep(item.ratingCount)}人评价` : ''
   };
 }
 
@@ -121,6 +125,8 @@ Page({
     ratingsError: '',
     ratingCells: [],
     movieFull: null,
+    // 时光网候选选中态标记：控制跳过全平台评分抓取（对用户不可见、不做来源展示）
+    mtimeMode: false,
 
     // 剧集进度（仅电视剧展示）：hasEpisodes 决定是否显示「看到第几集」输入
     hasEpisodes: false,
@@ -234,6 +240,7 @@ Page({
       ratingsError: '',
       ratingCells: [],
       movieFull: null,
+      mtimeMode: false,
       hasEpisodes: true,
       totalEpisodes: item.totalEpisodes,
       currentEpisode: String(item.lastEpisode || ''),
@@ -261,6 +268,7 @@ Page({
       ratingsError: '',
       ratingCells: [],
       movieFull: null,
+      mtimeMode: false,
       hasEpisodes: false,
       totalEpisodes: 0,
       currentEpisode: '',
@@ -285,7 +293,8 @@ Page({
     try {
       const res = await wx.cloud.callFunction({
         name: 'searchMovieByTitle',
-        data: { keyword }
+        // includeMtime：豆瓣被登录墙挡掉的正片（如蓝丝绒/巴黎野玫瑰）用时光网兜底补进候选
+        data: { keyword, includeMtime: true }
       });
       const result = res && res.result;
       if (!result || !result.success) {
@@ -305,9 +314,14 @@ Page({
   },
 
   onSelectMovie(e) {
-    const doubanId = e.currentTarget.dataset.doubanId;
-    const selected = this.data.candidates.find(item => String(item.doubanId) === String(doubanId));
+    const key = e.currentTarget.dataset.key;
+    const selected = this.data.candidates.find(item => String(item.key) === String(key));
     if (!selected) return;
+    // 时光网候选：无 doubanId，不能走 fetchMovieFullInfo，直接用时光网自带字段
+    if (selected.source === 'mtime') {
+      this._selectMtime(selected);
+      return;
+    }
     this.setData({
       selected,
       posterSrc: selected.posterThumb || '/images/default-movie.jpg',
@@ -316,6 +330,7 @@ Page({
       ratingsError: '',
       ratingCells: [],
       movieFull: null,
+      mtimeMode: false,
       hasEpisodes: false,
       totalEpisodes: 0,
       currentEpisode: '',
@@ -323,6 +338,26 @@ Page({
     });
     // 保存在飞的 Promise：提交时若云封面还没就绪，onSubmit 会 await 它
     this._fullInfoPromise = this._fetchFullRatings(selected.doubanId);
+  },
+
+  // 选中时光网候选：不抓评分，按时光网字段直接展示；电视剧允许记「看到第几集」（无总集数分母）
+  _selectMtime(selected) {
+    const isTv = selected.subtype === 'tv';
+    this._fullInfoPromise = null;
+    this.setData({
+      selected,
+      posterSrc: selected.posterThumb || selected.posterUrl || '/images/default-movie.jpg',
+      movieMeta: buildMeta(selected.year, selected.director),
+      ratingsLoading: false,
+      ratingsError: '',
+      ratingCells: [],
+      movieFull: null,
+      mtimeMode: true,
+      hasEpisodes: isTv,
+      totalEpisodes: 0,
+      currentEpisode: '',
+      episodeProgressText: ''
+    });
   },
 
   // 拉取全平台评分（豆瓣/IMDb/新鲜度/爆米花），首次约 10s，命中缓存秒回
@@ -474,7 +509,10 @@ Page({
     const cloudPoster = isCloud(full.poster) ? full.poster : '';
     const rawPoster = full.originalPoster || selected.posterUrl || '';
     const meta = {
-      doubanId: selected.doubanId,
+      doubanId: selected.doubanId || '',
+      // 时光网候选：无 doubanId，用 mtimeId + source 标记来源（platform 各项自然为空）
+      mtimeId: selected.mtimeId || '',
+      source: selected.source || 'douban',
       title: selected.title || '',
       year: full.year || selected.year || '',
       poster: cloudPoster || rawPoster,
@@ -482,7 +520,7 @@ Page({
       director: full.directorText || selected.director || '',
       genres: Array.isArray(full.genres) ? full.genres.slice(0, 4) : [],
       // 剧集进度：subtype 标记电视剧，totalEpisodes 0=未知，currentEpisode 0=未填
-      subtype: full.subtype || '',
+      subtype: full.subtype || selected.subtype || '',
       totalEpisodes: this.data.hasEpisodes ? (Number(this.data.totalEpisodes) || 0) : 0,
       currentEpisode: this.data.hasEpisodes ? (Number(this.data.currentEpisode) || 0) : 0,
       rating: Number(this.data.rating) || 0,

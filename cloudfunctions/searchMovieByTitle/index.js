@@ -104,6 +104,65 @@ function pickDirectorFromSubTitle(subTitle) {
   return candidate;
 }
 
+// ── 时光网（Mtime）替补搜索 ─────────────────────────────────────────────
+// 场景：豆瓣对含成人内容的影片正片，仅对已登录用户开放搜索，匿名爬虫搜不到
+//   （如《蓝丝绒》《巴黎野玫瑰》）。时光网无此登录墙，用它兜底把正片补进候选。
+// 接口：front-gateway.mtime.com 的 unionSearch2，免登录直出结构化 JSON。
+//   type=1 = 影视；data.movies 为结果数组（部分地区/IP 会返回 null，容错为空即可）。
+// 注意：时光网候选无 doubanId，无法走 fetchMovieFullInfo 抓全平台评分——
+//   前端据 source==='mtime' 跳过评分抓取、仅按时光网自带字段展示/记录。
+const MTIME_SEARCH_API = 'https://front-gateway.mtime.com/mtime-search/search/unionSearch2';
+const MTIME_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
+
+async function searchViaMtime(keyword) {
+  const url = `${MTIME_SEARCH_API}?keyword=${encodeURIComponent(keyword)}&type=1&pageIndex=1&pageSize=20`;
+  const res = await axios.get(url, {
+    headers: {
+      'User-Agent': MTIME_UA,
+      'Referer': 'https://film.mtime.com/',
+      'Accept': 'application/json, text/plain, */*',
+      'Accept-Language': 'zh-CN,zh;q=0.9'
+    },
+    timeout: 10000,
+    responseType: 'json',
+    validateStatus: () => true
+  });
+  const data = res && res.data && res.data.data;
+  const movies = (data && Array.isArray(data.movies)) ? data.movies : [];
+  return movies
+    .filter(m => m && m.movieId && m.name && (m.movieContentType === '电影' || m.movieContentType === '电视剧'))
+    .map(m => {
+      const director = Array.isArray(m.directors) && m.directors.length ? m.directors[0] : '';
+      // 时光网封面均为 jpg（iOS 可正常渲染），直接用原图直链
+      const poster = m.img || '';
+      const year = m.year || m.rYear || '';
+      return {
+        source: 'mtime',
+        mtimeId: String(m.movieId),
+        doubanId: '',
+        title: m.name,
+        titleEn: m.nameEn || '',
+        year: year ? String(year) : '',
+        posterUrl: poster,
+        subtype: m.movieContentType === '电视剧' ? 'tv' : '',
+        director,
+        movieType: m.movieType || '',
+        rating: null,
+        ratingCount: null,
+        url: m.href ? (m.href.indexOf('http') === 0 ? m.href : `https://movie.mtime.com/${m.movieId}/`) : `https://movie.mtime.com/${m.movieId}/`
+      };
+    });
+}
+
+// 归一化「片名+年份」用于跨源去重：去空白/标点、小写；年份直接比字符串
+function dedupeKeyOf(title, year) {
+  const t = String(title || '')
+    .replace(/[\s　]+/g, '')
+    .replace(/[·・:：\-—_（）()【】\[\]"'"'!！?？、,，.。/]/g, '')
+    .toLowerCase();
+  return `${t}@${String(year || '')}`;
+}
+
 // 回退：电影 suggest（前缀匹配，仅标题/年份/封面，无评分）
 async function suggestFallback(keyword) {
   try {
@@ -133,27 +192,50 @@ async function suggestFallback(keyword) {
 
 exports.main = async (event, context) => {
   const keyword = (event && event.keyword || '').trim();
+  // includeMtime：仅每日电影（pages/daily/movie/add）传，用时光网兜底补正片；
+  // pages/movie-search（全平台评分查询）不传 → 行为完全不变、纯豆瓣。
+  const includeMtime = !!(event && event.includeMtime);
   if (!keyword) {
     return { success: false, error: 'EMPTY_KEYWORD' };
   }
 
   try {
-    let candidates = [];
-    try {
-      candidates = await searchViaSearchPage(keyword);
-    } catch (e) {
-      console.warn('/search 抓取异常，走回退:', e && e.message);
-    }
-    if (!candidates.length) {
-      candidates = await suggestFallback(keyword);
-    }
+    // 豆瓣主链（/search 结果页 → suggest 回退）与时光网并行，互不阻塞
+    const doubanPromise = (async () => {
+      let list = [];
+      try {
+        list = await searchViaSearchPage(keyword);
+      } catch (e) {
+        console.warn('/search 抓取异常，走回退:', e && e.message);
+      }
+      if (!list.length) {
+        list = await suggestFallback(keyword);
+      }
+      return list;
+    })();
+    const mtimePromise = includeMtime
+      ? searchViaMtime(keyword).catch(e => { console.warn('时光网搜索失败:', e && e.message); return []; })
+      : Promise.resolve([]);
 
-    // 按 doubanId 去重，保序
-    const seen = new Set();
-    candidates = candidates.filter(c => {
-      if (!c.doubanId || seen.has(c.doubanId)) return false;
-      seen.add(c.doubanId);
-      return true;
+    const [doubanRaw, mtimeRaw] = await Promise.all([doubanPromise, mtimePromise]);
+
+    // 豆瓣候选：按 doubanId 去重、保序，打上 source/key
+    const seenId = new Set();
+    const seenKey = new Set();
+    const candidates = [];
+    doubanRaw.forEach(c => {
+      if (!c.doubanId || seenId.has(c.doubanId)) return;
+      seenId.add(c.doubanId);
+      seenKey.add(dedupeKeyOf(c.title, c.year));
+      candidates.push({ ...c, source: 'douban', key: `db${c.doubanId}` });
+    });
+
+    // 时光网候选：豆瓣已有（同片名+年份）的跳过，其余追加到末尾（无评分）
+    mtimeRaw.forEach(m => {
+      const k = dedupeKeyOf(m.title, m.year);
+      if (seenKey.has(k)) return;
+      seenKey.add(k);
+      candidates.push({ ...m, key: `mt${m.mtimeId}` });
     });
 
     return { success: true, candidates, keyword };
