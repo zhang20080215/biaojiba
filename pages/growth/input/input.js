@@ -1,9 +1,11 @@
 const { formatAge } = require('../../../utils/growthCalculator.js');
 const userStore = require('../../../utils/userStore.js');
+const { trackGrowth } = require('../../../utils/track.js');
 
 Page({
   onLoad() {
     wx.setNavigationBarTitle({ title: '儿童生长发育评估' });
+    trackGrowth('start'); // 埋点：进入育儿评估
     this.checkLoginStatus();
   },
 
@@ -138,6 +140,8 @@ Page({
 
     // 记录评估数据到云数据库
     this.saveGrowthRecord(inputData);
+
+    trackGrowth('submit', ageMonths); // 埋点：提交评估（校验/登录已通过）
 
     // 同时通过 URL 参数传递（支持独立访问，利于 SEO）
     let url = `/pages/growth/result/result?gender=${gender}&ageMonths=${ageMonths}&weight=${w}&height=${h}`;

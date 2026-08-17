@@ -2,6 +2,7 @@ const { evaluate, formatAge } = require('../../../utils/growthCalculator.js');
 const GrowthPosterDrawer = require('../../../utils/growthPosterDrawer.js');
 var adConfig = require('../../../utils/adConfig');
 const rewardedSaveGate = require('../../../utils/rewardedSaveGate.js');
+const { trackGrowth } = require('../../../utils/track.js');
 
 Page({
   data: {
@@ -69,6 +70,7 @@ Page({
       genderIcon: input.gender === 'male' ? '♂' : '♀',
       ageText: formatAge(input.ageMonths)
     });
+    trackGrowth('result', input.ageMonths); // 埋点：评估结果成功渲染
     this.initAds();
     rewardedSaveGate.refreshHint(this);
   },

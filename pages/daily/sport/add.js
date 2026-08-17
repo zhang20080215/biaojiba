@@ -2,6 +2,7 @@ const toast = require('../../../utils/dailyToast.js');
 const fitnessTypes = require('../../../utils/fitnessTypes.js');
 const sportIcons = require('../../../utils/sportIcons.js');
 const { getNavMetrics, todayStr, buildSummary } = require('./common.js');
+const { trackDaily } = require('../../../utils/track.js');
 
 // 预生成带线性图标 URI 的分类结构（图标来自 utils/sportIcons.js）
 const CATEGORIES = fitnessTypes.categories.map(c => ({
@@ -266,7 +267,9 @@ Page({
       data: { action: 'addEntry', theme: 'sport', date: this.data.date, value: 1, meta }
     }).then(res => {
       const result = res && res.result;
-      return !!(result && result.success);
+      const ok = !!(result && result.success);
+      if (ok) trackDaily('sport', this.route); // 埋点：打卡成功（每条动作一次）
+      return ok;
     });
   },
 

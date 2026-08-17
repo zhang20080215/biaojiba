@@ -1,6 +1,7 @@
 import DataLoader from '../../../utils/dataLoader';
 import imageCacheManager from '../../../utils/imageCacheManager';
 var adConfig = require('../../../utils/adConfig');
+var { trackMark, trackShare } = require('../../../utils/track.js');
 var adManager = require('../../../utils/adManager');
 var userStore = require('../../../utils/userStore.js');
 
@@ -295,6 +296,7 @@ Page({
 
         const movieId = String(e.currentTarget.dataset.id);
         const type = e.currentTarget.dataset.type;
+        trackMark('oscar', type, 'single', 1); // 埋点：单标记
         if (!movieId || !type || !openid) {
             wx.showToast({ title: '数据不完整', icon: 'none' }); return;
         }
@@ -399,6 +401,7 @@ Page({
         const openid = this.getActiveOpenid();
         if (!openid) { wx.showToast({ title: '请先登录', icon: 'none' }); return; }
 
+        trackMark('oscar', status, 'batch', movieIds.length); // 埋点：批量标记
         wx.showLoading({ title: '批量更新中...' });
         wx.cloud.callFunction({
             name: 'batchUpdateMarks',
@@ -455,6 +458,7 @@ Page({
     },
 
     onShareAppMessage() {
+        trackShare('oscar', 'appmsg', this.route);
         return {
             title: '历届奥斯卡最佳影片 - 每年一部经典',
             path: '/pages/oscar/list/list'
@@ -462,6 +466,7 @@ Page({
     },
 
     onShareTimeline() {
+        trackShare('oscar', 'timeline', this.route);
         return { title: '历届奥斯卡最佳影片 - 每年一部经典', query: '' };
     },
 

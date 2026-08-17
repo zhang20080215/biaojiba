@@ -1,6 +1,7 @@
 import DataLoader from '../../../utils/dataLoader';
 import imageCacheManager from '../../../utils/imageCacheManager';
 var adConfig = require('../../../utils/adConfig');
+var { trackMark, trackShare } = require('../../../utils/track.js');
 var adManager = require('../../../utils/adManager');
 var grayBucket = require('../../../utils/grayBucket');
 var subscribeConfig = require('../../../utils/subscribeConfig');
@@ -558,6 +559,7 @@ Page({
 
         const movieId = String(e.currentTarget.dataset.id);
         const type = e.currentTarget.dataset.type;
+        trackMark('douban', type, 'single', 1); // 埋点：单标记
         const runOptimisticMark = () => {
             if (!this._pendingMarkMap) this._pendingMarkMap = {};
             if (this._pendingMarkMap[movieId]) return;
@@ -678,6 +680,7 @@ Page({
         const openid = this.getActiveOpenid();
         if (!openid) { wx.showToast({ title: '请先登录', icon: 'none' }); return; }
 
+        trackMark('douban', status, 'batch', movieIds.length); // 埋点：批量标记
         wx.showLoading({ title: '批量更新中...' });
         wx.cloud.callFunction({
             name: 'batchUpdateMarks',
@@ -734,6 +737,7 @@ Page({
     },
 
     onShareAppMessage() {
+        trackShare('douban', 'appmsg', this.route);
         return {
             title: '豆瓣电影TOP250 - 记录你的观影旅程',
             path: '/pages/douban/list/list'
@@ -741,6 +745,7 @@ Page({
     },
 
     onShareTimeline() {
+        trackShare('douban', 'timeline', this.route);
         return { title: '豆瓣电影TOP250 - 记录你的观影旅程', query: '' };
     },
 

@@ -4,6 +4,7 @@
 const { getTheme, ACCENT_HEX } = require('../../../utils/dailyThemes.js');
 const { buildBottleSvg, buildCupSvg, PRESET_FILL_LEVELS } = require('../../../utils/dailyBottle.js');
 const toast = require('../../../utils/dailyToast.js');
+const { trackDaily } = require('../../../utils/track.js');
 
 const WD_FULL = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
 
@@ -316,6 +317,7 @@ Page({
           toast.show(this, '记录失败');
           return;
         }
+        trackDaily(this.data.themeId, this.route); // 埋点：打卡成功
         const day = res.result.day;
         const oldTotal = this.data.totalValue;
         this.applyState({

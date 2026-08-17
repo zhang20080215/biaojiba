@@ -5,6 +5,7 @@
 import DataLoader from '../../../utils/dataLoader';
 import imageCacheManager from '../../../utils/imageCacheManager';
 var adConfig = require('../../../utils/adConfig');
+var { trackMark, trackShare } = require('../../../utils/track.js');
 var adManager = require('../../../utils/adManager');
 var userStore = require('../../../utils/userStore.js');
 
@@ -497,6 +498,7 @@ Page({
 
         const bookId = String(e.currentTarget.dataset.id);
         const type = e.currentTarget.dataset.type; // 'read' | 'wish'
+        trackMark('weread', type, 'single', 1); // 埋点：单标记
         const runOptimisticMark = () => {
             if (!this._pendingMarkMap) this._pendingMarkMap = {};
             if (this._pendingMarkMap[bookId]) return;
@@ -617,6 +619,7 @@ Page({
         const openid = this.getActiveOpenid();
         if (!openid) { wx.showToast({ title: '请先登录', icon: 'none' }); return; }
 
+        trackMark('weread', status, 'batch', bookIds.length); // 埋点：批量标记
         wx.showLoading({ title: '批量更新中...' });
         wx.cloud.callFunction({
             name: 'batchUpdateBookMarks',
@@ -673,6 +676,7 @@ Page({
     },
 
     onShareAppMessage() {
+        trackShare('weread', 'appmsg', this.route);
         return {
             title: '微信读书TOP200总榜 - 记录你的阅读旅程',
             path: '/pages/weread/list/list'
@@ -680,6 +684,7 @@ Page({
     },
 
     onShareTimeline() {
+        trackShare('weread', 'timeline', this.route);
         return { title: '微信读书TOP200总榜 - 记录你的阅读旅程', query: '' };
     },
 

@@ -1,0 +1,15 @@
+{
+  "name": "seedprovinces",
+  "version": "1.0.0",
+  "description": "Seed the 34 China provincial-level regions into travel_provinces (idempotent upsert, no scraping/covers)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "wx-server-sdk": "^3.0.1"
+  }
+}
