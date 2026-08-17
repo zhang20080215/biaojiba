@@ -29,6 +29,9 @@ Page({
         loading: false,
         showAuthModal: false,
         showShareModal: false,
+        markSheetVisible: false,
+        markSheetId: '',
+        markSheetStatus: '',
         tempAvatar: '',
         tempNickname: '',
         infeedSlots: {},
@@ -284,7 +287,52 @@ Page({
         });
     },
 
+    // 未标记时的快捷按钮（已看/想看）
     onMarkTap(e) {
+        const movieId = String(e.currentTarget.dataset.id);
+        const type = e.currentTarget.dataset.type;
+        if (!movieId || !type) { wx.showToast({ title: '数据不完整', icon: 'none' }); return; }
+        this.setMark(movieId, type);
+    },
+
+    // 点击已标记的标签 → 打开纠正弹窗（已看/想看/没看过）
+    onOpenMarkSheet(e) {
+        if (!this.getActiveOpenid()) {
+            wx.showModal({
+                title: '提示', content: '请登录后再进行标记', confirmText: '去登录',
+                success: (res) => { if (res.confirm) this.onGetUserProfile(); }
+            });
+            return;
+        }
+        const movieId = String(e.currentTarget.dataset.id);
+        if (!movieId) return;
+        this.setData({ markSheetVisible: true, markSheetId: movieId, markSheetStatus: this.data.markStatusMap[movieId] || '' });
+    },
+
+    onMarkSheetPick(e) {
+        const status = e.currentTarget.dataset.status || '';
+        const movieId = this.data.markSheetId;
+        this.setData({ markSheetVisible: false });
+        if (movieId) this.setMark(movieId, status);
+    },
+
+    onCloseMarkSheet() { this.setData({ markSheetVisible: false }); },
+
+    // 本地更新单个标记（status='' 表示取消），随后重算筛选
+    applyMarkLocally(movieId, status) {
+        const markStatusMap = { ...this.data.markStatusMap };
+        const markDateMap = { ...this.data.markDateMap };
+        const oldStatus = markStatusMap[movieId] || '';
+        let { watchedCount, wishCount, unwatchedCount } = this.data;
+        if (oldStatus === 'watched') watchedCount--; else if (oldStatus === 'wish') wishCount--; else unwatchedCount--;
+        if (status === 'watched') watchedCount++; else if (status === 'wish') wishCount++; else unwatchedCount++;
+        if (status) { markStatusMap[movieId] = status; markDateMap[movieId] = this.formatMarkDate(new Date().toISOString()); }
+        else { delete markStatusMap[movieId]; delete markDateMap[movieId]; }
+        this.setData({ markStatusMap, markDateMap, watchedCount, wishCount, unwatchedCount }, this.updateFilteredMovies);
+    },
+
+    // 统一标记入口：targetStatus 为 'watched'|'wish'|''（''=没看过=取消标记）
+    setMark(movieId, targetStatus) {
         const openid = this.getActiveOpenid();
         if (!openid) {
             wx.showModal({
@@ -293,50 +341,30 @@ Page({
             });
             return;
         }
+        movieId = String(movieId);
+        if (!movieId) return;
+        const currentStatus = this.data.markStatusMap[movieId] || '';
+        if (currentStatus === targetStatus) return;
 
-        const movieId = String(e.currentTarget.dataset.id);
-        const type = e.currentTarget.dataset.type;
-        trackMark('oscar', type, 'single', 1); // 埋点：单标记
-        if (!movieId || !type || !openid) {
-            wx.showToast({ title: '数据不完整', icon: 'none' }); return;
-        }
+        trackMark('oscar', targetStatus || 'unmark', 'single', 1); // 埋点：单标记
         const db = wx.cloud.database();
+        const now = new Date().toISOString();
+        const finalize = () => {
+            this.applyMarkLocally(movieId, targetStatus);
+            wx.showToast({ title: !targetStatus ? '已取消标记' : (targetStatus === 'watched' ? '已标记为已看' : '已标记为想看'), icon: 'none' });
+        };
         db.collection('Marks').where({ movieId, openid }).get().then(res => {
-            const now = new Date().toISOString();
-            if (res.data.length > 0) {
-                db.collection('Marks').doc(res.data[0]._id).update({
-                    data: { status: type, marked_at: now }
-                }).then(() => {
-                    const markStatusMap = { ...this.data.markStatusMap };
-                    const markDateMap = { ...this.data.markDateMap };
-                    const oldStatus = markStatusMap[movieId];
-                    markStatusMap[movieId] = type;
-                    markDateMap[movieId] = this.formatMarkDate(now);
-                    let { watchedCount, wishCount, unwatchedCount } = this.data;
-                    if (oldStatus === 'watched') watchedCount--;
-                    else if (oldStatus === 'wish') wishCount--;
-                    else unwatchedCount--;
-                    if (type === 'watched') watchedCount++;
-                    else if (type === 'wish') wishCount++;
-                    this.setData({ markStatusMap, markDateMap, watchedCount, wishCount, unwatchedCount }, this.updateFilteredMovies);
-                    wx.showToast({ title: type === 'watched' ? '已更新为已看' : '已更新为想看' });
-                });
-            } else {
-                db.collection('Marks').add({
-                    data: { movieId, openid, status: type, marked_at: now }
-                }).then(() => {
-                    const markStatusMap = { ...this.data.markStatusMap };
-                    const markDateMap = { ...this.data.markDateMap };
-                    markStatusMap[movieId] = type;
-                    markDateMap[movieId] = this.formatMarkDate(now);
-                    let { watchedCount, wishCount, unwatchedCount } = this.data;
-                    if (type === 'watched') watchedCount++;
-                    else if (type === 'wish') wishCount++;
-                    unwatchedCount--;
-                    this.setData({ markStatusMap, markDateMap, watchedCount, wishCount, unwatchedCount }, this.updateFilteredMovies);
-                    wx.showToast({ title: type === 'watched' ? '已看成功' : '想看成功' });
-                });
+            if (!targetStatus) {
+                if (!res.data.length) { finalize(); return; }
+                return Promise.all(res.data.map(r => db.collection('Marks').doc(r._id).remove())).then(finalize);
             }
+            if (res.data.length > 0) {
+                return db.collection('Marks').doc(res.data[0]._id).update({ data: { status: targetStatus, marked_at: now } }).then(finalize);
+            }
+            return db.collection('Marks').add({ data: { movieId, openid, status: targetStatus, marked_at: now } }).then(finalize);
+        }).catch(err => {
+            console.error('标记失败:', err);
+            wx.showToast({ title: '操作失败，请重试', icon: 'none' });
         });
     },
 
