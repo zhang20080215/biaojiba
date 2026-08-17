@@ -1,6 +1,7 @@
 // utils/dataLoader.js - 数据加载工具（含本地缓存优化）
 
 const themeRegistry = require('./themeRegistry.js');
+const { trackThemeOpen } = require('./track.js');
 
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 小时缓存有效期
 
@@ -59,7 +60,15 @@ const GENERIC_SCENIC_THEMES = new Set(['scenic5a']);
 // 博物馆主题（专属集合 museum_grade1），读取走 getMuseums；标记复用 Marks（参观过=watched、想去=wish）。
 const GENERIC_MUSEUM_THEMES = new Set(['museum']);
 
+// 全国旅游省份（专属集合 travel_provinces），读取走 getProvinces；标记复用 Marks（去过=watched、想去=wish）。
+const GENERIC_PROVINCE_THEMES = new Set(['province']);
+
+// 全国旅游城市（专属集合 travel_cities），读取走 getCities；标记复用 Marks（去过=watched、想去=wish）。
+const GENERIC_CITY_THEMES = new Set(['city']);
+
 function cloudFnForTheme(theme) {
+  if (GENERIC_PROVINCE_THEMES.has(theme)) return 'getProvinces';
+  if (GENERIC_CITY_THEMES.has(theme)) return 'getCities';
   if (GENERIC_MUSEUM_THEMES.has(theme)) return 'getMuseums';
   if (GENERIC_SCENIC_THEMES.has(theme)) return 'getScenicSpots';
   if (GENERIC_BOOK_THEMES.has(theme)) return 'getThemeBooks';
@@ -83,6 +92,7 @@ function cloudFnForTheme(theme) {
  * @param {object} queryOptions - 走 getThemeMovies 的通用主题可传 { orderByField, orderDirection }
  */
 async function loadMoviesData(theme, openid, forceRefresh = false, queryOptions = {}) {
+  trackThemeOpen(theme); // 埋点：进入主题（含刷新会略多计，作热度/漏斗基数够用）
   const cached = forceRefresh ? null : readMovieCache(theme);
 
   let movies;

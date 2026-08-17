@@ -1,6 +1,7 @@
 import DataLoader from '../../../utils/dataLoader';
 import imageCacheManager from '../../../utils/imageCacheManager';
 var adConfig = require('../../../utils/adConfig');
+var { trackMark, trackShare } = require('../../../utils/track.js');
 var adManager = require('../../../utils/adManager');
 var userStore = require('../../../utils/userStore.js');
 var { getThemeConfig } = require('../../../utils/genericBookThemeConfig.js');
@@ -517,6 +518,7 @@ Page({
 
         const bookId = String(e.currentTarget.dataset.id);
         const type = e.currentTarget.dataset.type; // 'read' | 'wish'
+        trackMark(this.data.theme, type, 'single', 1); // 埋点：单标记
         const source = (this.data.cfg && this.data.cfg.source) || 'generic';
         const runOptimisticMark = () => {
             if (!this._pendingMarkMap) this._pendingMarkMap = {};
@@ -639,6 +641,7 @@ Page({
         if (!openid) { wx.showToast({ title: '请先登录', icon: 'none' }); return; }
         const source = (this.data.cfg && this.data.cfg.source) || 'generic';
 
+        trackMark(this.data.theme, status, 'batch', bookIds.length); // 埋点：批量标记
         wx.showLoading({ title: '批量更新中...' });
         wx.cloud.callFunction({
             name: 'batchUpdateBookMarks',
@@ -695,6 +698,7 @@ Page({
     },
 
     onShareAppMessage() {
+        trackShare(this.data.theme, 'appmsg', this.route);
         return {
             title: `${this.data.cfg.title} - 记录你的阅读旅程`,
             path: `/pages/genericBookList/list/list?theme=${this.data.theme}`
@@ -702,6 +706,7 @@ Page({
     },
 
     onShareTimeline() {
+        trackShare(this.data.theme, 'timeline', this.route);
         return { title: `${this.data.cfg.title} - 记录你的阅读旅程`, query: `theme=${this.data.theme}` };
     },
 

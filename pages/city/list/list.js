@@ -1,16 +1,15 @@
-// pages/museum/list/list.js —— 中国国家一级博物馆列表页
-// 数据走 getMuseums（专属集合 museum_grade1），标记复用 Marks（参观过=watched、想去=wish）+ batchUpdateMarks，
-// 交互骨架借鉴 pages/scenic/list，新增批次徽标 + 省份筛选 + 文博化文案。
+// pages/city/list/list.js —— 全国旅游城市列表页
+// 数据走 getCities（专属集合 travel_cities，中国优秀旅游城市），标记复用 Marks（去过=watched、
+// 想去=wish）+ batchUpdateMarks，交互骨架借鉴 pages/scenic/list，去掉封面图（纯色文字卡），
+// 按省份筛选。
 import DataLoader from '../../../utils/dataLoader';
-import imageCacheManager from '../../../utils/imageCacheManager';
 var adConfig = require('../../../utils/adConfig');
-var { trackMark } = require('../../../utils/track.js');
+var { trackMark, trackShare } = require('../../../utils/track.js');
 var userStore = require('../../../utils/userStore.js');
-var museumShortName = require('../../../utils/museumShortName.js').museumShortName;
 
-const THEME = 'museum';
-const PAGE_SIZE = 24;   // 分批渲染每页条数（首屏只渲染一页，上拉自动追加）
-// 省份筛选固定顺序（与数据源省份短名一致）
+const THEME = 'city';
+const PAGE_SIZE = 40;   // 单省城市数≤35，一屏渲染完；全部视图靠 scroll-view 触底追加
+// 省份筛选固定顺序（与省份主题一致，地理向）
 const PROVINCE_ORDER = ['北京', '天津', '河北', '山西', '内蒙古', '辽宁', '吉林', '黑龙江', '上海', '江苏', '浙江', '安徽', '福建', '江西', '山东', '河南', '湖北', '湖南', '广东', '广西', '海南', '重庆', '四川', '贵州', '云南', '西藏', '陕西', '甘肃', '青海', '宁夏', '新疆'];
 
 Page({
@@ -20,9 +19,9 @@ Page({
         pendingOpenid: '',
         allSpots: [],
         spots: [],
-        provinces: [],           // 数据里出现过的省份（按 PROVINCE_ORDER 排序）
-        currentProvince: '',     // '' = 全部省份
-        searchKeyword: '',       // 搜索关键词（匹配名称/简称/省市）
+        provinces: [],
+        currentProvince: '',
+        searchKeyword: '',
         markStatusMap: {},
         markDateMap: {},
         markRecordIdMap: {},
@@ -36,9 +35,9 @@ Page({
         isBatchEditing: false,
         selectedIds: [],
         loading: false,
-        dataLoaded: false,       // 首屏数据是否已到位（区分「加载中」与「真的没有」）
-        hasMore: false,          // 当前筛选下是否还有未渲染的下一页
-        markSheetVisible: false, // 标记纠正弹窗
+        dataLoaded: false,
+        hasMore: false,
+        markSheetVisible: false,
         markSheetId: '',
         markSheetStatus: '',
         showAuthModal: false,
@@ -46,13 +45,13 @@ Page({
         customToastVisible: false,
         tempAvatar: '',
         tempNickname: '',
-        // 文博主题配色（青铜金褐）
+        // 旅游城市主题配色（暖橙，与省份靛蓝 / 5A 青绿 / 博物馆金褐区分）
         cfg: {
-            title: '中国国家一级博物馆',
-            slogan: '打卡你走过的博物馆，收藏一整部文明史',
-            brandPrimary: '#8C6239',
-            brandSoft: '#B98E56',
-            shadowRgb: '140, 98, 57'
+            title: '全国旅游城市',
+            slogan: '打卡中国优秀旅游城市，收藏你走过的城',
+            brandPrimary: '#C9743A',
+            brandSoft: '#E0A06E',
+            shadowRgb: '201, 116, 58'
         },
         infeedSlots: {},
         adUnitIds: {
@@ -130,17 +129,12 @@ Page({
             const allSpots = movies.map(m => ({
                 ...m,
                 _id: String(m._id),
-                // 简称：优先用库里的 shortName 字段（灌库已写入时），否则前端即时提取
-                shortName: m.shortName || museumShortName(m.name),
-                thumbCover: imageCacheManager.getThumbnailUrl(m.cover || m.originalCover, 'list')
+                shortName: m.shortName || m.name
             }));
 
-            // 汇总数据里出现的省份，按固定顺序
             const present = new Set(allSpots.map(s => s.province).filter(Boolean));
             const provinces = PROVINCE_ORDER.filter(p => present.has(p));
 
-            // allSpots 只用于本地筛选/统计，WXML 从不渲染它 —— 直接挂到 data 上，
-            // 不走 setData，省掉一次全量的跨线程传输（真正渲染的是分页后的 spots）。
             this.data.allSpots = allSpots;
 
             const { markStatusMap, markDateMap, markRecordIdMap, stats } = DataLoader.processMarks(marks, allSpots);
@@ -155,7 +149,7 @@ Page({
                 wx.hideNavigationBarLoading();
             });
         } catch (err) {
-            console.error('加载博物馆数据失败:', err);
+            console.error('加载城市数据失败:', err);
             this.data.allSpots = [];
             this._filtered = [];
             this._renderedCount = 0;
@@ -191,8 +185,6 @@ Page({
         }
     },
 
-    // 计算当前筛选后的完整列表（存到 this._filtered，不进 setData），再分页渲染。
-    // opts.preserve=true：保持已渲染的条数（标记更新后重算时用，避免列表回弹到首页）。
     updateFilteredSpots(opts) {
         const preserve = opts && opts.preserve;
         const { allSpots, markStatusMap, activeTab, currentProvince, searchKeyword } = this.data;
@@ -200,7 +192,7 @@ Page({
         const kw = (searchKeyword || '').trim().toLowerCase();
         if (kw) {
             list = list.filter(s => {
-                const hay = `${s.name || ''} ${s.shortName || ''} ${s.province || ''} ${s.city || ''} ${s.location || ''}`.toLowerCase();
+                const hay = `${s.name || ''} ${s.shortName || ''} ${s.province || ''}`.toLowerCase();
                 return hay.indexOf(kw) >= 0;
             });
         } else if (currentProvince) {
@@ -218,7 +210,6 @@ Page({
         this.renderUpTo(target);
     },
 
-    // 从头渲染到第 count 条（整段替换 spots，用于筛选切换/重算）
     renderUpTo(count) {
         const all = this._filtered || [];
         const { selectedIds } = this.data;
@@ -228,7 +219,6 @@ Page({
         this.setData({ spots: slice, hasMore: target < all.length });
     },
 
-    // 上拉追加下一页：只把新增的一批按下标追加进 spots，不整段重传
     loadMoreSpots() {
         const all = this._filtered || [];
         const start = this._renderedCount || 0;
@@ -256,11 +246,9 @@ Page({
     onProvinceTap(e) {
         const p = e.currentTarget.dataset.province || '';
         if (p === this.data.currentProvince && !this.data.searchKeyword) return;
-        // 选省份时清空搜索（两者互斥，避免冲突）
         this.setData({ currentProvince: p, searchKeyword: '', isBatchEditing: false, selectedIds: [] }, () => this.updateFilteredSpots());
     },
 
-    // 搜索：输入即过滤；有关键词时清空省份筛选（搜索跨全部省份）
     onSearchInput(e) {
         const v = e.detail.value || '';
         const patch = { searchKeyword: v, isBatchEditing: false, selectedIds: [] };
@@ -327,7 +315,6 @@ Page({
         } catch (e) { return ''; }
     },
 
-    // 快捷按钮（未标记时的 想去/参观过）→ 直接标记
     onMarkTap(e) {
         const id = String(e.currentTarget.dataset.id);
         const type = e.currentTarget.dataset.type;
@@ -335,7 +322,6 @@ Page({
         this.setMark(id, type);
     },
 
-    // 点击已标记的标签 → 打开纠正弹窗（参观过/想去/没去过）
     onOpenMarkSheet(e) {
         if (!this.getActiveOpenid()) {
             wx.showModal({
@@ -350,7 +336,7 @@ Page({
     },
 
     onMarkSheetPick(e) {
-        const status = e.currentTarget.dataset.status || '';   // 'watched' | 'wish' | '' (没去过)
+        const status = e.currentTarget.dataset.status || '';
         const id = this.data.markSheetId;
         this.setData({ markSheetVisible: false });
         if (id) this.setMark(id, status);
@@ -360,9 +346,8 @@ Page({
         this.setData({ markSheetVisible: false });
     },
 
-    // 统一标记入口：targetStatus 为 'watched'|'wish'|''（''=没去过=取消标记）。乐观更新 + 写 Marks
     setMark(id, targetStatus) {
-        trackMark('museum', targetStatus || 'unmark', 'single', 1); // 埋点：单标记
+        trackMark('city', targetStatus || 'unmark', 'single', 1);
         const openid = this.getActiveOpenid();
         if (!openid) {
             wx.showModal({
@@ -374,7 +359,7 @@ Page({
         id = String(id);
         if (!id) return;
         const currentStatus = this.data.markStatusMap[id] || '';
-        if (currentStatus === targetStatus) return;   // 选了当前状态，无变化
+        if (currentStatus === targetStatus) return;
 
         if (!this._pendingMarkMap) this._pendingMarkMap = {};
         if (this._pendingMarkMap[id]) return;
@@ -388,7 +373,6 @@ Page({
         const existingRecordId = this.data.markRecordIdMap[id];
         this._pendingMarkMap[id] = true;
 
-        // 没去过 → 取消标记
         if (!targetStatus) {
             this.clearSingleMarkLocally(id);
             this.showCustomToast('已取消标记');
@@ -403,10 +387,9 @@ Page({
             return;
         }
 
-        // 设为 / 切换到 targetStatus
         const now = new Date().toISOString();
         this.applySingleMarkLocally(id, targetStatus, now, existingRecordId);
-        this.showCustomToast(targetStatus === 'watched' ? '✓ 已标记为参观过' : '✓ 已标记为想去');
+        this.showCustomToast(targetStatus === 'watched' ? '✓ 已标记为去过' : '✓ 已标记为想去');
 
         const persist = existingRecordId
             ? db.collection('Marks').doc(existingRecordId).update({ data: { status: targetStatus, marked_at: now } })
@@ -425,7 +408,6 @@ Page({
         });
     },
 
-    // 本地清除单个标记（取消标记用）
     clearSingleMarkLocally(id) {
         const markStatusMap = { ...this.data.markStatusMap };
         const markDateMap = { ...this.data.markDateMap };
@@ -479,12 +461,12 @@ Page({
     onBatchUnvisited() { this._batch('unwatched'); },
 
     _batch(status) {
-        if (this.data.selectedIds.length === 0) { wx.showToast({ title: '请选择博物馆', icon: 'none' }); return; }
+        if (this.data.selectedIds.length === 0) { wx.showToast({ title: '请选择城市', icon: 'none' }); return; }
         const ids = this.data.selectedIds;
         const openid = this.getActiveOpenid();
         if (!openid) { wx.showToast({ title: '请先登录', icon: 'none' }); return; }
 
-        trackMark('museum', status, 'batch', ids.length); // 埋点：批量标记
+        trackMark('city', status, 'batch', ids.length);
         wx.showLoading({ title: '批量更新中...' });
         wx.cloud.callFunction({
             name: 'batchUpdateMarks',
@@ -533,10 +515,10 @@ Page({
             return;
         }
         if (this.data.visitedCount === 0) {
-            wx.showToast({ title: '先打卡参观过的博物馆吧', icon: 'none' });
+            wx.showToast({ title: '先打卡去过的城市吧', icon: 'none' });
             return;
         }
-        wx.navigateTo({ url: '/pages/museum/share/share' });
+        wx.navigateTo({ url: '/pages/city/share/share' });
     },
 
     // ─── 登录 ───
@@ -606,31 +588,14 @@ Page({
         }
     },
 
-    onImageError(e) {
-        const id = e.currentTarget.dataset.id;
-        if (!id) return;
-        const spot = this.data.spots.find(s => String(s._id) === String(id));
-        if (spot && spot.originalCover && spot.cover !== spot.originalCover) {
-            this.updateSpotImage(id, spot.originalCover);
-        }
-    },
-
-    updateSpotImage(id, url) {
-        const targetId = String(id);
-        const updates = {};
-        const sIdx = this.data.spots.findIndex(s => String(s._id) === targetId);
-        if (sIdx >= 0) { updates[`spots[${sIdx}].cover`] = url; updates[`spots[${sIdx}].thumbCover`] = url; }
-        const aIdx = this.data.allSpots.findIndex(s => String(s._id) === targetId);
-        if (aIdx >= 0) { updates[`allSpots[${aIdx}].cover`] = url; updates[`allSpots[${aIdx}].thumbCover`] = url; }
-        if (Object.keys(updates).length) this.setData(updates);
-    },
-
     onShareAppMessage() {
-        return { title: '中国国家一级博物馆 - 打卡你走过的博物馆', path: '/pages/museum/list/list' };
+        trackShare('city', 'appmsg', this.route);
+        return { title: '全国旅游城市 - 打卡你走过的城', path: '/pages/city/list/list' };
     },
 
     onShareTimeline() {
-        return { title: '中国国家一级博物馆 - 打卡你走过的博物馆', query: '' };
+        trackShare('city', 'timeline', this.route);
+        return { title: '全国旅游城市 - 打卡你走过的城', query: '' };
     },
 
     // ========== 广告 ==========

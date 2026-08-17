@@ -1,0 +1,9 @@
+{
+  "backgroundColor": "#FFFFFF",
+  "backgroundTextStyle": "light",
+  "enablePullDownRefresh": true,
+  "onReachBottomDistance": 200,
+  "navigationBarTitleText": "全国旅游省份",
+  "navigationBarBackgroundColor": "#3A6EA5",
+  "navigationBarTextStyle": "white"
+}

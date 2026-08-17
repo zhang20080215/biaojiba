@@ -1,0 +1,264 @@
+/* 全国旅游城市列表页：左省份 / 右城市 两栏定高布局。主题色由 list.wxml 内联传入 */
+
+page { background-color: var(--brand-primary); }
+
+.page-root {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #FFFFFF;
+  box-sizing: border-box;
+}
+
+/* ===== 紧凑头部 ===== */
+.hero-compact {
+  flex: 0 0 auto;
+  background: var(--brand-primary);
+  padding: var(--space-3) var(--space-4) var(--space-3);
+}
+.hero-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.app-name {
+  font-size: 40rpx;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: 1rpx;
+}
+.hero-percent {
+  font-size: 36rpx;
+  font-weight: 800;
+  color: #FFFFFF;
+}
+.hero-progress-bar {
+  height: 12rpx;
+  margin-top: 12rpx;
+  background: rgba(255, 255, 255, 0.26);
+  border-radius: 999rpx;
+  overflow: hidden;
+}
+.hero-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.78) 0%, #FFFFFF 100%);
+  border-radius: 999rpx;
+}
+.hero-sub {
+  display: block;
+  margin-top: 10rpx;
+  font-size: var(--font-caption);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* ===== 搜索 ===== */
+.search-bar {
+  flex: 0 0 auto;
+  background: var(--bg-card);
+  padding: 12rpx var(--space-3);
+  box-sizing: border-box;
+  border-bottom: 1rpx solid var(--line-subtle);
+}
+.search-box {
+  display: flex;
+  align-items: center;
+  height: 64rpx;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--bg-section);
+}
+.search-icon { font-size: 26rpx; margin-right: 12rpx; opacity: 0.6; }
+.search-input { flex: 1; min-width: 0; font-size: var(--font-body); color: var(--text-primary); }
+.search-ph { color: var(--text-muted); }
+.search-clear {
+  width: 40rpx; height: 40rpx; line-height: 40rpx; text-align: center;
+  font-size: 24rpx; color: #FFFFFF; background: rgba(0, 0, 0, 0.22);
+  border-radius: 50%; margin-left: 8rpx;
+}
+
+/* ===== Tab ===== */
+.tabs-bar {
+  flex: 0 0 auto;
+  display: flex;
+  background: var(--bg-card);
+  padding: 10rpx var(--space-3);
+  box-sizing: border-box;
+  border-bottom: 1rpx solid var(--line-subtle);
+}
+.tab {
+  flex: 1; text-align: center; font-size: var(--font-caption);
+  color: var(--text-secondary); padding: 14rpx 0; font-weight: 500;
+  border-radius: var(--radius-md);
+}
+.tab.active { color: #FFFFFF; font-weight: 700; background: var(--brand-primary); }
+
+/* ===== 操作行 ===== */
+.action-row {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 10rpx var(--space-3);
+  background: var(--bg-card);
+  border-bottom: 1rpx solid var(--line-subtle);
+}
+.batch-options { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.icon-btn {
+  font-size: var(--font-caption); font-weight: 600;
+  padding: 12rpx var(--space-3); border-radius: var(--radius-md); line-height: 1.2;
+}
+.batch-icon { background: var(--bg-section); color: var(--text-primary); }
+.action-watched { background: var(--success-soft); color: var(--success); }
+.action-wish { background: var(--warning-soft); color: var(--warning); }
+.action-unwatched { background: var(--info-soft); color: var(--info); }
+.action-cancel { background: var(--bg-section); color: var(--text-muted); }
+.generate-card-btn {
+  background: var(--brand-primary); color: #FFFFFF; font-size: var(--font-caption);
+  font-weight: 700; padding: 12rpx var(--space-3); border-radius: var(--radius-md);
+  letter-spacing: 1rpx; white-space: nowrap;
+}
+
+/* ===== 两栏 ===== */
+.two-col {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+.prov-rail {
+  flex: 0 0 176rpx;
+  width: 176rpx;
+  height: 100%;
+  background: var(--bg-section);
+  box-sizing: border-box;
+}
+.rail-item {
+  padding: 24rpx 10rpx;
+  text-align: center;
+  font-size: var(--font-body);
+  color: var(--text-secondary);
+  border-left: 6rpx solid transparent;
+  line-height: 1.2;
+}
+.rail-item.active {
+  color: var(--brand-primary);
+  font-weight: 800;
+  background: #FFFFFF;
+  border-left-color: var(--brand-primary);
+}
+
+.city-col {
+  flex: 1;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 0 var(--space-3);
+}
+.city-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 22rpx 6rpx;
+  border-bottom: 1rpx solid var(--line-subtle);
+}
+.city-row.row-visited .city-name { color: var(--brand-primary); }
+.batch-checkbox-wrap { display: flex; align-items: center; flex-shrink: 0; }
+.batch-checkbox { transform: scale(0.85); }
+.batch-checkbox .wx-checkbox-input.wx-checkbox-input-checked {
+  background: var(--brand-primary) !important; border-color: var(--brand-primary) !important;
+}
+.city-main { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 10rpx; }
+.city-name {
+  font-size: var(--font-title); font-weight: 600; color: var(--text-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.city-prov {
+  font-size: var(--font-mini); color: var(--text-muted);
+  background: var(--bg-section); padding: 2rpx 12rpx; border-radius: var(--radius-pill);
+  flex-shrink: 0;
+}
+.city-action { display: flex; align-items: center; gap: var(--space-1); flex-shrink: 0; }
+.mark-tag { font-size: var(--font-caption); font-weight: 600; white-space: nowrap; padding: 4rpx 0; }
+.mark-tag.watched { color: var(--brand-primary); }
+.mark-tag.wish { color: var(--text-muted); }
+.mark-btn {
+  display: flex; align-items: center; justify-content: center;
+  font-size: var(--font-caption); font-weight: 600; border-radius: var(--radius-md);
+  border: none; height: 52rpx; line-height: 52rpx; padding: 0 var(--space-3) !important;
+  margin: 0; width: auto !important; min-width: 0 !important;
+  background: var(--brand-primary); color: #FFFFFF;
+}
+.mark-btn::after { border: none; }
+.mark-btn-wish { background: #E8A93C; }
+
+.empty-tip { text-align: center; color: var(--text-muted); font-size: var(--font-caption); padding: var(--space-6) 0; }
+.load-more-tip { text-align: center; color: var(--text-muted); font-size: var(--font-caption); padding: var(--space-4) 0; }
+.col-bottom-pad { height: calc(24rpx + env(safe-area-inset-bottom)); }
+
+::-webkit-scrollbar { width: 0; height: 0; }
+
+/* ===== 自定义 Toast ===== */
+.custom-toast {
+  position: fixed; top: 22%; left: 50%;
+  transform: translateX(-50%) translateY(-8rpx);
+  background: rgba(45, 45, 43, 0.88); color: #FFFFFF;
+  padding: 16rpx 40rpx; border-radius: var(--radius-lg); z-index: 9999;
+  opacity: 0; pointer-events: none; transition: opacity 280ms ease, transform 280ms ease;
+}
+.custom-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.custom-toast-text { font-size: var(--font-body); font-weight: 600; white-space: nowrap; }
+
+/* ===== 标记纠正弹窗 ===== */
+.mark-sheet-mask {
+  position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45);
+  opacity: 0; visibility: hidden; transition: opacity 200ms ease-out; z-index: 100;
+}
+.mark-sheet-mask.show { opacity: 1; visibility: visible; }
+.mark-sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 101;
+  background: #FFFFFF; border-radius: 28rpx 28rpx 0 0;
+  padding: 24rpx 24rpx calc(24rpx + env(safe-area-inset-bottom));
+  transform: translateY(100%); transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.mark-sheet.show { transform: translateY(0); }
+.mark-sheet-title { text-align: center; font-size: var(--font-caption); color: var(--text-muted); padding: 8rpx 0 16rpx; }
+.mark-sheet-opt {
+  display: flex; align-items: center; justify-content: center; position: relative;
+  height: 96rpx; border-radius: var(--radius-md); font-size: var(--font-title);
+  font-weight: 600; color: var(--text-primary); margin-bottom: 12rpx; background: var(--bg-section);
+}
+.mark-sheet-opt.active { color: var(--brand-primary); background: rgba(var(--brand-rgb), 0.12); }
+.mark-sheet-check { position: absolute; right: 32rpx; font-size: var(--font-title); color: var(--brand-primary); font-weight: 700; }
+.mark-sheet-cancel {
+  display: flex; align-items: center; justify-content: center; height: 96rpx; margin-top: 8rpx;
+  border-radius: var(--radius-md); font-size: var(--font-title); color: var(--text-secondary); background: var(--bg-section);
+}
+
+/* ===== 授权弹窗 ===== */
+.auth-modal { position: fixed; inset: 0; z-index: 999; display: flex; align-items: center; justify-content: center; }
+.auth-mask { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.32); }
+.auth-content {
+  position: relative; width: 82%; background: var(--bg-card); border-radius: var(--radius-xl);
+  padding: var(--space-5) var(--space-4) var(--space-4); box-shadow: var(--shadow-float);
+  display: flex; flex-direction: column; align-items: center;
+}
+.auth-title { font-size: var(--font-h1); font-weight: 700; color: var(--text-primary); margin-bottom: var(--space-1); }
+.auth-subtitle { font-size: var(--font-caption); color: var(--text-muted); margin-bottom: var(--space-5); }
+.avatar-btn { background: transparent; padding: 0; margin: 0; border: none; display: flex; flex-direction: column; align-items: center; }
+.avatar-btn::after { border: none; }
+.temp-avatar { width: 120rpx; height: 120rpx; border-radius: 50%; background: var(--bg-section); box-shadow: var(--shadow-card); }
+.avatar-edit-tip { font-size: var(--font-mini); color: var(--brand-primary); margin-top: var(--space-1); }
+.nickname-input-group {
+  width: 100%; margin-top: var(--space-4); display: flex; align-items: center; height: 80rpx;
+  background: var(--bg-section); border-radius: var(--radius-md); padding: 0 var(--space-3); box-sizing: border-box;
+}
+.input-label { font-size: var(--font-body); color: var(--text-secondary); width: 80rpx; flex-shrink: 0; }
+.nickname-input { flex: 1; font-size: var(--font-body); color: var(--text-primary); }
+.auth-actions { display: flex; width: 100%; margin-top: var(--space-5); gap: var(--space-2); }
+.auth-btn {
+  flex: 1; height: 84rpx; line-height: 84rpx; text-align: center; border-radius: var(--radius-pill);
+  font-size: var(--font-body); font-weight: 600; padding: 0; margin: 0;
+}
+.auth-btn::after { border: none; }
+.auth-btn.cancel { background: var(--bg-section); color: var(--text-secondary); }
+.auth-btn.confirm { background: var(--brand-primary); color: #FFFFFF; box-shadow: var(--shadow-cta); }

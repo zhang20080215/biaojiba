@@ -4,6 +4,7 @@
 import DataLoader from '../../../utils/dataLoader';
 import imageCacheManager from '../../../utils/imageCacheManager';
 var adConfig = require('../../../utils/adConfig');
+var { trackMark, trackShare } = require('../../../utils/track.js');
 var userStore = require('../../../utils/userStore.js');
 var scenicShortName = require('../../../utils/scenicShortName.js').scenicShortName;
 
@@ -362,6 +363,7 @@ Page({
 
     // 统一标记入口：targetStatus 为 'watched'|'wish'|''（''=没去过=取消标记）。乐观更新 + 写 Marks
     setMark(id, targetStatus) {
+        trackMark('scenic5a', targetStatus || 'unmark', 'single', 1); // 埋点：单标记
         const openid = this.getActiveOpenid();
         if (!openid) {
             wx.showModal({
@@ -483,6 +485,7 @@ Page({
         const openid = this.getActiveOpenid();
         if (!openid) { wx.showToast({ title: '请先登录', icon: 'none' }); return; }
 
+        trackMark('scenic5a', status, 'batch', ids.length); // 埋点：批量标记
         wx.showLoading({ title: '批量更新中...' });
         wx.cloud.callFunction({
             name: 'batchUpdateMarks',
@@ -624,10 +627,12 @@ Page({
     },
 
     onShareAppMessage() {
+        trackShare('scenic5a', 'appmsg', this.route);
         return { title: '全国5A旅游景区 - 打卡你走过的山河', path: '/pages/scenic/list/list' };
     },
 
     onShareTimeline() {
+        trackShare('scenic5a', 'timeline', this.route);
         return { title: '全国5A旅游景区 - 打卡你走过的山河', query: '' };
     },
 

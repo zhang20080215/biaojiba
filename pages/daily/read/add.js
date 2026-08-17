@@ -2,6 +2,7 @@ const toast = require('../../../utils/dailyToast.js');
 const imageCache = require('../../../utils/imageCacheManager.js');
 const { addThousandSep } = require('../../../utils/bookFormat.js');
 const { getNavMetrics, todayStr } = require('./common.js');
+const { trackDaily } = require('../../../utils/track.js');
 
 const MOOD_OPTIONS = [
   { key: 'love', emoji: '😍', label: '超爱' },
@@ -453,6 +454,7 @@ Page({
           toast.show(this, '记录失败');
           return;
         }
+        trackDaily('read', this.route); // 埋点：打卡成功
         toast.show(this, '已记录', { icon: 'success' });
         setTimeout(() => {
           wx.navigateBack();

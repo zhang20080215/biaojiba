@@ -1,6 +1,7 @@
 import DataLoader from '../../../utils/dataLoader';
 import imageCacheManager from '../../../utils/imageCacheManager';
 var adConfig = require('../../../utils/adConfig');
+var { trackMark, trackShare } = require('../../../utils/track.js');
 var adManager = require('../../../utils/adManager');
 var userStore = require('../../../utils/userStore.js');
 
@@ -478,6 +479,7 @@ Page({
 
         const movieId = String(e.currentTarget.dataset.id);
         const type = e.currentTarget.dataset.type;
+        trackMark('boxoffice', type, 'single', 1); // 埋点：单标记
         if (!movieId || !type || !openid) {
             wx.showToast({ title: '数据不完整', icon: 'none' });
             return;
@@ -627,6 +629,7 @@ Page({
             wx.showToast({ title: '请先登录', icon: 'none' });
             return;
         }
+        trackMark('boxoffice', status, 'batch', movieIds.length); // 埋点：批量标记
 
         wx.showLoading({ title: '批量更新中...' });
         wx.cloud.callFunction({
@@ -703,6 +706,7 @@ Page({
     },
 
     onShareAppMessage() {
+        trackShare('boxoffice', 'appmsg', this.route);
         return {
             title: '全球电影票房榜 - 见证影史商业传奇',
             path: '/pages/boxoffice/list/list'
@@ -710,6 +714,7 @@ Page({
     },
 
     onShareTimeline() {
+        trackShare('boxoffice', 'timeline', this.route);
         return { title: '全球电影票房榜 - 见证影史商业传奇', query: '' };
     },
 

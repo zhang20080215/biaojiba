@@ -74,11 +74,7 @@
     >
       <view class="feature-body">
         <text class="feature-title">{{item.featureTitle}}</text>
-        <view class="feature-meta">
-          <text wx:if="{{item.userCountText}}" class="feature-count {{item.tintClass}}">{{item.userCountText}}</text>
-        </view>
       </view>
-      <view wx:if="{{item.isNew}}" class="new-badge feature-new {{item.tintClass}}"><text>NEW</text></view>
     </navigator>
   </view>
 
@@ -252,6 +248,14 @@
           <text class="placeholder-emoji">🏛️</text>
           <text class="placeholder-text">一级博物馆</text>
         </view>
+        <view wx:elif="{{item.id === 'travel_provinces'}}" class="cover-placeholder province">
+          <text class="placeholder-emoji">🗺️</text>
+          <text class="placeholder-text">旅游省份</text>
+        </view>
+        <view wx:elif="{{item.id === 'travel_cities'}}" class="cover-placeholder city">
+          <text class="placeholder-emoji">🏙️</text>
+          <text class="placeholder-text">旅游城市</text>
+        </view>
         <view wx:else class="cover-placeholder cloud" style="{{item.coverStyle}}">
           <text class="placeholder-emoji">{{item.placeholderEmoji}}</text>
           <text class="placeholder-text">{{item.title}}</text>
@@ -259,7 +263,7 @@
         <!-- 上面 wx:else 是云端注册表新主题的封面兜底（无对应占位 class，配色走内联 coverStyle） -->
         <view class="cover-mask"></view>
         <text class="cover-tag-label">{{item.tag}}</text>
-        <view wx:if="{{item.id === 'palme_dor_movies' || item.id === 'oscar_screenplay_movies' || item.id === 'oscar_foreign_movies' || item.id === 'rt_action_movies' || item.id === 'letterboxd500_movies' || item.id === 'maodun_books' || item.id === 'newbery_books' || item.id === 'oscar_director_movies' || item.id === 'oscar_vfx_movies' || item.id === 'oscar_actor_movies' || item.id === 'oscar_actress_movies' || item.id === 'scenic_5a' || item.newBadge}}" class="new-badge">
+        <view wx:if="{{item.id === 'palme_dor_movies' || item.id === 'oscar_screenplay_movies' || item.id === 'oscar_foreign_movies' || item.id === 'rt_action_movies' || item.id === 'letterboxd500_movies' || item.id === 'maodun_books' || item.id === 'newbery_books' || item.id === 'oscar_director_movies' || item.id === 'oscar_vfx_movies' || item.id === 'oscar_actor_movies' || item.id === 'oscar_actress_movies' || item.newBadge}}" class="new-badge">
           <text>NEW</text>
         </view>
         <view wx:if="{{item.wishFrom}}" class="wish-badge">
@@ -394,6 +398,14 @@
           <text class="placeholder-emoji">🏛️</text>
           <text class="placeholder-text">一级博物馆</text>
         </view>
+        <view wx:elif="{{item.id === 'travel_provinces'}}" class="cover-placeholder province">
+          <text class="placeholder-emoji">🗺️</text>
+          <text class="placeholder-text">旅游省份</text>
+        </view>
+        <view wx:elif="{{item.id === 'travel_cities'}}" class="cover-placeholder city">
+          <text class="placeholder-emoji">🏙️</text>
+          <text class="placeholder-text">旅游城市</text>
+        </view>
         <view wx:else class="cover-placeholder cloud" style="{{item.coverStyle}}">
           <text class="placeholder-emoji">{{item.placeholderEmoji}}</text>
           <text class="placeholder-text">{{item.title}}</text>
@@ -401,7 +413,7 @@
         <!-- 上面 wx:else 是云端注册表新主题的封面兜底（无对应占位 class，配色走内联 coverStyle） -->
         <view class="cover-mask"></view>
         <text class="cover-tag-label">{{item.tag}}</text>
-        <view wx:if="{{item.id === 'palme_dor_movies' || item.id === 'oscar_screenplay_movies' || item.id === 'oscar_foreign_movies' || item.id === 'rt_action_movies' || item.id === 'letterboxd500_movies' || item.id === 'maodun_books' || item.id === 'newbery_books' || item.id === 'oscar_director_movies' || item.id === 'oscar_vfx_movies' || item.id === 'oscar_actor_movies' || item.id === 'oscar_actress_movies' || item.id === 'scenic_5a' || item.newBadge}}" class="new-badge">
+        <view wx:if="{{item.id === 'palme_dor_movies' || item.id === 'oscar_screenplay_movies' || item.id === 'oscar_foreign_movies' || item.id === 'rt_action_movies' || item.id === 'letterboxd500_movies' || item.id === 'maodun_books' || item.id === 'newbery_books' || item.id === 'oscar_director_movies' || item.id === 'oscar_vfx_movies' || item.id === 'oscar_actor_movies' || item.id === 'oscar_actress_movies' || item.newBadge}}" class="new-badge">
           <text>NEW</text>
         </view>
         <view wx:if="{{item.wishFrom}}" class="wish-badge">

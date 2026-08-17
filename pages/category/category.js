@@ -71,7 +71,7 @@ Page({
     themes: [
       {
         id: 'scenic_5a',
-        title: '全国5A旅游景区',
+        title: '5A景区',
         description: '打卡你走过的山河，攒成专属旅行足迹',
         image: '',
         tintClass: 'scenic',
@@ -84,7 +84,7 @@ Page({
       },
       {
         id: 'museum_grade1',
-        title: '中国国家一级博物馆',
+        title: '博物馆',
         description: '打卡你走过的博物馆，收藏一整部文明史',
         image: '',
         tintClass: 'museum',
@@ -93,6 +93,32 @@ Page({
         category: 'travel',
         isNew: true,
         url: '/pages/museum/list/list'
+      },
+      {
+        id: 'travel_provinces',
+        title: '省份旅游',
+        description: '点亮你走过的省份，拼出专属中国足迹',
+        image: '',
+        tintClass: 'province',
+        userCount: 0,
+        tag: '旅行',
+        category: 'travel',
+        isNew: true,
+        hidden: true,        // 随包上线但先不开放入口（去掉此行即放开）
+        url: '/pages/province/list/list'
+      },
+      {
+        id: 'travel_cities',
+        title: '城市旅游',
+        description: '打卡中国优秀旅游城市，收藏你走过的城',
+        image: '',
+        tintClass: 'city',
+        userCount: 0,
+        tag: '旅行',
+        category: 'travel',
+        isNew: true,
+        hidden: true,        // 随包上线但先不开放入口（去掉此行即放开）
+        url: '/pages/city/list/list'
       },
       {
         id: 'oscar_foreign_movies',
@@ -730,8 +756,8 @@ Page({
   },
 
   filterThemes(tab) {
-    // 每日主题已独立到顶部横排块，下方网格只放非 daily 主题
-    const themes = (this.data.themes || []).filter(t => t.category !== 'daily');
+    // 每日主题已独立到顶部横排块，下方网格只放非 daily 主题；hidden 主题随包上线但不展示入口
+    const themes = (this.data.themes || []).filter(t => t.category !== 'daily' && !t.hidden);
     let filtered;
     if (tab === 'all') {
       filtered = themes;
@@ -768,8 +794,9 @@ Page({
 
     // 「旅行打卡」专属推荐区：5A 景区 + 国家一级博物馆并排（不随分类 tab 变化，始终展示）
     const TRAVEL_FEATURE_DEFS = [
-      { id: 'scenic_5a', emoji: '🏞️', featureTitle: '全国5A景区' },
-      { id: 'museum_grade1', emoji: '🏛️', featureTitle: '全国博物馆' }
+      { id: 'scenic_5a', emoji: '🏞️', featureTitle: '5A景区' },
+      { id: 'museum_grade1', emoji: '🏛️', featureTitle: '博物馆' }
+      // 省份旅游 / 城市旅游随包上线但暂不开放入口（去 themes 里的 hidden + 在此加回两行即放开）
     ];
     const travelFeatures = TRAVEL_FEATURE_DEFS.map(def => {
       const t = (this.data.themes || []).find(x => x.id === def.id);
@@ -792,7 +819,7 @@ Page({
   onOpenPinManager() {
     const pinnedIds = this.data.pinnedIds || [];
     const pinnedSet = new Set(pinnedIds);
-    const all = (this.data.themes || []).filter(t => t.category !== 'daily');
+    const all = (this.data.themes || []).filter(t => t.category !== 'daily' && !t.hidden);
     // 已置顶的按 pinnedIds 顺序排在管理列表前面，方便查看/取消；其余保持网格原顺序
     const pinnedItems = [];
     pinnedIds.forEach(id => {
@@ -1008,11 +1035,8 @@ Page({
         { id: 'douban_books', collection: 'douban_books', topFiltered: true, marksCollection: 'BookMarks', idField: 'bookId', source: 'douban' },
         { id: 'weread_books', collection: 'weread_books', topFiltered: true, marksCollection: 'BookMarks', idField: 'bookId', source: 'weread' },
         { id: 'maodun_books', collection: 'generic_theme_books', theme: 'maodun', topFiltered: false, marksCollection: 'BookMarks', idField: 'bookId', source: 'maodun' },
-        { id: 'newbery_books', collection: 'generic_theme_books', theme: 'newbery', topFiltered: false, marksCollection: 'BookMarks', idField: 'bookId', source: 'newbery' },
-        // 旅游：专属集合 scenic_5a，标记复用 Marks（movieId=景区_id）
-        { id: 'scenic_5a', collection: 'scenic_5a', topFiltered: false },
-        // 博物馆：专属集合 museum_grade1，标记复用 Marks（movieId=博物馆_id）
-        { id: 'museum_grade1', collection: 'museum_grade1', theme: 'museum', topFiltered: false }
+        { id: 'newbery_books', collection: 'generic_theme_books', theme: 'newbery', topFiltered: false, marksCollection: 'BookMarks', idField: 'bookId', source: 'newbery' }
+        // 旅游四个主题（5A景区/博物馆/省份/城市）不在此统计人数：卡片不展示人数标签
       ];
 
     // 云端注册表新主题：按 type 拼参与人数统计配置（电影走 Marks，书走 BookMarks）

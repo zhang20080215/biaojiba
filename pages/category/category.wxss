@@ -750,6 +750,18 @@
 .feature-count.museum { color: #8C6239; background: rgba(140, 98, 57, 0.10); }
 .feature-new.museum { background: rgba(140, 98, 57, 0.92); }
 
+/* 旅游省份卡靛蓝变体 */
+.feature-card.province { box-shadow: 0 6rpx 20rpx rgba(58, 110, 165, 0.14); }
+.feature-cover.province { background: linear-gradient(135deg, #6C97C4 0%, #3A6EA5 100%); }
+.feature-count.province { color: #3A6EA5; background: rgba(58, 110, 165, 0.10); }
+.feature-new.province { background: rgba(58, 110, 165, 0.92); }
+
+/* 旅游城市卡暖橙变体 */
+.feature-card.city { box-shadow: 0 6rpx 20rpx rgba(201, 116, 58, 0.14); }
+.feature-cover.city { background: linear-gradient(135deg, #E0A06E 0%, #C9743A 100%); }
+.feature-count.city { color: #C9743A; background: rgba(201, 116, 58, 0.10); }
+.feature-new.city { background: rgba(201, 116, 58, 0.92); }
+
 /* 奥斯卡 badge */
 .oscar-icon {
   position: absolute;
@@ -833,6 +845,12 @@
 }
 .cover-placeholder.museum {
   background: linear-gradient(135deg, #B98E56 0%, #8C6239 100%);
+}
+.cover-placeholder.province {
+  background: linear-gradient(135deg, #6C97C4 0%, #3A6EA5 100%);
+}
+.cover-placeholder.city {
+  background: linear-gradient(135deg, #E0A06E 0%, #C9743A 100%);
 }
 .cover-placeholder .placeholder-emoji {
   font-size: 56rpx;
