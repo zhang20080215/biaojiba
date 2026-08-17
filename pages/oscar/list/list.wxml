@@ -71,10 +71,10 @@
             <text class="movie-ceremony">第{{item.rank}}届</text>
             <view class="movie-action" wx:if="{{!isBatchEditing}}">
               <block wx:if="{{markStatusMap[item._id] === 'watched'}}">
-                <view class="mark-status"><text class="mark-text watched">{{markDateMap[item._id]}}已看</text></view>
+                <view class="mark-status" data-id="{{item._id}}" catchtap="onOpenMarkSheet"><text class="mark-text watched">{{markDateMap[item._id]}}已看 ▾</text></view>
               </block>
               <block wx:elif="{{markStatusMap[item._id] === 'wish'}}">
-                <view class="mark-status"><text class="mark-text wish">{{markDateMap[item._id]}}想看</text></view>
+                <view class="mark-status" data-id="{{item._id}}" catchtap="onOpenMarkSheet"><text class="mark-text wish">{{markDateMap[item._id]}}想看 ▾</text></view>
               </block>
               <block wx:else>
                 <view class="mark-buttons">
@@ -119,6 +119,25 @@
     </view>
     <view class="share-sheet-cancel" bindtap="onCloseShareModal">取消</view>
   </view>
+</view>
+
+<!-- 标记纠正弹窗（已看/想看/没看过） -->
+<view class="mark-sheet-mask {{markSheetVisible ? 'show' : ''}}" catchtap="onCloseMarkSheet"></view>
+<view class="mark-sheet {{markSheetVisible ? 'show' : ''}}">
+  <view class="mark-sheet-title">修改标记</view>
+  <view class="mark-sheet-opt {{markSheetStatus === 'watched' ? 'active' : ''}}" data-status="watched" catchtap="onMarkSheetPick">
+    <text class="mark-sheet-opt-text">已看</text>
+    <text wx:if="{{markSheetStatus === 'watched'}}" class="mark-sheet-check">✓</text>
+  </view>
+  <view class="mark-sheet-opt {{markSheetStatus === 'wish' ? 'active' : ''}}" data-status="wish" catchtap="onMarkSheetPick">
+    <text class="mark-sheet-opt-text">想看</text>
+    <text wx:if="{{markSheetStatus === 'wish'}}" class="mark-sheet-check">✓</text>
+  </view>
+  <view class="mark-sheet-opt {{!markSheetStatus ? 'active' : ''}}" data-status="" catchtap="onMarkSheetPick">
+    <text class="mark-sheet-opt-text">没看过</text>
+    <text wx:if="{{!markSheetStatus}}" class="mark-sheet-check">✓</text>
+  </view>
+  <view class="mark-sheet-cancel" catchtap="onCloseMarkSheet">取消</view>
 </view>
 
 <!-- 个人信息授权弹窗（使用 hidden 避免 type="nickname" 原生输入框销毁时报错） -->

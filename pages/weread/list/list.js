@@ -36,6 +36,9 @@ Page({
         showAuthModal: false,
         customToast: '',
         customToastVisible: false,
+        markSheetVisible: false,
+        markSheetId: '',
+        markSheetStatus: '',
         showSharePicker: false,
         tempAvatar: '',
         tempNickname: '',
@@ -486,7 +489,39 @@ Page({
         });
     },
 
+    // 未标记时的快捷按钮（想读/已读）
     onMarkTap(e) {
+        const bookId = String(e.currentTarget.dataset.id);
+        const type = e.currentTarget.dataset.type;
+        if (!bookId || !type) { wx.showToast({ title: '数据不完整', icon: 'none' }); return; }
+        this.setMark(bookId, type);
+    },
+
+    // 点击已标记的标签 → 打开纠正弹窗（已读/想读/没读过）
+    onOpenMarkSheet(e) {
+        if (!this.getActiveOpenid()) {
+            wx.showModal({
+                title: '提示', content: '请登录后再进行标记', confirmText: '去登录',
+                success: (res) => { if (res.confirm) this.onGetUserProfile(); }
+            });
+            return;
+        }
+        const bookId = String(e.currentTarget.dataset.id);
+        if (!bookId) return;
+        this.setData({ markSheetVisible: true, markSheetId: bookId, markSheetStatus: this.data.markStatusMap[bookId] || '' });
+    },
+
+    onMarkSheetPick(e) {
+        const status = e.currentTarget.dataset.status || '';   // 'read' | 'wish' | ''(没读过)
+        const bookId = this.data.markSheetId;
+        this.setData({ markSheetVisible: false });
+        if (bookId) this.setMark(bookId, status);
+    },
+
+    onCloseMarkSheet() { this.setData({ markSheetVisible: false }); },
+
+    // 统一标记入口：targetStatus 为 'read'|'wish'|''（''=没读过=取消标记）。乐观更新 + 写 BookMarks
+    setMark(bookId, targetStatus) {
         const openid = this.getActiveOpenid();
         if (!openid) {
             wx.showModal({
@@ -495,52 +530,75 @@ Page({
             });
             return;
         }
+        bookId = String(bookId);
+        if (!bookId) return;
+        const currentStatus = this.data.markStatusMap[bookId] || '';
+        if (currentStatus === targetStatus) return;
 
-        const bookId = String(e.currentTarget.dataset.id);
-        const type = e.currentTarget.dataset.type; // 'read' | 'wish'
-        trackMark('weread', type, 'single', 1); // 埋点：单标记
-        const runOptimisticMark = () => {
-            if (!this._pendingMarkMap) this._pendingMarkMap = {};
-            if (this._pendingMarkMap[bookId]) return;
+        trackMark('weread', targetStatus || 'unmark', 'single', 1); // 埋点：单标记
+        if (!this._pendingMarkMap) this._pendingMarkMap = {};
+        if (this._pendingMarkMap[bookId]) return;
 
-            const snapshot = {
-                status: this.data.markStatusMap[bookId] || '',
-                date: this.data.markDateMap[bookId] || '',
-                recordId: this.data.markRecordIdMap[bookId] || ''
-            };
-            const now = new Date().toISOString();
-            const db = wx.cloud.database();
-            const existingRecordId = this.data.markRecordIdMap[bookId];
-
-            this._pendingMarkMap[bookId] = true;
-            this.applySingleMarkLocally(bookId, type, now, existingRecordId);
-            this.showCustomToast(type === 'read' ? '✓ 已标记为已读' : '✓ 已标记为想读');
-
-            const persistMark = existingRecordId
-                ? db.collection('BookMarks').doc(existingRecordId).update({
-                    data: { status: type, marked_at: now }
-                })
-                : db.collection('BookMarks').add({
-                    data: { bookId, openid, status: type, marked_at: now, source: 'weread' }
-                });
-
-            persistMark.then(res => {
-                if (!existingRecordId && res && res._id) {
-                    const markRecordIdMap = { ...this.data.markRecordIdMap, [bookId]: res._id };
-                    this.setData({ markRecordIdMap });
-                }
-            }).catch(err => {
-                console.error('标记失败:', err);
-                this.restoreSingleMarkLocally(bookId, snapshot);
-                wx.showToast({ title: '标记失败，请重试', icon: 'none' });
-            }).finally(() => {
-                delete this._pendingMarkMap[bookId];
-            });
+        const snapshot = {
+            status: currentStatus,
+            date: this.data.markDateMap[bookId] || '',
+            recordId: this.data.markRecordIdMap[bookId] || ''
         };
-        if (!bookId || !type || !openid) {
-            wx.showToast({ title: '数据不完整', icon: 'none' }); return;
+        const db = wx.cloud.database();
+        const existingRecordId = this.data.markRecordIdMap[bookId];
+        this._pendingMarkMap[bookId] = true;
+
+        if (!targetStatus) {
+            this.clearSingleMarkLocally(bookId);
+            this.showCustomToast('已取消标记');
+            const persist = existingRecordId
+                ? db.collection('BookMarks').doc(existingRecordId).remove()
+                : db.collection('BookMarks').where({ bookId, openid }).remove();
+            persist.catch(err => {
+                console.error('取消标记失败:', err);
+                this.restoreSingleMarkLocally(bookId, snapshot);
+                wx.showToast({ title: '取消失败，请重试', icon: 'none' });
+            }).finally(() => { delete this._pendingMarkMap[bookId]; });
+            return;
         }
-        runOptimisticMark();
+
+        const now = new Date().toISOString();
+        this.applySingleMarkLocally(bookId, targetStatus, now, existingRecordId);
+        this.showCustomToast(targetStatus === 'read' ? '✓ 已标记为已读' : '✓ 已标记为想读');
+
+        const persist = existingRecordId
+            ? db.collection('BookMarks').doc(existingRecordId).update({ data: { status: targetStatus, marked_at: now } })
+            : db.collection('BookMarks').add({ data: { bookId, openid, status: targetStatus, marked_at: now, source: 'weread' } });
+
+        persist.then(res => {
+            if (!existingRecordId && res && res._id) {
+                this.setData({ markRecordIdMap: { ...this.data.markRecordIdMap, [bookId]: res._id } });
+            }
+        }).catch(err => {
+            console.error('标记失败:', err);
+            this.restoreSingleMarkLocally(bookId, snapshot);
+            wx.showToast({ title: '标记失败，请重试', icon: 'none' });
+        }).finally(() => {
+            delete this._pendingMarkMap[bookId];
+        });
+    },
+
+    clearSingleMarkLocally(bookId) {
+        const markStatusMap = { ...this.data.markStatusMap };
+        const markDateMap = { ...this.data.markDateMap };
+        const markRecordIdMap = { ...this.data.markRecordIdMap };
+        delete markStatusMap[bookId];
+        delete markDateMap[bookId];
+        delete markRecordIdMap[bookId];
+
+        const { readCount, wishCount, unreadCount } = this.recalculateMarkStats(markStatusMap);
+        const nextData = {
+            markStatusMap, markDateMap, markRecordIdMap,
+            readCount, wishCount, unreadCount,
+            ...this.buildReadProgress(readCount, this.data.allBooks.length)
+        };
+        if (this.data.activeTab === 0) this.setData(nextData);
+        else this.setData(nextData, () => this.refreshBooksAfterMarkChange());
     },
 
     showCustomToast(msg) {

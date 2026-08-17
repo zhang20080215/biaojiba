@@ -869,3 +869,72 @@ page {
   color: var(--text-primary);
   box-shadow: var(--shadow-cta);
 }
+
+/* ===== 标记纠正弹窗（点击已标记标签弹出） ===== */
+.mark-sheet-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 200ms ease-out;
+  z-index: 200;
+}
+.mark-sheet-mask.show { opacity: 1; visibility: visible; }
+.mark-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 201;
+  background: #FFFFFF;
+  border-radius: 28rpx 28rpx 0 0;
+  padding: 24rpx 24rpx calc(24rpx + env(safe-area-inset-bottom));
+  transform: translateY(100%);
+  transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.mark-sheet.show { transform: translateY(0); }
+.mark-sheet-title {
+  text-align: center;
+  font-size: var(--font-caption);
+  color: var(--text-muted);
+  padding: 8rpx 0 16rpx;
+}
+.mark-sheet-opt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  height: 100rpx;
+  border-radius: var(--radius-md);
+  font-size: var(--font-title);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12rpx;
+  background: var(--bg-section);
+}
+.mark-sheet-opt.active {
+  color: var(--text-primary);
+  font-weight: 700;
+  background: rgba(0, 0, 0, 0.05);
+}
+.mark-sheet-opt:active { opacity: 0.85; }
+.mark-sheet-check {
+  position: absolute;
+  right: 32rpx;
+  font-size: var(--font-title);
+  color: var(--success);
+  font-weight: 700;
+}
+.mark-sheet-cancel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100rpx;
+  margin-top: 8rpx;
+  border-radius: var(--radius-md);
+  font-size: var(--font-title);
+  color: var(--text-secondary);
+  background: var(--bg-section);
+}
+.mark-sheet-cancel:active { opacity: 0.85; }

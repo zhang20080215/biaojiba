@@ -36,6 +36,9 @@ Page({
         showAuthModal: false,
         customToast: '',
         customToastVisible: false,
+        markSheetVisible: false,
+        markSheetId: '',
+        markSheetStatus: '',
         showSharePicker: false,
         subscribeBucketIn: false,
         tempAvatar: '',
@@ -547,7 +550,39 @@ Page({
         });
     },
 
+    // 未标记时的快捷按钮（想看/已看）
     onMarkTap(e) {
+        const movieId = String(e.currentTarget.dataset.id);
+        const type = e.currentTarget.dataset.type;
+        if (!movieId || !type) { wx.showToast({ title: '数据不完整', icon: 'none' }); return; }
+        this.setMark(movieId, type);
+    },
+
+    // 点击已标记的标签 → 打开纠正弹窗（已看/想看/没看过）
+    onOpenMarkSheet(e) {
+        if (!this.getActiveOpenid()) {
+            wx.showModal({
+                title: '提示', content: '请登录后再进行标记', confirmText: '去登录',
+                success: (res) => { if (res.confirm) this.onGetUserProfile(); }
+            });
+            return;
+        }
+        const movieId = String(e.currentTarget.dataset.id);
+        if (!movieId) return;
+        this.setData({ markSheetVisible: true, markSheetId: movieId, markSheetStatus: this.data.markStatusMap[movieId] || '' });
+    },
+
+    onMarkSheetPick(e) {
+        const status = e.currentTarget.dataset.status || '';
+        const movieId = this.data.markSheetId;
+        this.setData({ markSheetVisible: false });
+        if (movieId) this.setMark(movieId, status);
+    },
+
+    onCloseMarkSheet() { this.setData({ markSheetVisible: false }); },
+
+    // 统一标记入口：targetStatus 为 'watched'|'wish'|''（''=没看过=取消标记）
+    setMark(movieId, targetStatus) {
         const openid = this.getActiveOpenid();
         if (!openid) {
             wx.showModal({
@@ -556,52 +591,75 @@ Page({
             });
             return;
         }
+        movieId = String(movieId);
+        if (!movieId) return;
+        const currentStatus = this.data.markStatusMap[movieId] || '';
+        if (currentStatus === targetStatus) return;
 
-        const movieId = String(e.currentTarget.dataset.id);
-        const type = e.currentTarget.dataset.type;
-        trackMark('douban', type, 'single', 1); // 埋点：单标记
-        const runOptimisticMark = () => {
-            if (!this._pendingMarkMap) this._pendingMarkMap = {};
-            if (this._pendingMarkMap[movieId]) return;
+        trackMark('douban', targetStatus || 'unmark', 'single', 1); // 埋点：单标记
+        if (!this._pendingMarkMap) this._pendingMarkMap = {};
+        if (this._pendingMarkMap[movieId]) return;
 
-            const snapshot = {
-                status: this.data.markStatusMap[movieId] || '',
-                date: this.data.markDateMap[movieId] || '',
-                recordId: this.data.markRecordIdMap[movieId] || ''
-            };
-            const now = new Date().toISOString();
-            const db = wx.cloud.database();
-            const existingRecordId = this.data.markRecordIdMap[movieId];
-
-            this._pendingMarkMap[movieId] = true;
-            this.applySingleMarkLocally(movieId, type, now, existingRecordId);
-            this.showCustomToast(type === 'watched' ? '✓ 已标记为已看' : '✓ 已标记为想看');
-
-            const persistMark = existingRecordId
-                ? db.collection('Marks').doc(existingRecordId).update({
-                    data: { status: type, marked_at: now }
-                })
-                : db.collection('Marks').add({
-                    data: { movieId, openid, status: type, marked_at: now }
-                });
-
-            persistMark.then(res => {
-                if (!existingRecordId && res && res._id) {
-                    const markRecordIdMap = { ...this.data.markRecordIdMap, [movieId]: res._id };
-                    this.setData({ markRecordIdMap });
-                }
-            }).catch(err => {
-                console.error('标记失败:', err);
-                this.restoreSingleMarkLocally(movieId, snapshot);
-                wx.showToast({ title: '标记失败，请重试', icon: 'none' });
-            }).finally(() => {
-                delete this._pendingMarkMap[movieId];
-            });
+        const snapshot = {
+            status: currentStatus,
+            date: this.data.markDateMap[movieId] || '',
+            recordId: this.data.markRecordIdMap[movieId] || ''
         };
-        if (!movieId || !type || !openid) {
-            wx.showToast({ title: '数据不完整', icon: 'none' }); return;
+        const db = wx.cloud.database();
+        const existingRecordId = this.data.markRecordIdMap[movieId];
+        this._pendingMarkMap[movieId] = true;
+
+        if (!targetStatus) {
+            this.clearSingleMarkLocally(movieId);
+            this.showCustomToast('已取消标记');
+            const persist = existingRecordId
+                ? db.collection('Marks').doc(existingRecordId).remove()
+                : db.collection('Marks').where({ movieId, openid }).remove();
+            persist.catch(err => {
+                console.error('取消标记失败:', err);
+                this.restoreSingleMarkLocally(movieId, snapshot);
+                wx.showToast({ title: '取消失败，请重试', icon: 'none' });
+            }).finally(() => { delete this._pendingMarkMap[movieId]; });
+            return;
         }
-        runOptimisticMark();
+
+        const now = new Date().toISOString();
+        this.applySingleMarkLocally(movieId, targetStatus, now, existingRecordId);
+        this.showCustomToast(targetStatus === 'watched' ? '✓ 已标记为已看' : '✓ 已标记为想看');
+
+        const persist = existingRecordId
+            ? db.collection('Marks').doc(existingRecordId).update({ data: { status: targetStatus, marked_at: now } })
+            : db.collection('Marks').add({ data: { movieId, openid, status: targetStatus, marked_at: now } });
+
+        persist.then(res => {
+            if (!existingRecordId && res && res._id) {
+                this.setData({ markRecordIdMap: { ...this.data.markRecordIdMap, [movieId]: res._id } });
+            }
+        }).catch(err => {
+            console.error('标记失败:', err);
+            this.restoreSingleMarkLocally(movieId, snapshot);
+            wx.showToast({ title: '标记失败，请重试', icon: 'none' });
+        }).finally(() => {
+            delete this._pendingMarkMap[movieId];
+        });
+    },
+
+    clearSingleMarkLocally(movieId) {
+        const markStatusMap = { ...this.data.markStatusMap };
+        const markDateMap = { ...this.data.markDateMap };
+        const markRecordIdMap = { ...this.data.markRecordIdMap };
+        delete markStatusMap[movieId];
+        delete markDateMap[movieId];
+        delete markRecordIdMap[movieId];
+
+        const { watchedCount, wishCount, unwatchedCount } = this.recalculateMarkStats(markStatusMap);
+        const nextData = {
+            markStatusMap, markDateMap, markRecordIdMap,
+            watchedCount, wishCount, unwatchedCount,
+            ...this.buildWatchedProgress(watchedCount, this.data.allMovies.length)
+        };
+        if (this.data.activeTab === 0) this.setData(nextData);
+        else this.setData(nextData, () => this.refreshMoviesAfterMarkChange());
     },
 
     showCustomToast(msg) {
