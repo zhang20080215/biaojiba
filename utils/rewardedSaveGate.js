@@ -55,6 +55,9 @@ function awaitOpenid(page, timeoutMs) {
 
 function isGated(openid) {
   if (!openid) return false
+  // 熔断兜底：连续多次广告侧异常后本地自动停闸 2 小时，之后自动恢复。
+  // 广告链路再出问题时，用户不必每次保存都白等超时，也不用等云端配置或发版。
+  if (rewardedAdManager.isCircuitOpen()) return false
   const forced = adConfig.isForcedIntoGray(PLACEMENT, openid)
   if (!forced) {
     const percentage = adConfig.getGrayPercentage(PLACEMENT)
@@ -93,19 +96,26 @@ function refreshHint(page) {
  * @returns {Promise<boolean>} true=放行继续保存，false=未完播应中止
  */
 async function ensureGrant(page) {
-  // 等 openid 到位再判灰度；冷启动窗口期 openid 为空时直接放行会绕过闸门。
-  // 超时兜底仍放行，避免 cloud 异常时阻塞正常保存——极端 case，不是灰度用户预期路径。
-  const openid = await awaitOpenid(page, 1500)
-  const gated = isGated(openid)
-  // 每次保存尝试都埋点：gated=1 表示本次需看广告，用于观察“每次看广告”改动对保存量的影响
-  track('poster_save', { route: (page && page.route) || '', gated: gated ? 1 : 0 })
-  if (!gated) return true
+  // 整个闸门包在 try 里：这里抛任何异常都会让 20 个页面的 saveImage 静默中止，
+  // 用户点了没反应。广告链路出任何意外，一律放行保存。
+  try {
+    // 等 openid 到位再判灰度；冷启动窗口期 openid 为空时直接放行会绕过闸门。
+    // 超时兜底仍放行，避免 cloud 异常时阻塞正常保存——极端 case，不是灰度用户预期路径。
+    const openid = await awaitOpenid(page, 1500)
+    const gated = isGated(openid)
+    // 每次保存尝试都埋点：gated=1 表示本次需看广告，用于观察“每次看广告”改动对保存量的影响
+    track('poster_save', { route: (page && page.route) || '', gated: gated ? 1 : 0 })
+    if (!gated) return true
 
-  const watched = await rewardedAdManager.show(PLACEMENT, page)
-  if (!watched) return false
+    const watched = await rewardedAdManager.show(PLACEMENT, page)
+    if (!watched) return false
 
-  // 每次保存都需观看广告：不写当天授权，下次保存仍会触发闸门，needRewardedAd 保持为 true
-  return true
+    // 每次保存都需观看广告：不写当天授权，下次保存仍会触发闸门，needRewardedAd 保持为 true
+    return true
+  } catch (err) {
+    console.warn('[rewardedSaveGate] ensureGrant 异常，放行保存', err)
+    return true
+  }
 }
 
 module.exports = {

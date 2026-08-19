@@ -50,23 +50,25 @@ const adConfig = {
 
 // ── 远程配置缓存 key ──
 var CACHE_KEY = 'ad_remote_config'
-var CACHE_TTL = 3600000 // 1小时缓存
 
 /**
  * 从云端拉取广告配置并合并到本地（启动时调用一次）
- * 优先使用本地缓存，过期后异步刷新
+ *
+ * stale-while-revalidate：先用本地缓存立即生效（不阻塞启动），再**无条件**异步刷新。
+ * 原先是「缓存 1 小时内直接 return 不请求云端」——出事时那 1 小时就是止血延迟的下限，
+ * 且杀进程重进也没用。改成每次冷启都刷新后，云端改配置在用户下一次冷启动即生效；
+ * 代价是每次冷启多一次数据库读（按日打开次数计，远在免费额度内）。
  */
 function fetchRemoteConfig() {
-  // 1. 先尝试读取本地缓存
+  // 1. 有缓存就先套用，保证启动瞬间就有配置可用
   try {
     var cached = wx.getStorageSync(CACHE_KEY)
-    if (cached && cached.data && (Date.now() - cached.timestamp < CACHE_TTL)) {
+    if (cached && cached.data) {
       _applyRemoteConfig(cached.data)
-      return // 缓存未过期，直接使用
     }
   } catch (e) { /* ignore */ }
 
-  // 2. 从云数据库拉取
+  // 2. 再从云数据库拉一次最新的覆盖上去
   if (!wx.cloud) return
   var db = wx.cloud.database()
   db.collection('app_config').where({ key: 'ad_config' }).limit(1).get().then(function (res) {

@@ -1,168 +1,269 @@
 const { getPlacement } = require('./adConfig')
 const { track } = require('./track')
 
-function _routeOf(page) {
-  return (page && page.route) || ''
-}
+/**
+ * 激励视频广告管理
+ *
+ * ── 关于实例 ──
+ * wx.createRewardedVideoAd 对同一个 adUnitId **只有一个实例**（SDK 单例）。
+ * 但它又是原生组件，绑定「最后一次 create 它的页面」——在别的页面调 show() 会抛
+ * "you can only invoke show() on the page where rewardedVideoAd is created"。
+ * 所以：每次 preload/show 都重新 create 一次（拿回同一个实例并重绑到当前页），
+ * 而所有状态（监听器、素材就绪、当前等待者）都挂在**实例**上，天然跨页面共享。
+ *
+ * 历史坑（v1.0.40 线上事故，2026-08）：
+ * 1. 之前把实例按页面缓存，跨页面走回头路时没重绑 → show() 直接抛错；
+ * 2. 每次 show 都 onClose/onError 注册一遍，单例上监听器越积越多，
+ *    旧页面的 handler 会在新页面弹出「未完整观看广告」；
+ * 3. 播完后不 load 下一条，第二次 show() 素材没就绪必 reject；
+ * 4. reject 出来的对象常常不带 errCode（错误码走 onError 单独下发），
+ *    只放行 1004/1005 的写法把其余全判成失败 → 弹「广告加载失败」并拒绝保存。
+ * 「每次保存都看广告」的策略下，第 2 次保存是每个用户的必经路径，于是全量卡死。
+ *
+ * ── 现在的约定 ──
+ * · 监听器只绑一次（实例上打 __xbjBound 标记），用「当前等待者」分发结果；
+ * · onClose 后立刻 load 下一条，为下一次保存备料；
+ * · show 前若素材没就绪，先 load 并给一个轻量 loading，避免用户干等；
+ * · 广告侧任何失败（无填充/内部错误/超时/无广告位）一律**放行保存**。
+ *   广告是变现手段，不能挡住用户存图——只有「用户主动中途关掉视频」才拦。
+ */
 
-// 激励视频广告管理
-// 约束：wx.createRewardedVideoAd 返回的实例是「页面作用域」的——页面 A
-// 创建的实例在页面 B 调用 .show() 会抛
-// "you can only invoke show() on the page where rewardedVideoAd is created"
-// 解决：实例与「正在播放的 Promise」都按页面对象缓存（挂在 page 上）。
-// 模块级单例曾导致一个 corner case：用户在广告关闭事件触发前跳页，
-// activeShowPromise 永远不会 resolve，下一次在别的页面调用 show() 直接
-// 返回已死的 promise，save 闸门卡死。改成 page-scoped 后，页面 GC 随之销毁。
-const PAGE_AD_PROP = '__xbj_rewardedAd__'
+// 从点保存到广告真正出现的兜底时限。超时即放行：
+// load() 有可能既不 resolve 也不 reject，否则页面会永远卡在「生成中」。
+var SHOW_TIMEOUT_MS = 6000
+// 广告已经显示出来之后，等 onClose 的兜底时限。正常激励视频不超过 60s，
+// 这里只防「回调永远不来」导致等待者残留、把后续所有 show 都挡住。
+var CLOSE_TIMEOUT_MS = 180000
 
-function _createInstance(placementName) {
-  if (!wx.createRewardedVideoAd) return null
-  var placement = getPlacement(placementName)
-  if (!placement || placement.type !== 'rewarded' || !placement.unitId) return null
+// ── 熔断兜底 ──
+// 连续多次广告侧异常（不含无填充/用户主动关闭）后，本地自动停闸一段时间。
+// 目的：万一广告链路又出问题，用户不必每次保存都白等 6 秒超时，也不必等
+// 云端改 app_config 或等发版——客户端自己降级，之后自动恢复。
+var FUSE_KEY = 'rewarded_ad_fuse'
+var FUSE_THRESHOLD = 3
+var FUSE_DURATION_MS = 2 * 60 * 60 * 1000
+
+function _readFuse() {
   try {
-    return wx.createRewardedVideoAd({ adUnitId: placement.unitId })
-  } catch (err) {
-    console.error('[rewardedAdManager] createRewardedVideoAd failed', err)
+    return wx.getStorageSync(FUSE_KEY) || null
+  } catch (e) {
     return null
   }
 }
 
-function _getPageEntry(page, placementName) {
-  if (!page) return null
-  var bucket = page[PAGE_AD_PROP]
-  return (bucket && bucket[placementName]) || null
+function _writeFuse(value) {
+  try {
+    wx.setStorageSync(FUSE_KEY, value)
+  } catch (e) { /* ignore */ }
 }
 
-function _ensurePageEntry(page, placementName) {
-  if (!page) return null
-  if (!page[PAGE_AD_PROP]) page[PAGE_AD_PROP] = {}
-  if (!page[PAGE_AD_PROP][placementName]) page[PAGE_AD_PROP][placementName] = {}
-  return page[PAGE_AD_PROP][placementName]
+/** 闸门是否已被熔断（rewardedSaveGate 在判灰度前先问一次） */
+function isCircuitOpen() {
+  var fuse = _readFuse()
+  return !!(fuse && fuse.until && Date.now() < fuse.until)
 }
 
-function _getPageAd(page, placementName) {
-  var entry = _getPageEntry(page, placementName)
-  return entry ? entry.ad : null
+function _noteResult(reason, route) {
+  // nofill 是平台没广告可给，不是故障；abandoned 是用户自己关的，都不计数
+  var broken = (reason === 'showfail' || reason === 'timeout' || reason === 'nocallback')
+  var fuse = _readFuse() || { fails: 0, until: 0 }
+  if (!broken) {
+    if (fuse.fails) _writeFuse({ fails: 0, until: 0 })
+    return
+  }
+  fuse.fails = (fuse.fails || 0) + 1
+  if (fuse.fails >= FUSE_THRESHOLD) {
+    fuse.fails = 0
+    fuse.until = Date.now() + FUSE_DURATION_MS
+    track('ad_rewarded', { route: route || '', result: 'fuse' })
+  }
+  _writeFuse(fuse)
 }
 
-function _setPageAd(page, placementName, ad) {
-  var entry = _ensurePageEntry(page, placementName)
-  if (entry) entry.ad = ad
+function _routeOf(page) {
+  return (page && page.route) || ''
 }
 
-function _getActivePromise(page, placementName) {
-  var entry = _getPageEntry(page, placementName)
-  return entry ? entry.activePromise : null
+// Promise.resolve 包一层：异常实现下 show()/load() 可能不返回 Promise，
+// 直接 .then 会同步抛错，把整条保存链路带成 reject。
+function _call(fn) {
+  try {
+    return Promise.resolve(fn())
+  } catch (e) {
+    return Promise.reject(e)
+  }
 }
 
-function _setActivePromise(page, placementName, promise) {
-  var entry = _getPageEntry(page, placementName)
-  if (entry) entry.activePromise = promise
+function _load(ad) {
+  if (!ad || !ad.load) return
+  try {
+    var p = ad.load()
+    if (p && p.then) {
+      // 双保险：onLoad 事件是主信号，load() 的 resolve 也算就绪，
+      // 免得某些基础库不派发 onLoad 时 __xbjReady 永远为 false、每次都白等一轮。
+      p.then(function () { ad.__xbjReady = true }).catch(function () { /* 预拉失败不处理，show 时还会再试 */ })
+    }
+  } catch (e) { /* ignore */ }
+}
+
+// 播完/失败后延迟一点再拉下一条：紧贴着关闭动画调 load 容易和 SDK 自身的
+// 回收流程打架，300ms 足够让原生组件收干净。
+function _reload(ad) {
+  setTimeout(function () { _load(ad) }, 300)
+}
+
+/**
+ * 拿到实例并绑定到当前页面。
+ * 同一 adUnitId 返回同一对象，重复调用只是重绑页面，代价极低。
+ */
+function _acquire(placementName) {
+  if (!wx.createRewardedVideoAd) return null
+  var placement = getPlacement(placementName)
+  if (!placement || placement.type !== 'rewarded' || !placement.unitId) return null
+  var ad = null
+  try {
+    ad = wx.createRewardedVideoAd({ adUnitId: placement.unitId })
+  } catch (err) {
+    console.error('[rewardedAdManager] createRewardedVideoAd failed', err)
+    return null
+  }
+  if (ad) _bind(ad)
+  return ad
+}
+
+/**
+ * 监听器只绑一次，结果分发给「当前等待者」。
+ * 实例是单例，这些标记跟着实例走，页面来回切换也不会重复注册。
+ */
+function _bind(ad) {
+  if (ad.__xbjBound) return
+  ad.__xbjBound = true
+  try {
+    if (ad.onLoad) {
+      ad.onLoad(function () { ad.__xbjReady = true })
+    }
+    ad.onError(function (err) {
+      ad.__xbjReady = false
+      console.warn('[rewardedAdManager] ad error', err && err.errCode, err && err.errMsg)
+      var waiter = ad.__xbjWaiter
+      if (waiter) waiter.onError(err)
+    })
+    ad.onClose(function (res) {
+      ad.__xbjReady = false
+      var waiter = ad.__xbjWaiter
+      if (waiter) waiter.onClose(res)
+      // 「每次保存都看广告」下，用户很可能马上就要存第二张，立刻备料
+      _reload(ad)
+    })
+  } catch (e) { /* ignore */ }
 }
 
 /**
  * 预热：在页面 onLoad / refreshHint 中调用。
- * 创建实例并触发素材 load，用户真正点保存时 .show() 瞬时播放。
- * 幂等：若当前页面已有实例则跳过。
+ * 绑定实例到当前页 + 触发素材下发，用户点保存时几乎零延迟。
  */
 function preload(placementName, page) {
-  if (_getPageAd(page, placementName)) return
-  var ad = _createInstance(placementName)
+  var ad = _acquire(placementName)
   if (!ad) return
-
-  try {
-    // 挂一个静默的错误 listener 避免 unhandled；show() 时会另挂具体 handler
-    ad.onError(function (err) {
-      console.warn('[rewardedAdManager] preload warn', err && err.errMsg)
-    })
-    // 触发 SDK 下发素材，不阻塞调用方
-    if (ad.load) {
-      ad.load().catch(function () { /* 预热失败不处理，show 时兜底重新 load */ })
-    }
-  } catch (e) { /* ignore */ }
-
-  _setPageAd(page, placementName, ad)
+  if (!ad.__xbjReady) _load(ad)
 }
 
 /**
- * 展示激励广告；resolve(true) = 完整观看，resolve(false) = 未完播/失败
+ * 展示激励广告
+ * @returns {Promise<boolean>} true = 放行保存，false = 用户中途关闭
  */
 function show(placementName, page) {
-  var active = _getActivePromise(page, placementName)
-  if (active) return active
-
-  var ad = _getPageAd(page, placementName)
-  if (!ad) {
-    ad = _createInstance(placementName)
-    if (ad) _setPageAd(page, placementName, ad)
-  }
+  var ad = _acquire(placementName)
   if (!ad) {
     // 无广告位/不支持：直接放行，记为无实例（无收入）
     track('ad_rewarded', { route: _routeOf(page), result: 'noinstance' })
     return Promise.resolve(true)
   }
+  // 同一实例同一时刻只服务一个等待者（用户连点、或前一次还没收场）
+  if (ad.__xbjWaiter && ad.__xbjWaiter.promise) return ad.__xbjWaiter.promise
+
+  var route = _routeOf(page)
+  var waiter = {}
 
   var promise = new Promise(function (resolve) {
     var settled = false
+    var timer = null
+    var loading = false
 
-    var cleanup = function () {
-      if (ad.offClose) ad.offClose(handleClose)
-      if (ad.offError) ad.offError(handleError)
-      _setActivePromise(page, placementName, null)
-      // 不清空 page 上的 ad 引用，下次 show 仍可复用；
-      // 页面销毁时 JS 引用随 page 对象一起被 GC。
+    ad.__xbjWaiter = waiter
+
+    var hideLoading = function () {
+      if (!loading) return
+      loading = false
+      try { wx.hideLoading() } catch (e) { /* ignore */ }
     }
 
-    var finish = function (result) {
+    var finish = function (result, reason) {
       if (settled) return
       settled = true
-      cleanup()
+      if (timer) {
+        clearTimeout(timer)
+        timer = null
+      }
+      hideLoading()
+      if (ad.__xbjWaiter === waiter) ad.__xbjWaiter = null
+      _noteResult(reason, route)
+      track('ad_rewarded', { route: route, result: reason })
       resolve(result)
+      // 无论成败都为下一次保存备料（onClose 那条路径已经拉过，这里只兜失败路径）
+      if (!ad.__xbjReady) _reload(ad)
     }
 
-    var handleClose = function (res) {
+    waiter.onClose = function (res) {
       if (res === undefined || (res && res.isEnded)) {
-        track('ad_rewarded', { route: _routeOf(page), result: 'watched' })
-        finish(true)
+        finish(true, 'watched')
         return
       }
-      track('ad_rewarded', { route: _routeOf(page), result: 'abandoned' })
       wx.showToast({ title: '未完整观看广告，暂无法保存', icon: 'none' })
-      finish(false)
+      finish(false, 'abandoned')
     }
 
-    var handleError = function (err) {
-      console.error('[rewardedAdManager] rewarded error', err)
+    // 拉取/播放期间的错误统一按「广告侧问题」处理：放行，不拦用户
+    waiter.onError = function (err) {
+      var code = (err && err.errCode) || 0
+      finish(true, code === 1004 ? 'nofill' : 'showfail')
     }
 
-    ad.onClose(handleClose)
-    ad.onError(handleError)
+    timer = setTimeout(function () { finish(true, 'timeout') }, SHOW_TIMEOUT_MS)
 
-    ad.show().catch(function () {
-      return ad.load().then(function () {
-        return ad.show()
+    // 素材没就绪就先 load，期间给个轻量 loading，别让用户对着静止界面等
+    var prepare = function () {
+      if (ad.__xbjReady) return Promise.resolve()
+      try {
+        wx.showLoading({ title: '广告加载中', mask: true })
+        loading = true
+      } catch (e) { /* ignore */ }
+      return _call(function () { return ad.load() })
+    }
+
+    prepare().then(function () {
+      if (settled) return null
+      hideLoading()
+      return _call(function () { return ad.show() }).then(function () {
+        // 广告已经显示，撤掉「打不开」的兜底，换成等 onClose 的长兜底
+        if (settled) return
+        if (timer) clearTimeout(timer)
+        timer = setTimeout(function () { finish(true, 'nocallback') }, CLOSE_TIMEOUT_MS)
       })
     }).catch(function (err) {
-      console.warn('[rewardedAdManager] rewarded show fallback', err)
-      var code = err && err.errCode
-      // 1004=无合适广告 / 1005=广告组件未显示 —— 属于广告平台侧问题，
-      // 非用户过错。放行保存并按已完播处理，避免阻塞正常业务。
-      if (code === 1004 || code === 1005) {
-        track('ad_rewarded', { route: _routeOf(page), result: 'nofill' })
-        finish(true)
-        return
-      }
-      track('ad_rewarded', { route: _routeOf(page), result: 'showfail' })
-      wx.showToast({ title: '广告加载失败，请稍后重试', icon: 'none' })
-      finish(false)
+      if (settled) return
+      var code = (err && err.errCode) || 0
+      console.warn('[rewardedAdManager] show failed', code, err && err.errMsg)
+      finish(true, code === 1004 ? 'nofill' : 'showfail')
     })
   })
 
-  _setActivePromise(page, placementName, promise)
+  waiter.promise = promise
   return promise
 }
 
 module.exports = {
   preload,
   show,
+  isCircuitOpen,
 }
