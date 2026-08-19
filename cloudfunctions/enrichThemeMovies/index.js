@@ -250,6 +250,82 @@ function validateMovieList(movieList) {
     return { errors, warns };
 }
 
+
+/**
+ * 按豆瓣评分的贝叶斯加权重算 rank（IMDb Top250 同款公式），就地回写。
+ * 给「名单是编的、源站没有现成排名」的主题用（目前是 arthouse 世界文艺电影250）。
+ *
+ *   WR = v/(v+m) × R + m/(v+m) × C
+ *     R = 该片评分，v = 该片评分人数，C = 全体均分，m = 票数门槛
+ *
+ * m 默认取评分人数的 25% 分位。**不要取中位数**——那会让一半条目塌到均值上、
+ * 彼此区分度消失（实测 9.5 分和 8.2 分的冷门片加权后只差千分之几）。
+ *
+ * 之所以做成云函数里的一个模式而不是本地脚本：250 条文档带着 cover/summary 等字段，
+ * 从控制台复制返回值根本复制不全，数据没法搬到本地算。
+ *
+ * @param {string} theme
+ * @param {{ m?: number, dryRun?: boolean }} opts  m 手动指定门槛；dryRun 只预览不写库
+ */
+async function rerankByWeightedRating(theme, opts) {
+    const list = await fetchExistingByTheme(theme);
+    if (!list.length) return { success: false, error: `主题 ${theme} 在 generic_theme_movies 里没有数据` };
+
+    const num = v => (typeof v === 'number' && isFinite(v) ? v : 0);
+    const rated = list.filter(x => num(x.rating) > 0);
+    if (!rated.length) return { success: false, error: '所有条目 rating 都是 0，先把名单灌完再重排' };
+
+    const missing = list.filter(x => !num(x.ratingCount)).length;
+    const C = rated.reduce((sum, x) => sum + num(x.rating), 0) / rated.length;
+    const counts = list.map(x => num(x.ratingCount)).filter(v => v > 0).sort((a, b) => a - b);
+    const pct = q => (counts.length ? counts[Math.min(counts.length - 1, Math.floor(counts.length * q))] : 0);
+    const mGiven = num(opts && opts.m) > 0;
+    const m = mGiven ? num(opts.m) : pct(0.25);
+
+    const scored = list.map(x => {
+        const R = num(x.rating), v = num(x.ratingCount);
+        return { x, R, v, WR: (v + m) > 0 ? (v / (v + m)) * R + (m / (v + m)) * C : C };
+    });
+    // 加权分相同的按评分人数兜底、再按年份，保证顺序稳定可复现
+    scored.sort((a, b) => (b.WR - a.WR) || (b.v - a.v) || (num(a.x.year) - num(b.x.year)));
+
+    const changes = [];
+    scored.forEach((s0, i) => {
+        const newRank = i + 1;
+        if (s0.x.rank !== newRank) changes.push({ _id: s0.x._id, to: newRank });
+    });
+
+    const fmt = (s0, n) => `${n}. ${s0.x.title} ${s0.R}分/${s0.v}人 → ${s0.WR.toFixed(3)}`;
+    const top = scored.slice(0, 15).map((s0, i) => fmt(s0, i + 1));
+    const bottom = scored.slice(-5).map((s0, i) => fmt(s0, scored.length - 4 + i));
+    const stats = {
+        total: list.length,
+        C: Number(C.toFixed(3)),
+        m,
+        mSource: mGiven ? '手动指定' : '25% 分位',
+        ratingCountPercentiles: { p25: pct(0.25), p50: pct(0.5), p75: pct(0.75), min: counts[0] || 0, max: counts[counts.length - 1] || 0 },
+        missingRatingCount: missing
+    };
+
+    if (opts && opts.dryRun) {
+        return {
+            success: true, dryRun: true, ...stats, willChange: changes.length, top, bottom,
+            hint: missing
+                ? `⚠ 有 ${missing} 条缺 ratingCount（enrichThemeMovies 可能还是旧版本，确认已部署带 ratingCount 的版本并重灌）；这是预览，没写库`
+                : '这是预览，没有写库；去掉 dryRun 再跑一次才会写入'
+        };
+    }
+
+    for (let i = 0; i < changes.length; i += 20) {
+        const batch = changes.slice(i, i + 20);
+        await Promise.all(batch.map(c =>
+            collection.doc(c._id).update({ data: { rank: c.to, updateTime: db.serverDate() } })
+        )).catch(console.error);
+    }
+
+    return { success: true, ...stats, updated: changes.length, top, bottom, hint: '重排完成' };
+}
+
 exports.main = async (event, context) => {
     const START_TIME = Date.now();
     const TIME_LIMIT = 45000;
@@ -267,6 +343,14 @@ exports.main = async (event, context) => {
     if (!theme) {
         return { success: false, error: '缺少 theme 参数' };
     }
+
+    // 重排模式：不吃 movieList，直接按库内已有的评分/评分人数重算 rank 并回写。
+    // 传 { theme, rerank: true } 或 { theme, rerank: { dryRun: true } } / { rerank: { m: 5000 } }
+    if (event && event.rerank) {
+        const rerankOpts = typeof event.rerank === 'object' ? event.rerank : {};
+        return await rerankByWeightedRating(theme, rerankOpts);
+    }
+
     if (!Array.isArray(movieList) || movieList.length === 0) {
         return { success: false, error: 'movieList 为空' };
     }
