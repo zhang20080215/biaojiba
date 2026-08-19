@@ -251,6 +251,101 @@ function validateMovieList(movieList) {
 }
 
 
+
+/**
+ * 按 doubanId 回查详情，只补/刷新评分字段（rating + ratingCount），不碰封面。
+ *
+ * 用途一：库里是「还没有 ratingCount 的旧版本」灌的，要给加权排名补数据。
+ *   走 forceRefresh 全量重灌也能补上，但那会重搜豆瓣 + 重下封面（一份 250 条的名单
+ *   约 20 分钟，且旧封面全变成云存储里的孤儿文件）——条目已经有 doubanId 了，没必要。
+ * 用途二：豆瓣评分会漂，隔段时间刷新一遍再重排。
+ *
+ * 45 秒预算内能跑约 30 条，配合 autoContinue 自动接力；顺序按 _id 固定，
+ * 保证 startFrom 续跑时指向同一批。
+ *
+ * @param {string} theme
+ * @param {{ onlyMissing: boolean, startFrom: number, autoContinue: boolean }} opts
+ * @param {number} START_TIME
+ */
+async function backfillRatings(theme, opts, START_TIME) {
+    const TIME_LIMIT = 45000;
+    const list = await fetchExistingByTheme(theme);
+    if (!list.length) return { success: false, error: `主题 ${theme} 在 generic_theme_movies 里没有数据` };
+
+    list.sort((a, b) => (a._id < b._id ? -1 : a._id > b._id ? 1 : 0));
+
+    const hasCount = x => typeof x.ratingCount === 'number' && x.ratingCount > 0;
+    const noDoubanId = list.filter(x => !x.doubanId).map(x => `#${x.rank} ${x.title}`);
+    const targets = list.filter(x => x.doubanId && (opts.onlyMissing ? !hasCount(x) : true));
+
+    const startFrom = Number(opts.startFrom) || 0;
+    const pending = targets.slice(startFrom);
+    let processed = 0, updated = 0, stoppedEarly = false;
+    const failed = [];
+
+    for (let i = 0; i < pending.length; i++) {
+        if (Date.now() - START_TIME > TIME_LIMIT) { stoppedEarly = true; break; }
+        const doc = pending[i];
+        const detail = await fetchDoubanDetail(doc.doubanId);
+        if (detail && (detail.ratingCount || detail.rating)) {
+            const data = { ratingCount: detail.ratingCount || 0, updateTime: db.serverDate() };
+            if (detail.rating) data.rating = detail.rating;
+            try {
+                await collection.doc(doc._id).update({ data });
+                updated++;
+            } catch (e) {
+                failed.push(`#${doc.rank} ${doc.title}: 写库失败 ${e.message}`);
+            }
+        } else {
+            // 详情拿不到基本是豆瓣临时限流/反爬，隔一会儿重跑同一条就好
+            failed.push(`#${doc.rank} ${doc.title}: 详情请求失败(doubanId=${doc.doubanId})`);
+        }
+        processed++;
+        await new Promise(r => setTimeout(r, 800));
+    }
+
+    const nextStartFrom = startFrom + processed;
+    let autoChained = false;
+    if (stoppedEarly && opts.autoContinue && processed > 0) {
+        try {
+            cloud.callFunction({
+                name: 'enrichThemeMovies',
+                data: {
+                    theme,
+                    backfillRatings: { onlyMissing: opts.onlyMissing },
+                    startFrom: nextStartFrom,
+                    autoContinue: true
+                }
+            }).catch(e => console.error('[backfillRatings] 自动接力触发失败:', e && e.message));
+            await new Promise(r => setTimeout(r, 1200));
+            autoChained = true;
+        } catch (e) {
+            console.error('[backfillRatings] 自动接力异常:', e && e.message);
+        }
+    }
+
+    return {
+        success: true,
+        mode: 'backfillRatings',
+        totalInTheme: list.length,
+        needBackfill: targets.length,
+        processed, updated,
+        failed: failed.slice(0, 20),
+        failedCount: failed.length,
+        noDoubanId: noDoubanId.slice(0, 20),
+        noDoubanIdCount: noDoubanId.length,
+        stoppedEarly, autoChained,
+        nextStartFrom: stoppedEarly ? nextStartFrom : 0,
+        hint: !stoppedEarly
+            ? (failed.length
+                ? `跑完了，但有 ${failed.length} 条失败（多半是豆瓣临时限流），隔几分钟原样再跑一次即可`
+                : '全部补完，可以去跑 rerank 了')
+            : autoChained
+                ? `已自动接力，从 ${nextStartFrom} 继续（几分钟后用 rerank 的 dryRun 看 missingRatingCount 是否归零）`
+                : `未处理完，下次传 { "theme": "${theme}", "backfillRatings": true, "startFrom": ${nextStartFrom} } 继续`
+    };
+}
+
 /**
  * 按豆瓣评分的贝叶斯加权重算 rank（IMDb Top250 同款公式），就地回写。
  * 给「名单是编的、源站没有现成排名」的主题用（目前是 arthouse 世界文艺电影250）。
@@ -349,6 +444,18 @@ exports.main = async (event, context) => {
     if (event && event.rerank) {
         const rerankOpts = typeof event.rerank === 'object' ? event.rerank : {};
         return await rerankByWeightedRating(theme, rerankOpts);
+    }
+
+    // 补数模式：按 doubanId 回查详情，只补/刷新 rating + ratingCount，不重搜、不重下封面。
+    // 传 { theme, backfillRatings: true, autoContinue: true }；
+    // 想连已有 ratingCount 的一起刷新（评分会漂）传 { backfillRatings: { onlyMissing: false } }
+    if (event && event.backfillRatings) {
+        const o = typeof event.backfillRatings === 'object' ? event.backfillRatings : {};
+        return await backfillRatings(theme, {
+            onlyMissing: o.onlyMissing !== false,
+            startFrom,
+            autoContinue
+        }, START_TIME);
     }
 
     if (!Array.isArray(movieList) || movieList.length === 0) {

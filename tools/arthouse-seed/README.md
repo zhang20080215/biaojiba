@@ -76,7 +76,27 @@ WR = v/(v+m) × R + m/(v+m) × C
 
 这一轮只 update `rank` 字段，不爬豆瓣、不下封面，几秒钟跑完。日后豆瓣评分漂了，重跑第三步就能刷新排名，用户标记不受影响。
 
-> 如果返回里 `missingRatingCount` 不是 0，说明第一步的部署没生效或第二步是用旧版本灌的——补上再重排。
+> 如果返回里 `missingRatingCount` 不是 0，说明第一步的部署没生效、或第二步是用旧版本灌的。
+
+### 已经用旧版本灌过了怎么办
+
+库里的条目已经有 `doubanId`，按 id 回查详情把评分字段补上就行，**不用整份重灌**：
+
+```json
+{
+  "theme": "arthouse",
+  "backfillRatings": true,
+  "autoContinue": true
+}
+```
+
+只更新 `rating` + `ratingCount`，不重搜豆瓣、不重下封面。45 秒一轮约 30 条，250 条自动接力跑约 7 分钟。跑完再回到上面的 `rerank`。
+
+对比：走 `forceRefresh: true` 整份重灌也能补上，但要重搜 + 重下 250 张封面（约 20 分钟），而且旧封面会全部变成云存储里的孤儿文件——除非确实要换封面，否则别用。
+
+日后豆瓣评分漂了想刷新，传 `{ "backfillRatings": { "onlyMissing": false } }` 连已有的一起刷，然后重排。
+
+返回里 `failed` 非空多半是豆瓣临时限流，隔几分钟原样再跑一次即可（已补上的会被 `onlyMissing` 自动跳过）；`noDoubanId` 是当初就没匹配上豆瓣的条目，得人工处理。
 
 ## 已知问题
 
