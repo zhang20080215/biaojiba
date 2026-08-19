@@ -117,6 +117,15 @@ const THEME_CONFIG = {
     editionField: 'edition',
     orderDirection: 'asc',
   },
+  arthouse: {
+    title: '世界文艺电影250',
+    slogan: '标记你看过的作者电影，生成专属观影海报',
+    brandPrimary: '#2E3A59',
+    brandSoft: '#5E6E96',
+    shadowRgb: '46, 58, 89',
+    showEdition: false,
+    orderDirection: 'asc',
+  },
   // ── 豆瓣「选剧集」9 分以上（movie.douban.com/tv/ 评分区间 9~10，按豆瓣评分降序取 TOP250）──
   doubanTvCn: {
     // 评分门槛是 8 分（9 分以上全量仅 168 条凑不满 250），所以标题不写「9分」

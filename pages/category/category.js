@@ -36,6 +36,7 @@ var DYNAMIC_COVER_THEMES = [
   { id: 'douban_tv_cn', theme: 'doubanTvCn' },
   { id: 'douban_tv_foreign', theme: 'doubanTvForeign' },
   { id: 'douban_tv_anime', theme: 'doubanTvAnime' },
+  { id: 'arthouse_movies', theme: 'arthouse' },
   // collection 省略时默认 generic_theme_movies；读书通用主题（generic_theme_books）显式指定
   { id: 'maodun_books', theme: 'maodun', collection: 'generic_theme_books' },
   { id: 'newbery_books', theme: 'newbery', collection: 'generic_theme_books' },
@@ -235,6 +236,17 @@ Page({
         category: 'oscar',
         isNew: true,
         url: '/pages/genericList/list/list?theme=oscarActress'
+      },
+      {
+        id: 'arthouse_movies',
+        title: '世界文艺电影250',
+        description: '250 部作者电影与艺术电影，148 位导演、35 个国家与地区',
+        image: '',
+        tintClass: 'arthouse',
+        userCount: 0,
+        tag: '电影',
+        category: 'movie',
+        url: '/pages/genericList/list/list?theme=arthouse'
       },
       {
         id: 'douban_tv_cn',
@@ -1075,6 +1087,7 @@ Page({
         { id: 'douban_tv_cn', collection: 'generic_theme_movies', theme: 'doubanTvCn', topFiltered: false },
         { id: 'douban_tv_foreign', collection: 'generic_theme_movies', theme: 'doubanTvForeign', topFiltered: false },
         { id: 'douban_tv_anime', collection: 'generic_theme_movies', theme: 'doubanTvAnime', topFiltered: false },
+        { id: 'arthouse_movies', collection: 'generic_theme_movies', theme: 'arthouse', topFiltered: false },
         // 书线：marks 集合是 BookMarks，主键是 bookId，按 source 字段区分豆瓣/微信读书/各通用读书主题
         { id: 'douban_books', collection: 'douban_books', topFiltered: true, marksCollection: 'BookMarks', idField: 'bookId', source: 'douban' },
         { id: 'weread_books', collection: 'weread_books', topFiltered: true, marksCollection: 'BookMarks', idField: 'bookId', source: 'weread' },

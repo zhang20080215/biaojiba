@@ -92,6 +92,9 @@ async function fetchDoubanDetail(doubanId) {
             countries: (j.countries || []).filter(Boolean)[0] || '', // 合拍片只取第一个国家，不要罗列一长串
             coverUrl: (j.pic && (j.pic.large || j.pic.normal)) || j.cover_url || '',
             rating: j.rating && typeof j.rating.value === 'number' ? j.rating.value : 0,
+            // 评分人数：给「按加权评分排名」的主题用（各片样本量能差四个数量级，
+            // 只看评分会让几百人评的冷门片虚高，需要用人数做贝叶斯回归）
+            ratingCount: j.rating && typeof j.rating.count === 'number' ? j.rating.count : 0,
             subtype: j.subtype || '' // 'movie' | 'tv'，非电影（综艺/电视剧）用来在校验阶段直接排除
         };
     } catch (e) {
@@ -163,6 +166,7 @@ async function fetchDoubanInfo(originalTitle, chineseTitle, year) {
                         doubanId: cand.doubanId,
                         coverUrl: detail.coverUrl || cand.coverUrl || '',
                         rating: detail.rating || (cand.rating ? parseFloat(cand.rating) : 0),
+                        ratingCount: detail.ratingCount || 0,
                         title: detail.title,
                         directors: detail.directors,
                         countries: detail.countries,
@@ -182,6 +186,7 @@ async function fetchDoubanInfo(originalTitle, chineseTitle, year) {
             doubanId: fallback.cand.doubanId,
             coverUrl: fallback.detail.coverUrl || fallback.cand.coverUrl || '',
             rating: fallback.detail.rating || (fallback.cand.rating ? parseFloat(fallback.cand.rating) : 0),
+            ratingCount: fallback.detail.ratingCount || 0,
             title: fallback.detail.title,
             directors: fallback.detail.directors,
             countries: fallback.detail.countries,
@@ -387,6 +392,7 @@ exports.main = async (event, context) => {
                     doubanId: movieTarget.doubanId,
                     coverUrl: detail.coverUrl || '',
                     rating: detail.rating || 0,
+                    ratingCount: detail.ratingCount || 0,
                     title: detail.title,
                     directors: detail.directors,
                     countries: detail.countries,
@@ -425,6 +431,7 @@ exports.main = async (event, context) => {
                     doubanId: doubanInfo.doubanId,
                     coverUrl: doubanInfo.coverUrl,
                     rating: doubanInfo.rating,
+                    ratingCount: doubanInfo.ratingCount || 0,
                     updateTime: db.serverDate()
                 };
                 delete finalMovieData._id;
