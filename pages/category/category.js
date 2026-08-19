@@ -238,8 +238,8 @@ Page({
       },
       {
         id: 'douban_tv_cn',
-        title: '豆瓣9分华语剧集',
-        description: '豆瓣评分 9 分以上的华语剧集 TOP250，标记你追完的国剧',
+        title: '豆瓣高分华语剧集',
+        description: '豆瓣评分 8 分以上的华语剧集 TOP250，标记你追完的国剧',
         image: '',
         tintClass: 'douban-tv-cn',
         userCount: 0,

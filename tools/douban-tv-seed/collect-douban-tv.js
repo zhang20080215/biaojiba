@@ -1,14 +1,18 @@
 // tools/douban-tv-seed/collect-douban-tv.js
-// 从豆瓣「选剧集」(https://movie.douban.com/tv/) 抓取评分区间 9~10 的剧集，生成三份
-// enrichThemeMovies 的 params.json。
+// 从豆瓣「选剧集」(https://movie.douban.com/tv/) 抓取高分剧集，生成三份
+// enrichThemeMovies 的 params.json。评分区间按主题各自配置（见下）。
 //
 //   node tools/douban-tv-seed/collect-douban-tv.js            # 上限 250，不足则全收
 //   node tools/douban-tv-seed/collect-douban-tv.js --limit 200
 //
 // 筛选口径（与页面上的下拉一一对应）：
-//   doubanTvCn      类型=电视剧，地区=华语   → tags=电视剧,华语
-//   doubanTvForeign 类型=电视剧，地区=国外   → tags=电视剧,国外
-//   doubanTvAnime   类型=动画，地区不限      → tags=动画
+//   doubanTvCn      类型=电视剧，地区=华语，评分 8~10 → tags=电视剧,华语
+//   doubanTvForeign 类型=电视剧，地区=国外，评分 9~10 → tags=电视剧,国外
+//   doubanTvAnime   类型=动画，地区不限，评分 9~10    → tags=动画
+//
+//   华语单独放宽到 8 分：该口径 9 分以上真实全量只有 168 条，凑不满 250。
+//   代价是前 250 里约 185 条低于 9 分，所以这个主题的前端标题是「豆瓣高分华语剧集」
+//   而不是「豆瓣9分…」——改回 9 分门槛的话记得把标题也一起改回去。
 //
 //   ⚠️ 类型必须用「电视剧」而不是「全部剧集」：「全部剧集」把动画和纪录片也算进来，
 //   华语榜里会混进《葫芦兄弟》《舌尖上的中国》这类条目。「电视剧」天然排除综艺/纪录片/动画，
@@ -21,8 +25,8 @@
 // 接口：m.douban.com/rexxar/api/v2/tv/recommend
 //   · 真正生效的筛选参数是 tags（逗号分隔），selected_categories 传了会被服务端忽略；
 //   · score_range 只接受整数（9,10），传小数直接 403；
-//   · 单个 tags 组合最多返回 500 条（服务端硬上限）。华语电视剧 9 分以上总共才 168 条，
-//     没碰到上限；国外电视剧/动画都是 500，取前 250 够用。
+//   · 单个 tags 组合最多返回 500 条（服务端硬上限）。三份都是 500，取前 250 够用；
+//     真要超过 500 条得按「年份」tag 分片再合并。
 
 const https = require('https');
 const fs = require('fs');
@@ -36,9 +40,9 @@ const LIMIT = (() => {
 })();
 
 const THEMES = [
-  { theme: 'doubanTvCn', tags: '电视剧,华语', label: '华语剧集' },
-  { theme: 'doubanTvForeign', tags: '电视剧,国外', label: '国外剧集' },
-  { theme: 'doubanTvAnime', tags: '动画', label: '动画' }
+  { theme: 'doubanTvCn', tags: '电视剧,华语', scoreRange: '8,10', label: '华语剧集' },
+  { theme: 'doubanTvForeign', tags: '电视剧,国外', scoreRange: '9,10', label: '国外剧集' },
+  { theme: 'doubanTvAnime', tags: '动画', scoreRange: '9,10', label: '动画' }
 ];
 
 const HEADERS = {
@@ -66,16 +70,16 @@ function get(url, tries = 3) {
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-function pageUrl(tags, start, count) {
+function pageUrl(tags, scoreRange, start, count) {
   return 'https://m.douban.com/rexxar/api/v2/tv/recommend?refresh=0'
     + '&start=' + start + '&count=' + count
-    + '&selected_categories=%7B%7D&uncollect=false&score_range=9,10'
+    + '&selected_categories=%7B%7D&uncollect=false&score_range=' + scoreRange
     + '&tags=' + encodeURIComponent(tags) + '&sort=T';
 }
 
 // 按综合排序抓取，保持豆瓣页面顺序；最多 500 条（服务端硬上限）
-async function collect(tags) {
-  const cacheFile = path.join(CACHE_DIR, 'pool_' + tags.replace(/[,\s]/g, '_') + '@T.json');
+async function collect(tags, scoreRange) {
+  const cacheFile = path.join(CACHE_DIR, 'pool_' + tags.replace(/[,\s]/g, '_') + '@' + scoreRange.replace(',', '-') + '.json');
   if (fs.existsSync(cacheFile)) {
     const cached = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
     console.log('[cache] ' + tags + ' => ' + cached.length);
@@ -84,7 +88,7 @@ async function collect(tags) {
   const sink = new Map();
   for (let start = 0; start < 500; start += 50) {
     let json;
-    try { json = await get(pageUrl(tags, start, 50)); } catch (e) {
+    try { json = await get(pageUrl(tags, scoreRange, start, 50)); } catch (e) {
       console.error('  ! ' + tags + ' start=' + start + ' ' + e.message);
       break;
     }
@@ -102,9 +106,9 @@ async function collect(tags) {
 
 const clean = s => String(s || '').replace(/\s+/g, ' ').trim();
 
-function emit(theme, label, ranked) {
+function emit(theme, label, ranked, minScore) {
   // 保持豆瓣综合排序的原始顺序，只挡掉异常（无评分）条目
-  const list = ranked.filter(x => x.rating && typeof x.rating.value === 'number' && x.rating.value >= 9);
+  const list = ranked.filter(x => x.rating && typeof x.rating.value === 'number' && x.rating.value >= minScore);
 
   const seen = new Map();
   const movieList = list.slice(0, LIMIT).map((x, i) => {
@@ -125,7 +129,7 @@ function emit(theme, label, ranked) {
     JSON.stringify(movieList, null, 2).replace(/\n/g, '\r\n') + '\r\n');
 
   const scores = list.slice(0, movieList.length).map(x => x.rating.value);
-  const note = movieList.length < LIMIT ? '（该口径 9 分以上全量就这么多，已全收）' : '';
+  const note = movieList.length < LIMIT ? '（该口径全量就这么多，已全收）' : '';
   console.log(theme + ' [' + label + '] => ' + movieList.length + ' 条'
     + '，评分 ' + Math.max(...scores) + ' ~ ' + Math.min(...scores) + note);
   console.log('   前 5：' + movieList.slice(0, 5).map(m => m.rank + '.' + m.title).join('  '));
@@ -133,7 +137,7 @@ function emit(theme, label, ranked) {
 
 (async () => {
   for (const t of THEMES) {
-    const ranked = await collect(t.tags);
-    emit(t.theme, t.label, ranked);
+    const ranked = await collect(t.tags, t.scoreRange);
+    emit(t.theme, t.label, ranked, parseInt(t.scoreRange.split(',')[0], 10));
   }
 })();

@@ -119,7 +119,8 @@ const THEME_CONFIG = {
   },
   // ── 豆瓣「选剧集」9 分以上（movie.douban.com/tv/ 评分区间 9~10，按豆瓣评分降序取 TOP250）──
   doubanTvCn: {
-    title: '豆瓣9分华语剧集',
+    // 评分门槛是 8 分（9 分以上全量仅 168 条凑不满 250），所以标题不写「9分」
+    title: '豆瓣高分华语剧集',
     slogan: '标记你追过的华语高分剧集，生成专属追剧海报',
     brandPrimary: '#C0453E',
     brandSoft: '#DA7A72',
