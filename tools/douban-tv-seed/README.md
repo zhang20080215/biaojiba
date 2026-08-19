@@ -5,28 +5,45 @@
 
 | 主题 id | 前端标题 | 豆瓣筛选条件 | 收录 |
 |---|---|---|---|
-| `doubanTvCn` | 豆瓣9分华语剧集 | 类型=全部剧集，地区=华语，评分 9~10 | TOP250（评分 9.8 ~ 9.2，全量池子 563） |
-| `doubanTvForeign` | 豆瓣9分国外剧集 | 类型=全部剧集，地区=国外，评分 9~10 | TOP250（评分 9.8 ~ 9.5，全量池子 2910） |
-| `doubanTvAnime` | 豆瓣9分动画 | 类型=动画，地区不限，评分 9~10 | TOP250（评分 9.8 ~ 9.4，全量池子 1128） |
+| `doubanTvCn` | 豆瓣9分华语剧集 | 类型=全部剧集，地区=华语，评分 9~10 | 综合排序前 250（可选池 377）|
+| `doubanTvForeign` | 豆瓣9分国外剧集 | 类型=全部剧集，地区=国外，评分 9~10 | 综合排序前 250（可选池 480）|
+| `doubanTvAnime` | 豆瓣9分动画 | 类型=动画，地区不限，评分 9~10 | 综合排序前 250（可选池 500）|
 
 数据源：https://movie.douban.com/tv/ 的 `m.douban.com/rexxar/api/v2/tv/recommend` 接口，采集脚本 `collect-douban-tv.js`。
 
-`*.params.json` 每条含：`rank`（按豆瓣评分降序，同分按评分人数降序）、`year`、`title` / `originalTitle`、`doubanId`。
+`*.params.json` 每条含：`rank`（**豆瓣综合排序位次**）、`year`、`title` / `originalTitle`、`doubanId`。
 片名/封面/评分/导演/国家灌库时由 `enrichThemeMovies` 从豆瓣详情接口取，名单只负责给出「哪一部」。
+
+## 排序必须是「综合排序」
+
+名单顺序跟豆瓣页面默认的 **综合排序 `sort=T`** 一致，也就是用户在 movie.douban.com/tv/ 上往下滚看到的顺序：
+
+```
+动画 前 5：爱，死亡和机器人 第一季 / 猫和老鼠 / 鬼灭之刃 / 灌篮高手 / 哆啦A梦
+华语 前 5：漫长的季节 / 沉默的真相 / 后宫·甄嬛传 / 琅琊榜 / 想见你
+国外 前 5：请回答1988 / 非自然死亡 / 神探夏洛克 第一季 / 致命女人 第一季 / 权力的游戏 第一季
+```
+
+⚠️ **不要改成 `sort=S`（高分优先）**。9 分区间里评分 9.6+ 的绝大多数是长寿动画/美剧的分季条目，
+按评分取前 250 会把 9.0~9.3 这一段整体砍掉——《爱，死亡和机器人》《鬼灭之刃》《葫芦兄弟》
+《英雄联盟：双城之战》这些页面首屏就有的条目会全部丢失，跟用户在豆瓣上看到的完全对不上。
+（本仓库第一版就是这么错的，改回 `sort=T` 后 162/250 条发生了变化。）
 
 ## 采集
 
 ```bash
-node tools/douban-tv-seed/collect-douban-tv.js          # 默认各取 TOP250
-node tools/douban-tv-seed/collect-douban-tv.js --limit 500
+node tools/douban-tv-seed/collect-douban-tv.js          # 默认各取前 250
+node tools/douban-tv-seed/collect-douban-tv.js --limit 200
 ```
 
-抓到的原始池子缓存在 `.cache/`（已 gitignore 之外，手动删掉即可重抓）。接口的三个坑，脚本里都绕过了：
+抓到的原始池子缓存在 `.cache/`（已 gitignore，删掉即重抓）。接口的几个坑，脚本里都绕过了：
 
 - 真正生效的筛选参数是 **`tags`**（逗号分隔），`selected_categories` 传了会被服务端**忽略**；
 - `score_range` **只接受整数**（`9,10`），传 `9.5,10` 直接 403；
-- 单个 tags 组合**最多返回 500 条**（服务端硬上限），所以按「年份」tag 分片再合并才拿得到完整池子；
-- 「类型 = 全部剧集」在接口上**没有对应 tag**（传 `全部剧集` 返回 0 条），等价做法是取该地区全量池子再减去 `地区,综艺` 的池子——脚本就是这么做的。
+- 单个 tags 组合**最多返回 500 条**（服务端硬上限）。名单只要前 250，主榜直接取前 500 就够；
+  但「排除综艺」用的对照池必须是全量，那部分按「年份」tag 分片再合并（华语综艺 228 / 国外综艺 558）；
+- 「类型 = 全部剧集」在接口上**没有对应 tag**（传 `全部剧集` 返回 0 条），等价做法是取该地区主榜
+  再减去 `地区,综艺` 的全量池子——脚本就是这么做的。动画是「电视剧」下的类型 tag，本身不含综艺，不用减。
 
 ## 灌库
 
@@ -39,9 +56,24 @@ node tools/douban-tv-seed/collect-douban-tv.js --limit 500
 
 灌完 `getThemeMovies` 分别测 `{ "theme": "doubanTvCn" }` 等，`movies` 长度应为 250。
 
+> 控制台偶发 `scf/Invoke` 报 `ret=-3 / system error`，但函数其实**已经被触发并执行**（`autoContinue` 也会继续接力）。
+> 遇到时**不要立刻重试**，先用 `getThemeMovies` 查实际条数，否则会起两条链同时写同一批文档。
+
+## 换名单重灌要先清库
+
+`enrichThemeMovies` 只做 upsert，**没有删除逻辑**。名单内容变了（比如换了排序口径）直接重灌，
+旧名单里有、新名单里没有的条目会残留成孤儿文档，`getThemeMovies` 会把它们一起返回，条数超出且 rank 错乱。
+换名单前先在云开发控制台「数据库 → 高级操作」清掉该主题：
+
+```js
+db.collection('generic_theme_movies').where({ theme: 'doubanTvCn' }).remove()
+```
+
+（云存储里 `doubanTvCn_covers/` 下的旧封面不会被连带删除，量小可忽略，也可以在存储页手动清。）
+
 ## 重灌注意
 
-榜单按**豆瓣实时评分**排序，隔段时间重抓名次一定会漂。名单里 `originalTitle` 与 `title` 同值，
+榜单按**豆瓣综合排序**，隔段时间重抓名次会漂。名单里 `originalTitle` 与 `title` 同值，
 是刻意给 `enrichThemeMovies` 当「同一部剧」的身份键用的：重灌时同名同年的条目会走「仅调整序号」分支，
 `_id` 不变，用户已有的标记不会错位。**不要**把 `originalTitle` 删掉或改成别的值。
 
