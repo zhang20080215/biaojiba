@@ -296,7 +296,11 @@ Page({
                     metaParts.push({ type: 'winner', text: m.winner });
                 }
                 if (m.director) {
-                    metaParts.push({ type: 'director', text: m.director });
+                    // 剧集类主题（豆瓣详情常挂 4~8 位导演）只保留第一位，避免信息行被整串导演撑爆
+                    const director = cfg.firstDirectorOnly
+                        ? String(m.director).split('、')[0].trim()
+                        : m.director;
+                    if (director) metaParts.push({ type: 'director', text: director });
                 }
                 const countryTags = (m.country || '').split('、').map(s => s.trim()).filter(Boolean);
                 if (countryTags.length) {

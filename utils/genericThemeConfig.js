@@ -5,6 +5,7 @@
 //   showEdition   — 是否显示"第X届 · 年份[ · 导演 · 国家]"信息行（false 则标题前缀 rank）
 //   editionField  — 届数取 item 的哪个字段：'edition'（独立字段，如金棕榈/原创剧本）
 //                   或 'rank'（rank 本身就是届数，如奥斯卡最佳摄影/动画长篇，此时列表本就按届数排序）
+//   firstDirectorOnly— 导演只显示第一个（剧集条目常挂 4~8 位导演，整串会把信息行撑爆）
 //   orderDirection— 传给云函数的 rank 排序方向：新到旧编号的主题用 'asc'（rank 1=最新）；
 //                   rank 本身是历史届数（逐年递增）的主题要 'desc' 才能新到旧展示
 //   导演/国家 chip 是否显示由数据本身决定（item.director / item.countryTags 有值才渲染），不用单独开关
@@ -124,6 +125,7 @@ const THEME_CONFIG = {
     brandSoft: '#DA7A72',
     shadowRgb: '192, 69, 62',
     showEdition: false,
+    firstDirectorOnly: true,
     orderDirection: 'asc',
   },
   doubanTvForeign: {
@@ -133,6 +135,7 @@ const THEME_CONFIG = {
     brandSoft: '#6A93BF',
     shadowRgb: '47, 93, 140',
     showEdition: false,
+    firstDirectorOnly: true,
     orderDirection: 'asc',
   },
   doubanTvAnime: {
@@ -142,6 +145,7 @@ const THEME_CONFIG = {
     brandSoft: '#A98AD9',
     shadowRgb: '124, 77, 190',
     showEdition: false,
+    firstDirectorOnly: true,
     orderDirection: 'asc',
   },
   letterboxd500: {
@@ -185,6 +189,7 @@ const DEFAULT_CONFIG = {
   shadowRgb: '59, 66, 82',
   showEdition: false,
   editionField: 'edition',
+  firstDirectorOnly: false,
   orderDirection: 'asc',
 };
 
@@ -199,7 +204,7 @@ function getThemeConfig(theme) {
     if (reg && reg.type !== 'book') cfg = reg;
   }
   cfg = cfg || DEFAULT_CONFIG;
-  return { editionField: 'edition', orderDirection: 'asc', ...cfg };
+  return { editionField: 'edition', orderDirection: 'asc', firstDirectorOnly: false, ...cfg };
 }
 
 module.exports = { THEME_CONFIG, getThemeConfig };
