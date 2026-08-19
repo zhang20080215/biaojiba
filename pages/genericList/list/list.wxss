@@ -469,27 +469,31 @@ page {
 
 .movie-title {
   display: flex;
-  align-items: center;
+  /* 标题完整展示、不截断，长了就换行；复制按钮跟第一行对齐（居中会悬在多行正中间） */
+  align-items: flex-start;
   gap: 4rpx;
   margin: 0 0 var(--space-2) 0;
   max-width: 100%;
   min-width: 0;
-  overflow: hidden;
 }
 
 .movie-title-text {
   font-size: var(--font-title);
   color: var(--text-primary);
   font-weight: 700;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
+  /* 剧集名普遍比片名长（《名侦探柯南 钢琴奏鸣曲月光杀人事件》），
+     不做省略号截断，宽度不够就换行完整展示 */
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.35;
   flex: 0 1 auto;
   min-width: 0;
 }
 
 .movie-title-copy {
   flex: 0 0 auto;
+  /* 40rpx 行高（30rpx × 1.35）与 48rpx 按钮的高度差，上移 4rpx 让图标视觉对齐第一行 */
+  margin-top: -4rpx;
   width: 48rpx;
   height: 48rpx;
   display: flex;
