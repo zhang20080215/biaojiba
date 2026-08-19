@@ -113,6 +113,13 @@
       <text>电影</text>
     </view>
     <view
+      class="filter-chip {{activeTab === 'tv' ? 'active' : ''}}"
+      data-tab="tv" bindtap="onTabTap"
+    >
+      <view class="chip-dot" wx:if="{{activeTab === 'tv'}}"></view>
+      <text>剧集</text>
+    </view>
+    <view
       class="filter-chip {{activeTab === 'oscar' ? 'active' : ''}}"
       data-tab="oscar" bindtap="onTabTap"
     >

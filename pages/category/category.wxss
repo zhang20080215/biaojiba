@@ -607,6 +607,9 @@
 .cover-tint.oscar-actress { background: linear-gradient(135deg, rgba(208, 122, 160, 0.5) 0%, rgba(176, 71, 110, 0.5) 100%); }
 .cover-tint.rt-action { background: linear-gradient(135deg, rgba(100, 110, 128, 0.5) 0%, rgba(59, 66, 82, 0.5) 100%); }
 .cover-tint.letterboxd500 { background: linear-gradient(135deg, rgba(230, 150, 64, 0.5) 0%, rgba(200, 110, 20, 0.5) 100%); }
+.cover-tint.douban-tv-cn { background: linear-gradient(135deg, rgba(218, 122, 114, 0.5) 0%, rgba(192, 69, 62, 0.5) 100%); }
+.cover-tint.douban-tv-foreign { background: linear-gradient(135deg, rgba(106, 147, 191, 0.5) 0%, rgba(47, 93, 140, 0.5) 100%); }
+.cover-tint.douban-tv-anime { background: linear-gradient(135deg, rgba(169, 138, 217, 0.5) 0%, rgba(124, 77, 190, 0.5) 100%); }
 .cover-tint.maodun { background: linear-gradient(135deg, rgba(181, 96, 92, 0.5) 0%, rgba(139, 46, 46, 0.5) 100%); }
 .cover-tint.newbery { background: linear-gradient(135deg, rgba(212, 169, 74, 0.5) 0%, rgba(184, 134, 11, 0.5) 100%); }
 .cover-tint.scenic { background: linear-gradient(135deg, rgba(95, 184, 156, 0.5) 0%, rgba(46, 139, 114, 0.5) 100%); }
@@ -833,6 +836,15 @@
 }
 .cover-placeholder.letterboxd500 {
   background: linear-gradient(135deg, #FF9933 0%, #E67300 100%);
+}
+.cover-placeholder.douban-tv-cn {
+  background: linear-gradient(135deg, #DA7A72 0%, #C0453E 100%);
+}
+.cover-placeholder.douban-tv-foreign {
+  background: linear-gradient(135deg, #6A93BF 0%, #2F5D8C 100%);
+}
+.cover-placeholder.douban-tv-anime {
+  background: linear-gradient(135deg, #A98AD9 0%, #7C4DBE 100%);
 }
 .cover-placeholder.maodun {
   background: linear-gradient(135deg, #B5605C 0%, #8B2E2E 100%);

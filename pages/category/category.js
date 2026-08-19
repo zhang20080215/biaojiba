@@ -32,6 +32,10 @@ var DYNAMIC_COVER_THEMES = [
   { id: 'oscar_actress_movies', theme: 'oscarActress' },
   { id: 'rt_action_movies', theme: 'rtAction' },
   { id: 'letterboxd500_movies', theme: 'letterboxd500' },
+  // 豆瓣「选剧集」9 分以上三主题
+  { id: 'douban_tv_cn', theme: 'doubanTvCn' },
+  { id: 'douban_tv_foreign', theme: 'doubanTvForeign' },
+  { id: 'douban_tv_anime', theme: 'doubanTvAnime' },
   // collection 省略时默认 generic_theme_movies；读书通用主题（generic_theme_books）显式指定
   { id: 'maodun_books', theme: 'maodun', collection: 'generic_theme_books' },
   { id: 'newbery_books', theme: 'newbery', collection: 'generic_theme_books' },
@@ -231,6 +235,42 @@ Page({
         category: 'oscar',
         isNew: true,
         url: '/pages/genericList/list/list?theme=oscarActress'
+      },
+      {
+        id: 'douban_tv_cn',
+        title: '豆瓣9分华语剧集',
+        description: '豆瓣评分 9 分以上的华语剧集 TOP250，标记你追完的国剧',
+        image: '',
+        tintClass: 'douban-tv-cn',
+        userCount: 0,
+        tag: '剧集',
+        category: 'tv',
+        isNew: true,
+        url: '/pages/genericList/list/list?theme=doubanTvCn'
+      },
+      {
+        id: 'douban_tv_foreign',
+        title: '豆瓣9分国外剧集',
+        description: '豆瓣评分 9 分以上的国外剧集 TOP250，标记你追完的美剧英剧日韩剧',
+        image: '',
+        tintClass: 'douban-tv-foreign',
+        userCount: 0,
+        tag: '剧集',
+        category: 'tv',
+        isNew: true,
+        url: '/pages/genericList/list/list?theme=doubanTvForeign'
+      },
+      {
+        id: 'douban_tv_anime',
+        title: '豆瓣9分动画',
+        description: '豆瓣评分 9 分以上的动画剧集 TOP250，标记你追完的神番',
+        image: '',
+        tintClass: 'douban-tv-anime',
+        userCount: 0,
+        tag: '剧集',
+        category: 'tv',
+        isNew: true,
+        url: '/pages/genericList/list/list?theme=doubanTvAnime'
       },
       {
         id: 'maodun_books',
@@ -1031,6 +1071,10 @@ Page({
         { id: 'oscar_actress_movies', collection: 'generic_theme_movies', theme: 'oscarActress', topFiltered: false },
         { id: 'rt_action_movies', collection: 'generic_theme_movies', theme: 'rtAction', topFiltered: false },
         { id: 'letterboxd500_movies', collection: 'generic_theme_movies', theme: 'letterboxd500', topFiltered: false },
+        // 剧集线：豆瓣「选剧集」9 分以上（华语/国外/动画），同样落 generic_theme_movies + Marks
+        { id: 'douban_tv_cn', collection: 'generic_theme_movies', theme: 'doubanTvCn', topFiltered: false },
+        { id: 'douban_tv_foreign', collection: 'generic_theme_movies', theme: 'doubanTvForeign', topFiltered: false },
+        { id: 'douban_tv_anime', collection: 'generic_theme_movies', theme: 'doubanTvAnime', topFiltered: false },
         // 书线：marks 集合是 BookMarks，主键是 bookId，按 source 字段区分豆瓣/微信读书/各通用读书主题
         { id: 'douban_books', collection: 'douban_books', topFiltered: true, marksCollection: 'BookMarks', idField: 'bookId', source: 'douban' },
         { id: 'weread_books', collection: 'weread_books', topFiltered: true, marksCollection: 'BookMarks', idField: 'bookId', source: 'weread' },
