@@ -313,6 +313,7 @@
 }
 
 .filter-chip {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -384,7 +385,6 @@
 /* 缩略封面上的角标/占位文字在小尺寸下会打架，列表模式统一收起，只保留纯封面/占位色块 */
 .list-mode .cover-tag-label,
 .list-mode .wish-badge,
-.list-mode .new-badge,
 .list-mode .oscar-icon,
 .list-mode .cover-mask {
   display: none;
@@ -607,6 +607,9 @@
 .cover-tint.oscar-actress { background: linear-gradient(135deg, rgba(208, 122, 160, 0.5) 0%, rgba(176, 71, 110, 0.5) 100%); }
 .cover-tint.rt-action { background: linear-gradient(135deg, rgba(100, 110, 128, 0.5) 0%, rgba(59, 66, 82, 0.5) 100%); }
 .cover-tint.letterboxd500 { background: linear-gradient(135deg, rgba(230, 150, 64, 0.5) 0%, rgba(200, 110, 20, 0.5) 100%); }
+.cover-tint.douban-tv-cn { background: linear-gradient(135deg, rgba(218, 122, 114, 0.5) 0%, rgba(192, 69, 62, 0.5) 100%); }
+.cover-tint.douban-tv-foreign { background: linear-gradient(135deg, rgba(106, 147, 191, 0.5) 0%, rgba(47, 93, 140, 0.5) 100%); }
+.cover-tint.douban-tv-anime { background: linear-gradient(135deg, rgba(169, 138, 217, 0.5) 0%, rgba(124, 77, 190, 0.5) 100%); }
 .cover-tint.maodun { background: linear-gradient(135deg, rgba(181, 96, 92, 0.5) 0%, rgba(139, 46, 46, 0.5) 100%); }
 .cover-tint.newbery { background: linear-gradient(135deg, rgba(212, 169, 74, 0.5) 0%, rgba(184, 134, 11, 0.5) 100%); }
 .cover-tint.scenic { background: linear-gradient(135deg, rgba(95, 184, 156, 0.5) 0%, rgba(46, 139, 114, 0.5) 100%); }
@@ -625,28 +628,27 @@
   z-index: 2;
 }
 
-/* NEW 标识 — 封面右上角，与左上角分类标签对称；低饱和度+细字重，走精致路线 */
-.new-badge {
+/* NEW 标识 — 全站唯一一处：「剧集」分类 chip 的右上角，用主题粉 --brand-soft。
+   .filter-bar 是 overflow-x:auto，但它有 24rpx 的 padding-top，负偏移落在 padding 区内不会被裁 */
+.chip-new {
   position: absolute;
-  top: var(--space-2);
-  right: var(--space-2);
+  top: -6rpx;
+  right: -8rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.22);
-  backdrop-filter: blur(6rpx);
-  border: 1rpx solid rgba(255, 255, 255, 0.4);
+  background: var(--brand-soft);
   border-radius: var(--radius-pill);
-  padding: 4rpx 16rpx;
+  padding: 3rpx 10rpx;
+  box-shadow: 0 2rpx 6rpx rgba(255, 178, 221, 0.5);
   z-index: 2;
 }
-.new-badge text {
-  font-size: 18rpx;
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.92);
-  letter-spacing: 1.5rpx;
+.chip-new text {
+  font-size: 16rpx;
+  font-weight: 700;
+  color: #FFFFFF;
+  letter-spacing: 0.5rpx;
   line-height: 1;
-  text-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.25);
 }
 
 /* 许愿来源标识 — 封面左下角，压在 cover-mask 渐变上，自带底色，不依赖图片本身对比度 */
@@ -738,29 +740,20 @@
   font-size: var(--font-mini);
   color: var(--text-muted);
 }
-/* 浅色卡右上角 NEW：需深色底才清晰（覆盖默认 new-badge 的半透明白底） */
-.feature-new {
-  background: rgba(46, 139, 114, 0.92);
-  border-color: rgba(255, 255, 255, 0.5);
-}
-
 /* 博物馆卡青铜金褐变体（景区卡沿用上面的青绿基色） */
 .feature-card.museum { box-shadow: 0 6rpx 20rpx rgba(140, 98, 57, 0.14); }
 .feature-cover.museum { background: linear-gradient(135deg, #B98E56 0%, #8C6239 100%); }
 .feature-count.museum { color: #8C6239; background: rgba(140, 98, 57, 0.10); }
-.feature-new.museum { background: rgba(140, 98, 57, 0.92); }
 
 /* 旅游省份卡靛蓝变体 */
 .feature-card.province { box-shadow: 0 6rpx 20rpx rgba(58, 110, 165, 0.14); }
 .feature-cover.province { background: linear-gradient(135deg, #6C97C4 0%, #3A6EA5 100%); }
 .feature-count.province { color: #3A6EA5; background: rgba(58, 110, 165, 0.10); }
-.feature-new.province { background: rgba(58, 110, 165, 0.92); }
 
 /* 旅游城市卡暖橙变体 */
 .feature-card.city { box-shadow: 0 6rpx 20rpx rgba(201, 116, 58, 0.14); }
 .feature-cover.city { background: linear-gradient(135deg, #E0A06E 0%, #C9743A 100%); }
 .feature-count.city { color: #C9743A; background: rgba(201, 116, 58, 0.10); }
-.feature-new.city { background: rgba(201, 116, 58, 0.92); }
 
 /* 奥斯卡 badge */
 .oscar-icon {
@@ -833,6 +826,15 @@
 }
 .cover-placeholder.letterboxd500 {
   background: linear-gradient(135deg, #FF9933 0%, #E67300 100%);
+}
+.cover-placeholder.douban-tv-cn {
+  background: linear-gradient(135deg, #DA7A72 0%, #C0453E 100%);
+}
+.cover-placeholder.douban-tv-foreign {
+  background: linear-gradient(135deg, #6A93BF 0%, #2F5D8C 100%);
+}
+.cover-placeholder.douban-tv-anime {
+  background: linear-gradient(135deg, #A98AD9 0%, #7C4DBE 100%);
 }
 .cover-placeholder.maodun {
   background: linear-gradient(135deg, #B5605C 0%, #8B2E2E 100%);

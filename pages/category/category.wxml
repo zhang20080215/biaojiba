@@ -78,7 +78,6 @@
           <text wx:if="{{item.userCountText}}" class="feature-count {{item.tintClass}}">{{item.userCountText}}</text>
         </view>
       </view>
-      <view wx:if="{{item.isNew}}" class="new-badge feature-new {{item.tintClass}}"><text>NEW</text></view>
     </navigator>
   </view>
 
@@ -111,6 +110,14 @@
     >
       <view class="chip-dot" wx:if="{{activeTab === 'movie'}}"></view>
       <text>电影</text>
+    </view>
+    <view
+      class="filter-chip {{activeTab === 'tv' ? 'active' : ''}}"
+      data-tab="tv" bindtap="onTabTap"
+    >
+      <view class="chip-dot" wx:if="{{activeTab === 'tv'}}"></view>
+      <text>剧集</text>
+      <view class="chip-new"><text>NEW</text></view>
     </view>
     <view
       class="filter-chip {{activeTab === 'oscar' ? 'active' : ''}}"
@@ -267,9 +274,6 @@
         <!-- 上面 wx:else 是云端注册表新主题的封面兜底（无对应占位 class，配色走内联 coverStyle） -->
         <view class="cover-mask"></view>
         <text class="cover-tag-label">{{item.tag}}</text>
-        <view wx:if="{{item.id === 'palme_dor_movies' || item.id === 'oscar_screenplay_movies' || item.id === 'oscar_foreign_movies' || item.id === 'rt_action_movies' || item.id === 'letterboxd500_movies' || item.id === 'maodun_books' || item.id === 'newbery_books' || item.id === 'oscar_director_movies' || item.id === 'oscar_vfx_movies' || item.id === 'oscar_actor_movies' || item.id === 'oscar_actress_movies' || item.id === 'scenic_5a' || item.newBadge}}" class="new-badge">
-          <text>NEW</text>
-        </view>
         <view wx:if="{{item.wishFrom}}" class="wish-badge">
           <text>来自用户{{item.wishFrom}}的许愿</text>
         </view>
@@ -417,9 +421,6 @@
         <!-- 上面 wx:else 是云端注册表新主题的封面兜底（无对应占位 class，配色走内联 coverStyle） -->
         <view class="cover-mask"></view>
         <text class="cover-tag-label">{{item.tag}}</text>
-        <view wx:if="{{item.id === 'palme_dor_movies' || item.id === 'oscar_screenplay_movies' || item.id === 'oscar_foreign_movies' || item.id === 'rt_action_movies' || item.id === 'letterboxd500_movies' || item.id === 'maodun_books' || item.id === 'newbery_books' || item.id === 'oscar_director_movies' || item.id === 'oscar_vfx_movies' || item.id === 'oscar_actor_movies' || item.id === 'oscar_actress_movies' || item.id === 'scenic_5a' || item.newBadge}}" class="new-badge">
-          <text>NEW</text>
-        </view>
         <view wx:if="{{item.wishFrom}}" class="wish-badge">
           <text>来自用户{{item.wishFrom}}的许愿</text>
         </view>

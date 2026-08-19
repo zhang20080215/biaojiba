@@ -19,6 +19,9 @@ const FILES = [
   { file: 'tools/oscar-foreign-seed/oscarForeign.json', theme: 'oscarForeign', edition: (y) => y - 1927, needDirector: true, needCountry: true },
   { file: 'tools/rt-action-seed/rtAction.json', theme: 'rtAction' },
   { file: 'tools/letterboxd500-seed/letterboxd500.json', theme: 'letterboxd500' },
+  { file: 'tools/douban-tv-seed/doubanTvCn.json', theme: 'doubanTvCn' },
+  { file: 'tools/douban-tv-seed/doubanTvForeign.json', theme: 'doubanTvForeign' },
+  { file: 'tools/douban-tv-seed/doubanTvAnime.json', theme: 'doubanTvAnime' },
 ];
 
 // 港台译名 → 大陆标准（命中即 WARN）

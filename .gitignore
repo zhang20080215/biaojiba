@@ -34,3 +34,6 @@ tools/_bundle_extract/
 # 本地草稿 / 临时素材
 小程序首页码.png
 Water Tracker *.html
+
+# 豆瓣剧集采集脚本的原始池子缓存（体积大、可重抓）
+tools/douban-tv-seed/.cache/

@@ -5,6 +5,7 @@
 //   showEdition   — 是否显示"第X届 · 年份[ · 导演 · 国家]"信息行（false 则标题前缀 rank）
 //   editionField  — 届数取 item 的哪个字段：'edition'（独立字段，如金棕榈/原创剧本）
 //                   或 'rank'（rank 本身就是届数，如奥斯卡最佳摄影/动画长篇，此时列表本就按届数排序）
+//   firstDirectorOnly— 导演只显示第一个（剧集条目常挂 4~8 位导演，整串会把信息行撑爆）
 //   orderDirection— 传给云函数的 rank 排序方向：新到旧编号的主题用 'asc'（rank 1=最新）；
 //                   rank 本身是历史届数（逐年递增）的主题要 'desc' 才能新到旧展示
 //   导演/国家 chip 是否显示由数据本身决定（item.director / item.countryTags 有值才渲染），不用单独开关
@@ -116,6 +117,38 @@ const THEME_CONFIG = {
     editionField: 'edition',
     orderDirection: 'asc',
   },
+  // ── 豆瓣「选剧集」9 分以上（movie.douban.com/tv/ 评分区间 9~10，按豆瓣评分降序取 TOP250）──
+  doubanTvCn: {
+    // 评分门槛是 8 分（9 分以上全量仅 168 条凑不满 250），所以标题不写「9分」
+    title: '豆瓣高分华语剧集',
+    slogan: '标记你追过的华语高分剧集，生成专属追剧海报',
+    brandPrimary: '#C0453E',
+    brandSoft: '#DA7A72',
+    shadowRgb: '192, 69, 62',
+    showEdition: false,
+    firstDirectorOnly: true,
+    orderDirection: 'asc',
+  },
+  doubanTvForeign: {
+    title: '豆瓣9分国外剧集',
+    slogan: '标记你追过的海外高分剧集，生成专属追剧海报',
+    brandPrimary: '#2F5D8C',
+    brandSoft: '#6A93BF',
+    shadowRgb: '47, 93, 140',
+    showEdition: false,
+    firstDirectorOnly: true,
+    orderDirection: 'asc',
+  },
+  doubanTvAnime: {
+    title: '豆瓣9分动画',
+    slogan: '标记你追过的高分动画，生成专属追番海报',
+    brandPrimary: '#7C4DBE',
+    brandSoft: '#A98AD9',
+    shadowRgb: '124, 77, 190',
+    showEdition: false,
+    firstDirectorOnly: true,
+    orderDirection: 'asc',
+  },
   letterboxd500: {
     title: 'Letterboxd Top 500',
     slogan: '标记你看过的经典，生成专属观影海报',
@@ -157,6 +190,7 @@ const DEFAULT_CONFIG = {
   shadowRgb: '59, 66, 82',
   showEdition: false,
   editionField: 'edition',
+  firstDirectorOnly: false,
   orderDirection: 'asc',
 };
 
@@ -171,7 +205,7 @@ function getThemeConfig(theme) {
     if (reg && reg.type !== 'book') cfg = reg;
   }
   cfg = cfg || DEFAULT_CONFIG;
-  return { editionField: 'edition', orderDirection: 'asc', ...cfg };
+  return { editionField: 'edition', orderDirection: 'asc', firstDirectorOnly: false, ...cfg };
 }
 
 module.exports = { THEME_CONFIG, getThemeConfig };
