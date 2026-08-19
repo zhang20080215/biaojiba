@@ -275,6 +275,9 @@ page {
 
 .movie-content {
   flex: 1;
+  /* flex item 默认 min-width:auto，标题很长时这块会被撑到内容自然宽度，
+     把右侧「想看/已看」按钮顶出卡片——必须显式压成 0 才能让标题正常省略号截断 */
+  min-width: 0;
   display: flex;
   align-items: center;
   transition: transform 300ms;
@@ -336,6 +339,7 @@ page {
   margin: 0 0 var(--space-2) 0;
   max-width: 100%;
   min-width: 0;
+  overflow: hidden;
 }
 
 .movie-title-text {
