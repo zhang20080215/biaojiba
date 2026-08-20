@@ -65,7 +65,7 @@ function isCircuitOpen() {
 
 function _noteResult(reason, route) {
   // nofill 是平台没广告可给，不是故障；abandoned 是用户自己关的，都不计数
-  var broken = (reason === 'showfail' || reason === 'timeout' || reason === 'nocallback')
+  var broken = (reason.indexOf('showfail') === 0 || reason === 'timeout' || reason === 'nocallback')
   var fuse = _readFuse() || { fails: 0, until: 0 }
   if (!broken) {
     if (fuse.fails) _writeFuse({ fails: 0, until: 0 })
@@ -78,6 +78,15 @@ function _noteResult(reason, route) {
     track('ad_rewarded', { route: route || '', result: 'fuse' })
   }
   _writeFuse(fuse)
+}
+
+// 线上诊断需要：2026-08-13~19 埋点里 showfail 占 82%、而 nofill 只有 0.5%，
+// 说明失败不是「平台没广告」而是别的层面出的问题，但笼统的 'showfail' 看不出
+// 到底哪个错误码在挂。把 errCode 拼进 result（参数值是自由字符串，后台不用
+// 额外注册属性），事件分析里就能直接按错误码分组定位。
+function _failReason(code) {
+  if (code === 1004) return 'nofill'
+  return 'showfail_' + (code || 0)
 }
 
 function _routeOf(page) {
@@ -226,7 +235,7 @@ function show(placementName, page) {
     // 拉取/播放期间的错误统一按「广告侧问题」处理：放行，不拦用户
     waiter.onError = function (err) {
       var code = (err && err.errCode) || 0
-      finish(true, code === 1004 ? 'nofill' : 'showfail')
+      finish(true, _failReason(code))
     }
 
     timer = setTimeout(function () { finish(true, 'timeout') }, SHOW_TIMEOUT_MS)
@@ -254,7 +263,7 @@ function show(placementName, page) {
       if (settled) return
       var code = (err && err.errCode) || 0
       console.warn('[rewardedAdManager] show failed', code, err && err.errMsg)
-      finish(true, code === 1004 ? 'nofill' : 'showfail')
+      finish(true, _failReason(code))
     })
   })
 
