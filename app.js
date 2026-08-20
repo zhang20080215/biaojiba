@@ -69,25 +69,62 @@ App({
       // 拉取远程广告配置（含一次本地缓存读取）
       adConfig.fetchRemoteConfig()
 
-      // 获取用户openid
+      // 获取用户 openid
+      this.ensureOpenid()
+    }, 0);
+  },
+
+  /**
+   * 拉取 openid，失败自动退避重试；已有则直接返回。
+   *
+   * 为什么要重试：openid 拿不到时 rewardedSaveGate.isGated 首行就 return false，
+   * 广告闸门对这个用户**整个会话永久失效**（历史埋点里约 17% 的保存没触发闸门，
+   * 大概率就是这条路径）。原来只在启动时打一次，失败就再也没有第二次机会。
+   *
+   * 也可由业务方按需调用（如 awaitOpenid 发现仍为空时补一次），
+   * 覆盖「启动那几秒失败、用户很久之后才去保存海报」的情况。
+   */
+  ensureOpenid() {
+    if (this.globalData.openid) return
+    if (this._openidFetching) return          // 已有一次在飞，别叠加
+    if (!wx.cloud) return
+    this._openidFetching = true
+
+    var attempt = this._openidAttempt || 0
+    var self = this
+    var onDone = function (openid) {
+      self._openidFetching = false
+      if (openid) {
+        self.globalData.openid = openid
+        self._openidAttempt = 0
+        return
+      }
+      // 退避重试 1s / 2s / 4s，共 3 次；再失败就交给后续 ensureOpenid 调用
+      self._openidAttempt = attempt + 1
+      if (self._openidAttempt >= 3) return
+      setTimeout(function () { self.ensureOpenid() }, 1000 * Math.pow(2, attempt))
+    }
+
+    try {
       wx.cloud.callFunction({
         name: 'getOpenid',
-        success: res => {
-          console.log('云函数调用成功，完整返回：', res);
-          if (res.result && res.result.openid) {
-            this.globalData.openid = res.result.openid;
-          }
+        success: function (res) {
+          onDone(res && res.result && res.result.openid)
         },
-        fail: err => {
-          console.error('云函数调用失败，错误详情：', err);
+        fail: function (err) {
+          console.error('[app] getOpenid 调用失败:', err && (err.errMsg || err))
+          onDone(null)
         }
-      });
-    }, 0);
+      })
+    } catch (e) {
+      console.error('[app] getOpenid 抛错:', e)
+      onDone(null)
+    }
   },
 
   globalData: {
     openid: null,
-    // 主题色：'' (默认粉色) | 'theme-gold' (暖金) | 'theme-green' (橄榄绿) | 'theme-sand' (暖沙)
+    // 主题色：'theme-green' (橄榄绿，默认) | '' (粉色) | 'theme-gold' (暖金) | 'theme-sand' (暖沙)
     theme: 'theme-green'
   }
 });

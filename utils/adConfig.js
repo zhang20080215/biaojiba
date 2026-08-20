@@ -82,7 +82,16 @@ function fetchRemoteConfig() {
 
   // 2. 再从云数据库拉一次最新的覆盖上去
   if (!wx.cloud) return
-  var db = wx.cloud.database()
+  // cloud 存在不等于 init 成功过，database() 可能抛。这里在 setTimeout 回调里，
+  // 抛出去会打断同一个回调中紧随其后的逻辑（比如 getOpenid），必须包住。
+  var db
+  try {
+    db = wx.cloud.database()
+  } catch (e) {
+    _remoteFetched = true
+    console.warn('[adConfig] 云数据库不可用，使用本地默认:', e)
+    return
+  }
   db.collection('app_config').where({ key: 'ad_config' }).limit(1).get().then(function (res) {
     if (res.data && res.data.length > 0) {
       var remote = res.data[0]

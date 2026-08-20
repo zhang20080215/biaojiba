@@ -42,6 +42,12 @@ function awaitOpenid(page, timeoutMs) {
   return new Promise(function (resolve) {
     const immediate = getCurrentOpenid(page)
     if (immediate) return resolve(immediate)
+    // 还没拿到就补触发一次拉取：启动那几秒 getOpenid 失败的话，原本这个会话
+    // 就再也没机会了，闸门对该用户永久失效（历史约 17% 的保存没触发闸门）。
+    try {
+      const app = getApp()
+      if (app && typeof app.ensureOpenid === 'function') app.ensureOpenid()
+    } catch (e) { /* ignore */ }
     const deadline = Date.now() + (timeoutMs || 1500)
     const tick = function () {
       const openid = getCurrentOpenid(page)
@@ -78,17 +84,26 @@ function refreshHint(page) {
   // 打开海报页即埋一次“查看海报”；与 poster_save 组成漏斗：poster_view − poster_save = 看了海报但没保存
   track('poster_view', { route: (page && page.route) || '' })
   awaitOpenid(page, 1500).then(function (openid) {
-    // page._destroyed：页面若已 onUnload，此处 setData 会让渲染层往已销毁的父节点插节点
-    // （insertTextView:fail parent not found）。未定义该字段的页面不受影响。
-    if (!page || page._destroyed || typeof page.setData !== 'function') return
-    const needRewardedAd = isGated(openid)
-    if (page.data.needRewardedAd !== needRewardedAd) {
-      page.setData({ needRewardedAd })
-    }
-    if (needRewardedAd) {
+    syncHint(page, openid)
+    if (page && page.data && page.data.needRewardedAd) {
       rewardedAdManager.preload(PLACEMENT, page)
     }
   })
+}
+
+/**
+ * 只同步 needRewardedAd 副文案，不埋点、不预热。
+ * 保存流程结束后也要调一次：广告连挂 3 次会触发熔断、之后 2 小时不再闸门，
+ * 若不同步，按钮会一直挂着“需观看广告后保存”，而实际上点了并不看广告。
+ */
+function syncHint(page, openid) {
+  // page._destroyed：页面若已 onUnload，此处 setData 会让渲染层往已销毁的父节点插节点
+  // （insertTextView:fail parent not found）。未定义该字段的页面不受影响。
+  if (!page || page._destroyed || typeof page.setData !== 'function') return
+  const needRewardedAd = isGated(openid)
+  if (page.data.needRewardedAd !== needRewardedAd) {
+    page.setData({ needRewardedAd })
+  }
 }
 
 /**
@@ -108,12 +123,14 @@ async function ensureGrant(page) {
   if (page && page._rewardedGateInFlight) return false
   if (page) page._rewardedGateInFlight = true
 
+  let currentOpenid = ''
   // 整个闸门包在 try 里：这里抛任何异常都会让 20 个页面的 saveImage 静默中止，
   // 用户点了没反应。广告链路出任何意外，一律放行保存。
   try {
     // 等 openid 到位再判灰度；冷启动窗口期 openid 为空时直接放行会绕过闸门。
     // 超时兜底仍放行，避免 cloud 异常时阻塞正常保存——极端 case，不是灰度用户预期路径。
     const openid = await awaitOpenid(page, 1500)
+    currentOpenid = openid
     const gated = isGated(openid)
     // 每次保存尝试都埋点：gated=1 表示本次需看广告，用于观察“每次看广告”改动对保存量的影响
     track('poster_save', { route: (page && page.route) || '', gated: gated ? 1 : 0 })
@@ -129,6 +146,9 @@ async function ensureGrant(page) {
     return true
   } finally {
     if (page) page._rewardedGateInFlight = false
+    // 本次可能触发了熔断（连挂 3 次 → 停闸 2 小时），同步一下按钮副文案，
+    // 免得一直挂着「需观看广告后保存」而实际已经不看广告了
+    syncHint(page, currentOpenid)
   }
 }
 

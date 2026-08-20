@@ -65,7 +65,8 @@ function isCircuitOpen() {
 
 function _noteResult(reason, route) {
   // nofill 是平台没广告可给，不是故障；abandoned 是用户自己关的，都不计数
-  var broken = (reason.indexOf('showfail') === 0 || reason === 'timeout' || reason === 'nocallback')
+  var r = String(reason || '')
+  var broken = (r.indexOf('showfail') === 0 || r === 'timeout' || r === 'nocallback')
   var fuse = _readFuse() || { fails: 0, until: 0 }
   if (!broken) {
     if (fuse.fails) _writeFuse({ fails: 0, until: 0 })
@@ -188,16 +189,24 @@ function show(placementName, page) {
     track('ad_rewarded', { route: _routeOf(page), result: 'noinstance' })
     return Promise.resolve(true)
   }
-  // 同一实例同一时刻只服务一个等待者（用户连点、或前一次还没收场）
-  if (ad.__xbjWaiter && ad.__xbjWaiter.promise) return ad.__xbjWaiter.promise
+  // 同一实例同一时刻只服务一个等待者（用户连点、或前一次还没收场）。
+  // 但等待者不能无限期霸占：异常情况下（页面被销毁、定时器在后台被节流）
+  // 它可能残留，之后所有 show() 都会拿到那个死 promise。超过兜底时限就丢弃重来。
+  var prev = ad.__xbjWaiter
+  if (prev && prev.promise) {
+    if (Date.now() - (prev.startedAt || 0) < CLOSE_TIMEOUT_MS + 5000) return prev.promise
+    console.warn('[rewardedAdManager] 丢弃过期的等待者')
+    ad.__xbjWaiter = null
+  }
 
   var route = _routeOf(page)
-  var waiter = {}
+  var waiter = { startedAt: Date.now() }
 
   var promise = new Promise(function (resolve) {
     var settled = false
     var timer = null
     var loading = false
+    var playing = false      // ad.show() 已 resolve = 广告真的放出来了
 
     ad.__xbjWaiter = waiter
 
@@ -232,8 +241,15 @@ function show(placementName, page) {
       finish(false, 'abandoned')
     }
 
-    // 拉取/播放期间的错误统一按「广告侧问题」处理：放行，不拦用户
+    // 广告侧的错误统一按「平台问题」处理：放行，不拦用户。
+    // 但广告**已经在播**之后到达的 onError（多半来自后台预拉下一条失败）
+    // 不能收场——否则一次本该记 watched 的观看会被记成 nofill/showfail，
+    // 埋点失真，而埋点是判断修复是否生效的唯一依据。交给 onClose 收尾。
     waiter.onError = function (err) {
+      if (playing) {
+        console.warn('[rewardedAdManager] 播放中的 onError，忽略', err && err.errCode)
+        return
+      }
       var code = (err && err.errCode) || 0
       finish(true, _failReason(code))
     }
@@ -256,6 +272,7 @@ function show(placementName, page) {
       return _call(function () { return ad.show() }).then(function () {
         // 广告已经显示，撤掉「打不开」的兜底，换成等 onClose 的长兜底
         if (settled) return
+        playing = true
         if (timer) clearTimeout(timer)
         timer = setTimeout(function () { finish(true, 'nocallback') }, CLOSE_TIMEOUT_MS)
       })
