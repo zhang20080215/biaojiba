@@ -93,9 +93,21 @@ function refreshHint(page) {
 
 /**
  * 保存前调用：确保用户已通过激励广告闸门
- * @returns {Promise<boolean>} true=放行继续保存，false=未完播应中止
+ * @returns {Promise<boolean>} true=放行继续保存，false=未完播/已有保存在途，应中止
  */
 async function ensureGrant(page) {
+  // ── 连点保护 ──
+  // 各海报页的 saveImage 形如：
+  //   if (this.data.isGenerating) return          // 守卫
+  //   await rewardedSaveGate.ensureGrant(this)    // ← 等一整段广告，30s+
+  //   this.setData({ isGenerating: true })        // 守卫这时才生效
+  // 守卫和置位之间隔着整段广告播放，期间每次点击都能穿过页面守卫，广告结束后
+  // 多条流程一起往下跑 —— 相册里出现多张一样的图、loading 打架、poster_save 重复上报。
+  // 守卫放在这里，20 个海报页一处生效，不必逐页改。
+  // 注意：早退必须在 try 之外，否则 finally 会把在途那次的标记清掉。
+  if (page && page._rewardedGateInFlight) return false
+  if (page) page._rewardedGateInFlight = true
+
   // 整个闸门包在 try 里：这里抛任何异常都会让 20 个页面的 saveImage 静默中止，
   // 用户点了没反应。广告链路出任何意外，一律放行保存。
   try {
@@ -115,6 +127,8 @@ async function ensureGrant(page) {
   } catch (err) {
     console.warn('[rewardedSaveGate] ensureGrant 异常，放行保存', err)
     return true
+  } finally {
+    if (page) page._rewardedGateInFlight = false
   }
 }
 
