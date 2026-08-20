@@ -31,19 +31,32 @@ App({
     try {
       var updateManager = wx.getUpdateManager && wx.getUpdateManager()
       if (updateManager) {
-        updateManager.onUpdateReady(function () {
-          // 保留取消按钮：applyUpdate 会强制重启小程序，用户可能正在填育儿评估表单
-          // 或批量标记榜单，强制打断会丢数据。点「稍后」就退回微信原本的行为。
-          wx.showModal({
-            title: '有新版本',
-            content: '新版本已经准备好，重启后生效',
-            confirmText: '立即重启',
-            cancelText: '稍后',
-            success: function (res) {
-              if (res.confirm) updateManager.applyUpdate()
-            }
-          })
-        })
+        // 默认**不弹窗**：微信本来就会在下次冷启动应用已下载的新版，平时提示只能
+        // 提前一次冷启动，而本项目两三天一个版本，默认弹窗一个月要打扰用户七八次。
+        // 只有云端 app_config 把 forceUpdatePrompt 打开时（出 P0 需要快速铺开修复）
+        // 才提示。开关走已有的远程配置通道，改完下次冷启动即生效，不用发版。
+        var promptUpdate = function (retried) {
+          if (adConfig.shouldPromptUpdate()) {
+            // 保留取消按钮：applyUpdate 会强制重启小程序，用户可能正在填育儿评估
+            // 表单或批量标记榜单，强制打断会丢数据。点「稍后」退回微信原本的行为。
+            wx.showModal({
+              title: '有新版本',
+              content: '新版本已经准备好，重启后生效',
+              confirmText: '立即重启',
+              cancelText: '稍后',
+              success: function (res) {
+                if (res.confirm) updateManager.applyUpdate()
+              }
+            })
+            return
+          }
+          // onUpdateReady 和远程配置是两条独立的异步线，可能配置还没拉回来。
+          // 给一次重试；仍未打开就静默，交给微信下次冷启动自然生效。
+          if (!retried && !adConfig.isRemoteFetched()) {
+            setTimeout(function () { promptUpdate(true) }, 3000)
+          }
+        }
+        updateManager.onUpdateReady(function () { promptUpdate(false) })
         updateManager.onUpdateFailed(function () {
           // 静默：下次启动微信会自己重试，不打扰用户
           console.warn('[app] 新版本下载失败')

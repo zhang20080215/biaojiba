@@ -10,7 +10,8 @@
  *     category_native: { enabled: false },
  *     share_interstitial: { enabled: false },
  *     ...
- *   }
+ *   },
+ *   forceUpdatePrompt: true        // 可选，出 P0 时打开：提示用户立即重启用新版
  * }
  */
 
@@ -46,10 +47,21 @@ const adConfig = {
   },
 
   infeedPositions: [5, 25],
+
+  // 版本更新提示开关。默认 false = 静默，退回微信原本的「下次冷启动自动应用」，
+  // 平时零打扰（本项目两三天一个版本，默认弹窗一个月要打扰用户七八次，
+  // 而它换来的收益只是提前一次冷启动）。
+  // 出 P0 需要快速铺开修复时，把云端 app_config 的 forceUpdatePrompt 改成 true，
+  // 用户下次冷启动即弹窗提示立即重启——不用发版。
+  forceUpdatePrompt: false,
 }
 
 // ── 远程配置缓存 key ──
 var CACHE_KEY = 'ad_remote_config'
+
+// 云端那次网络拉取是否已经收口（成功或失败都算）。
+// 注意不含「套用了本地缓存」——缓存可能是旧的，事故时正需要最新那份。
+var _remoteFetched = false
 
 /**
  * 从云端拉取广告配置并合并到本地（启动时调用一次）
@@ -80,7 +92,9 @@ function fetchRemoteConfig() {
         wx.setStorageSync(CACHE_KEY, { data: remote, timestamp: Date.now() })
       } catch (e) { /* ignore */ }
     }
+    _remoteFetched = true
   }).catch(function (err) {
+    _remoteFetched = true
     console.warn('[adConfig] 拉取远程配置失败，使用本地默认:', err.errMsg || err)
   })
 }
@@ -132,6 +146,13 @@ function _applyRemoteConfig(remote) {
     }
   }
 
+  // 版本更新提示开关（出 P0 时云端打开，加速修复铺开）
+  if (remote.forceUpdatePrompt === true) {
+    adConfig.forceUpdatePrompt = true
+  } else if (remote.forceUpdatePrompt === false) {
+    adConfig.forceUpdatePrompt = false
+  }
+
   if (remote.grayForceIn) {
     var forceKeys = Object.keys(remote.grayForceIn)
     for (var k = 0; k < forceKeys.length; k++) {
@@ -175,6 +196,16 @@ function isForcedIntoGray(name, openid) {
   return list.indexOf(openid) !== -1
 }
 
+/** 是否要提示用户立即重启用新版（默认 false=静默，出 P0 时云端打开） */
+function shouldPromptUpdate() {
+  return adConfig.forceUpdatePrompt === true
+}
+
+/** 云端那次网络拉取是否已收口。用于区分「确实关着」和「配置还没到」 */
+function isRemoteFetched() {
+  return _remoteFetched
+}
+
 module.exports = {
   adConfig,
   getPlacement,
@@ -182,4 +213,6 @@ module.exports = {
   getGrayPercentage,
   isForcedIntoGray,
   fetchRemoteConfig,
+  shouldPromptUpdate,
+  isRemoteFetched,
 }
