@@ -38,6 +38,5 @@ Water Tracker *.html
 # 豆瓣剧集采集脚本的原始池子缓存（体积大、可重抓）
 tools/douban-tv-seed/.cache/
 
-# arthouse 重排的中间产物（getThemeMovies 导出 / 生成的重排参数）
-tools/arthouse-seed/_fetched.json
-tools/arthouse-seed/arthouse.rerank.params.json
+# 《视与听》榜单页面缓存（1MB HTML，可重抓）
+tools/sightsound-seed/.cache/

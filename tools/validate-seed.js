@@ -23,6 +23,7 @@ const FILES = [
   { file: 'tools/douban-tv-seed/doubanTvForeign.json', theme: 'doubanTvForeign' },
   { file: 'tools/douban-tv-seed/doubanTvAnime.json', theme: 'doubanTvAnime' },
   { file: 'tools/arthouse-seed/arthouse.json', theme: 'arthouse', needDirector: true, needCountry: true },
+  { file: 'tools/sightsound-seed/sightsound.json', theme: 'sightsound' },
 ];
 
 // 港台译名 → 大陆标准（命中即 WARN）

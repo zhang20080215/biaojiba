@@ -243,6 +243,14 @@
           <text class="placeholder-emoji">🎞️</text>
           <text class="placeholder-text">Letterboxd Top 500</text>
         </view>
+        <view wx:elif="{{item.id === 'arthouse_movies'}}" class="cover-placeholder arthouse">
+          <text class="placeholder-emoji">📽️</text>
+          <text class="placeholder-text">文艺电影250</text>
+        </view>
+        <view wx:elif="{{item.id === 'sightsound_movies'}}" class="cover-placeholder sightsound">
+          <text class="placeholder-emoji">🎥</text>
+          <text class="placeholder-text">视与听TOP250</text>
+        </view>
         <view wx:elif="{{item.id === 'maodun_books'}}" class="cover-placeholder maodun">
           <text class="placeholder-emoji">📚</text>
           <text class="placeholder-text">茅盾文学奖</text>
@@ -389,6 +397,14 @@
         <view wx:elif="{{item.id === 'letterboxd500_movies'}}" class="cover-placeholder letterboxd500">
           <text class="placeholder-emoji">🎞️</text>
           <text class="placeholder-text">Letterboxd Top 500</text>
+        </view>
+        <view wx:elif="{{item.id === 'arthouse_movies'}}" class="cover-placeholder arthouse">
+          <text class="placeholder-emoji">📽️</text>
+          <text class="placeholder-text">文艺电影250</text>
+        </view>
+        <view wx:elif="{{item.id === 'sightsound_movies'}}" class="cover-placeholder sightsound">
+          <text class="placeholder-emoji">🎥</text>
+          <text class="placeholder-text">视与听TOP250</text>
         </view>
         <view wx:elif="{{item.id === 'maodun_books'}}" class="cover-placeholder maodun">
           <text class="placeholder-emoji">📚</text>

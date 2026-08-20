@@ -126,6 +126,18 @@ const THEME_CONFIG = {
     showEdition: false,
     orderDirection: 'asc',
   },
+  // ── BFI《视与听》影史最伟大电影（影评人票选，十年一评，现行 2022 年版）──
+  // 官方名次到 250 为止但含大量并列，实际 264 部；rank 是拍平后的 1..264 顺序号，
+  // 官方名次留在 officialRank 字段（当前不展示）。详见 tools/sightsound-seed/README.md
+  sightsound: {
+    title: '视与听影史TOP250',
+    slogan: '标记你看过的影史经典，生成专属观影海报',
+    brandPrimary: '#6E2639',
+    brandSoft: '#A05066',
+    shadowRgb: '110, 38, 57',
+    showEdition: false,
+    orderDirection: 'asc',
+  },
   // ── 豆瓣「选剧集」9 分以上（movie.douban.com/tv/ 评分区间 9~10，按豆瓣评分降序取 TOP250）──
   doubanTvCn: {
     // 评分门槛是 8 分（9 分以上全量仅 168 条凑不满 250），所以标题不写「9分」
