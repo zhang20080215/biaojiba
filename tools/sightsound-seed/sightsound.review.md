@@ -61,11 +61,11 @@
 | ✓ | 47 | Barry Lyndon（1975） | Stanley Kubrick | [巴里·林登](https://movie.douban.com/subject/1292472/) | 1975 | movie | 160 |
 | ✓ | 48 | Ordet（1955） | Carl Th. Dreyer | [词语](https://movie.douban.com/subject/1303566/) | 1955 | movie | 160 |
 | ✓ | 49 | Wanda（1970） | Barbara Loden | [旺达](https://movie.douban.com/subject/1855338/) | 1970 | movie | 160 |
-| – | 50 | The 400 Blows（1959） | François Truffaut | — |  |  |  |
-| – | 51 | The Piano（1992） | Jane Campion | — |  |  |  |
-| – | 52 | Fear Eats the Soul（1974） | Rainer Werner Fassbinder | — |  |  |  |
-| – | 53 | News from Home（1976） | Chantal Akerman | — |  |  |  |
-| – | 54 | Sherlock Jr.（1924） | Buster Keaton | — |  |  |  |
+| ✓ | 50 | The 400 Blows（1959） | François Truffaut | [四百击](https://movie.douban.com/subject/1300056/) | 1959 | movie | 160 |
+| ✓ | 51 | The Piano（1992） | Jane Campion | [钢琴课](https://movie.douban.com/subject/1293818/) | 1993 | movie | 145 |
+| ? | 52 | Fear Eats the Soul（1974） | Rainer Werner Fassbinder | [恐惧吞噬灵魂](https://movie.douban.com/subject/1294092/) | 1974 | movie | 60 |
+| ✓ | 53 | News from Home（1976） | Chantal Akerman | [家乡的消息](https://movie.douban.com/subject/1902009/) | 1976 | movie | 160 |
+| ✓ | 54 | Sherlock Jr.（1924） | Buster Keaton | [福尔摩斯二世](https://movie.douban.com/subject/1303408/) | 1924 | movie | 160 |
 | ✓ | 55 | Battleship Potemkin（1925） | Sergei M. Eisenstein | [战舰波将金号](https://movie.douban.com/subject/1293492/) | 1925 | movie | 160 |
 | ✓ | 56 | The Apartment（1960） | Billy Wilder | [桃色公寓](https://movie.douban.com/subject/1394218/) | 1960 | movie | 160 |
 | ✓ | 57 | Le Mépris（1963） | Jean-Luc Godard | [蔑视](https://movie.douban.com/subject/1303555/) | 1963 | movie | 160 |
@@ -76,60 +76,60 @@
 | ✓ | 62 | Moonlight（2016） | Barry Jenkins | [月光男孩](https://movie.douban.com/subject/26648249/) | 2016 | movie | 160 |
 | ✓ | 63 | Casablanca（1942） | Michael Curtiz | [卡萨布兰卡](https://movie.douban.com/subject/1296753/) | 1942 | movie | 160 |
 | ✓ | 64 | The Third Man（1949） | Carol Reed | [第三人](https://movie.douban.com/subject/1295451/) | 1949 | movie | 160 |
-| – | 65 | GoodFellas（1990） | Martin Scorsese | — |  |  |  |
-| – | 66 | Touki Bouki（1973） | Djibril Diop Mambéty | — |  |  |  |
-| – | 67 | Metropolis（1927） | Fritz Lang | — |  |  |  |
-| – | 68 | The Red Shoes（1948） | Michael Powell, Emeric Pressburger | — |  |  |  |
-| – | 69 | La Jetée（1962） | Chris Marker | — |  |  |  |
-| – | 70 | Andrei Rublev（1966） | Andrei Tarkovsky | — |  |  |  |
-| – | 71 | The Gleaners and I（2000） | Agnès Varda | — |  |  |  |
-| – | 72 | Journey to Italy（1954） | Roberto Rossellini | — |  |  |  |
-| – | 73 | L'avventura（1960） | Michelangelo Antonioni | — |  |  |  |
-| – | 74 | My Neighbour Totoro（1988） | Hayao Miyazaki | — |  |  |  |
-| – | 75 | Sansho the Bailiff（1954） | Kenji Mizoguchi | — |  |  |  |
-| – | 76 | Imitation of Life（1959） | Douglas Sirk | — |  |  |  |
-| – | 77 | Spirited Away（2001） | Hayao Miyazaki | — |  |  |  |
-| – | 78 | Modern Times（1936） | Charles Chaplin | — |  |  |  |
-| – | 79 | A Matter of Life and Death（1946） | Michael Powell, Emeric Pressburger | — |  |  |  |
-| – | 80 | Sunset Blvd.（1950） | Billy Wilder | — |  |  |  |
-| – | 81 | Céline and Julie Go Boating（1974） | Jacques Rivette | — |  |  |  |
-| – | 82 | Histoire(s) du Cinéma（1988） | Jean-Luc Godard | — |  |  |  |
-| – | 83 | A Brighter Summer Day（1991） | Edward Yang | — |  |  |  |
-| – | 84 | Sátántangó（1994） | Béla Tarr | — |  |  |  |
-| – | 85 | Pierrot le fou（1965） | Jean-Luc Godard | — |  |  |  |
-| – | 86 | The Spirit of the Beehive（1973） | Víctor Erice | — |  |  |  |
-| – | 87 | Blue Velvet（1986） | David Lynch | — |  |  |  |
-| – | 88 | The Shining（1980） | Stanley Kubrick | — |  |  |  |
-| – | 89 | Chungking Express（1994） | Wong Kar Wai | — |  |  |  |
-| – | 90 | Madame de...（1953） | Max Ophuls | — |  |  |  |
-| – | 91 | Ugetsu Monogatari（1953） | Kenji Mizoguchi | — |  |  |  |
-| – | 92 | The Leopard（1962） | Luchino Visconti | — |  |  |  |
-| – | 93 | Yi Yi（1999） | Edward Yang | — |  |  |  |
-| – | 94 | Parasite（2019） | Bong Joon-ho | — |  |  |  |
-| – | 95 | The General（1926） | Buster Keaton, Clyde Bruckman | — |  |  |  |
-| – | 96 | A Man Escaped（1956） | Robert Bresson | — |  |  |  |
-| – | 97 | Black Girl（1965） | Ousmane Sembène | — |  |  |  |
-| – | 98 | Once upon a Time in the West（1968） | Sergio Leone | — |  |  |  |
-| – | 99 | Tropical Malady（2004） | Apichatpong Weerasethakul | — |  |  |  |
-| – | 100 | Get Out（2017） | Jordan Peele | — |  |  |  |
-| – | 101 | Rio Bravo（1958） | Howard Hawks | — |  |  |  |
-| – | 102 | The House Is Black（1962） | Forough Farokhzad | — |  |  |  |
-| – | 103 | Vagabond（1985） | Agnès Varda | — |  |  |  |
-| – | 104 | La Maman et la Putain（1973） | Jean Eustache | — |  |  |  |
-| – | 105 | The Godfather Part II（1974） | Francis Ford Coppola | — |  |  |  |
-| – | 106 | Jaws（1975） | Steven Spielberg | — |  |  |  |
-| – | 107 | Come and See（1985） | Elem Klimov | — |  |  |  |
-| – | 108 | Bringing Up Baby（1938） | Howard Hawks | — |  |  |  |
-| – | 109 | The Wizard of Oz（1939） | Victor Fleming | — |  |  |  |
+| ✓ | 65 | GoodFellas（1990） | Martin Scorsese | [好家伙](https://movie.douban.com/subject/1292268/) | 1990 | movie | 160 |
+| ✓ | 66 | Touki Bouki（1973） | Djibril Diop Mambéty | [土狼之旅](https://movie.douban.com/subject/1424576/) | 1973 | movie | 160 |
+| ✓ | 67 | Metropolis（1927） | Fritz Lang | [大都会](https://movie.douban.com/subject/1298107/) | 1927 | movie | 160 |
+| ✓ | 68 | The Red Shoes（1948） | Michael Powell, Emeric Pressburger | [红菱艳](https://movie.douban.com/subject/1299204/) | 1948 | movie | 160 |
+| ✓ | 69 | La Jetée（1962） | Chris Marker | [堤](https://movie.douban.com/subject/1306626/) | 1962 | movie | 160 |
+| ✓ | 70 | Andrei Rublev（1966） | Andrei Tarkovsky | [安德烈·卢布廖夫](https://movie.douban.com/subject/1298248/) | 1966 | movie | 160 |
+| ? | 71 | The Gleaners and I（2000） | Agnès Varda | [拾穗者](https://movie.douban.com/subject/1301279/) | 2000 | movie | 60 |
+| ✓ | 72 | Journey to Italy（1954） | Roberto Rossellini | [游览意大利](https://movie.douban.com/subject/1303576/) | 1954 | movie | 160 |
+| ✓ | 73 | L'avventura（1960） | Michelangelo Antonioni | [奇遇](https://movie.douban.com/subject/1389923/) | 1960 | movie | 160 |
+| ? | 74 | My Neighbour Totoro（1988） | Hayao Miyazaki | [龙猫](https://movie.douban.com/subject/1291560/) | 1988 | movie | 60 |
+| ✓ | 75 | Sansho the Bailiff（1954） | Kenji Mizoguchi | [山椒大夫](https://movie.douban.com/subject/1303573/) | 1954 | movie | 160 |
+| ✓ | 76 | Imitation of Life（1959） | Douglas Sirk | [春风秋雨](https://movie.douban.com/subject/1294625/) | 1959 | movie | 160 |
+| ✓ | 77 | Spirited Away（2001） | Hayao Miyazaki | [千与千寻](https://movie.douban.com/subject/1291561/) | 2001 | movie | 160 |
+| ✓ | 78 | Modern Times（1936） | Charles Chaplin | [摩登时代](https://movie.douban.com/subject/1294371/) | 1936 | movie | 160 |
+| ✓ | 79 | A Matter of Life and Death（1946） | Michael Powell, Emeric Pressburger | [平步青云](https://movie.douban.com/subject/1299411/) | 1946 | movie | 160 |
+| ✓ | 80 | Sunset Blvd.（1950） | Billy Wilder | [日落大道](https://movie.douban.com/subject/1298733/) | 1950 | movie | 160 |
+| ? | 81 | Céline and Julie Go Boating（1974） | Jacques Rivette | [塞琳和朱莉出航记](https://movie.douban.com/subject/1418141/) | 1974 | movie | 60 |
+| ? | 82 | Histoire(s) du Cinéma（1988） | Jean-Luc Godard | [电影史-1A 所有的历史](https://movie.douban.com/subject/1439723/) | 1989 | movie | 45 |
+| ✓ | 83 | A Brighter Summer Day（1991） | Edward Yang | [牯岭街少年杀人事件](https://movie.douban.com/subject/1292329/) | 1991 | movie | 160 |
+| ✓ | 84 | Sátántangó（1994） | Béla Tarr | [撒旦探戈](https://movie.douban.com/subject/1422088/) | 1994 | movie | 160 |
+| ✓ | 85 | Pierrot le fou（1965） | Jean-Luc Godard | [狂人皮埃罗](https://movie.douban.com/subject/1292533/) | 1965 | movie | 160 |
+| ✓ | 86 | The Spirit of the Beehive（1973） | Víctor Erice | [蜂巢幽灵](https://movie.douban.com/subject/1401900/) | 1973 | movie | 160 |
+| ? | 87 | Blue Velvet（1986） | David Lynch | [重访蓝丝绒](https://movie.douban.com/subject/27058856/) | 2016 | movie | -35 |
+| ✓ | 88 | The Shining（1980） | Stanley Kubrick | [闪灵](https://movie.douban.com/subject/1292225/) | 1980 | movie | 160 |
+| ✓ | 89 | Chungking Express（1994） | Wong Kar Wai | [重庆森林](https://movie.douban.com/subject/1291999/) | 1994 | movie | 160 |
+| ✓ | 90 | Madame de...（1953） | Max Ophuls | [伯爵夫人的耳环](https://movie.douban.com/subject/1301122/) | 1953 | movie | 160 |
+| ✓ | 91 | Ugetsu Monogatari（1953） | Kenji Mizoguchi | [雨月物语](https://movie.douban.com/subject/1303577/) | 1953 | movie | 160 |
+| ✓ | 92 | The Leopard（1962） | Luchino Visconti | [豹](https://movie.douban.com/subject/1293146/) | 1963 | movie | 145 |
+| ✓ | 93 | Yi Yi（1999） | Edward Yang | [一一](https://movie.douban.com/subject/1292434/) | 2000 | movie | 145 |
+| ✓ | 94 | Parasite（2019） | Bong Joon-ho | [寄生虫](https://movie.douban.com/subject/27010768/) | 2019 | movie | 160 |
+| ✓ | 95 | The General（1926） | Buster Keaton, Clyde Bruckman | [将军号](https://movie.douban.com/subject/1292778/) | 1926 | movie | 160 |
+| ✓ | 96 | A Man Escaped（1956） | Robert Bresson | [死囚越狱](https://movie.douban.com/subject/1303562/) | 1956 | movie | 160 |
+| ✓ | 97 | Black Girl（1965） | Ousmane Sembène | [黑女孩](https://movie.douban.com/subject/2060678/) | 1966 | movie | 145 |
+| ✓ | 98 | Once upon a Time in the West（1968） | Sergio Leone | [西部往事](https://movie.douban.com/subject/1293394/) | 1968 | movie | 160 |
+| ✓ | 99 | Tropical Malady（2004） | Apichatpong Weerasethakul | [热带疾病](https://movie.douban.com/subject/1414808/) | 2004 | movie | 160 |
+| ✓ | 100 | Get Out（2017） | Jordan Peele | [逃出绝命镇](https://movie.douban.com/subject/26688480/) | 2017 | movie | 160 |
+| ✓ | 101 | Rio Bravo（1958） | Howard Hawks | [赤胆屠龙](https://movie.douban.com/subject/1298497/) | 1959 | movie | 145 |
+| ✓ | 102 | The House Is Black（1962） | Forough Farokhzad | [房屋是黑的](https://movie.douban.com/subject/1499492/) | 1963 | movie | 145 |
+| ✓ | 103 | Vagabond（1985） | Agnès Varda | [天涯沦落女](https://movie.douban.com/subject/1292445/) | 1985 | movie | 160 |
+| ✓ | 104 | La Maman et la Putain（1973） | Jean Eustache | [母亲与娼妓](https://movie.douban.com/subject/1295252/) | 1973 | movie | 160 |
+| ✓ | 105 | The Godfather Part II（1974） | Francis Ford Coppola | [教父2](https://movie.douban.com/subject/1299131/) | 1974 | movie | 160 |
+| ✓ | 106 | Jaws（1975） | Steven Spielberg | [大白鲨](https://movie.douban.com/subject/1294941/) | 1975 | movie | 160 |
+| ✓ | 107 | Come and See（1985） | Elem Klimov | [自己去看](https://movie.douban.com/subject/1422186/) | 1985 | movie | 160 |
+| ✓ | 108 | Bringing Up Baby（1938） | Howard Hawks | [育婴奇谭](https://movie.douban.com/subject/1297657/) | 1938 | movie | 160 |
+| ✓ | 109 | The Wizard of Oz（1939） | Victor Fleming | [绿野仙踪](https://movie.douban.com/subject/1292625/) | 1939 | movie | 160 |
 | – | 110 | Wild Strawberries（1957） | Ingmar Bergman | — |  |  |  |
 | – | 111 | Touch of Evil（1958） | Orson Welles | — |  |  |  |
 | – | 112 | The Man Who Shot Liberty Valance（1962） | John Ford | — |  |  |  |
 | – | 113 | Goodbye, Dragon Inn（2003） | Tsai Ming-liang | — |  |  |  |
-| – | 114 | To Be or Not to Be（1942） | Ernst Lubitsch | — |  |  |  |
-| – | 115 | Don't Look Now（1973） | Nicolas Roeg | — |  |  |  |
-| – | 116 | A Woman under the Influence（1974） | John Cassavetes | — |  |  |  |
-| – | 117 | Nashville（1975） | Robert Altman | — |  |  |  |
-| – | 118 | The Conformist（1970） | Bernardo Bertolucci | — |  |  |  |
+| ✓ | 114 | To Be or Not to Be（1942） | Ernst Lubitsch | [你逃我也逃](https://movie.douban.com/subject/1303418/) | 1942 | movie | 160 |
+| ✓ | 115 | Don't Look Now（1973） | Nicolas Roeg | [威尼斯疑魂](https://movie.douban.com/subject/1302294/) | 1973 | movie | 160 |
+| ✓ | 116 | A Woman under the Influence（1974） | John Cassavetes | [醉酒的女人](https://movie.douban.com/subject/1293525/) | 1974 | movie | 160 |
+| ✓ | 117 | Nashville（1975） | Robert Altman | [纳什维尔](https://movie.douban.com/subject/1293037/) | 1975 | movie | 160 |
+| ✓ | 118 | The Conformist（1970） | Bernardo Bertolucci | [同流者](https://movie.douban.com/subject/1300955/) | 1970 | movie | 160 |
 | – | 119 | Aguirre, Wrath of God（1972） | Werner Herzog | — |  |  |  |
 | – | 120 | The Texas Chain Saw Massacre（1974） | Tobe Hooper | — |  |  |  |
 | – | 121 | The Thing（1982） | John Carpenter | — |  |  |  |
@@ -166,7 +166,7 @@
 | – | 152 | Meghe Dhaka Tara（1960） | Ritwik Ghatak | — |  |  |  |
 | – | 153 | Le Bonheur（1965） | Agnès Varda | — |  |  |  |
 | – | 154 | Days of Heaven（1978） | Terrence Malick | — |  |  |  |
-| – | 155 | West Indies: The Fugitive Slaves of Liberty（1979） | Med Hondo | — |  |  |  |
+| ✓人工 | 155 | West Indies: The Fugitive Slaves of Liberty（1979） | Med Hondo | [西印度群岛 West Indies (1979, 梅德·翁多)。豆瓣有条目且可访问，但零人评分、极冷门，搜索路径找不到——首轮灌库没进去的两条之一。详情接口已验证。](https://movie.douban.com/subject/25774676/) |  |  |  |
 | – | 156 | Twin Peaks: The Return（2017） | David Lynch | — |  |  |  |
 | – | 157 | Out of the Past（1947） | Jacques Tourneur | — |  |  |  |
 | – | 158 | Los olvidados（1950） | Luis Buñuel | — |  |  |  |
@@ -179,100 +179,99 @@
 | – | 165 | A City of Sadness（1989） | Hou Hsiao-Hsien | — |  |  |  |
 | – | 166 | Orlando（1992） | Sally Potter | — |  |  |  |
 | – | 167 | All about My Mother（1999） | Pedro Almodóvar | — |  |  |  |
-| – | 168 | West of the Tracks（2002） | Wang Bing | — |  |  |  |
-| – | 169 | Un chien andalou（1928） | Luis Buñuel | — |  |  |  |
-| – | 170 | The Magnificent Ambersons（1942） | Orson Welles | — |  |  |  |
-| – | 171 | Black Narcissus（1947） | Michael Powell, Emeric Pressburger | — |  |  |  |
-| – | 172 | Letter from an Unknown Woman（1948） | Max Ophuls | — |  |  |  |
-| – | 173 | Hiroshima mon amour（1959） | Alain Resnais | — |  |  |  |
-| – | 174 | Last Year at Marienbad（1961） | Alain Resnais | — |  |  |  |
-| – | 175 | The Exterminating Angel（1962） | Luis Buñuel | — |  |  |  |
-| – | 176 | Charulata（1964） | Satyajit Ray | — |  |  |  |
-| – | 177 | Red Desert（1964） | Michelangelo Antonioni | — |  |  |  |
-| – | 178 | The Good, the Bad and the Ugly（1966） | Sergio Leone | — |  |  |  |
-| – | 179 | Symbiopsychotaxiplasm: Take One（1967） | William Greaves | — |  |  |  |
-| – | 180 | Memories of Underdevelopment（1968） | Tomás Gutiérrez Alea | — |  |  |  |
-| – | 181 | L'Argent（1983） | Robert Bresson | — |  |  |  |
-| – | 182 | Out 1（1990） | Jacques Rivette | — |  |  |  |
-| – | 183 | Heat（1995） | Michael Mann | — |  |  |  |
-| – | 184 | Under the Skin（2013） | Jonathan Glazer | — |  |  |  |
-| – | 185 | Greed（1923） | Erich von Stroheim | — |  |  |  |
-| – | 186 | The River（1951） | Jean Renoir | — |  |  |  |
-| – | 187 | Pyaasa（1957） | Guru Dutt | — |  |  |  |
-| – | 188 | An Autumn Afternoon（1962） | Yasujirō Ozu | — |  |  |  |
-| – | 189 | The Birds（1963） | Alfred Hitchcock | — |  |  |  |
-| – | 190 | Les Demoiselles de Rochefort（1967） | Jacques Demy | — |  |  |  |
-| – | 191 | Love Streams（1984） | John Cassavetes | — |  |  |  |
-| – | 192 | Paris, Texas（1984） | Wim Wenders | — |  |  |  |
-| – | 193 | Ran（1985） | Akira Kurosawa | — |  |  |  |
-| – | 194 | Wings of Desire（1987） | Wim Wenders | — |  |  |  |
-| – | 195 | Magnolia（1999） | Paul Thomas Anderson | — |  |  |  |
-| – | 196 | Nosferatu（1922） | F.W. Murnau | — |  |  |  |
-| – | 197 | The Life and Death of Colonel Blimp（1943） | Michael Powell, Emeric Pressburger | — |  |  |  |
-| – | 198 | Double Indemnity（1944） | Billy Wilder | — |  |  |  |
-| – | 199 | I Know Where I’m Going!（1945） | Michael Powell, Emeric Pressburger | — |  |  |  |
-| – | 200 | Paisan（1946） | Roberto Rossellini | — |  |  |  |
-| – | 201 | L' eclisse（1962） | Michelangelo Antonioni | — |  |  |  |
-| – | 202 | Dr. Strangelove or: How I Learned to Stop Worrying and Love the Bomb（1963） | Stanley Kubrick | — |  |  |  |
-| – | 203 | Wavelength（1967） | Michael Snow | — |  |  |  |
-| – | 204 | One Way or Another（1977） | Sara Gómez | — |  |  |  |
-| – | 205 | Paris Is Burning（1990） | Jennie Livingston | — |  |  |  |
-| – | 206 | The Headless Woman（2008） | Lucrecia Martel | — |  |  |  |
-| – | 207 | The Tree of Life（2010） | Terrence Malick | — |  |  |  |
-| – | 208 | Uncle Boonmee Who Can Recall His Past Lives（2010） | Apichatpong Weerasethakul | — |  |  |  |
-| – | 209 | Mad Max: Fury Road（2015） | George Miller | — |  |  |  |
-| – | 210 | Zama（2017） | Lucrecia Martel | — |  |  |  |
-| – | 211 | Limite（1931） | Mário Peixoto | — |  |  |  |
-| – | 212 | Duck Soup（1933） | Leo McCarey | — |  |  |  |
-| – | 213 | By the Bluest of Seas（1935） | Boris Barnet | — |  |  |  |
-| – | 214 | Brief Encounter（1945） | David Lean | — |  |  |  |
-| – | 215 | All about Eve（1950） | Joseph L. Mankiewicz | — |  |  |  |
-| – | 216 | In a Lonely Place（1950） | Nicholas Ray | — |  |  |  |
-| – | 217 | Army of Shadows（1969） | Jean-Pierre Melville | — |  |  |  |
-| – | 218 | Pink Flamingos（1972） | John Waters | — |  |  |  |
-| – | 219 | Suspiria（1977） | Dario Argento | — |  |  |  |
-| – | 220 | The Deer Hunter（1978） | Michael Cimino | — |  |  |  |
-| – | 221 | Raiders of the Lost Ark（1981） | Steven Spielberg | — |  |  |  |
-| – | 222 | Twenty Years Later（1984） | Eduardo Coutinho | — |  |  |  |
-| – | 223 | Twin Peaks: Fire Walk with Me（1992） | David Lynch | — |  |  |  |
-| – | 224 | Melancholia（2011） | Lars von Trier | — |  |  |  |
-| – | 225 | Intolerance（1916） | D.W. Griffith | — |  |  |  |
-| – | 226 | Napoléon（1927） | Abel Gance | — |  |  |  |
-| – | 227 | The Crowd（1928） | King Vidor | — |  |  |  |
-| – | 228 | Europa '51（1952） | Roberto Rossellini | — |  |  |  |
-| – | 229 | The Hour of the Furnaces（1968） | Fernando Solanas | — |  |  |  |
-| – | 230 | A Touch of Zen（1969） | King Hu | — |  |  |  |
-| – | 231 | Cries and Whispers（1972） | Ingmar Bergman | — |  |  |  |
-| – | 232 | Je, tu, il, elle（1974） | Chantal Akerman | — |  |  |  |
-| – | 233 | Harlan County, USA（1976） | Barbara Kopple | — |  |  |  |
-| – | 234 | Star Wars（1977） | George Lucas | — |  |  |  |
-| – | 235 | The Green Ray（1986） | Eric Rohmer | — |  |  |  |
-| – | 236 | Grave of the Fireflies（1988） | Isao Takahata | — |  |  |  |
-| – | 237 | Blue（1993） | Derek Jarman | — |  |  |  |
-| – | 238 | Crash（1996） | David Cronenberg | — |  |  |  |
-| – | 239 | Happy Together（1997） | Wong Kar Wai | — |  |  |  |
-| – | 240 | Flowers of Shanghai（1998） | Hou Hsiao-Hsien | — |  |  |  |
-| – | 241 | As I Was Moving Ahead, Occasionally I Saw Brief Glimpses of Beauty（2000） | Jonas Mekas | — |  |  |  |
-| – | 242 | Petite maman（2021） | Céline Sciamma | — |  |  |  |
-| – | 243 | The Last Laugh（1924） | F.W. Murnau | — |  |  |  |
-| – | 244 | Pandora's Box（1928） | G.W. Pabst | — |  |  |  |
-| – | 245 | Earth（1930） | Alexander Dovzhenko | — |  |  |  |
-| – | 246 | Sullivan's Travels（1941） | Preston Sturges | — |  |  |  |
-| – | 247 | A Canterbury Tale（1944） | Michael Powell, Emeric Pressburger | — |  |  |  |
-| – | 248 | My Darling Clementine（1946） | John Ford | — |  |  |  |
-| – | 249 | Mouchette（1966） | Robert Bresson | — |  |  |  |
-| – | 250 | Soleil Ô（1970） | Med Hondo | — |  |  |  |
-| – | 251 | A Clockwork Orange（1971） | Stanley Kubrick | — |  |  |  |
-| – | 252 | Annie Hall（1977） | Woody Allen | — |  |  |  |
-| – | 253 | Possession（1981） | Andrzej Zulawski | — |  |  |  |
-| – | 254 | Born in Flames（1983） | Lizzie Borden | — |  |  |  |
-| – | 255 | Videodrome（1983） | David Cronenberg | — |  |  |  |
-| – | 256 | Distant Voices, Still Lives（1988） | Terence Davies | — |  |  |  |
-| – | 257 | The Quince Tree Sun（1992） | Víctor Erice | — |  |  |  |
-| – | 258 | Taste of Cherry（1997） | Abbas Kiarostami | — |  |  |  |
-| – | 259 | In Vanda's Room（2000） | Pedro Costa | — |  |  |  |
-| – | 260 | Werckmeister Harmonies（2000） | Béla Tarr | — |  |  |  |
-| – | 261 | Morvern Callar（2001） | Lynne Ramsay | — |  |  |  |
-| – | 262 | The Intruder（2004） | Claire Denis | — |  |  |  |
-| – | 263 | Syndromes and a Century（2006） | Apichatpong Weerasethakul | — |  |  |  |
-| – | 264 | Nostalgia for the Light（2010） | Patricio Guzmán | — |  |  |  |
+| – | 168 | Un chien andalou（1928） | Luis Buñuel | — |  |  |  |
+| – | 169 | The Magnificent Ambersons（1942） | Orson Welles | — |  |  |  |
+| – | 170 | Black Narcissus（1947） | Michael Powell, Emeric Pressburger | — |  |  |  |
+| – | 171 | Letter from an Unknown Woman（1948） | Max Ophuls | — |  |  |  |
+| – | 172 | Hiroshima mon amour（1959） | Alain Resnais | — |  |  |  |
+| – | 173 | Last Year at Marienbad（1961） | Alain Resnais | — |  |  |  |
+| – | 174 | The Exterminating Angel（1962） | Luis Buñuel | — |  |  |  |
+| – | 175 | Charulata（1964） | Satyajit Ray | — |  |  |  |
+| – | 176 | Red Desert（1964） | Michelangelo Antonioni | — |  |  |  |
+| – | 177 | The Good, the Bad and the Ugly（1966） | Sergio Leone | — |  |  |  |
+| – | 178 | Symbiopsychotaxiplasm: Take One（1967） | William Greaves | — |  |  |  |
+| – | 179 | Memories of Underdevelopment（1968） | Tomás Gutiérrez Alea | — |  |  |  |
+| – | 180 | L'Argent（1983） | Robert Bresson | — |  |  |  |
+| – | 181 | Out 1（1990） | Jacques Rivette | — |  |  |  |
+| – | 182 | Heat（1995） | Michael Mann | — |  |  |  |
+| – | 183 | Under the Skin（2013） | Jonathan Glazer | — |  |  |  |
+| – | 184 | Greed（1923） | Erich von Stroheim | — |  |  |  |
+| – | 185 | The River（1951） | Jean Renoir | — |  |  |  |
+| – | 186 | Pyaasa（1957） | Guru Dutt | — |  |  |  |
+| – | 187 | An Autumn Afternoon（1962） | Yasujirō Ozu | — |  |  |  |
+| – | 188 | The Birds（1963） | Alfred Hitchcock | — |  |  |  |
+| – | 189 | Les Demoiselles de Rochefort（1967） | Jacques Demy | — |  |  |  |
+| – | 190 | Love Streams（1984） | John Cassavetes | — |  |  |  |
+| – | 191 | Paris, Texas（1984） | Wim Wenders | — |  |  |  |
+| – | 192 | Ran（1985） | Akira Kurosawa | — |  |  |  |
+| – | 193 | Wings of Desire（1987） | Wim Wenders | — |  |  |  |
+| – | 194 | Magnolia（1999） | Paul Thomas Anderson | — |  |  |  |
+| – | 195 | Nosferatu（1922） | F.W. Murnau | — |  |  |  |
+| – | 196 | The Life and Death of Colonel Blimp（1943） | Michael Powell, Emeric Pressburger | — |  |  |  |
+| – | 197 | Double Indemnity（1944） | Billy Wilder | — |  |  |  |
+| – | 198 | I Know Where I’m Going!（1945） | Michael Powell, Emeric Pressburger | — |  |  |  |
+| – | 199 | Paisan（1946） | Roberto Rossellini | — |  |  |  |
+| – | 200 | L' eclisse（1962） | Michelangelo Antonioni | — |  |  |  |
+| – | 201 | Dr. Strangelove or: How I Learned to Stop Worrying and Love the Bomb（1963） | Stanley Kubrick | — |  |  |  |
+| – | 202 | Wavelength（1967） | Michael Snow | — |  |  |  |
+| – | 203 | One Way or Another（1977） | Sara Gómez | — |  |  |  |
+| – | 204 | Paris Is Burning（1990） | Jennie Livingston | — |  |  |  |
+| – | 205 | The Headless Woman（2008） | Lucrecia Martel | — |  |  |  |
+| – | 206 | The Tree of Life（2010） | Terrence Malick | — |  |  |  |
+| – | 207 | Uncle Boonmee Who Can Recall His Past Lives（2010） | Apichatpong Weerasethakul | — |  |  |  |
+| – | 208 | Mad Max: Fury Road（2015） | George Miller | — |  |  |  |
+| – | 209 | Zama（2017） | Lucrecia Martel | — |  |  |  |
+| – | 210 | Limite（1931） | Mário Peixoto | — |  |  |  |
+| – | 211 | Duck Soup（1933） | Leo McCarey | — |  |  |  |
+| – | 212 | By the Bluest of Seas（1935） | Boris Barnet | — |  |  |  |
+| – | 213 | Brief Encounter（1945） | David Lean | — |  |  |  |
+| – | 214 | All about Eve（1950） | Joseph L. Mankiewicz | — |  |  |  |
+| – | 215 | In a Lonely Place（1950） | Nicholas Ray | — |  |  |  |
+| – | 216 | Army of Shadows（1969） | Jean-Pierre Melville | — |  |  |  |
+| – | 217 | Pink Flamingos（1972） | John Waters | — |  |  |  |
+| – | 218 | Suspiria（1977） | Dario Argento | — |  |  |  |
+| – | 219 | The Deer Hunter（1978） | Michael Cimino | — |  |  |  |
+| – | 220 | Raiders of the Lost Ark（1981） | Steven Spielberg | — |  |  |  |
+| – | 221 | Twenty Years Later（1984） | Eduardo Coutinho | — |  |  |  |
+| – | 222 | Twin Peaks: Fire Walk with Me（1992） | David Lynch | — |  |  |  |
+| – | 223 | Melancholia（2011） | Lars von Trier | — |  |  |  |
+| – | 224 | Intolerance（1916） | D.W. Griffith | — |  |  |  |
+| – | 225 | Napoléon（1927） | Abel Gance | — |  |  |  |
+| – | 226 | The Crowd（1928） | King Vidor | — |  |  |  |
+| – | 227 | Europa '51（1952） | Roberto Rossellini | — |  |  |  |
+| – | 228 | The Hour of the Furnaces（1968） | Fernando Solanas | — |  |  |  |
+| – | 229 | A Touch of Zen（1969） | King Hu | — |  |  |  |
+| – | 230 | Cries and Whispers（1972） | Ingmar Bergman | — |  |  |  |
+| – | 231 | Je, tu, il, elle（1974） | Chantal Akerman | — |  |  |  |
+| – | 232 | Harlan County, USA（1976） | Barbara Kopple | — |  |  |  |
+| – | 233 | Star Wars（1977） | George Lucas | — |  |  |  |
+| – | 234 | The Green Ray（1986） | Eric Rohmer | — |  |  |  |
+| – | 235 | Grave of the Fireflies（1988） | Isao Takahata | — |  |  |  |
+| – | 236 | Blue（1993） | Derek Jarman | — |  |  |  |
+| – | 237 | Crash（1996） | David Cronenberg | — |  |  |  |
+| – | 238 | Happy Together（1997） | Wong Kar Wai | — |  |  |  |
+| – | 239 | Flowers of Shanghai（1998） | Hou Hsiao-Hsien | — |  |  |  |
+| – | 240 | As I Was Moving Ahead, Occasionally I Saw Brief Glimpses of Beauty（2000） | Jonas Mekas | — |  |  |  |
+| – | 241 | Petite maman（2021） | Céline Sciamma | — |  |  |  |
+| – | 242 | The Last Laugh（1924） | F.W. Murnau | — |  |  |  |
+| – | 243 | Pandora's Box（1928） | G.W. Pabst | — |  |  |  |
+| – | 244 | Earth（1930） | Alexander Dovzhenko | — |  |  |  |
+| – | 245 | Sullivan's Travels（1941） | Preston Sturges | — |  |  |  |
+| – | 246 | A Canterbury Tale（1944） | Michael Powell, Emeric Pressburger | — |  |  |  |
+| – | 247 | My Darling Clementine（1946） | John Ford | — |  |  |  |
+| – | 248 | Mouchette（1966） | Robert Bresson | — |  |  |  |
+| – | 249 | Soleil Ô（1970） | Med Hondo | — |  |  |  |
+| – | 250 | A Clockwork Orange（1971） | Stanley Kubrick | — |  |  |  |
+| – | 251 | Annie Hall（1977） | Woody Allen | — |  |  |  |
+| – | 252 | Possession（1981） | Andrzej Zulawski | — |  |  |  |
+| – | 253 | Born in Flames（1983） | Lizzie Borden | — |  |  |  |
+| – | 254 | Videodrome（1983） | David Cronenberg | — |  |  |  |
+| – | 255 | Distant Voices, Still Lives（1988） | Terence Davies | — |  |  |  |
+| – | 256 | The Quince Tree Sun（1992） | Víctor Erice | — |  |  |  |
+| – | 257 | Taste of Cherry（1997） | Abbas Kiarostami | — |  |  |  |
+| – | 258 | In Vanda's Room（2000） | Pedro Costa | — |  |  |  |
+| – | 259 | Werckmeister Harmonies（2000） | Béla Tarr | — |  |  |  |
+| – | 260 | Morvern Callar（2001） | Lynne Ramsay | — |  |  |  |
+| – | 261 | The Intruder（2004） | Claire Denis | — |  |  |  |
+| – | 262 | Syndromes and a Century（2006） | Apichatpong Weerasethakul | — |  |  |  |
+| – | 263 | Nostalgia for the Light（2010） | Patricio Guzmán | — |  |  |  |

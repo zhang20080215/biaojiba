@@ -35,6 +35,18 @@ const SOURCE_URL = 'https://www.bfi.org.uk/sight-and-sound/greatest-films-all-ti
 const THEME = 'sightsound';
 const REFRESH = process.argv.includes('--refresh');
 
+// 豆瓣根本收不进来的条目 —— 剔除，不进名单。
+// 《铁西区》(West of the Tracks, 2002, 王兵)：豆瓣把 9 小时的整片拆成三个条目
+//   （工厂 1309215 / 艳粉街 1309221 / 铁路），而这三个条目的 rexxar 详情接口一律返回
+//   403 need_permission —— 条目级封禁，跟《蓝风筝》《蓝丝绒》同类，本地 IP 与腾讯云 IP
+//   两个出口都被拒，钉 doubanId 也没用。首轮灌库它就是没进去的两条之一。
+// 剔除必须发生在并列拍平**之前**：否则每次重抓都会把它带回来，并让它之后的 rank
+// 全部错位一格 —— rank 生成 _id，错位即用户标记错乱。
+// 名单因此是 263 部而不是 264，分类页文案与 README 已同步。
+const EXCLUDED_TITLES = new Set([
+  'West of the Tracks'
+]);
+
 // 源站脏片名订正（key 是 cleanTitle 归一化之后的原文：实体已解码、连续空白已压成单空格）
 const TITLE_FIX = {
   'CHUNGKING EXPRESS': 'Chungking Express',         // 源站这一条是全大写
@@ -110,7 +122,7 @@ function cleanTitle(raw) {
   const results = cs.results || [];
   if (!results.length) throw new Error('componentState.results 是空的');
 
-  const rows = results.map(r => ({
+  let rows = results.map(r => ({
     officialRank: r.rank,
     tied: !!r.tied,
     year: parseInt((r.film && r.film.year) || '', 10),
@@ -121,6 +133,15 @@ function cleanTitle(raw) {
 
   const bad = rows.filter(x => !x.title || !x.year);
   if (bad.length) throw new Error('有 ' + bad.length + ' 条缺片名或年份：' + JSON.stringify(bad.slice(0, 3)));
+
+  // 豆瓣收不进来的条目，在拍平之前剔除。不剔的话每次重抓都会把它带回来、
+  // 并且让它之后的 rank 全部错位一格（rank 生成 _id，错位 = 用户标记错乱）。
+  const excluded = rows.filter(x => EXCLUDED_TITLES.has(x.title));
+  if (excluded.length) {
+    console.log('⚠ 剔除 ' + excluded.length + ' 条豆瓣无法收录的条目：'
+      + excluded.map(x => x.title + '(' + x.year + ')').join('、'));
+  }
+  rows = rows.filter(x => !EXCLUDED_TITLES.has(x.title));
 
   // 并列拍平：官方名次升序，组内按年份 + 片名排定（可复现，重抓不漂）
   rows.sort((a, b) => (a.officialRank - b.officialRank) || (a.year - b.year) || a.title.localeCompare(b.title));
