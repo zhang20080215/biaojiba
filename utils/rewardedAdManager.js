@@ -34,6 +34,10 @@ var SHOW_TIMEOUT_MS = 6000
 // 广告已经显示出来之后，等 onClose 的兜底时限。正常激励视频不超过 60s，
 // 这里只防「回调永远不来」导致等待者残留、把后续所有 show 都挡住。
 var CLOSE_TIMEOUT_MS = 180000
+// reject 出来的错误对象基本不带 errCode，真码由 onError 单独下发，而且常常比
+// reject 晚到一点。失败时先放行用户，把「上报」挂起这么久等真码回填，等不到
+// 才按 showfail_0 记。只延迟埋点，不延迟保存。
+var LATE_ERR_WINDOW_MS = 1000
 
 // ── 熔断兜底 ──
 // 连续多次广告侧异常（不含无填充/用户主动关闭）后，本地自动停闸一段时间。
@@ -85,9 +89,22 @@ function _noteResult(reason, route) {
 // 说明失败不是「平台没广告」而是别的层面出的问题，但笼统的 'showfail' 看不出
 // 到底哪个错误码在挂。把 errCode 拼进 result（参数值是自由字符串，后台不用
 // 额外注册属性），事件分析里就能直接按错误码分组定位。
+// 2026-08-21 补：上面这套只在「reject 带码」时有效，而实测绝大多数 reject 不带码，
+// 于是 45% 的失败全挤在 showfail_0 里，连 1004（平台无填充，属正常库存不足、没什么
+// 可修）也被吞了进去——「失败是技术性的不是库存性的」这个结论因此无从验证。
+// 真码走 onError，见 __xbjLastErr / LATE_ERR_WINDOW_MS。
 function _failReason(code) {
   if (code === 1004) return 'nofill'
   return 'showfail_' + (code || 0)
+}
+
+// onError 早于 reject 到达时，码已经挂在实例上了，直接取用。
+// 只认本次 show 开始之后到的，免得把上一次失败的码安到这次头上。
+function _recentErrCode(ad, since) {
+  var last = ad && ad.__xbjLastErr
+  if (!last || !last.code) return 0
+  if (last.at < since) return 0
+  return last.code
 }
 
 function _routeOf(page) {
@@ -154,7 +171,16 @@ function _bind(ad) {
     }
     ad.onError(function (err) {
       ad.__xbjReady = false
-      console.warn('[rewardedAdManager] ad error', err && err.errCode, err && err.errMsg)
+      var code = (err && err.errCode) || 0
+      console.warn('[rewardedAdManager] ad error', code, err && err.errMsg)
+      // 码先挂到实例上：这条回调可能早于 reject（则由 _recentErrCode 取走），
+      // 也可能晚于 reject（则由挂起的上报回填）。
+      ad.__xbjLastErr = { code: code, msg: (err && err.errMsg) || '', at: Date.now() }
+      var pending = ad.__xbjPendingReport
+      if (pending && code) {
+        ad.__xbjPendingReport = null
+        pending(code)
+      }
       var waiter = ad.__xbjWaiter
       if (waiter) waiter.onError(err)
     })
@@ -199,6 +225,10 @@ function show(placementName, page) {
     ad.__xbjWaiter = null
   }
 
+  // 上一次失败若还挂着回填窗口，到这里作废（它自己的兜底定时器会按 0 收口），
+  // 免得这次的错误码被算到上一次头上。
+  ad.__xbjPendingReport = null
+
   var route = _routeOf(page)
   var waiter = { startedAt: Date.now() }
 
@@ -216,8 +246,17 @@ function show(placementName, page) {
       try { wx.hideLoading() } catch (e) { /* ignore */ }
     }
 
-    var finish = function (result, reason) {
-      if (settled) return
+    // 收场与上报拆开：失败时可能还要多等一会儿真的错误码，但用户不该跟着等。
+    var reported = false
+    var report = function (reason) {
+      if (reported) return
+      reported = true
+      _noteResult(reason, route)
+      track('ad_rewarded', { route: route, result: reason })
+    }
+
+    var settle = function (result) {
+      if (settled) return false
       settled = true
       if (timer) {
         clearTimeout(timer)
@@ -225,11 +264,30 @@ function show(placementName, page) {
       }
       hideLoading()
       if (ad.__xbjWaiter === waiter) ad.__xbjWaiter = null
-      _noteResult(reason, route)
-      track('ad_rewarded', { route: route, result: reason })
       resolve(result)
       // 无论成败都为下一次保存备料（onClose 那条路径已经拉过，这里只兜失败路径）
       if (!ad.__xbjReady) _reload(ad)
+      return true
+    }
+
+    var finish = function (result, reason) {
+      if (!settle(result)) return
+      report(reason)
+    }
+
+    // 广告侧失败的统一入口：立刻放行保存，同时尽量把真的 errCode 记进埋点。
+    var failWith = function (err) {
+      var code = (err && err.errCode) || 0
+      if (!code) code = _recentErrCode(ad, waiter.startedAt)
+      if (code) return finish(true, _failReason(code))
+      // 码还没到：先放行用户，留一个短窗口等 onError 送来
+      if (!settle(true)) return
+      var pending = function (lateCode) { report(_failReason(lateCode)) }
+      ad.__xbjPendingReport = pending
+      setTimeout(function () {
+        if (ad.__xbjPendingReport === pending) ad.__xbjPendingReport = null
+        report(_failReason(0))
+      }, LATE_ERR_WINDOW_MS)
     }
 
     waiter.onClose = function (res) {
@@ -250,8 +308,7 @@ function show(placementName, page) {
         console.warn('[rewardedAdManager] 播放中的 onError，忽略', err && err.errCode)
         return
       }
-      var code = (err && err.errCode) || 0
-      finish(true, _failReason(code))
+      failWith(err)
     }
 
     timer = setTimeout(function () { finish(true, 'timeout') }, SHOW_TIMEOUT_MS)
@@ -278,9 +335,8 @@ function show(placementName, page) {
       })
     }).catch(function (err) {
       if (settled) return
-      var code = (err && err.errCode) || 0
-      console.warn('[rewardedAdManager] show failed', code, err && err.errMsg)
-      finish(true, _failReason(code))
+      console.warn('[rewardedAdManager] show failed', (err && err.errCode) || 0, err && err.errMsg)
+      failWith(err)
     })
   })
 

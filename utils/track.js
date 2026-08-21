@@ -13,7 +13,9 @@
  *                 漏斗：poster_view − poster_save = 看了海报但没保存的人
  *   ad_rewarded  { route:字符串, result:字符串 }              —— 激励视频结果
  *                 result ∈ watched(完播,有收入) | abandoned(未完播) |
- *                          nofill(无广告放行,无收入) | showfail(加载失败) | noinstance(无广告位)
+ *                          nofill(无填充放行,无收入) | showfail_<errCode>(加载失败,码拼在后面) |
+ *                          timeout | nocallback | fuse(熔断) | noinstance(无广告位)
+ *                 showfail_0 = 连 errCode 都没拿到；参数值是自由字符串，后台不用注册新属性
  *   app_open     { scene:数值 }                               —— 启动/回访场景值
  *   ── 第二版（核心动作 + 漏斗）──
  *   theme_open   { theme:字符串 }                              —— 进入榜单/景区/书单主题
