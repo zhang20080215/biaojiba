@@ -252,7 +252,7 @@ Page({
       {
         id: 'sightsound_movies',
         title: '视与听影史TOP250',
-        description: '英国《视与听》十年一度影评人票选，含并列共 263 部影史经典',
+        description: '英国《视与听》十年一度影评人票选，含并列共 262 部影史经典',
         image: '',
         tintClass: 'sightsound',
         userCount: 0,

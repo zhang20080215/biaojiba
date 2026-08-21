@@ -35,16 +35,26 @@ const SOURCE_URL = 'https://www.bfi.org.uk/sight-and-sound/greatest-films-all-ti
 const THEME = 'sightsound';
 const REFRESH = process.argv.includes('--refresh');
 
-// 豆瓣根本收不进来的条目 —— 剔除，不进名单。
+// 豆瓣收不进来的条目 —— 剔除，不进名单。源站是 264 部，这里剔 2 部 => 262。
+//
 // 《铁西区》(West of the Tracks, 2002, 王兵)：豆瓣把 9 小时的整片拆成三个条目
 //   （工厂 1309215 / 艳粉街 1309221 / 铁路），而这三个条目的 rexxar 详情接口一律返回
 //   403 need_permission —— 条目级封禁，跟《蓝风筝》《蓝丝绒》同类，本地 IP 与腾讯云 IP
-//   两个出口都被拒，钉 doubanId 也没用。首轮灌库它就是没进去的两条之一。
-// 剔除必须发生在并列拍平**之前**：否则每次重抓都会把它带回来，并让它之后的 rank
-// 全部错位一格 —— rank 生成 _id，错位即用户标记错乱。
-// 名单因此是 263 部而不是 264，分类页文案与 README 已同步。
+//   两个出口都被拒，钉 doubanId 也没用。而且它是纪录片，还会撞上搜索路径的非电影闸门。
+//
+// 《西印度群岛》(West Indies, 1979, 梅德·翁多)：豆瓣条目 25774676 本地能取到详情，
+//   但零人评分、无封面，云函数那边 fetchDoubanDetail 取不回来，两轮灌库都没进去。
+//   为一条零评分的极冷门片反复折腾不值，一并剔除。
+//
+// 剔除必须发生在并列拍平**之前**：否则每次重抓都会把它们带回来，并让后面的 rank
+// 全部错位 —— rank 生成 _id，错位即用户标记错乱。
+//
+// ⚠ 剔除条目会让其后所有 rank 前移，而 manual-ids.json 是**按 rank 索引**的：
+//   往这里加条目时，务必同步检查 manual-ids.json 里有没有落在剔除位之后的键，
+//   否则那些手工 id 会被钉到错误的片子上。
 const EXCLUDED_TITLES = new Set([
-  'West of the Tracks'
+  'West of the Tracks',
+  'West Indies: The Fugitive Slaves of Liberty'
 ]);
 
 // 源站脏片名订正（key 是 cleanTitle 归一化之后的原文：实体已解码、连续空白已压成单空格）
