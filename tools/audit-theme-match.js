@@ -22,9 +22,10 @@
  * ⚠ 名单用**英文片名**的主题（sightsound）①② 两个信号失效：库内 title 被豆瓣中文名
  * 覆盖后，中英文字符重叠恒为 0，264 条会全部误报。这类条目自动跳过 ①②。
  *
- * --verify：联网校验模式。按库内 doubanId 逐条拉豆瓣详情，比对**年份**——错配片的年份
- * 几乎总是对不上，而库里的 year 是从名单写进去的、永远等于名单年份，离线比不出来。
- * 详情接口不吃搜索额度，但 264 条要跑约 11 分钟（每条间隔 2.5s 避免触发风控）。
+ * --verify：联网校验模式。按库内 doubanId 逐条拉豆瓣详情，比对**外文原名 + 年份**。
+ * 原名是主判据（名单标题能对上 original_title / title / aka 任一即通过）；年份是辅助——
+ * 「同年不同片」是最常见的错配形态，年份对它无效。结果带缓存，可分多轮补齐（详情接口
+ * 连跑约 90 条就开始 HTTP 400，一轮跑不完 262 条）。
  */
 
 const fs = require('fs');
@@ -177,16 +178,30 @@ function main() {
   console.log(`\n———— 可疑 ${suspects.length} / 缺失 ${missing.length} / 孤儿 ${orphans.length} / id撞车 ${collisions.length} ————\n`);
 
   if (process.argv.includes('--verify')) {
-    return verifyAgainstDouban(seed, docs);
+    return verifyAgainstDouban(seed, docs, theme);
   }
 }
 
+/** 外文原名归一化：去掉标点/冠词/变音符，只留可比对的骨架 */
+function normLatin(s) {
+  return String(s || '')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')   // é → e
+    .toLowerCase()
+    .replace(/^(the|a|an|le|la|les|il|el|der|die|das)\s+/, '')
+    .replace(/[^a-z0-9]/g, '');
+}
+
 /**
- * 联网校验：按库内 doubanId 拉豆瓣详情，比对年份。
- * 库里的 year 是从名单写进去的（永远等于名单年份），离线比不出错配；
- * 豆瓣那边的年份才是判据——错配片的年份几乎总是对不上。
+ * 联网校验：按库内 doubanId 拉豆瓣详情，比对**外文原名**与年份。
+ *
+ * 原名是主判据：BFI 名单给的就是英文原名，豆瓣详情的 original_title 存的也是外文原名，
+ * 两者可直接比对。年份只是辅助——「同年不同片」是最常见的错配形态（《Pink Flamingos》
+ * 撞到同年的西班牙片、《Twenty Years Later》撞到同年的国产片），年份判据对它完全无效。
+ *
+ * 结果缓存在 .cache/verify-<theme>.json：豆瓣详情接口连跑约 90 条就开始返回 HTTP 400，
+ * 262 条一轮跑不完，缓存让重跑能接着上次的继续，只补没验证过的。
  */
-function verifyAgainstDouban(seed, docs) {
+function verifyAgainstDouban(seed, docs, theme) {
   const https = require('https');
   const detail = id => new Promise(resolve => {
     const req = https.get({
@@ -208,30 +223,74 @@ function verifyAgainstDouban(seed, docs) {
     req.setTimeout(15000, () => { req.destroy(); resolve({ err: 'timeout' }); });
   });
 
-  const targets = docs.filter(d => d.doubanId);
-  console.log(`联网校验 ${targets.length} 条（每条间隔 2.5s，约 ${Math.ceil(targets.length * 2.5 / 60)} 分钟）…\n`);
+  const cacheFile = path.join(process.cwd(), 'tools', 'sightsound-seed', '.cache', `verify-${theme}.json`);
+  let cache = {};
+  try { cache = JSON.parse(fs.readFileSync(cacheFile, 'utf8')); } catch (e) { /* 首次跑 */ }
+  const saveCache = () => {
+    try {
+      fs.mkdirSync(path.dirname(cacheFile), { recursive: true });
+      fs.writeFileSync(cacheFile, JSON.stringify(cache, null, 2));
+    } catch (e) { console.warn('缓存写入失败:', e.message); }
+  };
 
-  const bad = [];
-  const failed = [];
-  return targets.reduce((chain, d, i) => chain.then(async () => {
+  const all = docs.filter(d => d.doubanId);
+  const todo = all.filter(d => !cache[d.doubanId]);
+  console.log(`联网校验：${all.length} 条，已缓存 ${all.length - todo.length}，本轮需拉取 ${todo.length} 条`
+    + `（间隔 2.5s，约 ${Math.ceil(todo.length * 2.5 / 60)} 分钟）\n`);
+
+  let failed = 0;
+  let done = 0;
+  return todo.reduce((chain, d) => chain.then(async () => {
     const r = await detail(d.doubanId);
-    if (r.err) { failed.push({ d, err: r.err }); }
+    if (r.err) { failed++; }
     else {
-      const dy = Number(r.j.year);
-      if (dy && Number(d.year) && Math.abs(dy - Number(d.year)) > 1) {
-        bad.push({ d, doubanYear: dy, doubanTitle: r.j.title });
-        console.log(`  ✗ rank ${d.rank} 《${d.originalTitle}》名单 ${d.year} vs 豆瓣 ${dy}《${r.j.title}》 id=${d.doubanId}`);
-      }
+      // aka 一并存下：豆瓣对非英语片的 original_title 是法语/日语原名（《四百击》= Les Quatre
+      // cents coups），跟 BFI 给的英文通用名必然对不上；英文名通常躺在 aka 里
+      cache[d.doubanId] = {
+        title: r.j.title || '',
+        originalTitle: r.j.original_title || '',
+        aka: Array.isArray(r.j.aka) ? r.j.aka : [],
+        year: Number(r.j.year) || null,
+      };
+      done++;
+      if (done % 20 === 0) saveCache();
     }
-    if ((i + 1) % 25 === 0) console.log(`  …已校验 ${i + 1}/${targets.length}`);
+    if ((done + failed) % 25 === 0) console.log(`  …已处理 ${done + failed}/${todo.length}（成功 ${done} / 失败 ${failed}）`);
     await new Promise(s => setTimeout(s, 2500));
   }), Promise.resolve()).then(() => {
-    console.log(`\n———— 年份对不上 ${bad.length} / 请求失败 ${failed.length} / 已校验 ${targets.length} ————`);
-    if (failed.length) {
-      console.log('请求失败的（403 need_permission = 条目级封禁，换片；其余多为临时问题，可重跑）：');
-      failed.slice(0, 20).forEach(f => console.log(`  rank ${f.d.rank} 《${f.d.originalTitle}》 id=${f.d.doubanId} ${f.err}`));
+    saveCache();
+
+    const bad = [];
+    let unchecked = 0;
+    all.forEach(d => {
+      const c = cache[d.doubanId];
+      if (!c) { unchecked++; return; }
+      const reasons = [];
+      // 主判据：外文原名 + 别名。名单标题只要能对上其中任何一个就算过。
+      // 豆瓣对华语片的 original_title 是中文，归一化后为空，这类自动跳过原名比对。
+      const seedT = normLatin(d.originalTitle);
+      const candidates = [c.originalTitle, c.title, ...(c.aka || [])].map(normLatin).filter(Boolean);
+      const hit = !seedT || !candidates.length || candidates.some(x =>
+        x === seedT || x.includes(seedT) || seedT.includes(x));
+      if (!hit) {
+        reasons.push(`原名对不上：名单「${d.originalTitle}」vs 豆瓣「${c.originalTitle}」`
+          + (c.aka && c.aka.length ? `（别名 ${c.aka.slice(0, 3).join(' / ')}）` : '（无别名）'));
+      }
+      if (c.year && Number(d.year) && Math.abs(c.year - Number(d.year)) > 1) {
+        reasons.push(`年份 ${d.year} vs 豆瓣 ${c.year}`);
+      }
+      if (reasons.length) bad.push({ d, c, reasons });
+    });
+
+    if (bad.length) {
+      console.log(`\n⚠ ${bad.length} 条对不上：\n`);
+      bad.forEach(({ d, c, reasons }) => {
+        console.log(`  rank ${d.rank} 《${d.originalTitle}》(${d.year}) → 库内《${d.title}》 id=${d.doubanId}`);
+        reasons.forEach(r => console.log(`    ✗ ${r}`));
+        console.log(`    豆瓣页 https://movie.douban.com/subject/${d.doubanId}/\n`);
+      });
     }
-    console.log('');
+    console.log(`———— 对不上 ${bad.length} / 已校验 ${all.length - unchecked} / 尚未校验 ${unchecked}（本轮失败 ${failed}，隔一阵重跑本命令即可接着补）————\n`);
   });
 }
 
