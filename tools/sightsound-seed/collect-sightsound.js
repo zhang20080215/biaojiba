@@ -52,9 +52,23 @@ const REFRESH = process.argv.includes('--refresh');
 // ⚠ 剔除条目会让其后所有 rank 前移，而 manual-ids.json 是**按 rank 索引**的：
 //   往这里加条目时，务必同步检查 manual-ids.json 里有没有落在剔除位之后的键，
 //   否则那些手工 id 会被钉到错误的片子上。
+// 下面 5 条是**灌库后审计查出的错配**，豆瓣搜索路径把它们匹配到了完全不同的片子。
+// 判据是拿 sightsound.source.json 里 BFI 的导演/国家跟库内豆瓣数据交叉比对
+// （见 scratchpad 的 country-check 思路，已并入 tools/audit-theme-match.js 的说明）：
+//   Blue Velvet         → 《重访蓝丝绒》 导演 Peter Braatz ≠ David Lynch（正片豆瓣封禁）
+//   Twin Peaks: The Return → 《双峰：遗失的碎片》2014 删减片段合集，不是第三季
+//   Pink Flamingos      → 西班牙片《粉色火烈鸟之惑》导演 哈维尔·波罗·甘迪亚 ≠ John Waters
+//   Twenty Years Later  → 石晓华《二十年后再相会》≠ Eduardo Coutinho 的巴西纪录片
+//   Blue                → 《蓝白红三部曲之蓝》基耶斯洛夫斯基 ≠ Derek Jarman 1993 年那部
+//                          全片蓝屏的实验片（英文名撞车的典型）
 const EXCLUDED_TITLES = new Set([
   'West of the Tracks',
-  'West Indies: The Fugitive Slaves of Liberty'
+  'West Indies: The Fugitive Slaves of Liberty',
+  'Blue Velvet',
+  'Twin Peaks: The Return',
+  'Pink Flamingos',
+  'Twenty Years Later',
+  'Blue'
 ]);
 
 // 源站脏片名订正（key 是 cleanTitle 归一化之后的原文：实体已解码、连续空白已压成单空格）

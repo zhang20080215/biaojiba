@@ -36,6 +36,38 @@ const SEED_BY_THEME = {
   sightsound: 'tools/sightsound-seed/sightsound.json',
 };
 
+// 源站原始字段（含导演/国家），用于交叉校验。名单本身刻意不带这两个字段
+// （让豆瓣的中文版本胜出），但源站留了一份，正好拿来验匹配对不对。
+const SOURCE_BY_THEME = {
+  sightsound: 'tools/sightsound-seed/sightsound.source.json',
+};
+
+// 源站英文国名 → 豆瓣中文国名。只列名单里出现过的。
+const COUNTRY_CN = {
+  'USA': '美国', 'United Kingdom': '英国', 'France': '法国', 'Italy': '意大利',
+  'Japan': '日本', 'Germany': '德国', 'Federal Republic of Germany': '西德',
+  'German Democratic Republic': '东德', 'Soviet Union': '苏联', 'USSR': '苏联',
+  'Spain': '西班牙', 'Sweden': '瑞典', 'Denmark': '丹麦', 'Belgium': '比利时',
+  'Netherlands': '荷兰', 'Poland': '波兰', 'Czechoslovakia': '捷克斯洛伐克',
+  'Hungary': '匈牙利', 'Austria': '奥地利', 'Switzerland': '瑞士', 'Brazil': '巴西',
+  'Argentina': '阿根廷', 'Mexico': '墨西哥', 'Cuba': '古巴', 'Chile': '智利',
+  'India': '印度', 'Iran': '伊朗', 'China': '中国大陆', 'Hong Kong': '中国香港',
+  'Taiwan': '中国台湾', 'Republic of Korea': '韩国', 'South Korea': '韩国',
+  'Thailand': '泰国', 'Senegal': '塞内加尔', 'Angola': '安哥拉',
+  'Mauritania': '毛里塔尼亚', 'Algeria': '阿尔及利亚', 'Canada': '加拿大',
+  'Australia': '澳大利亚', 'New Zealand': '新西兰', 'Portugal': '葡萄牙',
+  'Greece': '希腊', 'Turkey': '土耳其', 'Norway': '挪威', 'Finland': '芬兰',
+  'Ireland': '爱尔兰', 'Israel': '以色列', 'Palestine': '巴勒斯坦', 'Egypt': '埃及',
+  'Burkina Faso': '布基纳法索', 'Mali': '马里', 'Russia': '俄罗斯',
+  'Russian Federation': '俄罗斯', 'Ukraine': '乌克兰', 'Georgia': '格鲁吉亚',
+  'Armenia': '亚美尼亚', 'Cambodia': '柬埔寨', 'Philippines': '菲律宾',
+  'Lebanon': '黎巴嫩', 'Dominican Republic': '多米尼加', 'Monaco': '摩纳哥',
+  'Yugoslavia': '南斯拉夫', 'Romania': '罗马尼亚', 'Bulgaria': '保加利亚',
+  'Congo': '刚果', 'Tunisia': '突尼斯', 'Morocco': '摩洛哥', 'Bolivia': '玻利维亚',
+  'Colombia': '哥伦比亚', 'Peru': '秘鲁', 'Venezuela': '委内瑞拉',
+  'South Africa': '南非', 'Iceland': '冰岛', 'Luxembourg': '卢森堡',
+};
+
 const LOW_COUNT = 2000;      // 评分人数低于此值 → 可疑
 const LOW_RATING = 7.0;      // 评分低于此值 → 可疑（精选片单里不该有）
 const SIM_THRESHOLD = 0.34;  // 片名字符重叠率低于此值 → 可疑
@@ -129,6 +161,27 @@ function main() {
     }
   });
 
+  // ⑤ 国家交叉校验 —— 离线信号里最有效的一个。
+  // 源站给了导演和国家，库里存的是豆瓣的；国家对不上基本就是匹配到了别的片。
+  // sightsound 实测：262 条里命中 8 条，其中 4 条是真错配（导演也对不上）、
+  // 4 条是合拍片国家标注差异的误报（导演一致）。所以输出里带上两边的导演，
+  // 由人一眼判定——导演不同 = 确认错配，导演相同 = 合拍片标注差异，放过。
+  const sourceRel = SOURCE_BY_THEME[theme];
+  const countryBad = [];
+  if (sourceRel) {
+    let source = [];
+    try { source = loadJson(path.join(process.cwd(), sourceRel)); } catch (e) { /* 没有源站文件就跳过 */ }
+    const srcByKey = new Map();
+    source.forEach(s => srcByKey.set(s.title + '__' + s.year, s));
+    docs.forEach(d => {
+      const s = srcByKey.get(d.originalTitle + '__' + d.year);
+      if (!s || !s.country || !d.country) return;
+      const bfiCn = s.country.split(',').map(x => COUNTRY_CN[x.trim()]).filter(Boolean);
+      if (!bfiCn.length) return;
+      if (!bfiCn.includes(d.country)) countryBad.push({ d, s, bfiCn });
+    });
+  }
+
   // doubanId 撞车：两条名单匹配到了同一个豆瓣条目，必有一条是错的
   const byDoubanId = new Map();
   docs.forEach(d => {
@@ -175,7 +228,17 @@ function main() {
     });
   }
 
-  console.log(`\n———— 可疑 ${suspects.length} / 缺失 ${missing.length} / 孤儿 ${orphans.length} / id撞车 ${collisions.length} ————\n`);
+  if (countryBad.length) {
+    console.log(`\n⚠ ${countryBad.length} 条国家与源站对不上（**看导演判定**：导演不同 = 确认错配；导演相同 = 合拍片标注差异，放过）：\n`);
+    countryBad.forEach(({ d, s, bfiCn }) => {
+      console.log(`  rank ${String(d.rank).padStart(3)} 《${d.originalTitle}》(${d.year})`);
+      console.log(`        库内《${d.title}》 ${d.country} / ${d.director}  id=${d.doubanId}`);
+      console.log(`        源站  ${s.country} → ${bfiCn.join('、')}  导演 ${s.director}`);
+      console.log(`        https://movie.douban.com/subject/${d.doubanId}/\n`);
+    });
+  }
+
+  console.log(`\n———— 可疑 ${suspects.length} / 缺失 ${missing.length} / 孤儿 ${orphans.length} / id撞车 ${collisions.length} / 国家不符 ${countryBad.length} ————\n`);
 
   if (process.argv.includes('--verify')) {
     return verifyAgainstDouban(seed, docs, theme);
