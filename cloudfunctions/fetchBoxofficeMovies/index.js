@@ -120,14 +120,21 @@ const BOXOFFICE_DATA = [
  * 格式化票房金额为可读文本
  */
 function formatBoxOffice(amount) {
-    if (amount >= 1000000000) {
-        return '$' + (amount / 1000000000).toFixed(1) + '亿';
-    } else if (amount >= 100000000) {
-        return '$' + (amount / 100000000).toFixed(1) + '千万';
-    } else if (amount >= 1000000) {
-        return '$' + (amount / 1000000).toFixed(0) + '万';
+    // ⚠ 这里曾经用**英文数量级去除、却标中文单位**（/1e9 标「亿」、/1e8 标「千万」、
+    // /1e6 标「万」），三个分支一律小 10 倍——阿凡达 29.2 亿被写成「$2.9亿」，
+    // 而且 boxOfficeText 是 seed 时算好存进库的，前端 list.js 又优先用库里这个字段
+    // （`movie.boxOfficeText || this.formatBoxOffice(...)`），所以前端那份正确实现
+    // 根本没机会兜底，100 条全错。改动这里必须与 pages/boxoffice/list/list.js 的
+    // formatBoxOffice 保持一致。
+    const num = Number(amount);
+    if (!num || Number.isNaN(num) || num <= 0) return '';
+    if (num >= 100000000) {   // 1 亿
+        return '$' + (num / 100000000).toFixed(num >= 1000000000 ? 1 : 2) + '亿';
     }
-    return '$' + amount.toLocaleString();
+    if (num >= 10000) {       // 1 万
+        return '$' + (num / 10000).toFixed(num >= 10000000 ? 0 : 1) + '万';
+    }
+    return '$' + num;
 }
 
 /**
