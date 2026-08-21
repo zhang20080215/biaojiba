@@ -533,6 +533,12 @@ page {
   border-radius: var(--radius-pill);
 }
 
+/* 评分人数：跟评分同处一个胶囊，但减重降透明度，让「8.4」仍是视觉重心 */
+.movie-rating-votes {
+  font-weight: 400;
+  opacity: 0.72;
+}
+
 /* ========== 右侧操作区 ========== */
 .movie-action {
   display: flex;

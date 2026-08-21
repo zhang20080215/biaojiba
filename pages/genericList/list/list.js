@@ -5,6 +5,7 @@ var { trackMark, trackShare } = require('../../../utils/track.js');
 var adManager = require('../../../utils/adManager');
 var userStore = require('../../../utils/userStore.js');
 var { getThemeConfig } = require('../../../utils/genericThemeConfig.js');
+var { formatVotes } = require('../../../utils/movieFormat.js');
 
 // 通用榜单页：走 enrichThemeMovies/generic_theme_movies 流水线的新主题、以及迁移过来的老主题共用这一套页面，
 // 通过 ?theme=xxx 区分（同 pages/daily/index 靠 ?theme= 复用一套页面的思路）。
@@ -306,10 +307,15 @@ Page({
                 if (countryTags.length) {
                     metaParts.push({ type: 'country', tags: countryTags });
                 }
+                // 评分人数：ratingCount 是做 arthouse 时才加进 fetchDoubanDetail 的，
+                // 更早灌库的主题库里没这个字段，所以是「有就显示」而非固定占位。
+                // 想让老主题也有，逐个跑 { theme, backfillRatings: true, autoContinue: true } 即可。
+                const votes = formatVotes(m.ratingCount);
                 return {
                     ...m,
                     _id: String(m._id),
                     metaParts,
+                    ratingVotesText: votes ? `${votes}人评` : '',
                     // thumbCover：优先取 originalCover（原始 douban URL）转缩略图，cover 保留用于海报生成
                     thumbCover: imageCacheManager.getThumbnailUrl(m.cover || m.coverUrl || m.originalCover, 'list')
                 };
