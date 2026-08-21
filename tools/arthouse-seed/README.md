@@ -1,11 +1,11 @@
-# 世界文艺电影250 灌库说明（arthouse）
+# 文艺电影必修课 灌库说明（arthouse）
 
 走通用主题流水线（`enrichThemeMovies` → 共享集合 `generic_theme_movies` → `getThemeMovies` 读取 → 共用页面 `pages/genericList`），**不新增页面、不新增云函数**。
 
 | 项 | 值 |
 |---|---|
 | 主题 id | `arthouse` |
-| 前端标题 | 世界文艺电影250 |
+| 前端标题 | 文艺电影必修课 |
 | 分类 | 电影（category `movie`） |
 | 配色 | `#2E3A59` / `#5E6E96` |
 | 条数 | 250（153 位导演、35 个国家与地区、1925—2022） |

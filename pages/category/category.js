@@ -240,7 +240,7 @@ Page({
       },
       {
         id: 'arthouse_movies',
-        title: '世界文艺电影250',
+        title: '文艺电影必修课',
         description: '250 部作者电影与艺术电影，153 位导演、35 个国家与地区',
         image: '',
         tintClass: 'arthouse',

@@ -118,8 +118,8 @@ const THEME_CONFIG = {
     orderDirection: 'asc',
   },
   arthouse: {
-    title: '世界文艺电影250',
-    slogan: '标记你看过的作者电影，生成专属观影海报',
+    title: '文艺电影必修课',
+    slogan: '标记你看过的文艺电影，生成专属观影海报。',
     brandPrimary: '#2E3A59',
     brandSoft: '#5E6E96',
     shadowRgb: '46, 58, 89',

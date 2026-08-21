@@ -348,7 +348,7 @@ async function backfillRatings(theme, opts, START_TIME) {
 
 /**
  * 按豆瓣评分的贝叶斯加权重算 rank（IMDb Top250 同款公式），就地回写。
- * 给「名单是编的、源站没有现成排名」的主题用（目前是 arthouse 世界文艺电影250）。
+ * 给「名单是编的、源站没有现成排名」的主题用（目前是 arthouse 文艺电影必修课）。
  *
  *   WR = v/(v+m) × R + m/(v+m) × C
  *     R = 该片评分，v = 该片评分人数，C = 全体均分，m = 票数门槛
