@@ -93,18 +93,42 @@ function _noteResult(reason, route) {
 // 于是 45% 的失败全挤在 showfail_0 里，连 1004（平台无填充，属正常库存不足、没什么
 // 可修）也被吞了进去——「失败是技术性的不是库存性的」这个结论因此无从验证。
 // 真码走 onError，见 __xbjLastErr / LATE_ERR_WINDOW_MS。
-function _failReason(code) {
-  if (code === 1004) return 'nofill'
-  return 'showfail_' + (code || 0)
+// 2026-08-23 再补：errCode 回填上线后 nofill 仍然是 0、失败依旧全是 showfail_0，
+// 说明 reject 不带码、onError 也没在 1 秒窗口内送来码——不是「拿到码发现不是 1004」，
+// 而是压根没拿到码。但 wx 的失败对象几乎总带 errMsg，之前被我们直接丢了。
+// 所以没有码的时候改用 errMsg 归一化出的标签，别再一律记成黑盒 showfail_0。
+//
+// 微信 SDK 的 errMsg 是有限的几种模板串，但我们还没看清它们长什么样，
+// 所以这里不写关键词表（写了也是瞎猜），直接把整条消息压成短 slug：
+// 去掉 "xxx:fail " 前缀、数字折成 #（免得 id/耗时把基数撑爆）、空白折成下划线、截断 24 字。
+// 等线上看清楚是哪几种，再决定要不要收敛成固定标签。
+function _msgTag(msg) {
+  if (!msg) return ''
+  var s = String(msg)
+    .replace(/^[\w.]+:fail\s*/i, '')
+    .replace(/\d+/g, '#')
+    .trim()
+    .replace(/\s+/g, '_')
+    .replace(/^_+|_+$/g, '')
+  return s.slice(0, 24)
 }
 
-// onError 早于 reject 到达时，码已经挂在实例上了，直接取用。
+function _failReason(code, msg) {
+  if (code === 1004) return 'nofill'
+  if (code) return 'showfail_' + code
+  var tag = _msgTag(msg)
+  // showfail_0 从此只剩一个含义：码和文案都没有
+  return tag ? 'showfail_' + tag : 'showfail_0'
+}
+
+// onError 早于 reject 到达时，错误已经挂在实例上了，直接取用。
 // 只认本次 show 开始之后到的，免得把上一次失败的码安到这次头上。
-function _recentErrCode(ad, since) {
+function _recentErr(ad, since) {
   var last = ad && ad.__xbjLastErr
-  if (!last || !last.code) return 0
-  if (last.at < since) return 0
-  return last.code
+  if (!last) return null
+  if (last.at < since) return null
+  if (!last.code && !last.msg) return null
+  return last
 }
 
 function _routeOf(page) {
@@ -173,13 +197,15 @@ function _bind(ad) {
       ad.__xbjReady = false
       var code = (err && err.errCode) || 0
       console.warn('[rewardedAdManager] ad error', code, err && err.errMsg)
-      // 码先挂到实例上：这条回调可能早于 reject（则由 _recentErrCode 取走），
+      // 码先挂到实例上：这条回调可能早于 reject（则由 _recentErr 取走），
       // 也可能晚于 reject（则由挂起的上报回填）。
       ad.__xbjLastErr = { code: code, msg: (err && err.errMsg) || '', at: Date.now() }
       var pending = ad.__xbjPendingReport
-      if (pending && code) {
+      // 原先只在 code 非 0 时回填，于是「有文案没有码」的 onError 被白白丢掉，
+      // 挂起的上报只能超时后记成 showfail_0。现在有文案也算数。
+      if (pending && (code || (err && err.errMsg))) {
         ad.__xbjPendingReport = null
-        pending(code)
+        pending(code, (err && err.errMsg) || '')
       }
       var waiter = ad.__xbjWaiter
       if (waiter) waiter.onError(err)
@@ -237,6 +263,7 @@ function show(placementName, page) {
     var timer = null
     var loading = false
     var playing = false      // ad.show() 已 resolve = 广告真的放出来了
+    var retried = false      // 无码失败后是否已经重拉素材重试过一次
 
     ad.__xbjWaiter = waiter
 
@@ -251,8 +278,12 @@ function show(placementName, page) {
     var report = function (reason) {
       if (reported) return
       reported = true
+      // 熔断计数用原始 reason：加了后缀 'timeout_r' 就不再等于 'timeout'，
+      // _noteResult 里那几个字符串比较会静默失配。
       _noteResult(reason, route)
-      track('ad_rewarded', { route: route, result: reason })
+      // 埋点带上 _r：用来量「重试到底救回了多少次曝光」。watched_r 就是重试救回来的那些，
+      // ⚠ 看总量时要把 xxx 和 xxx_r 相加。
+      track('ad_rewarded', { route: route, result: retried ? reason + '_r' : reason })
     }
 
     var settle = function (result) {
@@ -275,18 +306,24 @@ function show(placementName, page) {
       report(reason)
     }
 
-    // 广告侧失败的统一入口：立刻放行保存，同时尽量把真的 errCode 记进埋点。
+    // 广告侧失败的统一入口：立刻放行保存，同时尽量把真的 errCode / errMsg 记进埋点。
     var failWith = function (err) {
       var code = (err && err.errCode) || 0
-      if (!code) code = _recentErrCode(ad, waiter.startedAt)
-      if (code) return finish(true, _failReason(code))
-      // 码还没到：先放行用户，留一个短窗口等 onError 送来
+      var msg = (err && err.errMsg) || ''
+      var recent = _recentErr(ad, waiter.startedAt)
+      if (recent) {
+        if (!code) code = recent.code || 0
+        if (!msg) msg = recent.msg || ''
+      }
+      if (code) return finish(true, _failReason(code, msg))
+      // 有文案但没码时**仍然等**这一秒：1004 只能靠 onError 送来的真码才认得出 nofill，
+      // 提前用文案收场就再也分不清「平台没广告」和「真出错」了。等不到码再用文案兜底。
       if (!settle(true)) return
-      var pending = function (lateCode) { report(_failReason(lateCode)) }
+      var pending = function (lateCode, lateMsg) { report(_failReason(lateCode, lateMsg || msg)) }
       ad.__xbjPendingReport = pending
       setTimeout(function () {
         if (ad.__xbjPendingReport === pending) ad.__xbjPendingReport = null
-        report(_failReason(0))
+        report(_failReason(0, msg))
       }, LATE_ERR_WINDOW_MS)
     }
 
@@ -323,19 +360,49 @@ function show(placementName, page) {
       return _call(function () { return ad.load() })
     }
 
-    prepare().then(function () {
-      if (settled) return null
-      hideLoading()
-      return _call(function () { return ad.show() }).then(function () {
-        // 广告已经显示，撤掉「打不开」的兜底，换成等 onClose 的长兜底
-        if (settled) return
-        playing = true
-        if (timer) clearTimeout(timer)
-        timer = setTimeout(function () { finish(true, 'nocallback') }, CLOSE_TIMEOUT_MS)
+    var attempt = function () {
+      return prepare().then(function () {
+        if (settled) return null
+        hideLoading()
+        return _call(function () { return ad.show() }).then(function () {
+          // 广告已经显示，撤掉「打不开」的兜底，换成等 onClose 的长兜底
+          if (settled) return
+          playing = true
+          if (timer) clearTimeout(timer)
+          timer = setTimeout(function () { finish(true, 'nocallback') }, CLOSE_TIMEOUT_MS)
+        })
       })
-    }).catch(function (err) {
+    }
+
+    attempt().catch(function (err) {
       if (settled) return
-      console.warn('[rewardedAdManager] show failed', (err && err.errCode) || 0, err && err.errMsg)
+      var code = (err && err.errCode) || 0
+      console.warn('[rewardedAdManager] show failed', code, err && err.errMsg)
+
+      // ── 无码失败重试一次 ──
+      // 2026-08-23：线上约 46% 的尝试记成 showfail_0（无码、非超时、非无回调），
+      // 而 nofill 恒为 0，说明这些不是平台无填充。最可能是 __xbjReady 假阳性：
+      // 上面 prepare() 只要标记为 true 就跳过 load 直接 show，而这个标记只在
+      // onError/onClose/下一轮 _load 时才置 false——**素材自然过期不派发任何事件**，
+      // 标记就一直挂着 true。而 refreshHint 在每次打开海报页时就预热，用户往往
+      // 挑完背景/版式（该页均停留 21.8 秒，慢的几分钟）才点保存，中间素材早过期了。
+      // 这种 show() 是**状态错误而非广告请求失败**，所以不走 onError、拿不到任何码。
+      //
+      // 对策：清掉假阳性标记 → 强制重新 load → 再 show 一次。
+      // 有码的失败不重试（1004 是真没广告，重试纯浪费额度和用户时间）。
+      // 不额外延长 6 秒的 SHOW_TIMEOUT_MS：宁可超时放行用户，也不让人干等；
+      // 如果埋点里 timeout 开始变多，就说明重试挤不进这个预算，届时再调。
+      if (!code && !retried && !playing) {
+        retried = true
+        ad.__xbjReady = false
+        return attempt().catch(function (err2) {
+          if (settled) return
+          var e = err2 || err
+          console.warn('[rewardedAdManager] retry failed', (e && e.errCode) || 0, e && e.errMsg)
+          failWith(e)
+        })
+      }
+
       failWith(err)
     })
   })

@@ -14,8 +14,14 @@
  *   ad_rewarded  { route:字符串, result:字符串 }              —— 激励视频结果
  *                 result ∈ watched(完播,有收入) | abandoned(未完播) |
  *                          nofill(无填充放行,无收入) | showfail_<errCode>(加载失败,码拼在后面) |
+ *                          showfail_<errMsg标签>(没拿到码时用 errMsg 归一化出的短标签) |
  *                          timeout | nocallback | fuse(熔断) | noinstance(无广告位)
- *                 showfail_0 = 连 errCode 都没拿到；参数值是自由字符串，后台不用注册新属性
+ *                 showfail_0 = 码和文案都没拿到（2026-08-23 起它只剩这一个含义；
+ *                 在那之前它是「没拿到码」的统称，把 1004 和真错误一起吞了）
+ *                 **后缀 _r**（watched_r / showfail_0_r / abandoned_r …）= 无码失败后
+ *                 重拉素材重试了一次才得到的结果。watched_r 就是重试救回来的曝光。
+ *                 ⚠ 统计总量时要把 xxx 与 xxx_r 相加，否则会漏掉重试那部分。
+ *                 参数值是自由字符串，后台不用注册新属性
  *   app_open     { scene:数值 }                               —— 启动/回访场景值
  *   ── 第二版（核心动作 + 漏斗）──
  *   theme_open   { theme:字符串 }                              —— 进入榜单/景区/书单主题
