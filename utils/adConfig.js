@@ -11,8 +11,18 @@
  *     share_interstitial: { enabled: false },
  *     ...
  *   },
+ *   grayRollout: {                 // 可选，按广告位放量百分比（0~100）
+ *     save_image_rewarded: 100,    // ⚠ 必须存**数值**，字符串 "100" 会被静默忽略
+ *     daily_movie_banner: 20,
+ *   },
+ *   grayForceIn: {                 // 可选，白名单 openid 直通灰度（自测用）
+ *     daily_movie_banner: ["o..."],
+ *   },
  *   forceUpdatePrompt: true        // 可选，出 P0 时打开：提示用户立即重启用新版
  * }
+ *
+ * 灰度只对**接了 adPlacementGate 的展示位**和激励闸门生效；老广告位直接读 getAdUnitId，
+ * 不过灰度这一层。
  */
 
 // ── 本地默认配置（兜底，云端拉取失败时使用） ──
@@ -26,6 +36,9 @@ const adConfig = {
     movielist_infeed: { unitId: 'adunit-72684185bc7251e5', type: 'native', enabled: false },
     share_interstitial: { unitId: 'adunit-76c494953122488c', type: 'interstitial', enabled: true },
     share_banner: { unitId: 'adunit-d9b45d20a77f545e', type: 'banner', enabled: true },
+    // 每日电影日历页底部（内容流末尾、非悬浮）。该页 08/16~08/21 六天 4656 PV / 1282 UV，
+    // 是仅次于分类页的第二大内容页面，此前完全没有广告位。后台广告位名「每日电影-底部Banner」。
+    daily_movie_banner: { unitId: 'adunit-999e7d872a4458ba', type: 'banner', enabled: true },
     save_image_rewarded: { unitId: 'adunit-16f5506ef74be138', type: 'rewarded', enabled: true },
     // 已下线：育儿结果页曝光近乎为零（40天仅98次、eCPM 1.02），且该页漏斗本就需减负
     growth_result_native: { unitId: 'adunit-a0fdcfcd4703f705', type: 'native', enabled: false },
@@ -35,10 +48,16 @@ const adConfig = {
 
   grayRollout: {
     save_image_rewarded: 100,
+    // 每日电影底部 banner：本地默认 0 = 谁都不投。发版后线上先静默，
+    // 放量完全走云端 app_config.grayRollout.daily_movie_banner（存**数值**），
+    // 改完用户下次冷启动生效，不用发版。
+    daily_movie_banner: 0,
   },
 
   grayForceIn: {
     save_image_rewarded: ['ozCMC7vB3JQinqbeqyXzY_7TwSMo'],
+    // 灰度还是 0 的时候也能真机自测：白名单命中直接放行，绕过百分比
+    daily_movie_banner: ['ozCMC7vB3JQinqbeqyXzY_7TwSMo'],
   },
 
   frequency: {
