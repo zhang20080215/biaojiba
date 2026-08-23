@@ -592,6 +592,18 @@
           <text class="theme-option-label">暖沙</text>
         </view>
       </view>
+
+      <!-- 会员码：加白管理靠它。这里只显示和复制，不放任何联系方式/价格/外链 -->
+      <view class="member-row" bindtap="onCopyMemberCode">
+        <view class="member-row-left">
+          <text class="member-row-label">我的会员码</text>
+          <text class="member-row-code">{{memberCodeShort || '获取中…'}}</text>
+        </view>
+        <view class="member-row-right">
+          <text class="member-badge" wx:if="{{isAdFree}}">已开通</text>
+          <text class="member-copy" wx:else>复制</text>
+        </view>
+      </view>
     </view>
   </view>
 

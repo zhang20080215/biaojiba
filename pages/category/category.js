@@ -1,4 +1,5 @@
 var adConfig = require('../../utils/adConfig')
+var { awaitOpenid } = require('../../utils/openidWaiter.js')
 var userStore = require('../../utils/userStore.js')
 var themeRegistry = require('../../utils/themeRegistry.js')
 
@@ -60,6 +61,9 @@ Page({
     dailyBlocks: [],
     themeClass: '',
     showThemePicker: false,
+    // 会员码（= openid）。展示用的截断串；完整串放实例字段 _memberCode，不进 data
+    memberCodeShort: '',
+    isAdFree: adConfig.isAdFree(),
     // 卡片展示模式：'cover'（封面网格，默认）| 'list'（列表）——用户上次选择本地保留
     viewMode: 'cover',
     // 置顶主题 id（按展示先后排序）——用户上次选择本地保留
@@ -769,6 +773,9 @@ Page({
 
   onShow() {
     this.checkLoginStatus();
+    // 回到前台时重判一次免广告：刚被加白的用户切后台再回来就能生效，
+    // 不必等下一次冷启动（展示类广告位的 unitId 是在 onLoad 里取的）
+    this.initAds();
     // 首次 show 紧随 onLoad，主题/卡片已构建，跳过重复 rebuild
     if (this._firstShow) {
       this._firstShow = false;
@@ -785,8 +792,44 @@ Page({
   },
 
   // 涓婚鍒囨崲
+  onUnload() {
+    // syncMemberCode 的 openid 等待可能晚于页面销毁返回，落 setData 会往已销毁的
+    // 父节点插节点（insertTextView:fail parent not found）
+    this._pageUnloaded = true;
+  },
+
   onToggleThemePicker() {
-    this.setData({ showThemePicker: !this.data.showThemePicker });
+    const opening = !this.data.showThemePicker;
+    this.setData({ showThemePicker: opening });
+    // 面板打开时才去取会员码，平时不为它花一次 openid 等待
+    if (opening) this.syncMemberCode();
+  },
+
+  /**
+   * 会员码 = openid。用户复制后发给运营，运营在云端 app_config 的
+   * adFreeOpenids 数组里加白，该用户下次冷启动即免广告。
+   * 完整串只留在实例字段上，data 里只放截断展示串。
+   */
+  syncMemberCode() {
+    this.setData({ isAdFree: adConfig.isAdFree() });
+    if (this._memberCode) return;
+    awaitOpenid(this, 3000).then((openid) => {
+      if (!openid || this._pageUnloaded) return;
+      this._memberCode = openid;
+      this.setData({
+        memberCodeShort: openid.slice(0, 6) + '…' + openid.slice(-6),
+        isAdFree: adConfig.isAdFree(),
+      });
+    });
+  },
+
+  onCopyMemberCode() {
+    if (!this._memberCode) {
+      wx.showToast({ title: '正在获取，请稍后重试', icon: 'none' });
+      this.syncMemberCode();
+      return;
+    }
+    wx.setClipboardData({ data: this._memberCode });
   },
 
   onThemeSelect(e) {
@@ -1256,9 +1299,13 @@ Page({
 
   // ========== 骞垮憡 ==========
   initAds() {
-    if (this.data.adUnitIds.category_native) {
-      this.setData({ showNativeAd: true });
-    }
+    // 每次都重新取，不复用 data 里那份——data 的初始值是在模块加载时算的，
+    // 那时免广告白名单可能还没判定完（首次加白的用户尤其）。
+    const unitId = adConfig.getAdUnitId('category_native') || '';
+    this.setData({
+      'adUnitIds.category_native': unitId,
+      showNativeAd: !!unitId,
+    });
   },
 
   onNativeAdLoad() {},

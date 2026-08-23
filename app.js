@@ -97,6 +97,10 @@ App({
       if (openid) {
         self.globalData.openid = openid
         self._openidAttempt = 0
+        // openid 到位才谈得上判定免广告白名单。远程配置可能已经先回来了（那时
+        // openid 还是空、syncAdFree 是空转），所以这里必须补一次。
+        // trusted 取远程拉取是否已收口：没收口就只授予不撤销。
+        adConfig.syncAdFree(adConfig.isRemoteFetched())
         return
       }
       // 退避重试 1s / 2s / 4s，共 3 次；再失败就交给后续 ensureOpenid 调用
