@@ -262,3 +262,18 @@ page { background-color: var(--brand-primary); }
 .auth-btn::after { border: none; }
 .auth-btn.cancel { background: var(--bg-section); color: var(--text-secondary); }
 .auth-btn.confirm { background: var(--brand-primary); color: #FFFFFF; box-shadow: var(--shadow-cta); }
+
+/* 省份名 + 条数同一行（条数=该省一共有多少座城市，不随 tab 变化）。
+   栏宽 176rpx，内容可用 150rpx：3 字省名(78rpx)+间距(6rpx)+三位数(约30rpx) ≈ 114rpx，放得下 */
+.rail-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6rpx;
+}
+.rail-name { white-space: nowrap; }
+.rail-count {
+  font-size: var(--font-mini);
+  color: var(--text-muted);
+}
+.rail-item.active .rail-count { color: var(--brand-primary); opacity: 0.75; }

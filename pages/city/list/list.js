@@ -20,6 +20,7 @@ Page({
         allSpots: [],
         spots: [],
         provinces: [],
+        provinceCounts: {},      // 省份 → 该省城市总数，显示在省份栏名字后面
         currentProvince: '',
         searchKeyword: '',
         markStatusMap: {},
@@ -132,8 +133,14 @@ Page({
                 shortName: m.shortName || m.name
             }));
 
-            const present = new Set(allSpots.map(s => s.province).filter(Boolean));
-            const provinces = PROVINCE_ORDER.filter(p => present.has(p));
+            // 省份 → 条数：显示在左侧省份栏名字后面。刻意取该省的**全部**条数、
+            // 不随 activeTab 变化——否则切「去过/想去」时整条省份栏的数字会跟着跳，
+            // 而它此时的角色是「这个省一共有多少」，是稳定的目录信息。
+            const provinceCounts = {};
+            allSpots.forEach(s => {
+                if (s.province) provinceCounts[s.province] = (provinceCounts[s.province] || 0) + 1;
+            });
+            const provinces = PROVINCE_ORDER.filter(p => provinceCounts[p] > 0);
 
             this.data.allSpots = allSpots;
 
@@ -142,7 +149,7 @@ Page({
             this.setData({
                 markStatusMap, markDateMap, markRecordIdMap,
                 visitedCount: stats.watched, wishCount: stats.wish, unvisitedCount: stats.unwatched,
-                allCount: allSpots.length, provinces, dataLoaded: true,
+                allCount: allSpots.length, provinces, provinceCounts, dataLoaded: true,
                 ...this.buildProgress(stats.watched, allSpots.length)
             }, () => {
                 this.updateFilteredSpots();

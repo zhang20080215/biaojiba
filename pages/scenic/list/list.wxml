@@ -1,23 +1,14 @@
 <!-- 全国5A旅游景区列表页 -->
 <view class="page-root" style="--brand-primary:{{cfg.brandPrimary}};--brand-soft:{{cfg.brandSoft}};--brand-rgb:{{cfg.shadowRgb}};--shadow-cta: 0 6rpx 14rpx rgba({{cfg.shadowRgb}}, 0.28);">
 
-  <!-- Hero 区 -->
-  <view class="hero-section">
-    <view class="header">
-      <view class="header-left">
-        <text class="app-name">{{cfg.title}}</text>
-        <text class="app-slogan">{{cfg.slogan}}</text>
-        <view class="hero-progress">
-          <view class="hero-progress-head">
-            <text class="hero-progress-label">已打卡 {{visitedCount}}/{{allCount}}</text>
-            <text class="hero-progress-percent">{{visitedProgressText}}</text>
-          </view>
-          <view class="hero-progress-bar">
-            <view class="hero-progress-fill" style="width: {{visitedProgressWidth}};"></view>
-          </view>
-        </view>
-      </view>
+  <!-- 紧凑头部（四个旅行主题统一，与「全国旅游城市」一致） -->
+  <view class="hero-compact">
+    <view class="hero-row">
+      <text class="app-name">{{cfg.title}}</text>
+      <text class="hero-percent">{{visitedProgressText}}</text>
     </view>
+    <view class="hero-progress-bar"><view class="hero-progress-fill" style="width: {{visitedProgressWidth}};"></view></view>
+    <text class="hero-sub">已打卡 {{visitedCount}}/{{allCount}} · {{cfg.slogan}}</text>
   </view>
 
   <!-- 统计 Tab + 省份筛选（吸顶） -->
@@ -46,18 +37,6 @@
       <view class="tab {{activeTab === 3 ? 'active' : ''}}" data-idx="3" bindtap="onTabChange">未去({{unvisitedCount}})</view>
     </view>
 
-    <!-- 省份筛选条 -->
-    <scroll-view scroll-x class="province-bar" enhanced show-scrollbar="{{false}}">
-      <view class="province-chip {{currentProvince === '' ? 'active' : ''}}" data-province="" bindtap="onProvinceTap">全部</view>
-      <view
-        wx:for="{{provinces}}"
-        wx:key="*this"
-        class="province-chip {{currentProvince === item ? 'active' : ''}}"
-        data-province="{{item}}"
-        bindtap="onProvinceTap"
-      >{{item}}</view>
-    </scroll-view>
-
     <!-- 操作区域 -->
     <view class="sticky-action-container">
       <view class="middle-action-section">
@@ -79,7 +58,26 @@
     </view>
   </view>
 
-  <!-- 景区列表 -->
+  <!-- 两栏：左省份 / 右景区（与「全国旅游城市」同一套交互） -->
+  <view class="two-col">
+    <scroll-view scroll-y class="prov-rail" enhanced show-scrollbar="{{false}}">
+      <view class="rail-item {{currentProvince === '' && !searchKeyword ? 'active' : ''}}" data-province="" bindtap="onProvinceTap">
+        <text class="rail-name">全部</text>
+        <text class="rail-count">{{allCount}}</text>
+      </view>
+      <view
+        wx:for="{{provinces}}"
+        wx:key="*this"
+        class="rail-item {{currentProvince === item ? 'active' : ''}}"
+        data-province="{{item}}"
+        bindtap="onProvinceTap"
+      >
+        <text class="rail-name">{{item}}</text>
+        <text class="rail-count">{{provinceCounts[item]}}</text>
+      </view>
+    </scroll-view>
+
+    <scroll-view scroll-y class="list-col" bindscrolltolower="loadMoreSpots" lower-threshold="120">
   <view class="movie-list">
     <block wx:for="{{spots}}" wx:key="_id">
       <view wx:if="{{infeedSlots[index]}}" class="ad-infeed-container">
@@ -132,6 +130,9 @@
     <view wx:elif="{{hasMore}}" class="load-more-tip">
       <text>上拉加载更多景区…</text>
     </view>
+  </view>
+      <view class="col-bottom-pad"></view>
+    </scroll-view>
   </view>
 
   <view class="custom-toast {{customToastVisible ? 'show' : ''}}">

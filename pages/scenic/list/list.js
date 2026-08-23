@@ -22,6 +22,7 @@ Page({
         allSpots: [],
         spots: [],
         provinces: [],           // 数据里出现过的省份（按 PROVINCE_ORDER 排序）
+        provinceCounts: {},      // 省份 → 该省景区总数，显示在省份栏名字后面
         currentProvince: '',     // '' = 全部省份
         searchKeyword: '',       // 搜索关键词（匹配名称/简称/省市）
         markStatusMap: {},
@@ -137,8 +138,14 @@ Page({
             }));
 
             // 汇总数据里出现的省份，按固定顺序
-            const present = new Set(allSpots.map(s => s.province).filter(Boolean));
-            const provinces = PROVINCE_ORDER.filter(p => present.has(p));
+            // 省份 → 条数：显示在左侧省份栏名字后面。刻意取该省的**全部**条数、
+            // 不随 activeTab 变化——否则切「去过/想去」时整条省份栏的数字会跟着跳，
+            // 而它此时的角色是「这个省一共有多少」，是稳定的目录信息。
+            const provinceCounts = {};
+            allSpots.forEach(s => {
+                if (s.province) provinceCounts[s.province] = (provinceCounts[s.province] || 0) + 1;
+            });
+            const provinces = PROVINCE_ORDER.filter(p => provinceCounts[p] > 0);
 
             // allSpots 只用于本地筛选/统计，WXML 从不渲染它 —— 直接挂到 data 上，
             // 不走 setData，省掉一次 359 条的跨线程传输（真正渲染的是分页后的 spots）。
@@ -149,7 +156,7 @@ Page({
             this.setData({
                 markStatusMap, markDateMap, markRecordIdMap,
                 visitedCount: stats.watched, wishCount: stats.wish, unvisitedCount: stats.unwatched,
-                allCount: allSpots.length, provinces, dataLoaded: true,
+                allCount: allSpots.length, provinces, provinceCounts, dataLoaded: true,
                 ...this.buildProgress(stats.watched, allSpots.length)
             }, () => {
                 this.updateFilteredSpots();
@@ -245,6 +252,9 @@ Page({
         this.setData(updates);
     },
 
+    // 改成左省份/右列表两栏定高布局后，页面本身不再滚动，onReachBottom 永远不会触发；
+    // 分页由右栏 scroll-view 的 bindscrolltolower="loadMoreSpots" 接管。这里保留只为
+    // 兼容极端情况下页面仍可滚动的机型，正常路径下它是死代码。
     onReachBottom() {
         this.loadMoreSpots();
     },
