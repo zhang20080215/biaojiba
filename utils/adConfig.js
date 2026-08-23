@@ -94,14 +94,31 @@ var CACHE_KEY = 'ad_remote_config'
 var _remoteFetched = false
 
 /**
- * 从云端拉取广告配置并合并到本地（启动时调用一次）
+ * 从云端拉取广告配置并合并到本地
  *
  * stale-while-revalidate：先用本地缓存立即生效（不阻塞启动），再**无条件**异步刷新。
  * 原先是「缓存 1 小时内直接 return 不请求云端」——出事时那 1 小时就是止血延迟的下限，
- * 且杀进程重进也没用。改成每次冷启都刷新后，云端改配置在用户下一次冷启动即生效；
- * 代价是每次冷启多一次数据库读（按日打开次数计，远在免费额度内）。
+ * 且杀进程重进也没用。
+ *
+ * 调用点有两个：App.onLaunch（冷启动）与 **App.onShow（每次进入小程序，冷启热启都算）**。
+ * 挂在 onShow 上是为了让「云端改了配置」在用户**下一次进入小程序**就生效，而不是等到
+ * 下一次冷启动——热启动（从「最近使用」打开、保活期内切回前台）不触发 onLaunch，
+ * 只挂 onLaunch 的话免广告加白可能迟迟不生效。
+ *
+ * 代价是每次进入多一次数据库读。节流只为吃掉「onLaunch 与 onShow 在冷启动时连着各调
+ * 一次」（两者相隔毫秒级），所以取 3 秒就够——取大了会留出一段「刚加白、用户立刻退出
+ * 重进却拉不到新配置」的死窗口，那正是这次要解决的问题。
+ *
+ * @param {boolean} force 跳过节流（手动刷新用）
  */
-function fetchRemoteConfig() {
+var MIN_FETCH_INTERVAL_MS = 3000
+var _lastFetchAt = 0
+
+function fetchRemoteConfig(force) {
+  var now = Date.now()
+  if (force !== true && _lastFetchAt && now - _lastFetchAt < MIN_FETCH_INTERVAL_MS) return
+  _lastFetchAt = now
+
   // 1. 有缓存就先套用，保证启动瞬间就有配置可用
   try {
     var cached = wx.getStorageSync(CACHE_KEY)

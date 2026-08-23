@@ -2,10 +2,25 @@
 var adConfig = require('./utils/adConfig')
 var { track } = require('./utils/track')
 
+// 「免广告已开通」弹窗只弹一次。存的是 openid，同设备换号 / 撤销后重新加白都能再弹。
+var AD_FREE_NOTIFIED_KEY = 'ad_free_notified'
+
+// 各页面渲染广告用的显隐布尔字段。全项目的广告都是 <ad>/<ad-custom> 绑 adUnitIds.xxx，
+// 把 adUnitIds 清空即可移除；这两个 flag 是外层容器，一并收掉免得留下空白占位。
+var AD_VISIBILITY_FLAGS = ['showNativeAd', 'showBannerAd']
+
 App({
   onShow(options) {
     // 每次启动/回到前台埋点场景值（1007/1008 会话、1044 朋友圈、1047 扫码等），用于分享/回流来源分析
     track('app_open', { scene: (options && options.scene) || 0 })
+
+    // 每次进入小程序都刷一次远程配置（内部 10 秒节流）。
+    // onShow 冷启动和热启动都会触发，而 onLaunch 只在冷启动触发——免广告白名单
+    // 要做到「加白后用户下一次进入即生效」，就必须挂在这里。
+    // 放进 setTimeout 是不占启动同步路径，与 onLaunch 里那次保持一致。
+    setTimeout(function () {
+      adConfig.fetchRemoteConfig()
+    }, 0)
   },
 
   onLaunch() {
@@ -63,6 +78,19 @@ App({
         })
       }
     } catch (e) { /* 低版本基础库无此能力，忽略 */ }
+
+    // 免广告白名单判定翻转时的处理：立刻撤掉当前页面上已经渲染出来的广告，
+    // 并给刚开通的用户弹一次确认。必须在 fetchRemoteConfig 之前注册好。
+    adConfig.onAdFreeChange((adFree) => {
+      if (adFree) {
+        this.clearAdsOnLivePages()
+        this.notifyAdFreeGranted()
+      } else {
+        // 被撤销：清掉「已通知」标记，将来重新加白时还能再弹一次。
+        // 广告本身不用管，用户进入下一个页面时自然恢复。
+        try { wx.removeStorageSync(AD_FREE_NOTIFIED_KEY) } catch (e) { /* ignore */ }
+      }
+    })
 
     // 非关键启动任务延迟到首屏渲染后发起，避免阻塞 onLaunch 同步路径
     setTimeout(() => {
@@ -124,6 +152,73 @@ App({
       console.error('[app] getOpenid 抛错:', e)
       onDone(null)
     }
+  },
+
+  /**
+   * 立刻撤掉当前所有存活页面上已经渲染出来的广告。
+   *
+   * 为什么需要：页面是在 onLoad 里同步取 unitId 的，等云端名单异步到达时那一步早过去了。
+   * 不扫这一遍的话，用户当次进入仍会看着广告，直到重新进入该页面。
+   *
+   * 全项目每个广告位都是 <ad>/<ad-custom> 绑 adUnitIds.xxx（已核对：banner、原生、
+   * 信息流、每日电影 banner 无一例外），所以把 adUnitIds 的每个 key 置空就是通用解，
+   * 不用逐页写适配。
+   */
+  clearAdsOnLivePages() {
+    var pages = []
+    try {
+      pages = (typeof getCurrentPages === 'function' && getCurrentPages()) || []
+    } catch (e) {
+      return
+    }
+    for (var i = 0; i < pages.length; i++) {
+      var page = pages[i]
+      if (!page || !page.data || typeof page.setData !== 'function') continue
+
+      var patch = {}
+      var ids = page.data.adUnitIds
+      if (ids) {
+        var keys = Object.keys(ids)
+        for (var j = 0; j < keys.length; j++) {
+          if (ids[keys[j]]) patch['adUnitIds.' + keys[j]] = ''
+        }
+      }
+      for (var k = 0; k < AD_VISIBILITY_FLAGS.length; k++) {
+        if (page.data[AD_VISIBILITY_FLAGS[k]] === true) patch[AD_VISIBILITY_FLAGS[k]] = false
+      }
+
+      if (Object.keys(patch).length === 0) continue
+      try {
+        page.setData(patch)
+      } catch (e) {
+        console.warn('[app] 撤广告失败:', page.route, e)
+      }
+    }
+  },
+
+  /**
+   * 给刚开通的用户弹一次确认，之后不再弹（按 openid 记）。
+   *
+   * 延迟 1.2 秒有两个原因：一是避开 onUpdateReady 那个「有新版本」弹窗，
+   * 两个 showModal 撞在一起后一个会被丢掉；二是让首屏先渲染完再打断。
+   * 文案避开「免费 / 解锁 / 无限制 / 奖励」等《小程序广告规范》敏感措辞。
+   */
+  notifyAdFreeGranted() {
+    var openid = this.globalData.openid
+    if (!openid) return
+    try {
+      if (wx.getStorageSync(AD_FREE_NOTIFIED_KEY) === openid) return
+      wx.setStorageSync(AD_FREE_NOTIFIED_KEY, openid)
+    } catch (e) { /* ignore */ }
+
+    setTimeout(function () {
+      wx.showModal({
+        title: '会员已开通',
+        content: '小程序内的广告已经关闭，保存图片也不用再看视频了。感谢支持！',
+        showCancel: false,
+        confirmText: '知道了',
+      })
+    }, 1200)
   },
 
   globalData: {
