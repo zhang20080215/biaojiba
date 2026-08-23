@@ -175,11 +175,11 @@
       <view class="field">
         <view class="field-head">
           <text class="field-label">短评</text>
-          <text class="count">{{noteCount}}/140</text>
+          <text class="count">{{noteCount}}/500</text>
         </view>
         <textarea class="note"
                   value="{{note}}"
-                  maxlength="140"
+                  maxlength="500"
                   placeholder="写一句看完后的感受（可不填）"
                   placeholder-class="placeholder"
                   bindinput="onNoteInput" />
