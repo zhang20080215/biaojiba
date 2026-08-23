@@ -638,3 +638,50 @@ page {
 .auth-btn::after { border: none; }
 .auth-btn.cancel { background: var(--bg-section); color: var(--text-secondary); }
 .auth-btn.confirm { background: var(--brand-primary); color: #FFFFFF; box-shadow: var(--shadow-cta); }
+
+/* ===== 紧凑头部：四个旅行主题统一，取值与 pages/city 一致 =====
+   原先是带装饰圆的高 hero（标题 60rpx + slogan + 独立进度块，约 300rpx 高）。
+   .app-name / .hero-progress-bar / .hero-progress-fill 是与旧结构共用的类名，
+   这里必须一并覆盖，否则会留着旧尺寸。旧的 .hero-section / .header / .app-slogan /
+   .hero-progress* 规则在新结构里已无对应节点，属无害死样式。 */
+.hero-compact {
+  flex: 0 0 auto;
+  background: var(--brand-primary);
+  padding: var(--space-3) var(--space-4) var(--space-3);
+}
+.hero-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.app-name {
+  font-size: 40rpx;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: 1rpx;
+  line-height: 1.2;
+  text-shadow: none;
+}
+.hero-percent {
+  font-size: 36rpx;
+  font-weight: 800;
+  color: #FFFFFF;
+}
+.hero-progress-bar {
+  height: 12rpx;
+  margin-top: 12rpx;
+  background: rgba(255, 255, 255, 0.26);
+  border-radius: 999rpx;
+  overflow: hidden;
+}
+.hero-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.78) 0%, #FFFFFF 100%);
+  border-radius: 999rpx;
+}
+.hero-sub {
+  display: block;
+  margin-top: 10rpx;
+  font-size: var(--font-caption);
+  color: rgba(255, 255, 255, 0.8);
+}

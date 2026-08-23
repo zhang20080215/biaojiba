@@ -48,14 +48,20 @@
   <!-- 两栏：左省份 / 右城市 -->
   <view class="two-col">
     <scroll-view scroll-y class="prov-rail" enhanced show-scrollbar="{{false}}">
-      <view class="rail-item {{currentProvince === '' && !searchKeyword ? 'active' : ''}}" data-province="" bindtap="onProvinceTap">全部</view>
+      <view class="rail-item {{currentProvince === '' && !searchKeyword ? 'active' : ''}}" data-province="" bindtap="onProvinceTap">
+        <text class="rail-name">全部</text>
+        <text class="rail-count">{{allCount}}</text>
+      </view>
       <view
         wx:for="{{provinces}}"
         wx:key="*this"
         class="rail-item {{currentProvince === item ? 'active' : ''}}"
         data-province="{{item}}"
         bindtap="onProvinceTap"
-      >{{item}}</view>
+      >
+        <text class="rail-name">{{item}}</text>
+        <text class="rail-count">{{provinceCounts[item]}}</text>
+      </view>
     </scroll-view>
 
     <scroll-view scroll-y class="city-col" bindscrolltolower="loadMoreSpots" lower-threshold="120">

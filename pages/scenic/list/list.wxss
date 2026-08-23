@@ -618,3 +618,113 @@ page {
 .auth-btn::after { border: none; }
 .auth-btn.cancel { background: var(--bg-section); color: var(--text-secondary); }
 .auth-btn.confirm { background: var(--brand-primary); color: #FFFFFF; box-shadow: var(--shadow-cta); }
+
+/* ===== 左省份 / 右景区 两栏定高布局 =====
+   原先是「整页滚动 + 横向省份 chip 条」，改成与「全国旅游城市」一致的左侧省份栏：
+   31 个省份横向滑动找起来太费劲，竖排一眼扫得到。
+   页面因此不再整页滚动——page-root 定高、hero/搜索/tab/操作栏固定，
+   只有右侧列表滚动，所以列表分页从 onReachBottom 改成 scroll-view 的 scrolltolower。 */
+.page-root {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-bottom: 0;
+}
+.sticky-top-group { flex: 0 0 auto; position: static; }
+
+.two-col {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+.prov-rail {
+  flex: 0 0 156rpx;
+  width: 156rpx;
+  height: 100%;
+  background: var(--bg-section);
+  box-sizing: border-box;
+}
+.rail-item {
+  padding: 18rpx 8rpx;
+  /* 省份名 + 条数同一行：3 字省名(66rpx) + 间距(6rpx) + 三位数(约30rpx) ≈ 102rpx，
+     栏内可用宽 156-6(左边框)-16(padding) = 134rpx，放得下 */
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6rpx;
+  font-size: var(--font-caption);
+  color: var(--text-secondary);
+  border-left: 6rpx solid transparent;
+  line-height: 1.25;
+}
+.rail-item.active {
+  color: var(--brand-primary);
+  font-weight: 800;
+  background: #FFFFFF;
+  border-left-color: var(--brand-primary);
+}
+.rail-name { white-space: nowrap; }
+/* 省份名后面的条数：该省一共有多少个景区，不随 tab 变化 */
+.rail-count {
+  font-size: var(--font-mini);
+  color: var(--text-muted);
+}
+.rail-item.active .rail-count { color: var(--brand-primary); opacity: 0.75; }
+
+.list-col {
+  flex: 1;
+  height: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+/* 右栏只有约 594rpx 宽，列表左右外边距收一档 */
+.list-col .movie-list { margin: var(--space-2) var(--space-2) 0; }
+.col-bottom-pad { height: calc(24rpx + env(safe-area-inset-bottom)); }
+
+/* ===== 紧凑头部：四个旅行主题统一，取值与 pages/city 一致 =====
+   原先是带装饰圆的高 hero（标题 60rpx + slogan + 独立进度块，约 300rpx 高）。
+   .app-name / .hero-progress-bar / .hero-progress-fill 是与旧结构共用的类名，
+   这里必须一并覆盖，否则会留着旧尺寸。旧的 .hero-section / .header / .app-slogan /
+   .hero-progress* 规则在新结构里已无对应节点，属无害死样式。 */
+.hero-compact {
+  flex: 0 0 auto;
+  background: var(--brand-primary);
+  padding: var(--space-3) var(--space-4) var(--space-3);
+}
+.hero-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.app-name {
+  font-size: 40rpx;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: 1rpx;
+  line-height: 1.2;
+  text-shadow: none;
+}
+.hero-percent {
+  font-size: 36rpx;
+  font-weight: 800;
+  color: #FFFFFF;
+}
+.hero-progress-bar {
+  height: 12rpx;
+  margin-top: 12rpx;
+  background: rgba(255, 255, 255, 0.26);
+  border-radius: 999rpx;
+  overflow: hidden;
+}
+.hero-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.78) 0%, #FFFFFF 100%);
+  border-radius: 999rpx;
+}
+.hero-sub {
+  display: block;
+  margin-top: 10rpx;
+  font-size: var(--font-caption);
+  color: rgba(255, 255, 255, 0.8);
+}

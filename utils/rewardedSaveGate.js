@@ -22,42 +22,11 @@ const adConfig = require('./adConfig')
 const grayBucket = require('./grayBucket')
 const rewardedAdManager = require('./rewardedAdManager')
 const { track } = require('./track')
+// openid 等待逻辑抽到了 openidWaiter：展示类广告位的灰度要用同一套，
+// 复制一份必然走样。行为与原先逐字一致。
+const { awaitOpenid } = require('./openidWaiter')
 
 const PLACEMENT = 'save_image_rewarded'
-
-function getCurrentOpenid(page) {
-  const app = getApp()
-  if (app && app.globalData && app.globalData.openid) {
-    return app.globalData.openid
-  }
-  if (page && page.data && page.data.userInfo && page.data.userInfo._openid) {
-    return page.data.userInfo._openid
-  }
-  return ''
-}
-
-// openid 由 app.onLaunch 中异步 cloud.callFunction('getOpenid') 获取，
-// 用户冷启动后迅速点保存时可能仍为空。短轮询等待，避免此窗口期内整个灰度判定被跳过。
-function awaitOpenid(page, timeoutMs) {
-  return new Promise(function (resolve) {
-    const immediate = getCurrentOpenid(page)
-    if (immediate) return resolve(immediate)
-    // 还没拿到就补触发一次拉取：启动那几秒 getOpenid 失败的话，原本这个会话
-    // 就再也没机会了，闸门对该用户永久失效（历史约 17% 的保存没触发闸门）。
-    try {
-      const app = getApp()
-      if (app && typeof app.ensureOpenid === 'function') app.ensureOpenid()
-    } catch (e) { /* ignore */ }
-    const deadline = Date.now() + (timeoutMs || 1500)
-    const tick = function () {
-      const openid = getCurrentOpenid(page)
-      if (openid) return resolve(openid)
-      if (Date.now() >= deadline) return resolve('')
-      setTimeout(tick, 100)
-    }
-    setTimeout(tick, 100)
-  })
-}
 
 function isGated(openid) {
   if (!openid) return false

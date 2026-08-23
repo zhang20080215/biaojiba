@@ -391,6 +391,14 @@
         </view>
       </view>
     </block>
+
+    <!-- 底部广告位：跟在内容流末尾、不悬浮，滚到底才出现，不遮挡日历/电影墙/选中日记录 -->
+    <view class="ad-banner-container" wx:if="{{showBannerAd}}">
+      <ad unit-id="{{adUnitIds.daily_movie_banner}}"
+          ad-type="banner"
+          bindload="onBannerAdLoad"
+          binderror="onBannerAdError"></ad>
+    </view>
   </view>
 
   <!-- 轻编辑弹窗：只改 评分 / 心情 / 短评 -->
@@ -434,11 +442,11 @@
       <view class="edit-field">
         <view class="edit-field-head">
           <text class="edit-label">短评</text>
-          <text class="edit-count">{{editNoteCount}}/140</text>
+          <text class="edit-count">{{editNoteCount}}/500</text>
         </view>
         <textarea class="edit-note"
                   value="{{editNote}}"
-                  maxlength="140"
+                  maxlength="500"
                   placeholder="写一句看完后的感受（可不填）"
                   placeholder-class="edit-note-ph"
                   bindinput="onEditNoteInput" />

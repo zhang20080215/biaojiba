@@ -1,4 +1,5 @@
 const toast = require('../../../utils/dailyToast.js');
+const adPlacementGate = require('../../../utils/adPlacementGate.js');
 const {
   WD_MON,
   getWindowInfoCompat,
@@ -71,6 +72,11 @@ function tlLabels(date) {
 Page({
   data: {
     toast: { show: false, text: '', icon: '' },
+
+    // 底部 banner：unitId 拿不到、或广告加载失败时整块不渲染
+    showBannerAd: false,
+    adUnitIds: { daily_movie_banner: '' },
+
     statusBarHeight: 20,
     navBarHeight: 48,
     navOffset: 68,
@@ -146,7 +152,34 @@ Page({
       selectedDateText: formatDateCN(targetDate)
     });
     wx.setNavigationBarTitle({ title: '每日电影' });
+    this.initAds();
     this.fetchMonth();
+  },
+
+  onUnload() {
+    // initAds 要等 openid（最多 1.5s），回来时页面可能已经销毁
+    this._destroyed = true;
+  },
+
+  // 开关 / unitId / 灰度三层都在 adPlacementGate 里，任意一层不过就拿到空串，
+  // <ad> 整块不进 DOM，页面与加位之前完全一致。开关和灰度都能云端改、不用发版。
+  async initAds() {
+    const unitId = await adPlacementGate.resolveUnitId('daily_movie_banner', this);
+    if (this._destroyed) return;
+    this.setData({
+      'adUnitIds.daily_movie_banner': unitId,
+      showBannerAd: !!unitId
+    });
+  },
+
+  onBannerAdLoad() {
+    this.setData({ showBannerAd: true });
+  },
+
+  // 拉不到广告就把位子收掉，不留空白块
+  onBannerAdError(e) {
+    console.warn('[daily/movie] banner 加载失败', e && e.detail);
+    this.setData({ showBannerAd: false });
   },
 
   onShow() {

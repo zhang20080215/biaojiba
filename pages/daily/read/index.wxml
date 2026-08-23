@@ -421,11 +421,11 @@
       <view class="edit-field">
         <view class="edit-field-head">
           <text class="edit-label">短评</text>
-          <text class="edit-count">{{editNoteCount}}/140</text>
+          <text class="edit-count">{{editNoteCount}}/500</text>
         </view>
         <textarea class="edit-note"
                   value="{{editNote}}"
-                  maxlength="140"
+                  maxlength="500"
                   placeholder="写一句读完后的感受（可不填）"
                   placeholder-class="edit-note-ph"
                   bindinput="onEditNoteInput" />

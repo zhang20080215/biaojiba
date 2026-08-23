@@ -80,10 +80,13 @@ Page({
                 menuBtnHeight: menuBtn.height,
                 themeClass
             });
+            // poster_view 埋点与闸门副文案都不依赖榜单数据，提前触发。
+            // 原先它排在 loadData 之后，loadData 一抛异常就走 catch、poster_view 永远不上报，
+            // 漏斗分母被低估（实测 poster_view 873/天 < 本页 PV 1102/天）。
+            rewardedSaveGate.refreshHint(this);
             await this.loadUserInfo();
             await this.loadData();
             this.initAds();
-            rewardedSaveGate.refreshHint(this);
         } catch (err) {
             console.error('页面加载失败:', err);
             wx.showModal({ title: '加载失败', content: err.message || '请重试', showCancel: false });
@@ -268,7 +271,9 @@ Page({
     },
 
     async saveImage() {
-        if (this.data.isGenerating) {
+        // _saving 挡住「绘制已起跑、但 isGenerating 还没置位」这段空窗的连点。
+        // isGenerating 仍按原样只在拿到放行后才置位，按钮文案与遮罩表现不变。
+        if (this._saving || this.data.isGenerating) {
             wx.showToast({ title: '正在生成中...', icon: 'none' });
             return;
         }
@@ -276,16 +281,27 @@ Page({
             wx.showToast({ title: 'Canvas未初始化', icon: 'none' });
             return;
         }
+        this._saving = true;
 
-        const hasGrant = await rewardedSaveGate.ensureGrant(this);
-        if (!hasGrant) {
-            return;
-        }
+        // 绘制与激励广告**并行**。原先是串行：看完 30 秒广告，才开始按批拉 250 张封面画海报墙，
+        // 用户要连等两段。这里让绘制先起跑，广告放完时图基本已就绪，直接导出。
+        // startDrawing 不用 requestAnimationFrame（只有 exportAndSaveImage 用，而它在广告之后），
+        // 所以广告全屏期间绘制不会被挂起。
+        // 用户中途放弃广告的话这次绘制白做——只耗本地 CPU 与图片缓存，不影响正确性。
+        let drawErr = null;
+        const drawing = this.startDrawing().catch(err => { drawErr = err; });
 
         try {
+            const hasGrant = await rewardedSaveGate.ensureGrant(this);
+            if (!hasGrant) {
+                // 等这次绘制收尾再放行下一次点击，避免两次绘制往同一张 canvas 上打架
+                await drawing;
+                return;
+            }
             this.setData({ isGenerating: true });
             wx.showLoading({ title: '生成图片中...', mask: true });
-            await this.startDrawing();
+            await drawing;
+            if (drawErr) throw drawErr;
             await this.exportAndSaveImage();
             wx.hideLoading();
             wx.showToast({ title: '保存成功', icon: 'success' });
@@ -294,6 +310,7 @@ Page({
             console.error('保存图片失败:', err);
             wx.showModal({ title: '保存失败', content: err.message || '图片生成失败，请重试', showCancel: false });
         } finally {
+            this._saving = false;
             this.setData({ isGenerating: false });
         }
     },

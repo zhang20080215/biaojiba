@@ -1221,3 +1221,10 @@ page {
   color: #A89E8C;
   font-weight: 600;
 }
+
+/* 底部 banner 广告位：与 .month-stats 同一节奏的上间距；左右跟随 .content 的 32rpx 内边距 */
+.ad-banner-container {
+  margin-top: 28rpx;
+  overflow: hidden;
+  border-radius: 16rpx;
+}

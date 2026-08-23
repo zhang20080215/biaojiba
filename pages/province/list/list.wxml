@@ -1,23 +1,14 @@
 <!-- 全国旅游省份列表页（纯色文字卡，无封面图；按七大分区筛选） -->
 <view class="page-root" style="--brand-primary:{{cfg.brandPrimary}};--brand-soft:{{cfg.brandSoft}};--brand-rgb:{{cfg.shadowRgb}};--shadow-cta: 0 6rpx 14rpx rgba({{cfg.shadowRgb}}, 0.28);">
 
-  <!-- Hero 区 -->
-  <view class="hero-section">
-    <view class="header">
-      <view class="header-left">
-        <text class="app-name">{{cfg.title}}</text>
-        <text class="app-slogan">{{cfg.slogan}}</text>
-        <view class="hero-progress">
-          <view class="hero-progress-head">
-            <text class="hero-progress-label">已点亮 {{visitedCount}}/{{allCount}}</text>
-            <text class="hero-progress-percent">{{visitedProgressText}}</text>
-          </view>
-          <view class="hero-progress-bar">
-            <view class="hero-progress-fill" style="width: {{visitedProgressWidth}};"></view>
-          </view>
-        </view>
-      </view>
+  <!-- 紧凑头部（四个旅行主题统一，与「全国旅游城市」一致） -->
+  <view class="hero-compact">
+    <view class="hero-row">
+      <text class="app-name">{{cfg.title}}</text>
+      <text class="hero-percent">{{visitedProgressText}}</text>
     </view>
+    <view class="hero-progress-bar"><view class="hero-progress-fill" style="width: {{visitedProgressWidth}};"></view></view>
+    <text class="hero-sub">已点亮 {{visitedCount}}/{{allCount}} · {{cfg.slogan}}</text>
   </view>
 
   <!-- 统计 Tab + 分区筛选（吸顶） -->
