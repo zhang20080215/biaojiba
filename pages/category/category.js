@@ -110,7 +110,6 @@ Page({
         tag: '旅行',
         category: 'travel',
         isNew: true,
-        hidden: true,        // 随包上线但先不开放入口（去掉此行即放开）
         url: '/pages/province/list/list'
       },
       {
@@ -123,7 +122,6 @@ Page({
         tag: '旅行',
         category: 'travel',
         isNew: true,
-        hidden: true,        // 随包上线但先不开放入口（去掉此行即放开）
         url: '/pages/city/list/list'
       },
       {
@@ -856,11 +854,13 @@ Page({
     const restItems = nonPinned.filter(t => !frontSet.has(t.id));
     filtered = pinnedItems.concat(frontItems, restItems);
 
-    // 「旅行打卡」专属推荐区：5A 景区 + 国家一级博物馆并排（不随分类 tab 变化，始终展示）
+    // 「旅行打卡」专属推荐区：四张卡横排等分（不随分类 tab 变化，始终展示）
+    // 标题控制在 4 个字以内——四等分后每张约 170rpx，再长就要换行或被截断
     const TRAVEL_FEATURE_DEFS = [
-      { id: 'scenic_5a', emoji: '🏞️', featureTitle: '全国5A景区' },
-      { id: 'museum_grade1', emoji: '🏛️', featureTitle: '全国博物馆' }
-      // 省份旅游 / 城市旅游随包上线但暂不开放入口（去 themes 里的 hidden + 在此加回两行即放开）
+      { id: 'scenic_5a', emoji: '🏞️', featureTitle: '5A景区' },
+      { id: 'museum_grade1', emoji: '🏛️', featureTitle: '博物馆' },
+      { id: 'travel_provinces', emoji: '🗺️', featureTitle: '全国省份' },
+      { id: 'travel_cities', emoji: '🏙️', featureTitle: '全国城市' }
     ];
     const travelFeatures = TRAVEL_FEATURE_DEFS.map(def => {
       const t = (this.data.themes || []).find(x => x.id === def.id);
@@ -1109,8 +1109,10 @@ Page({
         // 旅游：专属集合 scenic_5a，标记复用 Marks（movieId=景区_id）
         { id: 'scenic_5a', collection: 'scenic_5a', topFiltered: false },
         // 博物馆：专属集合 museum_grade1，标记复用 Marks（movieId=博物馆_id）
-        { id: 'museum_grade1', collection: 'museum_grade1', theme: 'museum', topFiltered: false }
-        // 省份旅游/城市旅游暂隐藏入口，不统计人数
+        { id: 'museum_grade1', collection: 'museum_grade1', theme: 'museum', topFiltered: false },
+        // 省份/城市旅游：专属集合 travel_provinces / travel_cities，标记同样复用 Marks
+        { id: 'travel_provinces', collection: 'travel_provinces', theme: 'province', topFiltered: false },
+        { id: 'travel_cities', collection: 'travel_cities', theme: 'city', topFiltered: false }
       ];
 
     // 云端注册表新主题：按 type 拼参与人数统计配置（电影走 Marks，书走 BookMarks）

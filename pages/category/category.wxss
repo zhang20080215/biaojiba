@@ -672,16 +672,16 @@
 .feature-section {
   padding: var(--space-2) var(--space-3) 0;   /* 与 section-head 左右对齐 + 与标题留间距 */
   margin-bottom: var(--space-2);
-  display: flex;                              /* 两张卡并排：5A 景区 + 国家一级博物馆 */
-  gap: var(--space-2);
+  display: flex;                              /* 四张卡横排等分：5A / 博物馆 / 省份 / 城市 */
+  gap: var(--space-1);                        /* 四等分后横向很紧，gap 收到 8rpx */
 }
 .feature-card {
   position: relative;
-  flex: 1;                                    /* 两卡等分 */
+  flex: 1 1 0;                                /* 无论几张一律等分横排 */
   min-width: 0;
   display: flex;
   align-items: stretch;
-  height: 120rpx;                              /* 与主题标记「列表」行高一致 */
+  height: 108rpx;                              /* 横排小卡：标题单行 + 人数胶囊，不需要 120rpx */
   background: #FFFFFF;
   border-radius: var(--radius-lg);
   overflow: hidden;
@@ -708,34 +708,41 @@
 .feature-body {
   flex: 1;
   min-width: 0;
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-1);     /* 四等分后每张约 170rpx，横向 padding 收到 8rpx */
   display: flex;
   flex-direction: column;
+  align-items: center;                        /* 横排小卡内容居中，比左对齐整齐 */
   justify-content: center;
 }
 .feature-title {
-  font-size: var(--font-title);
+  /* 30rpx 在四等分下 4 个字（≈120rpx）放不进内容区，降一档到 26rpx */
+  font-size: var(--font-body);
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 8rpx;
-  /* 半宽卡：标题最多两行，超出省略（"国家一级博物馆"不被截断） */
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  margin-bottom: 6rpx;
+  /* 横排小卡：标题强制单行，超出省略。标题请控制在 4 字以内。 */
+  max-width: 100%;
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
   line-height: 1.25;
 }
 .feature-meta {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  justify-content: center;
+  gap: var(--space-1);
   flex-wrap: wrap;
 }
 .feature-count {
   font-size: var(--font-mini);
   color: #2E8B72;
   background: rgba(46, 139, 114, 0.10);
-  padding: 4rpx 12rpx;
+  padding: 2rpx 10rpx;                        /* 横排小卡：胶囊也跟着收一圈 */
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   border-radius: var(--radius-pill);
 }
 .feature-wish {
