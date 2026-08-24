@@ -68,9 +68,18 @@ function isCircuitOpen() {
 }
 
 function _noteResult(reason, route) {
-  // nofill 是平台没广告可给，不是故障；abandoned 是用户自己关的，都不计数
   var r = String(reason || '')
-  var broken = (r.indexOf('showfail') === 0 || r === 'timeout' || r === 'nocallback')
+  // ── 只对「慢失败」熔断 ──
+  // 熔断存在的唯一理由是「广告链路挂掉时，用户不必每次保存都白等 6 秒超时」——
+  // 只有 timeout / nocallback 这类**慢**失败才会让用户干等。而 show() 的状态错误
+  // （素材未就绪 / 实例绑在别的页面）是毫秒级 reject 后**立刻放行保存**的，
+  // 把它们计进熔断没有任何收益，害处却很大：2026-08-24 全天 91 次
+  // showfail_you_can_only_invoke_show_r 把熔断顶了 14 次，每次停闸 2 小时，
+  // 期间保存一律不弹广告**也完全不上报**，曝光机会静默丢失、还不进分母。
+  // nofill 是平台没广告、abandoned 是用户自己关的，本来就不该计数。
+  // 用 indexOf===0 而不是 ===：report 传进来的是不带 _r 的原始 reason，
+  // 但将来若有别的后缀，前缀匹配不会静默失配。
+  var broken = (r.indexOf('timeout') === 0 || r.indexOf('nocallback') === 0)
   var fuse = _readFuse() || { fails: 0, until: 0 }
   if (!broken) {
     if (fuse.fails) _writeFuse({ fails: 0, until: 0 })
@@ -100,17 +109,27 @@ function _noteResult(reason, route) {
 //
 // 微信 SDK 的 errMsg 是有限的几种模板串，但我们还没看清它们长什么样，
 // 所以这里不写关键词表（写了也是瞎猜），直接把整条消息压成短 slug：
-// 去掉 "xxx:fail " 前缀、数字折成 #（免得 id/耗时把基数撑爆）、空白折成下划线、截断 24 字。
-// 等线上看清楚是哪几种，再决定要不要收敛成固定标签。
+// 去掉 "xxx:fail " 前缀、数字折成 #（免得 id/耗时把基数撑爆）、空白折成下划线。
+//
+// ⚠ 2026-08-24：截断长度从 24 提到 48，这是本次改动里最要紧的一处。
+// 当天 91 次失败全落在 `showfail_you_can_only_invoke_show` 这一个标签上，而 24 字
+// 恰好把两条**根因完全不同**的微信错误切在了同一个位置：
+//   A「you can only invoke show() when the ad is loaded」        → 素材没就绪
+//   B「you can only invoke show() on the page where ... created」→ 实例绑在别的页面上
+// 两者都截成 `you_can_only_invoke_show`，一模一样。修法南辕北辙：A 要重拉素材，
+// B 要重绑页面，重拉一百次也没用。而当天重试（强制重拉素材后再 show）救回的曝光
+// ≤ 4 次 / 91 次，这个「重拉不管用」恰恰更像 B。
+// 48 字足以让两者分开（分歧点在第 25 个字符）。括号一并去掉，免得标签里带符号。
 function _msgTag(msg) {
   if (!msg) return ''
   var s = String(msg)
     .replace(/^[\w.]+:fail\s*/i, '')
     .replace(/\d+/g, '#')
+    .replace(/[()]/g, ' ')
     .trim()
     .replace(/\s+/g, '_')
     .replace(/^_+|_+$/g, '')
-  return s.slice(0, 24)
+  return s.slice(0, 48)
 }
 
 function _failReason(code, msg) {
@@ -135,6 +154,16 @@ function _routeOf(page) {
   return (page && page.route) || ''
 }
 
+/** 该 page 是否还在页面栈顶（create 绑定的就是栈顶那一页） */
+function _isTopPage(page) {
+  try {
+    var pages = (typeof getCurrentPages === 'function' && getCurrentPages()) || []
+    return pages.length > 0 && pages[pages.length - 1] === page
+  } catch (e) {
+    return true   // 取不到栈就别拦，维持原行为
+  }
+}
+
 // Promise.resolve 包一层：异常实现下 show()/load() 可能不返回 Promise，
 // 直接 .then 会同步抛错，把整条保存链路带成 reject。
 function _call(fn) {
@@ -145,22 +174,87 @@ function _call(fn) {
   }
 }
 
+/**
+ * 素材「就绪」是否还新鲜。
+ *
+ * 微信**不派发素材过期事件**，__xbjReady 一旦置 true 就会一直挂着，而
+ * rewardedSaveGate.refreshHint 在每次打开海报页时就预热一次、用户平均要在该页
+ * 停留 21.8 秒才点保存（挑背景/版式，慢的几分钟）——中间素材早没了，
+ * 于是拿着一个假阳性的就绪标记去 show()，SDK 报「未加载完成」。
+ * 宁可多拉一次也不要拿过期素材去 show：多拉一次只是几百毫秒 + 一个 loading，
+ * 而 show 失败是**永久丢一次曝光**（失败即放行保存，用户拿到图不会再点第二次）。
+ */
+var READY_TTL_MS = 3 * 60 * 1000
+
+// onLoad 迟迟不来时的兜底等待。有些基础库不派发 onLoad，死等会把保存流程一起卡住，
+// 等满这么久就直接 show()，成不成交给 SDK 说。
+// 注意这段时间是从 SHOW_TIMEOUT_MS 的 6 秒预算里扣的——若埋点里 timeout 开始变多，
+// 说明预算不够，届时先调 SHOW_TIMEOUT_MS 而不是砍这里。
+var READY_WAIT_MS = 1500
+
+function _isFresh(ad) {
+  if (!ad || !ad.__xbjReady) return false
+  if (!ad.__xbjReadyAt) return false
+  return Date.now() - ad.__xbjReadyAt < READY_TTL_MS
+}
+
+function _markStale(ad) {
+  if (!ad) return
+  ad.__xbjReady = false
+  ad.__xbjReadyAt = 0
+}
+
+/**
+ * 拉素材，返回 Promise。
+ *
+ * **在途去重**：preload、失败后的 _reload、show 里的重试三条路径都会调到这里。
+ * 同一实例上并发的 load() 会被 SDK 合并（第二次往往立刻 resolve），于是
+ * 「await load() 之后 show()」等到的其实是别人那次**还没完成**的加载——
+ * 素材没好就 show，照样报「未加载完成」。共用同一个 promise 才是真的等到。
+ *
+ * **不再把 load() 的 resolve 当就绪信号**：真正的就绪信号只有 onLoad 事件
+ * （在 _bind 里置 __xbjReady/__xbjReadyAt）。原来那个「双保险」正是假阳性的来源之一。
+ */
 function _load(ad) {
-  if (!ad || !ad.load) return
+  if (!ad || !ad.load) return Promise.resolve()
+  if (ad.__xbjLoading) return ad.__xbjLoading
+  var p
   try {
-    var p = ad.load()
-    if (p && p.then) {
-      // 双保险：onLoad 事件是主信号，load() 的 resolve 也算就绪，
-      // 免得某些基础库不派发 onLoad 时 __xbjReady 永远为 false、每次都白等一轮。
-      p.then(function () { ad.__xbjReady = true }).catch(function () { /* 预拉失败不处理，show 时还会再试 */ })
+    p = Promise.resolve(ad.load())
+  } catch (e) {
+    return Promise.reject(e)
+  }
+  var clear = function () { if (ad.__xbjLoading === p) ad.__xbjLoading = null }
+  p.then(clear, clear)
+  ad.__xbjLoading = p
+  return p
+}
+
+/** 预拉场景：失败不处理，show 时还会再试。单独包一层免得产生未捕获的 rejection。 */
+function _loadQuiet(ad) {
+  _load(ad).catch(function () { /* ignore */ })
+}
+
+/**
+ * 等 onLoad 把 __xbjReady 置起来，最多等 READY_WAIT_MS。
+ * 等满了也 resolve —— 让 show() 去试，失败有埋点，总好过把用户卡在这里。
+ */
+function _awaitReady(ad) {
+  if (ad.__xbjReady) return Promise.resolve()
+  return new Promise(function (resolve) {
+    var deadline = Date.now() + READY_WAIT_MS
+    var tick = function () {
+      if (ad.__xbjReady || Date.now() >= deadline) return resolve()
+      setTimeout(tick, 50)
     }
-  } catch (e) { /* ignore */ }
+    setTimeout(tick, 50)
+  })
 }
 
 // 播完/失败后延迟一点再拉下一条：紧贴着关闭动画调 load 容易和 SDK 自身的
 // 回收流程打架，300ms 足够让原生组件收干净。
 function _reload(ad) {
-  setTimeout(function () { _load(ad) }, 300)
+  setTimeout(function () { _loadQuiet(ad) }, 300)
 }
 
 /**
@@ -191,10 +285,14 @@ function _bind(ad) {
   ad.__xbjBound = true
   try {
     if (ad.onLoad) {
-      ad.onLoad(function () { ad.__xbjReady = true })
+      // 唯一权威的就绪信号。带上时间戳，_isFresh 靠它判素材有没有放过期。
+      ad.onLoad(function () {
+        ad.__xbjReady = true
+        ad.__xbjReadyAt = Date.now()
+      })
     }
     ad.onError(function (err) {
-      ad.__xbjReady = false
+      _markStale(ad)
       var code = (err && err.errCode) || 0
       console.warn('[rewardedAdManager] ad error', code, err && err.errMsg)
       // 码先挂到实例上：这条回调可能早于 reject（则由 _recentErr 取走），
@@ -211,7 +309,7 @@ function _bind(ad) {
       if (waiter) waiter.onError(err)
     })
     ad.onClose(function (res) {
-      ad.__xbjReady = false
+      _markStale(ad)
       var waiter = ad.__xbjWaiter
       if (waiter) waiter.onClose(res)
       // 「每次保存都看广告」下，用户很可能马上就要存第二张，立刻备料
@@ -225,9 +323,18 @@ function _bind(ad) {
  * 绑定实例到当前页 + 触发素材下发，用户点保存时几乎零延迟。
  */
 function preload(placementName, page) {
+  // ── 只在该页面仍处于栈顶时才创建实例 ──
+  // _acquire 会 createRewardedVideoAd，而这个调用决定实例绑在**哪个页面**上，
+  // 绑错了以后在别的页面 show() 会抛
+  // "you can only invoke show() on the page where rewardedVideoAd is created"。
+  // preload 的调用点 rewardedSaveGate.refreshHint 是在 awaitOpenid(...).then 里跑的，
+  // 最多晚 1.5 秒；用户要是这期间已经返回上一页，这次 create 就把实例绑到了错误的页面。
+  // 2026-08-24 那 91 次失败有可能正是这条路径（标签被截断，分不清是它还是素材未就绪，
+  // 见 _msgTag 的注释）。栈顶校验成本为零，无论最终是不是它都该加。
+  if (page && !_isTopPage(page)) return
   var ad = _acquire(placementName)
   if (!ad) return
-  if (!ad.__xbjReady) _load(ad)
+  if (!_isFresh(ad)) _loadQuiet(ad)
 }
 
 /**
@@ -297,7 +404,7 @@ function show(placementName, page) {
       if (ad.__xbjWaiter === waiter) ad.__xbjWaiter = null
       resolve(result)
       // 无论成败都为下一次保存备料（onClose 那条路径已经拉过，这里只兜失败路径）
-      if (!ad.__xbjReady) _reload(ad)
+      if (!_isFresh(ad)) _reload(ad)
       return true
     }
 
@@ -350,14 +457,18 @@ function show(placementName, page) {
 
     timer = setTimeout(function () { finish(true, 'timeout') }, SHOW_TIMEOUT_MS)
 
-    // 素材没就绪就先 load，期间给个轻量 loading，别让用户对着静止界面等
+    // 素材没就绪（或就绪得太久了）就先 load，期间给个轻量 loading，别让用户对着静止界面等。
+    // 三点与之前不同：① 用 _isFresh 而不是裸的 __xbjReady，过期的就绪标记不认；
+    // ② 走 _load 的在途去重，不再自己调 ad.load()，避免等到别人那次没完成的加载；
+    // ③ load() resolve 之后还要等 onLoad（_awaitReady），resolve 本身不算就绪。
     var prepare = function () {
-      if (ad.__xbjReady) return Promise.resolve()
+      if (_isFresh(ad)) return Promise.resolve()
       try {
         wx.showLoading({ title: '广告加载中', mask: true })
         loading = true
       } catch (e) { /* ignore */ }
-      return _call(function () { return ad.load() })
+      _markStale(ad)
+      return _load(ad).then(function () { return _awaitReady(ad) })
     }
 
     var attempt = function () {
@@ -394,7 +505,7 @@ function show(placementName, page) {
       // 如果埋点里 timeout 开始变多，就说明重试挤不进这个预算，届时再调。
       if (!code && !retried && !playing) {
         retried = true
-        ad.__xbjReady = false
+        _markStale(ad)
         return attempt().catch(function (err2) {
           if (settled) return
           var e = err2 || err
