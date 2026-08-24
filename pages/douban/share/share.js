@@ -521,7 +521,13 @@ Page({
                 return this.drawPosterItem(movie, x, y, posterMetrics.posterWidth, posterMetrics.posterHeight);
             }));
 
-            if (total > 0) {
+            // 只在拿到放行之后才刷进度（isGenerating 正是在 ensureGrant 通过后置位的）。
+            // 这一页的绘制与激励广告是**并行**的，而 wx.showLoading 是全局单例：
+            // 闸门在 prepare() 里挂着「广告加载中」，绘制每批刷一次「生成中 X%」，
+            // 两边互相顶标题，闸门播广告前的 hideLoading() 也会被下一批立刻顶回来。
+            // 何况广告是全屏原生组件，这段进度用户根本看不见，广告加载期间显示
+            // 「生成中 X%」还是误导。放行前把 loading 完全交给闸门。
+            if (total > 0 && this.data.isGenerating) {
                 const progress = Math.floor(((i + batch.length) / total) * 100);
                 wx.showLoading({ title: `生成中 ${progress}%`, mask: true });
             }
