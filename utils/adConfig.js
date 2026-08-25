@@ -24,9 +24,9 @@
  * 灰度只对**接了 adPlacementGate 的展示位**和激励闸门生效；老广告位直接读 getAdUnitId，
  * 不过灰度这一层。
  *
- * ── 免广告白名单 ──
- * 同一条 app_config 文档上再挂一个 `adFreeOpenids: ["oXXX...", ...]` 数组即可按 openid 加白，
- * 不用发版。命中后 getPlacement() 直接返回 null，**全部展示类广告位 + 插屏一次性关掉**
+ * ── 会员免广告 ──
+ * 与本文件的远程配置**无关**：数据源是 vip_users 集合（云函数 getVipStatus 按 openid 查），
+ * 这里只负责拦截。命中后 getPlacement() 直接返回 null，**全部展示类广告位 + 插屏一次性关掉**
  * （28 处 getAdUnitId 调用、adPlacementGate、adManager.showInterstitial 全都经过它）；
  * 激励闸门另在 rewardedSaveGate.isGated() 首行放行。判定逻辑见 utils/adFree.js。
  */
@@ -81,9 +81,6 @@ const adConfig = {
   // 出 P0 需要快速铺开修复时，把云端 app_config 的 forceUpdatePrompt 改成 true，
   // 用户下次冷启动即弹窗提示立即重启——不用发版。
   forceUpdatePrompt: false,
-
-  // 免广告白名单（openid 数组）。本地默认空 —— 加白只在云端 app_config 改，不发版。
-  adFreeOpenids: [],
 }
 
 // ── 远程配置缓存 key ──
@@ -124,8 +121,6 @@ function fetchRemoteConfig(force) {
     var cached = wx.getStorageSync(CACHE_KEY)
     if (cached && cached.data) {
       _applyRemoteConfig(cached.data)
-      // 缓存里的名单可能已过期（云端撤销了但还没拉到），只授予不撤销
-      syncAdFree(false)
     }
   } catch (e) { /* ignore */ }
 
@@ -151,8 +146,6 @@ function fetchRemoteConfig(force) {
       } catch (e) { /* ignore */ }
     }
     _remoteFetched = true
-    // 云端名单已到位，此刻才允许撤销
-    syncAdFree(true)
   }).catch(function (err) {
     _remoteFetched = true
     console.warn('[adConfig] 拉取远程配置失败，使用本地默认:', err.errMsg || err)
@@ -223,26 +216,6 @@ function _applyRemoteConfig(remote) {
       }
     }
   }
-
-  // 免广告白名单。**整份替换而不是合并**——合并的话云端删掉一个 openid 就撤销不了。
-  if (Array.isArray(remote.adFreeOpenids)) {
-    adConfig.adFreeOpenids = remote.adFreeOpenids.slice()
-  }
-}
-
-/**
- * 用当前 openid + 当前名单重新判定「是否免广告」。
- *
- * @param {boolean} trusted 名单是否来自云端本次拉取成功（决定允不允许撤销，见 adFree.js）
- * @returns {boolean} 判定是否发生变化
- */
-function syncAdFree(trusted) {
-  var openid = null
-  try {
-    var app = getApp()
-    openid = app && app.globalData && app.globalData.openid
-  } catch (e) { /* getApp 在极早期可能不可用 */ }
-  return adFree.apply(openid, adConfig.adFreeOpenids, trusted === true)
 }
 
 /**
@@ -300,9 +273,10 @@ module.exports = {
   fetchRemoteConfig,
   shouldPromptUpdate,
   isRemoteFetched,
-  // 免广告白名单（实现在 utils/adFree.js，这里转出去省得各处再 require 一个模块）
-  syncAdFree,
+  // 会员免广告（实现在 utils/adFree.js，这里转出去省得各处再 require 一个模块）
   isAdFree: adFree.isAdFree,
+  getVipExpireAt: adFree.getExpireAt,
+  refreshAdFree: adFree.refresh,
   onAdFreeChange: adFree.onChange,
   offAdFreeChange: adFree.offChange,
 }

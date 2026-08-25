@@ -14,12 +14,14 @@ App({
     // 每次启动/回到前台埋点场景值（1007/1008 会话、1044 朋友圈、1047 扫码等），用于分享/回流来源分析
     track('app_open', { scene: (options && options.scene) || 0 })
 
-    // 每次进入小程序都刷一次远程配置（内部 10 秒节流）。
-    // onShow 冷启动和热启动都会触发，而 onLaunch 只在冷启动触发——免广告白名单
-    // 要做到「加白后用户下一次进入即生效」，就必须挂在这里。
+    // 每次进入小程序都刷一次远程广告配置 + 会员状态（两者内部各有 3 秒节流）。
+    // onShow 冷启动和热启动都会触发，而 onLaunch 只在冷启动触发——会员开通要做到
+    // 「加完表后用户下一次进入即生效」，就必须挂在这里：热启动（从「最近使用」打开、
+    // 保活期内切回前台）根本不走 onLaunch。
     // 放进 setTimeout 是不占启动同步路径，与 onLaunch 里那次保持一致。
     setTimeout(function () {
       adConfig.fetchRemoteConfig()
+      adConfig.refreshAdFree()
     }, 0)
   },
 
@@ -79,14 +81,14 @@ App({
       }
     } catch (e) { /* 低版本基础库无此能力，忽略 */ }
 
-    // 免广告白名单判定翻转时的处理：立刻撤掉当前页面上已经渲染出来的广告，
-    // 并给刚开通的用户弹一次确认。必须在 fetchRemoteConfig 之前注册好。
+    // 会员状态翻转时的处理：立刻撤掉当前页面上已经渲染出来的广告，
+    // 并给刚开通的用户弹一次确认。必须在 refreshAdFree 之前注册好。
     adConfig.onAdFreeChange((adFree) => {
       if (adFree) {
         this.clearAdsOnLivePages()
         this.notifyAdFreeGranted()
       } else {
-        // 被撤销：清掉「已通知」标记，将来重新加白时还能再弹一次。
+        // 被撤销/到期：清掉「已通知」标记，将来续期或重新开通时还能再弹一次。
         // 广告本身不用管，用户进入下一个页面时自然恢复。
         try { wx.removeStorageSync(AD_FREE_NOTIFIED_KEY) } catch (e) { /* ignore */ }
       }
@@ -96,6 +98,10 @@ App({
     setTimeout(() => {
       // 拉取远程广告配置（含一次本地缓存读取）
       adConfig.fetchRemoteConfig()
+
+      // 查会员状态。openid 由云函数从 wxContext 取，不依赖下面这行 ensureOpenid，
+      // 所以两者顺序无关、并行即可。
+      adConfig.refreshAdFree()
 
       // 获取用户 openid
       this.ensureOpenid()
@@ -125,10 +131,6 @@ App({
       if (openid) {
         self.globalData.openid = openid
         self._openidAttempt = 0
-        // openid 到位才谈得上判定免广告白名单。远程配置可能已经先回来了（那时
-        // openid 还是空、syncAdFree 是空转），所以这里必须补一次。
-        // trusted 取远程拉取是否已收口：没收口就只授予不撤销。
-        adConfig.syncAdFree(adConfig.isRemoteFetched())
         return
       }
       // 退避重试 1s / 2s / 4s，共 3 次；再失败就交给后续 ensureOpenid 调用

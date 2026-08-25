@@ -1319,6 +1319,14 @@
 .member-row-right {
   flex-shrink: 0;
   margin-left: var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.member-expire {
+  font-size: var(--font-caption);
+  color: var(--text-secondary);
 }
 
 .member-copy {

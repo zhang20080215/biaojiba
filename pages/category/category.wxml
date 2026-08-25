@@ -600,7 +600,10 @@
           <text class="member-row-code">{{memberCodeShort || '获取中…'}}</text>
         </view>
         <view class="member-row-right">
-          <text class="member-badge" wx:if="{{isAdFree}}">已开通</text>
+          <block wx:if="{{isAdFree}}">
+            <text class="member-expire" wx:if="{{vipExpireText}}">{{vipExpireText}}</text>
+            <text class="member-badge">已开通</text>
+          </block>
           <text class="member-copy" wx:else>复制</text>
         </view>
       </view>

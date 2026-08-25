@@ -64,6 +64,7 @@ Page({
     // 会员码（= openid）。展示用的截断串；完整串放实例字段 _memberCode，不进 data
     memberCodeShort: '',
     isAdFree: adConfig.isAdFree(),
+    vipExpireText: '',
     // 卡片展示模式：'cover'（封面网格，默认）| 'list'（列表）——用户上次选择本地保留
     viewMode: 'cover',
     // 置顶主题 id（按展示先后排序）——用户上次选择本地保留
@@ -807,20 +808,34 @@ Page({
 
   /**
    * 会员码 = openid。用户复制后发给运营，运营在云端 app_config 的
-   * adFreeOpenids 数组里加白，该用户下次冷启动即免广告。
+   * vip_users 集合里新增一条（_id 填这串码），该用户下次进入小程序即免广告。
    * 完整串只留在实例字段上，data 里只放截断展示串。
    */
   syncMemberCode() {
-    this.setData({ isAdFree: adConfig.isAdFree() });
+    this.setData({ isAdFree: adConfig.isAdFree(), vipExpireText: this.buildExpireText() });
+    // 打开面板顺手强制查一次会员状态：用户刚付完款问「怎么还没生效」时，
+    // 让他打开这个面板就能拿到最新结果，不用教他退出重进。force=true 跳过节流。
+    adConfig.refreshAdFree(true).then(() => {
+      if (this._pageUnloaded) return;
+      this.setData({ isAdFree: adConfig.isAdFree(), vipExpireText: this.buildExpireText() });
+    });
     if (this._memberCode) return;
     awaitOpenid(this, 3000).then((openid) => {
       if (!openid || this._pageUnloaded) return;
       this._memberCode = openid;
       this.setData({
         memberCodeShort: openid.slice(0, 6) + '…' + openid.slice(-6),
-        isAdFree: adConfig.isAdFree(),
       });
     });
+  },
+
+  /** 会员到期文案：永久卡不显示日期，年卡显示到期日 */
+  buildExpireText() {
+    if (!adConfig.isAdFree()) return '';
+    const expireAt = adConfig.getVipExpireAt();
+    if (!expireAt) return '';
+    const d = new Date(expireAt);
+    return `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()} 到期`;
   },
 
   onCopyMemberCode() {
