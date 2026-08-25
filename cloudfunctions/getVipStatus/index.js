@@ -9,12 +9,16 @@
 //     expireAt:  null,              // null/缺省=永久；否则到期时间（Date / 毫秒数 / 日期字符串都认）
 //     price:     19.9,              // 实收金额，对账用
 //     channel:   "wechat",          // 收款渠道
-//     orderNo:   "",                // 你自己的流水号
-//     nickname:  "",                // 便于对人
+//     orderNo:   "20260825-001",    // 你自己的流水号
+//     nickname:  "小明",             // 便于对人
 //     note:      "首发100名",
-//     grantedAt: 1756000000000,     // 开通时间
-//     operator:  ""                 // 谁开的
+//     grantedAt: "2026-08-25",      // 开通时间
+//     operator:  "zhang"            // 谁开的
 //   }
+//
+// ⚠ 控制台的 JSON 编辑器**不接受空字符串**（会报「Key 或 Value 不能为空」）。
+//   没值的字段直接**别写**，不要写成 ""。expireAt 的 null 是允许的。
+//   判定只读 status / expireAt / plan 三个字段，其余全是给人看的，缺了不影响功能。
 //
 // ⚠ 安全：openid **只从 wxContext 取**，绝不接受前端传参——否则任何人填别人的 openid
 //   就能白嫖，或者填自己的去查别人。
