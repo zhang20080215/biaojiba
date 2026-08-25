@@ -6,6 +6,7 @@ var adManager = require('../../../utils/adManager');
 var userStore = require('../../../utils/userStore.js');
 var { getThemeConfig } = require('../../../utils/genericThemeConfig.js');
 var { formatVotes } = require('../../../utils/movieFormat.js');
+var markSync = require('../../../utils/markSync.js');
 
 // 通用榜单页：走 enrichThemeMovies/generic_theme_movies 流水线的新主题、以及迁移过来的老主题共用这一套页面，
 // 通过 ?theme=xxx 区分（同 pages/daily/index 靠 ?theme= 复用一套页面的思路）。
@@ -598,7 +599,10 @@ Page({
             const persist = existingRecordId
                 ? db.collection('Marks').doc(existingRecordId).remove()
                 : db.collection('Marks').where({ movieId, openid }).remove();
-            persist.catch(err => {
+            persist.then(() => {
+                // 跨榜单同步：其他榜单里的同一部电影也一并取消（详见 utils/markSync.js）
+                markSync.sync(movieId, '');
+            }).catch(err => {
                 console.error('取消标记失败:', err);
                 this.restoreSingleMarkLocally(movieId, snapshot);
                 wx.showToast({ title: '取消失败，请重试', icon: 'none' });
@@ -616,6 +620,8 @@ Page({
             : db.collection('Marks').add({ data: { movieId, openid, status: targetStatus, marked_at: now } });
 
         persist.then(res => {
+            // 跨榜单同步：其他榜单里的同一部电影设成同一状态
+            markSync.sync(movieId, targetStatus);
             if (!existingRecordId && res && res._id) {
                 this.setData({ markRecordIdMap: { ...this.data.markRecordIdMap, [movieId]: res._id } });
             }

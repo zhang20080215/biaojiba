@@ -6,6 +6,7 @@ var adManager = require('../../../utils/adManager');
 var grayBucket = require('../../../utils/grayBucket');
 var subscribeConfig = require('../../../utils/subscribeConfig');
 var userStore = require('../../../utils/userStore.js');
+var markSync = require('../../../utils/markSync.js');
 
 const SUBSCRIBE_BUCKET_PERCENT = 0; // 临时关闭订阅入口（access_token 链路问题待排查），代码完整保留，恢复时改回 100
 
@@ -615,7 +616,11 @@ Page({
             const persist = existingRecordId
                 ? db.collection('Marks').doc(existingRecordId).remove()
                 : db.collection('Marks').where({ movieId, openid }).remove();
-            persist.catch(err => {
+            persist.then(() => {
+                // 跨榜单同步：其他榜单里的同一部电影也一并取消。fire-and-forget，
+                // 失败不影响本次取消（详见 utils/markSync.js）
+                markSync.sync(movieId, '');
+            }).catch(err => {
                 console.error('取消标记失败:', err);
                 this.restoreSingleMarkLocally(movieId, snapshot);
                 wx.showToast({ title: '取消失败，请重试', icon: 'none' });
@@ -632,6 +637,8 @@ Page({
             : db.collection('Marks').add({ data: { movieId, openid, status: targetStatus, marked_at: now } });
 
         persist.then(res => {
+            // 跨榜单同步：其他榜单里的同一部电影设成同一状态
+            markSync.sync(movieId, targetStatus);
             if (!existingRecordId && res && res._id) {
                 this.setData({ markRecordIdMap: { ...this.data.markRecordIdMap, [movieId]: res._id } });
             }

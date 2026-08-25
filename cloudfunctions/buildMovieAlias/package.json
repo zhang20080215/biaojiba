@@ -1,0 +1,14 @@
+{
+  "name": "buildMovieAlias",
+  "version": "1.0.0",
+  "description": "重建跨榜单同一部电影的关联索引（movie_alias）",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

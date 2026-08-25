@@ -4,6 +4,7 @@ var adConfig = require('../../../utils/adConfig');
 var { trackMark, trackShare } = require('../../../utils/track.js');
 var adManager = require('../../../utils/adManager');
 var userStore = require('../../../utils/userStore.js');
+var markSync = require('../../../utils/markSync.js');
 
 Page({
     data: {
@@ -533,6 +534,8 @@ Page({
         const now = new Date().toISOString();
         const finalize = () => {
             this.applyMarkLocally(movieId, targetStatus);
+            // 跨榜单同步（详见 utils/markSync.js）：一处覆盖增/改/删三个分支
+            markSync.sync(movieId, targetStatus);
             this.showCustomToast(!targetStatus ? '已取消标记' : (targetStatus === 'watched' ? '✓ 已标记为已看' : '✓ 已标记为想看'));
         };
         db.collection('Marks').where({ movieId, openid }).get().then(res => {

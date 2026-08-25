@@ -4,6 +4,7 @@ var adConfig = require('../../../utils/adConfig');
 var { trackMark, trackShare } = require('../../../utils/track.js');
 var adManager = require('../../../utils/adManager');
 var userStore = require('../../../utils/userStore.js');
+var markSync = require('../../../utils/markSync.js');
 
 Page({
     data: {
@@ -525,6 +526,10 @@ Page({
         const now = new Date().toISOString();
         const finalize = () => {
             this.applyMarkLocally(movieId, targetStatus);
+            // 跨榜单同步：其他榜单里的同一部电影一并跟上。fire-and-forget，
+            // 失败不影响本次标记（详见 utils/markSync.js）。
+            // 放在 finalize 里一处覆盖增/改/删三个分支。
+            markSync.sync(movieId, targetStatus);
             this.showCustomToast(!targetStatus ? '已取消标记' : (targetStatus === 'watched' ? '✓ 已标记为已看' : '✓ 已标记为想看'));
         };
         db.collection('Marks').where({ movieId, openid }).get().then(res => {
