@@ -30,6 +30,9 @@ const PLACEMENT = 'save_image_rewarded'
 
 function isGated(openid) {
   if (!openid) return false
+  // 免广告白名单：加白用户保存海报不再需要看激励视频。
+  // 放在熔断之前——这是权益，不是降级路径。
+  if (adConfig.isAdFree()) return false
   // 熔断兜底：连续多次广告侧异常后本地自动停闸 2 小时，之后自动恢复。
   // 广告链路再出问题时，用户不必每次保存都白等超时，也不用等云端配置或发版。
   if (rewardedAdManager.isCircuitOpen()) return false

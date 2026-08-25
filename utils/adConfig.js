@@ -23,7 +23,15 @@
  *
  * 灰度只对**接了 adPlacementGate 的展示位**和激励闸门生效；老广告位直接读 getAdUnitId，
  * 不过灰度这一层。
+ *
+ * ── 会员免广告 ──
+ * 与本文件的远程配置**无关**：数据源是 vip_users 集合（云函数 getVipStatus 按 openid 查），
+ * 这里只负责拦截。命中后 getPlacement() 直接返回 null，**全部展示类广告位 + 插屏一次性关掉**
+ * （28 处 getAdUnitId 调用、adPlacementGate、adManager.showInterstitial 全都经过它）；
+ * 激励闸门另在 rewardedSaveGate.isGated() 首行放行。判定逻辑见 utils/adFree.js。
  */
+
+var adFree = require('./adFree')
 
 // ── 本地默认配置（兜底，云端拉取失败时使用） ──
 const adConfig = {
@@ -83,14 +91,31 @@ var CACHE_KEY = 'ad_remote_config'
 var _remoteFetched = false
 
 /**
- * 从云端拉取广告配置并合并到本地（启动时调用一次）
+ * 从云端拉取广告配置并合并到本地
  *
  * stale-while-revalidate：先用本地缓存立即生效（不阻塞启动），再**无条件**异步刷新。
  * 原先是「缓存 1 小时内直接 return 不请求云端」——出事时那 1 小时就是止血延迟的下限，
- * 且杀进程重进也没用。改成每次冷启都刷新后，云端改配置在用户下一次冷启动即生效；
- * 代价是每次冷启多一次数据库读（按日打开次数计，远在免费额度内）。
+ * 且杀进程重进也没用。
+ *
+ * 调用点有两个：App.onLaunch（冷启动）与 **App.onShow（每次进入小程序，冷启热启都算）**。
+ * 挂在 onShow 上是为了让「云端改了配置」在用户**下一次进入小程序**就生效，而不是等到
+ * 下一次冷启动——热启动（从「最近使用」打开、保活期内切回前台）不触发 onLaunch，
+ * 只挂 onLaunch 的话免广告加白可能迟迟不生效。
+ *
+ * 代价是每次进入多一次数据库读。节流只为吃掉「onLaunch 与 onShow 在冷启动时连着各调
+ * 一次」（两者相隔毫秒级），所以取 3 秒就够——取大了会留出一段「刚加白、用户立刻退出
+ * 重进却拉不到新配置」的死窗口，那正是这次要解决的问题。
+ *
+ * @param {boolean} force 跳过节流（手动刷新用）
  */
-function fetchRemoteConfig() {
+var MIN_FETCH_INTERVAL_MS = 3000
+var _lastFetchAt = 0
+
+function fetchRemoteConfig(force) {
+  var now = Date.now()
+  if (force !== true && _lastFetchAt && now - _lastFetchAt < MIN_FETCH_INTERVAL_MS) return
+  _lastFetchAt = now
+
   // 1. 有缓存就先套用，保证启动瞬间就有配置可用
   try {
     var cached = wx.getStorageSync(CACHE_KEY)
@@ -195,8 +220,13 @@ function _applyRemoteConfig(remote) {
 
 /**
  * 获取广告位配置
+ *
+ * 免广告白名单命中时全局返回 null——这是所有展示类广告位（banner / 原生 / 信息流）
+ * 和插屏的唯一收口点，一处拦住等于 28 个调用点全关。激励视频不经过这里，
+ * 由 rewardedSaveGate.isGated() 单独放行。
  */
 function getPlacement(placementName) {
+  if (adFree.isAdFree()) return null
   if (!adConfig.enabled) return null
   var placement = adConfig.placements[placementName]
   if (!placement || !placement.enabled) return null
@@ -243,4 +273,10 @@ module.exports = {
   fetchRemoteConfig,
   shouldPromptUpdate,
   isRemoteFetched,
+  // 会员免广告（实现在 utils/adFree.js，这里转出去省得各处再 require 一个模块）
+  isAdFree: adFree.isAdFree,
+  getVipExpireAt: adFree.getExpireAt,
+  refreshAdFree: adFree.refresh,
+  onAdFreeChange: adFree.onChange,
+  offAdFreeChange: adFree.offChange,
 }
