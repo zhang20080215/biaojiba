@@ -407,7 +407,10 @@ Page({
                     this.setData({ isBatchEditing: false, selectedMovieIds: [] });
                     setTimeout(() => { this.loadUserMarks(); }, 500);
                 } else {
-                    wx.showToast({ title: '部分标记失败', icon: 'none' });
+                    wx.showToast({ title: '部分标记失败，正在刷新', icon: 'none' });
+                    // 云函数已把「写成功条数」如实报回来，这里不能只弹个提示就完事：本地状态没跟着改，
+                    // 用户看到的仍是旧的。重新拉一次标记，让显示收敛到云端真实状态。
+                    setTimeout(() => { this.loadUserMarks(); }, 300);
                 }
             },
             fail: err => {

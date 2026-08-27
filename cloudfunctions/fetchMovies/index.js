@@ -316,13 +316,23 @@ exports.main = async (event, context) => {
             const category = ''; // 列表页较难精准抓取分类，保持为空
             const description = $element.find('.inq').text().trim() || 'No description available';
 
+            // 豆瓣条目 id：列表页每个 .item 里的详情链接就是
+            // https://movie.douban.com/subject/1292052/ ——本来就在 HTML 里，白捡的。
+            // 它是**跨榜单关联同一部电影的主键**：奥斯卡四奖、票房榜、18 个通用主题都存了
+            // doubanId（都走 enrichThemeMovies 的豆瓣搜索匹配），唯独本表和 imdb_movies 没有，
+            // 于是「在一个榜单标记后同步到其他榜单」无从下手。见 buildMovieAlias。
+            // ⚠ 只新增字段，**绝不动 _id** —— _id 一漂移，用户在 Marks 里的标记全成孤儿。
+            const href = $element.find('a').first().attr('href') || '';
+            const subjectMatch = href.match(/subject\/(\d+)/);
+            const doubanId = subjectMatch ? subjectMatch[1] : '';
+
             // 生成确定性的电影ID
             const safeTitle = title.replace(/[\/\\:*?"<>|]/g, '_');
             // _id 不带年份（与历史数据格式 `movie_{title}_` 对齐，避免 _id 漂移）；year 仍单独存字段
             const movieId = `movie_${safeTitle}_`;
 
             pageMovies.push({
-              _id: movieId, rank, title, rating: parseFloat(rating), coverUrl, originalCover: coverUrl, year, category, description
+              _id: movieId, rank, title, rating: parseFloat(rating), coverUrl, originalCover: coverUrl, year, category, description, doubanId
             });
           });
           return pageMovies;

@@ -6,6 +6,7 @@ var adManager = require('../../../utils/adManager');
 var userStore = require('../../../utils/userStore.js');
 var { getThemeConfig } = require('../../../utils/genericThemeConfig.js');
 var { formatVotes } = require('../../../utils/movieFormat.js');
+var markSync = require('../../../utils/markSync.js');
 
 // 通用榜单页：走 enrichThemeMovies/generic_theme_movies 流水线的新主题、以及迁移过来的老主题共用这一套页面，
 // 通过 ?theme=xxx 区分（同 pages/daily/index 靠 ?theme= 复用一套页面的思路）。
@@ -595,10 +596,16 @@ Page({
         if (!targetStatus) {
             this.clearSingleMarkLocally(movieId);
             this.showCustomToast('已取消标记');
-            const persist = existingRecordId
-                ? db.collection('Marks').doc(existingRecordId).remove()
-                : db.collection('Marks').where({ movieId, openid }).remove();
-            persist.catch(err => {
+            // 取消标记一律按 (id, openid) 删**全部**匹配记录，不走 doc(existingRecordId) 只删一条。
+            // 历史上 batchUpdateMarks/batchUpdateBookMarks 的 _.in 没分片、被 .get() 默认 100 条上限
+            // 静默截断，给批量标过 100+ 条的用户造出过重复记录。只删一条的话旧记录留在库里，下次
+            // 加载又被读回来 —— 表现就是「取消不掉、标记复活，状态还可能变回旧的」。删全部顺手把
+            // 这些历史重复清干净，且不需要单独跑清理脚本。
+            const persist = db.collection('Marks').where({ movieId, openid }).remove();
+            persist.then(() => {
+                // 跨榜单同步：其他榜单里的同一部电影也一并取消（详见 utils/markSync.js）
+                markSync.sync(movieId, '');
+            }).catch(err => {
                 console.error('取消标记失败:', err);
                 this.restoreSingleMarkLocally(movieId, snapshot);
                 wx.showToast({ title: '取消失败，请重试', icon: 'none' });
@@ -616,6 +623,8 @@ Page({
             : db.collection('Marks').add({ data: { movieId, openid, status: targetStatus, marked_at: now } });
 
         persist.then(res => {
+            // 跨榜单同步：其他榜单里的同一部电影设成同一状态
+            markSync.sync(movieId, targetStatus);
             if (!existingRecordId && res && res._id) {
                 this.setData({ markRecordIdMap: { ...this.data.markRecordIdMap, [movieId]: res._id } });
             }
@@ -715,7 +724,16 @@ Page({
         if (this.data.selectedMovieIds.length === 0) {
             wx.showToast({ title: '请选择电影', icon: 'none' }); return;
         }
-        this.batchUpdateMarks(this.data.selectedMovieIds, 'unwatched');
+        // 批量取消会经 movie_alias 扩散到其他榜单里的同一部影片——误点一次的代价从「毁掉当前榜单」
+        // 变成「毁掉全部榜单」，而且没有撤销。批量标记是加法不用拦，取消必须二次确认。
+        const ids = this.data.selectedMovieIds;
+        wx.showModal({
+            title: '确认取消标记',
+            content: '将取消 ' + ids.length + ' 部影片的标记，其他榜单中的同一部影片也会一并取消，且无法撤销。',
+            confirmText: '确认取消',
+            confirmColor: '#E64340',
+            success: (res) => { if (res.confirm) this.batchUpdateMarks(ids, 'unwatched'); }
+        });
     },
 
     // ─── 批量标记：一次云函数调用代替 N*2 次直接 DB 操作 ───
@@ -735,7 +753,10 @@ Page({
                     wx.showToast({ title: '批量标记成功', icon: 'success' });
                     setTimeout(() => { this.loadUserMarks(); }, 300);
                 } else {
-                    wx.showToast({ title: '部分标记失败', icon: 'none' });
+                    wx.showToast({ title: '部分标记失败，正在刷新', icon: 'none' });
+                    // 云函数已把「写成功条数」如实报回来，这里不能只弹个提示就完事：本地状态没跟着改，
+                    // 用户看到的仍是旧的。重新拉一次标记，让显示收敛到云端真实状态。
+                    setTimeout(() => { this.loadUserMarks(); }, 300);
                 }
             },
             fail: err => {

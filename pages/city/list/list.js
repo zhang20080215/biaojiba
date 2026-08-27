@@ -1,5 +1,5 @@
 // pages/city/list/list.js —— 全国旅游城市列表页
-// 数据走 getCities（专属集合 travel_cities，中国优秀旅游城市），标记复用 Marks（去过=watched、
+// 数据走 getCities（专属集合 travel_cities，大陆优秀旅游城市 + 港澳台市级行政区），标记复用 Marks（去过=watched、
 // 想去=wish）+ batchUpdateMarks，交互骨架借鉴 pages/scenic/list，去掉封面图（纯色文字卡），
 // 按省份筛选。
 import DataLoader from '../../../utils/dataLoader';
@@ -10,7 +10,7 @@ var userStore = require('../../../utils/userStore.js');
 const THEME = 'city';
 const PAGE_SIZE = 40;   // 单省城市数≤35，一屏渲染完；全部视图靠 scroll-view 触底追加
 // 省份筛选固定顺序（与省份主题一致，地理向）
-const PROVINCE_ORDER = ['北京', '天津', '河北', '山西', '内蒙古', '辽宁', '吉林', '黑龙江', '上海', '江苏', '浙江', '安徽', '福建', '江西', '山东', '河南', '湖北', '湖南', '广东', '广西', '海南', '重庆', '四川', '贵州', '云南', '西藏', '陕西', '甘肃', '青海', '宁夏', '新疆'];
+const PROVINCE_ORDER = ['北京', '天津', '河北', '山西', '内蒙古', '辽宁', '吉林', '黑龙江', '上海', '江苏', '浙江', '安徽', '福建', '江西', '山东', '河南', '湖北', '湖南', '广东', '广西', '海南', '重庆', '四川', '贵州', '云南', '西藏', '陕西', '甘肃', '青海', '宁夏', '新疆', '台湾', '香港', '澳门'];
 
 Page({
     data: {
@@ -49,7 +49,7 @@ Page({
         // 旅游城市主题配色（暖橙，与省份靛蓝 / 5A 青绿 / 博物馆金褐区分）
         cfg: {
             title: '全国旅游城市',
-            slogan: '打卡中国优秀旅游城市，收藏你走过的城',
+            slogan: '打卡全国旅游城市，收藏你走过的城',
             brandPrimary: '#C9743A',
             brandSoft: '#E0A06E',
             shadowRgb: '201, 116, 58'
@@ -383,9 +383,12 @@ Page({
         if (!targetStatus) {
             this.clearSingleMarkLocally(id);
             this.showCustomToast('已取消标记');
-            const persist = existingRecordId
-                ? db.collection('Marks').doc(existingRecordId).remove()
-                : db.collection('Marks').where({ movieId: id, openid }).remove();
+            // 取消标记一律按 (id, openid) 删**全部**匹配记录，不走 doc(existingRecordId) 只删一条。
+            // 历史上 batchUpdateMarks/batchUpdateBookMarks 的 _.in 没分片、被 .get() 默认 100 条上限
+            // 静默截断，给批量标过 100+ 条的用户造出过重复记录。只删一条的话旧记录留在库里，下次
+            // 加载又被读回来 —— 表现就是「取消不掉、标记复活，状态还可能变回旧的」。删全部顺手把
+            // 这些历史重复清干净，且不需要单独跑清理脚本。
+            const persist = db.collection('Marks').where({ movieId: id, openid }).remove();
             persist.catch(err => {
                 console.error('取消标记失败:', err);
                 this.restoreSingleMarkLocally(id, snapshot);
@@ -485,7 +488,10 @@ Page({
                     wx.showToast({ title: '批量标记成功', icon: 'success' });
                     setTimeout(() => { this.loadUserMarks(); }, 300);
                 } else {
-                    wx.showToast({ title: '部分标记失败', icon: 'none' });
+                    wx.showToast({ title: '部分标记失败，正在刷新', icon: 'none' });
+                    // 云函数已把「写成功条数」如实报回来，这里不能只弹个提示就完事：本地状态没跟着改，
+                    // 用户看到的仍是旧的。重新拉一次标记，让显示收敛到云端真实状态。
+                    setTimeout(() => { this.loadUserMarks(); }, 300);
                 }
             },
             fail: err => {

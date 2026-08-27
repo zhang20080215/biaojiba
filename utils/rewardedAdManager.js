@@ -6,10 +6,18 @@ const { track } = require('./track')
  *
  * ── 关于实例 ──
  * wx.createRewardedVideoAd 对同一个 adUnitId **只有一个实例**（SDK 单例）。
- * 但它又是原生组件，绑定「最后一次 create 它的页面」——在别的页面调 show() 会抛
+ * 但它又是原生组件，绑定某一个**页面实例**——在别的页面调 show() 会抛
  * "you can only invoke show() on the page where rewardedVideoAd is created"。
- * 所以：每次 preload/show 都重新 create 一次（拿回同一个实例并重绑到当前页），
- * 而所有状态（监听器、素材就绪、当前等待者）都挂在**实例**上，天然跨页面共享。
+ * 所有状态（监听器、素材就绪、当前等待者）都挂在**实例**上，天然跨页面共享。
+ *
+ * ⚠ **2026-08-25 推翻了「重复 create 会重绑页面」这条假设。** 原先这里写着
+ * 「每次 preload/show 都重新 create 一次（拿回同一个实例并重绑到当前页）」，
+ * 整条链路都建立在它上面。而线上数据显示：show() 第一行刚在正确的页面上 create 过，
+ * 紧接着 show() 仍然报「绑在别的页面」——**重复 create 不重绑**，绑的是**第一次**
+ * 创建它的那个页面实例。用户从列表进海报页→返回→再进，页面对象就换了，之后每次
+ * show 必失败，这就是失败率长期卡在 ~48% 的原因。
+ * 现在的做法：给实例戳上 __xbjOwner（创建时的页面实例标识），preload/show 前比对，
+ * 不匹配就 destroy 后重建（见 _bindState / _rebuild）。
  *
  * 历史坑（v1.0.40 线上事故，2026-08）：
  * 1. 之前把实例按页面缓存，跨页面走回头路时没重绑 → show() 直接抛错；
@@ -257,11 +265,47 @@ function _reload(ad) {
   setTimeout(function () { _loadQuiet(ad) }, 300)
 }
 
+// ── 页面归属 ──
+// 2026-08-25 埋点定案：全天 84 次 `showfail_you_can_only_invoke_show_on_the_page_where_rewar_r`，
+// 而「素材未就绪」那一支（..._when_the_ad_is_loaded）**一次都没有**。
+// ⇒ 失败的根因是**实例绑在别的页面**，不是素材问题。
+//
+// 更硬的一条推论：show() 的第一行就是 _acquire() → createRewardedVideoAd()，也就是
+// **在正确的页面上刚刚重新 create 过、紧接着 show 仍然报「绑在别的页面」**。
+// ⇒ **重复调用 createRewardedVideoAd 并不会重绑页面。** 这条假设自 v1.0.46 起就写在
+// 本文件头部、是整条链路的基石，现在被数据推翻了。
+//
+// 绑定的是**第一次创建它的那个页面实例**。用户从列表进海报页→返回→再进，页面对象就换了，
+// 之后每次 show 都失败——这解释了为什么失败率长期卡在一半左右。
+//
+// 对策：给实例戳上「创建于哪个页面实例」，show/preload 前比对，不匹配就 destroy 重建。
+// destroy 是否可用做特性检测，埋点会把结果带出来。
+var _pageSeq = 0
+
+function _pageKey(page) {
+  if (!page) return ''
+  if (!page.__xbjPageKey) page.__xbjPageKey = 'p' + (++_pageSeq)
+  return page.__xbjPageKey
+}
+
 /**
- * 拿到实例并绑定到当前页面。
- * 同一 adUnitId 返回同一对象，重复调用只是重绑页面，代价极低。
+ * 绑定状态。埋点后缀用，也是决定要不要重建的依据。
+ *   x0 = 就绑在当前这个页面实例上（正常）
+ *   x1 = 同一路由、不同页面实例（返回后重进海报页）
+ *   x2 = 跨页面（在别的海报页创建的）
+ *   x3 = 取不到归属信息
  */
-function _acquire(placementName) {
+function _bindState(ad, page) {
+  if (!ad || !page || !ad.__xbjOwner) return 'x3'
+  if (ad.__xbjOwner === _pageKey(page)) return 'x0'
+  return ad.__xbjOwnerRoute === _routeOf(page) ? 'x1' : 'x2'
+}
+
+/**
+ * 拿到实例。同一 adUnitId 返回同一对象；**首次创建**时才建立页面绑定。
+ * @param {object} page 调用方页面，用于记录归属
+ */
+function _acquire(placementName, page) {
   if (!wx.createRewardedVideoAd) return null
   var placement = getPlacement(placementName)
   if (!placement || placement.type !== 'rewarded' || !placement.unitId) return null
@@ -272,8 +316,36 @@ function _acquire(placementName) {
     console.error('[rewardedAdManager] createRewardedVideoAd failed', err)
     return null
   }
-  if (ad) _bind(ad)
+  if (!ad) return null
+  // 只在实例还没有归属时戳上——重复 create 不重绑，所以后来的 create 不该改写归属，
+  // 否则比对永远相等，问题就被自己盖住了。
+  if (!ad.__xbjOwner && page) {
+    ad.__xbjOwner = _pageKey(page)
+    ad.__xbjOwnerRoute = _routeOf(page)
+  }
+  _bind(ad)
   return ad
+}
+
+/**
+ * 销毁并重建实例，让它绑到当前页面。
+ * @returns {{ad: object|null, fix: string}} fix: '_d'=已重建 '_nd'=destroy 不可用 '_df'=destroy 了但拿回同一个对象
+ */
+function _rebuild(ad, placementName, page) {
+  if (!ad || typeof ad.destroy !== 'function') return { ad: ad, fix: '_nd' }
+  // 正在播 / 有活着的等待者时绝不销毁，会把在途那次保存打断
+  if (ad.__xbjWaiter) return { ad: ad, fix: '' }
+  try {
+    ad.destroy()
+  } catch (e) {
+    console.warn('[rewardedAdManager] destroy 失败', e)
+    return { ad: ad, fix: '_nd' }
+  }
+  var fresh = _acquire(placementName, page)
+  if (!fresh) return { ad: null, fix: '_d' }
+  // destroy 后 create 若仍拿回同一个对象，说明这条路走不通——埋点要能看出来
+  if (fresh === ad) return { ad: fresh, fix: '_df' }
+  return { ad: fresh, fix: '_d' }
 }
 
 /**
@@ -332,8 +404,14 @@ function preload(placementName, page) {
   // 2026-08-24 那 91 次失败有可能正是这条路径（标签被截断，分不清是它还是素材未就绪，
   // 见 _msgTag 的注释）。栈顶校验成本为零，无论最终是不是它都该加。
   if (page && !_isTopPage(page)) return
-  var ad = _acquire(placementName)
+  var ad = _acquire(placementName, page)
   if (!ad) return
+  // 归属不是当前页就在这里重建：代价（销毁 + 重新拉素材）摊在**打开海报页**时，
+  // 而不是等用户点了保存再在 6 秒预算里现做。
+  if (page && _bindState(ad, page) !== 'x0') {
+    var r = _rebuild(ad, placementName, page)
+    if (r.ad) ad = r.ad
+  }
   if (!_isFresh(ad)) _loadQuiet(ad)
 }
 
@@ -342,11 +420,22 @@ function preload(placementName, page) {
  * @returns {Promise<boolean>} true = 放行保存，false = 用户中途关闭
  */
 function show(placementName, page) {
-  var ad = _acquire(placementName)
+  var ad = _acquire(placementName, page)
   if (!ad) {
     // 无广告位/不支持：直接放行，记为无实例（无收入）
     track('ad_rewarded', { route: _routeOf(page), result: 'noinstance' })
     return Promise.resolve(true)
+  }
+
+  // ── 页面绑定校验（兜底；正常情况 preload 已经处理过了）──
+  // bindState 记的是**修之前**的状态，失败埋点带出去：既能看出错绑有多频繁，
+  // 也能看出重建到底有没有救回来。
+  var bindState = _bindState(ad, page)
+  var bindFix = ''
+  if (bindState !== 'x0') {
+    var rebuilt = _rebuild(ad, placementName, page)
+    bindFix = rebuilt.fix
+    if (rebuilt.ad) ad = rebuilt.ad
   }
   // 同一实例同一时刻只服务一个等待者（用户连点、或前一次还没收场）。
   // 但等待者不能无限期霸占：异常情况下（页面被销毁、定时器在后台被节流）
@@ -388,9 +477,14 @@ function show(placementName, page) {
       // 熔断计数用原始 reason：加了后缀 'timeout_r' 就不再等于 'timeout'，
       // _noteResult 里那几个字符串比较会静默失配。
       _noteResult(reason, route)
-      // 埋点带上 _r：用来量「重试到底救回了多少次曝光」。watched_r 就是重试救回来的那些，
-      // ⚠ 看总量时要把 xxx 和 xxx_r 相加。
-      track('ad_rewarded', { route: route, result: retried ? reason + '_r' : reason })
+      // 埋点后缀：
+      //   _r  —— 无码失败后重试过一次。⚠ 看总量时要把 xxx 和 xxx_r 相加。
+      //   _xN —— 本次 show 之前的页面绑定状态（见 _bindState），只加在 showfail 上，
+      //          免得把 watched/abandoned 这两个常看的指标打散。
+      //   _d / _nd / _df —— 是否做了销毁重建 / destroy 不可用 / 销毁后仍拿回同一对象。
+      var result = retried ? reason + '_r' : reason
+      if (result.indexOf('showfail') === 0) result += '_' + bindState + bindFix
+      track('ad_rewarded', { route: route, result: result })
     }
 
     var settle = function (result) {

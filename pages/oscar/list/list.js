@@ -4,6 +4,7 @@ var adConfig = require('../../../utils/adConfig');
 var { trackMark, trackShare } = require('../../../utils/track.js');
 var adManager = require('../../../utils/adManager');
 var userStore = require('../../../utils/userStore.js');
+var markSync = require('../../../utils/markSync.js');
 
 Page({
     data: {
@@ -351,6 +352,8 @@ Page({
         const now = new Date().toISOString();
         const finalize = () => {
             this.applyMarkLocally(movieId, targetStatus);
+            // 跨榜单同步（详见 utils/markSync.js）：一处覆盖增/改/删三个分支
+            markSync.sync(movieId, targetStatus);
             wx.showToast({ title: !targetStatus ? '已取消标记' : (targetStatus === 'watched' ? '已标记为已看' : '已标记为想看'), icon: 'none' });
         };
         db.collection('Marks').where({ movieId, openid }).get().then(res => {
@@ -441,7 +444,10 @@ Page({
                     this.setData({ isBatchEditing: false, selectedMovieIds: [] });
                     setTimeout(() => { this.loadUserMarks(); }, 500);
                 } else {
-                    wx.showToast({ title: '部分标记失败', icon: 'none' });
+                    wx.showToast({ title: '部分标记失败，正在刷新', icon: 'none' });
+                    // 云函数已把「写成功条数」如实报回来，这里不能只弹个提示就完事：本地状态没跟着改，
+                    // 用户看到的仍是旧的。重新拉一次标记，让显示收敛到云端真实状态。
+                    setTimeout(() => { this.loadUserMarks(); }, 300);
                 }
             },
             fail: err => {

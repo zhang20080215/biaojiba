@@ -4,8 +4,8 @@
 //
 // 两种版式：
 //   map  「城市热力图」—— 复用省份像素网格（utils/chinaProvinceGrid.js），每省块按
-//        「该省去过城市数 / 该省优秀旅游城市总数」上色深浅（choropleth 热力），标省名 + 去过/总。
-//   list 「城市清单」—— 按省份列出全部优秀旅游城市（简称），去过高亮加粗、未去灰显。
+//        「该省去过城市数 / 该省城市总数」上色深浅（choropleth 热力），标省名 + 去过/总。
+//   list 「城市清单」—— 按省份列出全部城市（简称），去过高亮加粗、未去灰显。
 const CanvasHelper = require('../../../utils/canvasHelper.js');
 const DataLoader = require('../../../utils/dataLoader.js');
 const rewardedSaveGate = require('../../../utils/rewardedSaveGate.js');

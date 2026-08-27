@@ -4,6 +4,7 @@ var adConfig = require('../../../utils/adConfig');
 var { trackMark, trackShare } = require('../../../utils/track.js');
 var adManager = require('../../../utils/adManager');
 var userStore = require('../../../utils/userStore.js');
+var markSync = require('../../../utils/markSync.js');
 
 Page({
     data: {
@@ -533,6 +534,8 @@ Page({
         const now = new Date().toISOString();
         const finalize = () => {
             this.applyMarkLocally(movieId, targetStatus);
+            // 跨榜单同步（详见 utils/markSync.js）：一处覆盖增/改/删三个分支
+            markSync.sync(movieId, targetStatus);
             this.showCustomToast(!targetStatus ? '已取消标记' : (targetStatus === 'watched' ? '✓ 已标记为已看' : '✓ 已标记为想看'));
         };
         db.collection('Marks').where({ movieId, openid }).get().then(res => {
@@ -626,7 +629,16 @@ Page({
             wx.showToast({ title: '请选择电影', icon: 'none' });
             return;
         }
-        this.batchUpdateMarks(this.data.selectedMovieIds, 'unwatched');
+        // 批量取消会经 movie_alias 扩散到其他榜单里的同一部影片——误点一次的代价从「毁掉当前榜单」
+        // 变成「毁掉全部榜单」，而且没有撤销。批量标记是加法不用拦，取消必须二次确认。
+        const ids = this.data.selectedMovieIds;
+        wx.showModal({
+            title: '确认取消标记',
+            content: '将取消 ' + ids.length + ' 部影片的标记，其他榜单中的同一部影片也会一并取消，且无法撤销。',
+            confirmText: '确认取消',
+            confirmColor: '#E64340',
+            success: (res) => { if (res.confirm) this.batchUpdateMarks(ids, 'unwatched'); }
+        });
     },
 
     batchUpdateMarks(movieIds, status) {
@@ -647,7 +659,10 @@ Page({
                     this.applyBatchMarksLocally(movieIds, status);
                     this.showCustomToast(status === 'unwatched' ? '已批量标记为未看' : '批量标记成功');
                 } else {
-                    wx.showToast({ title: '部分标记失败', icon: 'none' });
+                    wx.showToast({ title: '部分标记失败，正在刷新', icon: 'none' });
+                    // 云函数已把「写成功条数」如实报回来，这里不能只弹个提示就完事：本地状态没跟着改，
+                    // 用户看到的仍是旧的。重新拉一次标记，让显示收敛到云端真实状态。
+                    setTimeout(() => { this.loadUserMarks(); }, 300);
                 }
             },
             fail: err => {
