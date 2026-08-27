@@ -34,11 +34,27 @@ exports.main = async (event) => {
             ? { source: _.or([_.eq('douban'), _.exists(false)]) }
             : { source: effectiveSource };
 
-        const existingRes = await db.collection('BookMarks')
-            .where({ openid, bookId: _.in(bookIds), ...sourceFilter })
-            .get();
+        // ⚠ 分片查。**云函数端 .get() 不写 limit 时默认只返回 100 条**，而读书榜单是 200~250 本，
+        // 原先一条 _.in(bookIds) 全查会被静默截断到 100：漏掉的已有标记被当成「不存在」再 add 一条，
+        // 于是批量标记超过 100 本的用户，BookMarks 里就多出一批重复记录。同 batchUpdateMarks 的修法。
+        const CHUNK = 50;
+        const QUERY_LIMIT = 500;
         const existingMap = {};
-        existingRes.data.forEach((m) => { existingMap[m.bookId] = m; });
+        let duplicates = 0;
+        for (let i = 0; i < bookIds.length; i += CHUNK) {
+            const existingRes = await db.collection('BookMarks')
+                .where({ openid, bookId: _.in(bookIds.slice(i, i + CHUNK)), ...sourceFilter })
+                .limit(QUERY_LIMIT)
+                .get();
+            existingRes.data.forEach((m) => {
+                const prev = existingMap[m.bookId];
+                if (!prev) { existingMap[m.bookId] = m; return; }
+                duplicates++;
+                // ⚠ 必须和 dataLoader.processMarks 一致：它按 marked_at 取**最新**那条作准并
+                // 显示。这里若挑了旧的去更新，界面认的仍是那条新记录 → 用户会觉得标记没生效。
+                if (new Date(m.marked_at) > new Date(prev.marked_at)) existingMap[m.bookId] = m;
+            });
+        }
 
         const updateTasks = [];
         const addTasks = [];
@@ -77,6 +93,7 @@ exports.main = async (event) => {
         return {
             success: true,
             source: effectiveSource,
+            duplicates,
             updated: updateTasks.length,
             added: addTasks.length,
             deleted: deleteTasks.length

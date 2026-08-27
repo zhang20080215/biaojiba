@@ -60,7 +60,11 @@ exports.main = async (event) => {
       .where({ openid, movieId: _.in(siblings) })
       .get()
     const existingMap = {}
-    ;(existingRes.data || []).forEach((m) => { existingMap[m.movieId] = m })
+    ;(existingRes.data || []).forEach((m) => {
+      // 同 batchUpdateMarks：重复记录取 marked_at 最新的那条，与 dataLoader.processMarks 的口径一致
+      const prev = existingMap[m.movieId]
+      if (!prev || new Date(m.marked_at) > new Date(prev.marked_at)) existingMap[m.movieId] = m
+    })
 
     const now = new Date().toISOString()
     const clearing = isClearStatus(status)
@@ -71,7 +75,9 @@ exports.main = async (event) => {
       if (clearing) {
         // 取消：有记录才删。只同步「加」不同步「减」会比不同步更让人困惑。
         if (existing) {
-          tasks.push(() => db.collection('Marks').doc(existing._id).remove())
+          // 删全部匹配记录而非 doc(existing._id) 只删一条：历史重复记录若只删掉最新那条，
+          // 旧的会被下次加载读回来、标记复活。与各列表页取消标记的写法保持一致。
+          tasks.push(() => db.collection('Marks').where({ openid, movieId: sid }).remove())
         }
         return
       }

@@ -572,9 +572,12 @@ Page({
         if (!targetStatus) {
             this.clearSingleMarkLocally(bookId);
             this.showCustomToast('已取消标记');
-            const persist = existingRecordId
-                ? db.collection('BookMarks').doc(existingRecordId).remove()
-                : db.collection('BookMarks').where({ bookId, openid }).remove();
+            // 取消标记一律按 (id, openid) 删**全部**匹配记录，不走 doc(existingRecordId) 只删一条。
+            // 历史上 batchUpdateMarks/batchUpdateBookMarks 的 _.in 没分片、被 .get() 默认 100 条上限
+            // 静默截断，给批量标过 100+ 条的用户造出过重复记录。只删一条的话旧记录留在库里，下次
+            // 加载又被读回来 —— 表现就是「取消不掉、标记复活，状态还可能变回旧的」。删全部顺手把
+            // 这些历史重复清干净，且不需要单独跑清理脚本。
+            const persist = db.collection('BookMarks').where({ bookId, openid }).remove();
             persist.catch(err => {
                 console.error('取消标记失败:', err);
                 this.restoreSingleMarkLocally(bookId, snapshot);
@@ -711,7 +714,9 @@ Page({
                     wx.showToast({ title: '批量标记成功', icon: 'success' });
                     setTimeout(() => { this.loadUserMarks(); }, 300);
                 } else {
-                    wx.showToast({ title: '部分标记失败', icon: 'none' });
+                    wx.showToast({ title: '部分标记失败，正在刷新', icon: 'none' });
+                    // 本地状态没跟着改，用户看到的仍是旧的。重新拉一次标记，让显示收敛到云端真实状态。
+                    setTimeout(() => { this.loadUserMarks(); }, 300);
                 }
             },
             fail: err => {

@@ -430,6 +430,9 @@ exports.main = async (event = {}, context) => {
                         cover: cloudFileID,
                         coverUrl: doubanInfo.coverUrl,
                         originalCover: doubanInfo.coverUrl,
+                        // 把解析出来的 doubanId 存下来：跨榜单标记同步（buildMovieAlias）按 doubanId
+                        // 分组，而本表历史记录都没有这个字段，导致票房榜整张表进不了关联索引。
+                        doubanId: doubanInfo.doubanId,
                         updateTime: new Date()
                     };
                     // 如果豆瓣有评分，也存上

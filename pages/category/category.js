@@ -120,7 +120,7 @@ Page({
       {
         id: 'travel_cities',
         title: '城市旅游',
-        description: '打卡中国优秀旅游城市，收藏你走过的城',
+        description: '打卡全国旅游城市，收藏你走过的城',
         image: '',
         tintClass: 'city',
         userCount: 0,
