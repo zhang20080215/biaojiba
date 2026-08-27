@@ -44,7 +44,9 @@
     "pages/daily/sport/share",
     "pages/movie-search/input/input",
     "pages/movie-search/list/list",
-    "pages/movie-search/detail/detail"
+    "pages/movie-search/detail/detail",
+    "pages/guess/grid/index",
+    "pages/guess/clue/index"
   ],
   "window": {
     "navigationBarTitleText": "标记吧",

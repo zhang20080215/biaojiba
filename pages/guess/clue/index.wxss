@@ -1,0 +1,78 @@
+/* 每日猜电影 · 线索猜片。配色与交叉填格页保持一致 */
+
+page { background: #FFFCF5; }
+.page { padding: 24rpx 24rpx 60rpx; box-sizing: border-box; }
+
+.hd { padding: 12rpx 8rpx 20rpx; }
+.hd-title { font-size: 44rpx; font-weight: 700; color: #2D2D2B; letter-spacing: 2rpx; }
+.hd-sub { margin-top: 8rpx; font-size: 24rpx; color: #A7A498; }
+
+.state { padding: 60rpx 0; text-align: center; font-size: 28rpx; color: #A7A498; }
+.state.err { color: #C0603F; }
+.state.small { padding: 24rpx 0; font-size: 24rpx; }
+
+.meter {
+  display: flex; background: #fff; border-radius: 20rpx; padding: 20rpx 0; margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+}
+.meter-item { flex: 1; display: flex; flex-direction: column; align-items: center; }
+.meter-num { font-size: 36rpx; font-weight: 700; color: #6F8244; }
+.meter-lab { margin-top: 4rpx; font-size: 22rpx; color: #A7A498; }
+
+.clues { background: #fff; border-radius: 20rpx; padding: 12rpx 24rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04); }
+.clue { display: flex; align-items: flex-start; padding: 22rpx 0; border-bottom: 2rpx solid #F4F2EA; }
+.clue:last-child { border-bottom: none; }
+.clue.locked { opacity: 0.55; }
+.clue-no {
+  width: 44rpx; height: 44rpx; flex-shrink: 0; margin-right: 20rpx;
+  border-radius: 50%; background: #EEF2E2; color: #6F8244;
+  font-size: 24rpx; text-align: center; line-height: 44rpx; font-weight: 700;
+}
+.clue-body { flex: 1; min-width: 0; }
+.clue-label { font-size: 22rpx; color: #A7A498; }
+.clue-text { margin-top: 6rpx; font-size: 30rpx; color: #2D2D2B; line-height: 1.4; }
+.clue-text.muted { color: #C9C6BA; font-size: 26rpx; margin-top: 0; }
+
+.guess-input {
+  margin-top: 28rpx; background: #fff; border: 2rpx solid #E3E0D6; border-radius: 16rpx;
+  padding: 22rpx 24rpx; font-size: 28rpx; color: #2D2D2B;
+}
+.cands { margin-top: 12rpx; background: #fff; border-radius: 16rpx; overflow: hidden; }
+.cand { display: flex; align-items: center; padding: 16rpx 20rpx; border-bottom: 2rpx solid #F4F2EA; }
+.cand:last-child { border-bottom: none; }
+.cand-cover { width: 60rpx; height: 84rpx; border-radius: 8rpx; background: #EFEDE6; flex-shrink: 0; }
+.cand-mid { margin-left: 18rpx; min-width: 0; }
+.cand-title { font-size: 28rpx; color: #2D2D2B; }
+.cand-year { margin-top: 4rpx; font-size: 22rpx; color: #A7A498; }
+
+.wrongs { margin-top: 28rpx; }
+.wrongs-hd { font-size: 22rpx; color: #A7A498; margin-bottom: 12rpx; padding-left: 8rpx; }
+.wrong {
+  display: inline-block; margin: 0 12rpx 12rpx 0; padding: 10rpx 20rpx;
+  background: #F1EFE7; border-radius: 30rpx; font-size: 24rpx; color: #8A877C;
+  text-decoration: line-through;
+}
+
+.over {
+  margin-top: 28rpx; background: #fff; border-radius: 20rpx; padding: 36rpx;
+  text-align: center; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+}
+.over-title { font-size: 34rpx; font-weight: 700; color: #2D2D2B; }
+.over-cover { width: 200rpx; height: 280rpx; border-radius: 12rpx; margin: 24rpx auto 0; display: block; background: #EFEDE6; }
+.over-name { margin-top: 16rpx; font-size: 30rpx; color: #2D2D2B; }
+.over-sub { margin-top: 10rpx; font-size: 26rpx; color: #A7A498; }
+.over-mark {
+  display: inline-block; margin-top: 24rpx; padding: 14rpx 36rpx;
+  border: 2rpx solid #6F8244; color: #6F8244; border-radius: 40rpx; font-size: 26rpx;
+}
+.over-share {
+  margin-top: 20rpx; background: #6F8244; color: #fff;
+  font-size: 28rpx; border-radius: 40rpx; line-height: 2.6;
+}
+.over-share::after { border: none; }
+
+.switch {
+  margin-top: 28rpx; text-align: center; font-size: 26rpx; color: #6F8244;
+  padding: 20rpx; background: #fff; border-radius: 20rpx;
+}
+.tip { margin-top: 24rpx; padding: 0 12rpx; font-size: 22rpx; line-height: 1.6; color: #B5B2A6; }

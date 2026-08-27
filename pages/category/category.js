@@ -81,6 +81,20 @@ Page({
     },
     themes: [
       {
+        // 玩法卡，不是榜单卡：没有 collection 也不参与 _countThemeUsers / DYNAMIC_COVER_THEMES，
+        // 走 category.wxml 里 id === 'guess_movie' 那条占位卡分支渲染
+        id: 'guess_movie',
+        title: '每日猜电影',
+        description: '9 个格子 9 次机会，用你的片单储备填满它',
+        image: '',
+        tintClass: 'guess',
+        userCount: 0,
+        tag: '玩法',
+        category: 'movie',
+        isNew: true,
+        url: '/pages/guess/grid/index'
+      },
+      {
         id: 'scenic_5a',
         title: '全国5A旅游景区',
         description: '打卡你走过的山河，攒成专属旅行足迹',

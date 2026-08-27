@@ -195,6 +195,10 @@
           </view>
           <text class="placeholder-text">每日喝水</text>
         </view>
+        <view wx:elif="{{item.id === 'guess_movie'}}" class="cover-placeholder guess">
+          <text class="placeholder-emoji">🎬</text>
+          <text class="placeholder-text">猜电影</text>
+        </view>
         <view wx:elif="{{item.id === 'rt_horror_movies'}}" class="cover-placeholder rt-horror">
           <text class="placeholder-emoji">🔪</text>
           <text class="placeholder-text">恐怖电影</text>
@@ -349,6 +353,10 @@
             </view>
           </view>
           <text class="placeholder-text">每日喝水</text>
+        </view>
+        <view wx:elif="{{item.id === 'guess_movie'}}" class="cover-placeholder guess">
+          <text class="placeholder-emoji">🎬</text>
+          <text class="placeholder-text">猜电影</text>
         </view>
         <view wx:elif="{{item.id === 'rt_horror_movies'}}" class="cover-placeholder rt-horror">
           <text class="placeholder-emoji">🔪</text>

@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "线索猜片",
+  "enablePullDownRefresh": true,
+  "backgroundColor": "#FFFCF5",
+  "backgroundTextStyle": "dark",
+  "usingComponents": {}
+}
