@@ -23,7 +23,7 @@
 // 调用：
 //   { dryRun: true }             —— 只统计（去重后多少部、已建多少、多少条缺 doubanId），不写库。**第一次务必先跑**
 //   {}                           —— 增量构建：只处理 movie_facts 里还没有的
-//   { autoContinue: true }       —— 自动接力跑到完（单次 50 秒自保，约 4000 部要跑十几轮）
+//   { autoContinue: true }       —— 自动接力跑到完（单次 50 秒自保，2656 部约跑九到十轮）
 //   { startFrom: 600 }           —— 从第 N 条续跑（超时自保后手动接力用）
 //   { forceRefresh: true }       —— 连已有的一起重拉（豆瓣评分会漂，隔季度刷一次）
 //   { verify: true }             —— 只读回查，看 movie_facts 现状
@@ -71,7 +71,7 @@ const THEME_OF_COLLECTION = {
 const READ_LIMIT = 1000;       // 云函数侧单次最多 1000 条
 const TIME_BUDGET_MS = 50000;  // 自保：超时前收工并告诉调用方从哪续
 const CONCURRENCY = 3;         // 豆瓣详情接口的并发。顺序跑一轮只能推进 ~30 条，
-                               // 4000 部要一百多轮；并发拉到 3 大约 8~10 倍，又不至于触发限流。
+                               // 2656 部要跑近百轮；并发拉到 3 大约 8~10 倍，又不至于触发限流。
 
 /** movie_facts 不存在时所有写入都会失败，先建一次（已存在会抛，吞掉即可） */
 async function ensureCollection() {
@@ -171,7 +171,13 @@ async function collectSkeletons() {
                 noDoubanId.push(collection + '/' + row._id + (row.title ? ' ' + row.title : ''));
                 continue;
             }
-            const themeId = row.theme || THEME_OF_COLLECTION[collection] || collection;
+            // 映射表优先于 row.theme：oscar_movies / oscar_anime_movies / boxoffice_movies
+            // 这三个抓取函数都把 **集合名** 写进了文档的 theme 字段（如 theme:'oscar_anime_movies'），
+            // 原先的 row.theme 优先会让映射表整个失效，memberOf 里存进集合名。
+            // 后果是静默的：getGuessPuzzle 的 THEME_LABEL 查不到就跳过，
+            // 「入选奥斯卡最佳影片/最佳动画长片」两个谓词直接不会出现在题面上。
+            // 表里只有这 4 个老集合的键，generic_theme_movies 不在其中，仍然走 row.theme。
+            const themeId = THEME_OF_COLLECTION[collection] || row.theme || collection;
             let ent = byGid.get(gid);
             if (!ent) {
                 ent = { doubanId: gid, memberOf: [], movieIds: [], cover: '', title: row.title || '', year: row.year || null };
