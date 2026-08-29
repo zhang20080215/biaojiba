@@ -1,0 +1,87 @@
+<view class="page">
+  <view class="hd">
+    <view class="hd-title">每日填字</view>
+    <view class="hd-sub">{{date}} · 5 部电影，横竖交叉</view>
+  </view>
+
+  <view wx:if="{{loading}}" class="state">题目加载中…</view>
+  <view wx:elif="{{errMsg}}" class="state err">{{errMsg}}</view>
+
+  <block wx:else>
+    <view class="meter">
+      <view class="meter-item">
+        <view class="meter-num">{{solvedCount}}/{{entries.length}}</view>
+        <view class="meter-lab">已答出</view>
+      </view>
+      <view class="meter-item">
+        <view class="meter-num">{{guessesLeft}}</view>
+        <view class="meter-lab">剩余机会</view>
+      </view>
+      <view class="meter-item">
+        <view class="meter-num">{{score}}</view>
+        <view class="meter-lab">得分</view>
+      </view>
+    </view>
+
+    <!-- 网格 -->
+    <view class="board">
+      <view class="board-row" wx:for="{{board}}" wx:for-item="row" wx:for-index="r" wx:key="r">
+        <view
+          wx:for="{{row}}" wx:for-item="cell" wx:for-index="c" wx:key="c"
+          class="bcell {{cell.on ? 'on' : 'off'}} {{cell.locked ? 'locked' : ''}} {{cell.active ? 'active' : ''}} {{cell.focus ? 'focus' : ''}}"
+          data-r="{{r}}" data-c="{{c}}" bindtap="onTapCell">
+          <text wx:if="{{cell.on && cell.ch}}">{{cell.ch}}</text>
+          <text wx:if="{{cell.no}}" class="bcell-no">{{cell.no}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 线索 -->
+    <view class="clues">
+      <view
+        wx:for="{{entries}}" wx:key="no"
+        class="clue {{item.no === currentNo ? 'cur' : ''}} {{item.solved ? 'solved' : ''}}"
+        data-no="{{item.no}}" bindtap="onTapClue">
+        <view class="clue-head">
+          <text class="clue-no">{{item.no}}</text>
+          <text class="clue-meta">{{item.dir === 'H' ? '横' : '竖'}} · {{item.len}} 字</text>
+          <text wx:if="{{item.solved}}" class="clue-answer">{{item.word}}</text>
+        </view>
+        <view class="clue-text">{{item.clue}}</view>
+      </view>
+    </view>
+
+    <view wx:if="{{finished}}" class="over">
+      <view class="over-title">{{solvedCount === entries.length ? '全部答出！' : '今天到此为止'}}</view>
+      <view class="over-sub">答出 {{solvedCount}}/{{entries.length}} 条 · 得分 {{score}}</view>
+    </view>
+
+    <view class="tip">答案都在标记吧片库里 · 点线索选一条，再从下方字池点字填格</view>
+  </block>
+
+  <!-- 答对后顺手标记 -->
+  <view wx:if="{{lastCorrect}}" class="mark-bar">
+    <text class="mark-text">答对了：{{lastCorrect.word}}</text>
+    <view class="mark-btns">
+      <view class="mark-btn ghost" bindtap="dismissCorrect">不用</view>
+      <view class="mark-btn" bindtap="markWatched">标记看过</view>
+    </view>
+  </view>
+
+  <!-- 底部字池 -->
+  <view wx:if="{{!loading && !errMsg && !finished}}" class="dock">
+    <view class="dock-pool">
+      <view
+        wx:for="{{chips}}" wx:key="ch"
+        class="chip {{item.used ? 'used' : ''}}"
+        data-ch="{{item.ch}}" bindtap="onTapChar">{{item.ch}}</view>
+    </view>
+    <view class="dock-ops">
+      <view class="op ghost" bindtap="onBackspace">删除</view>
+      <view class="op ghost" bindtap="onHint">提示</view>
+      <view class="op {{canSubmit ? '' : 'disabled'}}" bindtap="onSubmit">
+        {{submitting ? '校验中…' : '提交这条'}}
+      </view>
+    </view>
+  </view>
+</view>

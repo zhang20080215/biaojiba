@@ -309,10 +309,16 @@ exports.main = async (event) => {
             rec.finished = rec.filled.length >= entries.length || rec.guessesUsed >= maxGuesses;
             await saveRecord(rec);
             await bumpStats(mode, date, 'entry' + e.no, e.id);
+            // 老的 puzzle 文档没存 movieIds（加这个字段之前备的题），回查兜一下
+            let movieIds = e.movieIds || [];
+            if (!movieIds.length) {
+                const fct = oneDoc(await db.collection(FACTS_COLLECTION).doc(String(e.id)).get().catch(function () { return null; }));
+                movieIds = (fct && fct.movieIds) || [];
+            }
             return {
                 success: true, correct: true,
                 entry: viewOf(e),
-                movieId: e.id,
+                movieId: e.id, movieIds: movieIds,
                 allSolved: rec.filled.length >= entries.length,
                 record: rec, maxGuesses: maxGuesses
             };

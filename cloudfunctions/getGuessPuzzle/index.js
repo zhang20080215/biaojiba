@@ -132,7 +132,8 @@ async function readPool() {
             .field({
                 _id: true, title: true, year: true, subtype: true, genres: true, actors: true,
                 directors: true, countries: true, durationMin: true, rating: true,
-                ratingCount: true, cover: true, memberOf: true, tags: true, intro: true
+                ratingCount: true, cover: true, memberOf: true, tags: true, intro: true,
+                movieIds: true
             })
             .skip(skip).limit(READ_LIMIT).get();
         const rows = (res && res.data) || [];
@@ -624,7 +625,11 @@ function generateCross(pool, rnd, opts) {
             const f = byTitle.get(p.word);
             return {
                 no: i + 1, id: p.id, word: p.word, r: p.r, c: p.c, dir: p.dir, len: p.word.length,
-                clue: crossClue(f), year: f.year || null, cover: f.cover || ''
+                clue: crossClue(f), year: f.year || null, cover: f.cover || '',
+                // 答对后「顺手标记」要用：这部片在各榜单里的文档 id。
+                // 存进 puzzle 而不是作答时现查，和 grid 把 answerIds 存进去是同一个理由 ——
+                // 校验只读这一份文档就够，不必再回 movie_facts。
+                movieIds: f.movieIds || []
             };
         });
         const solutionChars = new Set();

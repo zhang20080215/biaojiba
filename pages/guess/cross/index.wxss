@@ -1,0 +1,124 @@
+/* 每日填字 · 纵横交叉
+   配色沿用 pages/guess/grid 那套中性米白 + 墨绿点缀，两个玩法放在一起不违和 */
+
+page { background: #FFFCF5; }
+
+.page { padding: 24rpx 24rpx 260rpx; box-sizing: border-box; }
+
+/* —— 头部 */
+.hd { padding: 12rpx 8rpx 20rpx; }
+.hd-title { font-size: 44rpx; font-weight: 700; color: #2D2D2B; letter-spacing: 2rpx; }
+.hd-sub { margin-top: 8rpx; font-size: 24rpx; color: #A7A498; }
+
+.state { padding: 80rpx 0; text-align: center; font-size: 28rpx; color: #A7A498; }
+.state.err { color: #C0603F; }
+
+/* —— 计数条 */
+.meter {
+  display: flex; background: #fff; border-radius: 20rpx;
+  padding: 20rpx 0; margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+}
+.meter-item { flex: 1; display: flex; flex-direction: column; align-items: center; }
+.meter-num { font-size: 36rpx; font-weight: 700; color: #6F8244; }
+.meter-lab { margin-top: 4rpx; font-size: 22rpx; color: #A7A498; }
+
+/* —— 7×7 网格
+   宽度算法：页面 750 − 左右 padding 48 = 702；面板内边距 12×2 = 24 → 678。
+   7 格每格 margin 3rpx（左右合 6）→ 格宽 (678 − 42) / 7 ≈ 90。 */
+.board {
+  background: #fff; border-radius: 20rpx; padding: 12rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+}
+.board-row { display: flex; justify-content: center; }
+.bcell {
+  width: 90rpx; height: 90rpx; margin: 3rpx; box-sizing: border-box;
+  display: flex; align-items: center; justify-content: center;
+  position: relative; border-radius: 8rpx;
+  font-size: 40rpx; color: #2D2D2B;
+}
+/* 不参与填写的格子：留白，不画框，网格才有填字的样子 */
+.bcell.off { background: transparent; }
+.bcell.on { background: #FEFDFA; border: 2rpx solid #E3E0D6; }
+/* 当前选中那一条所覆盖的格子 */
+.bcell.active { border-color: #9AAB65; background: #FBFCF6; }
+/* 光标所在格 */
+.bcell.focus { border-color: #6F8244; border-width: 4rpx; background: #F3F6EA; }
+/* 已答出、锁定 */
+.bcell.locked { background: #fff; border-color: #9AAB65; color: #6F8244; font-weight: 700; }
+/* 条目序号，标在该条起始格左上角 */
+.bcell-no {
+  position: absolute; top: 2rpx; left: 6rpx;
+  font-size: 18rpx; line-height: 1; color: #C9C6BA;
+}
+
+/* —— 线索 */
+.clues { margin-top: 24rpx; }
+.clue {
+  background: #fff; border-radius: 16rpx; padding: 20rpx 24rpx; margin-bottom: 14rpx;
+  border-left: 6rpx solid transparent;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+}
+.clue.cur { border-left-color: #6F8244; }
+.clue.solved { opacity: 0.6; }
+.clue-head { display: flex; align-items: center; }
+.clue-no {
+  width: 36rpx; height: 36rpx; border-radius: 50%;
+  background: #EFEDE4; color: #6B6A62; font-size: 22rpx;
+  display: flex; align-items: center; justify-content: center; margin-right: 12rpx;
+}
+.clue.cur .clue-no { background: #6F8244; color: #fff; }
+.clue-meta { font-size: 22rpx; color: #A7A498; }
+.clue-answer { margin-left: auto; font-size: 26rpx; font-weight: 700; color: #6F8244; }
+.clue-text { margin-top: 10rpx; font-size: 26rpx; line-height: 1.6; color: #4A4942; }
+
+/* —— 结束面板 */
+.over {
+  margin-top: 28rpx; background: #fff; border-radius: 20rpx; padding: 32rpx;
+  text-align: center; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+}
+.over-title { font-size: 34rpx; font-weight: 700; color: #2D2D2B; }
+.over-sub { margin-top: 10rpx; font-size: 26rpx; color: #A7A498; }
+.over-list { margin-top: 20rpx; display: flex; flex-direction: column; }
+.over-item { font-size: 26rpx; color: #6B6A62; line-height: 1.9; }
+
+.tip { margin-top: 24rpx; padding: 0 12rpx; font-size: 22rpx; line-height: 1.6; color: #B5B2A6; }
+
+/* —— 答对后顺手标记 */
+.mark-bar {
+  position: fixed; left: 24rpx; right: 24rpx; bottom: 280rpx; z-index: 20;
+  background: rgba(45,45,43,0.94); border-radius: 16rpx;
+  padding: 20rpx 24rpx; display: flex; align-items: center;
+}
+.mark-text { flex: 1; font-size: 26rpx; color: #fff; }
+.mark-btns { display: flex; }
+.mark-btn {
+  margin-left: 12rpx; padding: 10rpx 24rpx; border-radius: 999rpx;
+  font-size: 24rpx; background: #9AAB65; color: #fff;
+}
+.mark-btn.ghost { background: transparent; color: #C9C6BA; }
+
+/* —— 底部字池（固定，网格不被挡住靠 .page 的 padding-bottom） */
+.dock {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+  background: #fff; border-top: 2rpx solid #EFEDE4;
+  padding: 20rpx 24rpx calc(20rpx + env(safe-area-inset-bottom));
+  box-shadow: 0 -4rpx 20rpx rgba(0,0,0,0.05);
+}
+.dock-pool { display: flex; flex-wrap: wrap; }
+.chip {
+  width: 76rpx; height: 76rpx; margin: 6rpx;
+  display: flex; align-items: center; justify-content: center;
+  background: #F6F5EE; border-radius: 12rpx;
+  font-size: 34rpx; color: #2D2D2B;
+}
+/* 已经填在盘面上的字：淡一档，但仍可点（同一个字可能要填两处） */
+.chip.used { color: #C9C6BA; background: #FAFAF6; }
+.dock-ops { display: flex; margin-top: 16rpx; }
+.op {
+  flex: 1; margin: 0 6rpx; height: 76rpx; border-radius: 14rpx;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28rpx; background: #6F8244; color: #fff;
+}
+.op.ghost { background: #F6F5EE; color: #6B6A62; flex: 0 0 160rpx; }
+.op.disabled { background: #DCDACE; color: #fff; }

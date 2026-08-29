@@ -95,6 +95,20 @@ Page({
         url: '/pages/guess/grid/index'
       },
       {
+        // 同为玩法卡：没有 collection，不参与 _countThemeUsers / DYNAMIC_COVER_THEMES，
+        // 渲染分支见 category.wxml 里 id === 'guess_cross' 的两处占位（封面模式 + 列表模式）
+        id: 'guess_cross',
+        title: '每日填字',
+        description: '五部电影横竖交叉，看剧情线索把片名填进格子',
+        image: '',
+        tintClass: 'cross',
+        userCount: 0,
+        tag: '玩法',
+        category: 'movie',
+        isNew: true,
+        url: '/pages/guess/cross/index'
+      },
+      {
         id: 'scenic_5a',
         title: '全国5A旅游景区',
         description: '打卡你走过的山河，攒成专属旅行足迹',
