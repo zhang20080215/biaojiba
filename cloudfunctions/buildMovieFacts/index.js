@@ -27,6 +27,7 @@
 //   { startFrom: 600 }           —— 从第 N 条续跑（超时自保后手动接力用）
 //   { forceRefresh: true }       —— 连已有的一起重拉（豆瓣评分会漂，隔季度刷一次）
 //   { verify: true }             —— 只读回查，看 movie_facts 现状
+//   { poolStats: true }          —— 出题池体检：剔掉剧集后还剩多少部、各阈值下人物轴有多少人可用
 //
 // 注：控制台「云端测试」面板常返回 [UPSTREAM] Upstream error (ret=-3)，那是面板网关抖动，
 // 函数照常跑完，结果去「云函数 → 日志」按时间捞（每个出口都打了 RESULT 日志）。
@@ -260,6 +261,60 @@ exports.main = async (event) => {
     const startedAt = Date.now();
     const done_ = (r) => { console.log('[buildMovieFacts] RESULT ' + JSON.stringify(r)); return r; };
     const ev = event || {};
+
+    // —— 出题池体检：剧集占比 + 人物轴可行性。
+    // getGuessPuzzle 用 subtype!=='tv' 过滤，所以 movie_facts 的 total 不等于出题池；
+    // 而 MIN_PERSON_FILMS 该定多少，取决于池子里够得着门槛的演员/导演有几个——
+    // 这里按 getGuessPuzzle 的同一口径（演员、导演分开计数）把几档阈值都算出来，
+    // 免得凭池子大小拍脑袋。
+    if (ev.poolStats === true) {
+        try {
+            const rows = [];
+            let skip = 0;
+            for (;;) {
+                const r = await db.collection(FACTS_COLLECTION)
+                    .field({ subtype: true, actors: true, directors: true })
+                    .skip(skip).limit(READ_LIMIT).get();
+                const batch = (r && r.data) || [];
+                for (let i = 0; i < batch.length; i++) rows.push(batch[i]);
+                if (batch.length < READ_LIMIT) break;
+                skip += batch.length;
+            }
+            const moviePool = rows.filter(f => f.subtype !== 'tv');
+            const tally = (getList) => {
+                const m = new Map();
+                moviePool.forEach(f => (getList(f) || []).forEach(v => {
+                    if (v) m.set(v, (m.get(v) || 0) + 1);
+                }));
+                return m;
+            };
+            const actorFilms = tally(f => f.actors);
+            const directorFilms = tally(f => f.directors);
+            const atLeast = (m, k) => Array.from(m.values()).filter(v => v >= k).length;
+            const thresholds = {};
+            [4, 5, 6, 8, 10].forEach(k => {
+                thresholds['>=' + k] = {
+                    actors: atLeast(actorFilms, k),
+                    directors: atLeast(directorFilms, k),
+                    personAxisTotal: atLeast(actorFilms, k) + atLeast(directorFilms, k)
+                };
+            });
+            const top = (m) => Array.from(m.entries()).sort((a, b) => b[1] - a[1])
+                .slice(0, 8).map(e => e[0] + '(' + e[1] + ')');
+            return done_({
+                success: true, mode: 'poolStats',
+                total: rows.length,
+                tvCount: rows.length - moviePool.length,
+                moviePool: moviePool.length,          // ← getGuessPuzzle 真正能用的池子
+                currentMinPersonFilms: 8,             // 与 getGuessPuzzle 的 MIN_PERSON_FILMS 对齐，改那边记得改这里
+                thresholds,
+                topActors: top(actorFilms),
+                topDirectors: top(directorFilms)
+            });
+        } catch (e) {
+            return done_({ success: false, mode: 'poolStats', error: (e && e.errMsg) || String(e) });
+        }
+    }
 
     // —— 只读回查：跑完之后拿它确认结果，比盯控制台可靠
     if (ev.verify === true) {
