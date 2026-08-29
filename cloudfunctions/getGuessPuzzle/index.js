@@ -232,15 +232,22 @@ function buildPredicates(pool, opts) {
  * 实测几十次内基本能中，代码简单得多。
  */
 function generateGrid(pool, rnd, opts) {
-    const { personAxis, attrAxis } = buildPredicates(pool, opts);
+    // opts.axes = 调用方预先建好的谓词。换种重试和压测都要反复调本函数，
+    // 而重建一次谓词要把整个片库按演员/导演/类型/国家/榜单/年代…全量扫一遍，
+    // 且 predicate 上 idSet() 的记忆化也会跟着丢 —— 不复用的话开销是几百倍。
+    const { personAxis, attrAxis } = (opts && opts.axes) || buildPredicates(pool, opts);
     if (personAxis.length < 3 || attrAxis.length < 3) {
         return { error: '谓词不足：人物 ' + personAxis.length + ' 个 / 属性 ' + attrAxis.length + ' 个，片库可能还没建好' };
     }
 
     const idSet = p => (p._idSet || (p._idSet = new Set(p.ids)));
 
-    // 两级放宽：先要求每格 3 解，凑不出来再退到 2。
-    for (const minCell of CELL_TARGETS) {
+    // 两级放宽：先要求每格 3 解，凑不出来再退到 2。压测可用 opts.cellTargets 覆盖。
+    // bestMin 记录所有尝试里「最小格」能达到的最好值 —— 失败时靠它判断该退到几，
+    // 否则只知道「凑不出来」，不知道差 1 个解还是差 3 个。
+    const targets = (opts && opts.cellTargets) || CELL_TARGETS;
+    let bestMin = -1;
+    for (const minCell of targets) {
         for (let tries = 0; tries < MAX_GENERATE_TRIES; tries++) {
             const rows = shuffled(personAxis, rnd).slice(0, 3);
             const cols = shuffled(attrAxis, rnd).slice(0, 3);
@@ -248,17 +255,20 @@ function generateGrid(pool, rnd, opts) {
             // 以为要选两个年代，而且这两列的交集约束其实高度相关）
             if (new Set(cols.map(c => c.type)).size < 3) continue;
 
+            // 9 个交集全算完再判定（不提前退出）：交集本身很廉价，
+            // 而算满才能拿到 minSeen，这是失败时唯一有诊断价值的数。
             const cells = [];
-            let ok = true;
-            for (let r = 0; r < 3 && ok; r++) {
-                for (let c = 0; c < 3 && ok; c++) {
+            let minSeen = Infinity;
+            for (let r = 0; r < 3; r++) {
+                for (let c = 0; c < 3; c++) {
                     const cs = idSet(cols[c]);
                     const answerIds = rows[r].ids.filter(id => cs.has(id));
-                    if (answerIds.length < minCell) { ok = false; break; }
+                    if (answerIds.length < minSeen) minSeen = answerIds.length;
                     cells.push({ r, c, answerIds, count: answerIds.length });
                 }
             }
-            if (!ok) continue;
+            if (minSeen > bestMin) bestMin = minSeen;
+            if (minSeen < minCell) continue;
 
             const strip = p => ({ key: p.key, type: p.type, label: p.label, value: p.value, poolCount: p.ids.length });
             return {
@@ -269,7 +279,8 @@ function generateGrid(pool, rnd, opts) {
         }
     }
     return {
-        error: '每格 ' + CELL_TARGETS.join('/') + ' 解各试了 ' + MAX_GENERATE_TRIES +
+        bestMinCell: bestMin,
+        error: '每格 ' + targets.join('/') + ' 解各试了 ' + MAX_GENERATE_TRIES +
             ' 次都没凑出 3×3。片库太小或谓词门槛太高，先确认 buildMovieFacts 跑完了'
     };
 }
@@ -391,21 +402,24 @@ exports.main = async (event) => {
             const opts = {
                 minPersonFilms: Number(ev.minPersonFilms) || MIN_PERSON_FILMS,
                 personTop: Number(ev.personTop) || PERSON_CANDIDATE_TOP,
-                maxAttrRatio: Number(ev.maxAttrRatio) || MAX_ATTR_RATIO
+                maxAttrRatio: Number(ev.maxAttrRatio) || MAX_ATTR_RATIO,
+                cellTargets: Array.isArray(ev.cellTargets) && ev.cellTargets.length ? ev.cellTargets : CELL_TARGETS
             };
             const axes = buildPredicates(mp, opts);
+            const gopts = Object.assign({}, opts, { axes });
             let failed = 0;
+            const bestFails = [];
             const hardest = [];
             const cellTarget = {};
             const persons = new Map();
             const attrs = new Map();
             for (let i = 0; i < days; i++) {
                 const d = 'stress-' + i;
-                let g = generateGrid(mp, seededRandom('grid|' + d), opts);
+                let g = generateGrid(mp, seededRandom('grid|' + d), gopts);
                 for (let salt = 1; g.error && salt <= 5; salt++) {
-                    g = generateGrid(mp, seededRandom('grid|' + d + '|retry' + salt), opts);
+                    g = generateGrid(mp, seededRandom('grid|' + d + '|retry' + salt), gopts);
                 }
-                if (g.error) { failed++; continue; }
+                if (g.error) { failed++; bestFails.push(g.bestMinCell); continue; }
                 hardest.push(g.hardestCell);
                 const k = '每格>=' + g.minCellAnswers;
                 cellTarget[k] = (cellTarget[k] || 0) + 1;
@@ -420,6 +434,12 @@ exports.main = async (event) => {
                 opts, poolSize: mp.length, days,
                 predicates: { person: axes.personAxis.length, attr: axes.attrAxis.length },
                 failed,
+                // 失败日里「最小格」最好能到几：0 = 总有空格，1 = 差一点点（把 cellTargets 退到 1 就能出题）
+                failedBestMinCell: (function () {
+                    const m = {};
+                    bestFails.forEach(v => { m['最好=' + v] = (m['最好=' + v] || 0) + 1; });
+                    return m;
+                })(),
                 cellTarget,
                 hardestCellMedian: hardest.length ? hardest[Math.floor(hardest.length / 2)] : 0,
                 hardestCellMin: hardest.length ? hardest[0] : 0,
@@ -459,9 +479,11 @@ exports.main = async (event) => {
         if (mode === 'grid') {
             // 换种重试：极少数种子的洗牌流就是凑不出可解的 3×3（合成片库实测 120 天里碰上 1 天）。
             // 换个后缀重新起一条随机流即可，仍然是确定性的——同一天任何人算出来的还是同一道题。
-            let g = generateGrid(moviePool, rnd);
+            // 谓词只建一次，5 次换种重试复用同一份
+            const gopts = { axes: buildPredicates(moviePool) };
+            let g = generateGrid(moviePool, rnd, gopts);
             for (let salt = 1; g.error && salt <= 5; salt++) {
-                g = generateGrid(moviePool, seededRandom(mode + '|' + date + seedSalt + '|retry' + salt));
+                g = generateGrid(moviePool, seededRandom(mode + '|' + date + seedSalt + '|retry' + salt), gopts);
             }
             if (g.error) return { success: false, error: g.error };
             doc = {
