@@ -1,26 +1,45 @@
 <view class="page">
+  <!-- 左右箭头翻看别的日期：题目是按日期备好的，切日期等于换一关 -->
   <view class="hd">
-    <view class="hd-title">每日填字</view>
-    <view class="hd-sub">{{date}} · 5 部电影，横竖交叉</view>
+    <view class="nav" bindtap="prevDay">‹</view>
+    <view class="hd-mid">
+      <view class="hd-title">每日填字</view>
+      <view class="hd-sub">{{date}}{{dayOffset === 0 ? ' · 今天' : (dayOffset > 0 ? ' · 第 +' + dayOffset + ' 天' : ' · ' + dayOffset + ' 天')}}</view>
+    </view>
+    <view class="nav" bindtap="nextDay">›</view>
   </view>
 
   <view wx:if="{{loading}}" class="state">题目加载中…</view>
   <view wx:elif="{{errMsg}}" class="state err">{{errMsg}}</view>
 
   <block wx:else>
+    <!-- 计数条：压成一行，纵向空间全留给网格和字池 -->
     <view class="meter">
-      <view class="meter-item">
-        <view class="meter-num">{{solvedCount}}/{{entries.length}}</view>
-        <view class="meter-lab">已答出</view>
+      <text class="m-seg"><text class="m-num">{{solvedCount}}/{{entries.length}}</text> 已答出</text>
+      <text class="m-dot">·</text>
+      <text class="m-seg"><text class="m-num">{{guessesLeft}}</text> 次机会</text>
+      <text class="m-dot">·</text>
+      <text class="m-seg"><text class="m-num">{{score}}</text> 分</text>
+    </view>
+
+    <!-- 条目切换 -->
+    <view class="tabs">
+      <view
+        wx:for="{{entries}}" wx:key="no"
+        class="tab {{item.no === currentNo ? 'cur' : ''}} {{item.solved ? 'solved' : ''}}"
+        data-no="{{item.no}}" bindtap="onTapClue">
+        <text class="tab-no">{{item.no}}</text>
+        <text class="tab-dir">{{item.dir === 'H' ? '横' : '竖'}}{{item.len}}</text>
       </view>
-      <view class="meter-item">
-        <view class="meter-num">{{guessesLeft}}</view>
-        <view class="meter-lab">剩余机会</view>
+    </view>
+
+    <!-- 线索放在网格**上面**：底部字池是浮层，放下面容易被盖住 -->
+    <view wx:if="{{current}}" class="clue-cur">
+      <view class="clue-head">
+        <text class="clue-meta">第 {{current.no}} 条 · {{current.dir === 'H' ? '横' : '竖'}}向 {{current.len}} 字</text>
+        <text wx:if="{{current.solved}}" class="clue-answer">{{current.word}}</text>
       </view>
-      <view class="meter-item">
-        <view class="meter-num">{{score}}</view>
-        <view class="meter-lab">得分</view>
-      </view>
+      <view class="clue-text">{{current.clue}}</view>
     </view>
 
     <!-- 网格 -->
@@ -34,26 +53,6 @@
           <text wx:if="{{cell.no}}" class="bcell-no">{{cell.no}}</text>
         </view>
       </view>
-    </view>
-
-    <!-- 条目切换：只有编号，占一行 -->
-    <view class="tabs">
-      <view
-        wx:for="{{entries}}" wx:key="no"
-        class="tab {{item.no === currentNo ? 'cur' : ''}} {{item.solved ? 'solved' : ''}}"
-        data-no="{{item.no}}" bindtap="onTapClue">
-        <text class="tab-no">{{item.no}}</text>
-        <text class="tab-dir">{{item.dir === 'H' ? '横' : '竖'}}{{item.len}}</text>
-      </view>
-    </view>
-
-    <!-- 只展示当前选中那条的线索 -->
-    <view wx:if="{{current}}" class="clue-cur">
-      <view class="clue-head">
-        <text class="clue-meta">第 {{current.no}} 条 · {{current.dir === 'H' ? '横' : '竖'}}向 {{current.len}} 字</text>
-        <text wx:if="{{current.solved}}" class="clue-answer">{{current.word}}</text>
-      </view>
-      <view class="clue-text">{{current.clue}}</view>
     </view>
 
     <view wx:if="{{finished}}" class="over">

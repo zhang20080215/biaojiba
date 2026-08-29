@@ -32,6 +32,22 @@ async function resolveOpenid() {
     }
 }
 
+/**
+ * 日期加减。用 UTC 解析 + UTC 取值，避免真机时区把 '2026-08-29' 解析成本地零点后
+ * 又按另一个时区格式化，跨月/跨年时会差一天。服务端 cnDateStr 也是同一套做法。
+ */
+function shiftDate(dateStr, delta) {
+    const ms = Date.parse(dateStr + 'T00:00:00Z') + delta * 86400000;
+    const d = new Date(ms);
+    const p = n => (n < 10 ? '0' : '') + n;
+    return d.getUTCFullYear() + '-' + p(d.getUTCMonth() + 1) + '-' + p(d.getUTCDate());
+}
+
+/** 两个日期相差几天（b − a） */
+function dayDiff(a, b) {
+    return Math.round((Date.parse(b + 'T00:00:00Z') - Date.parse(a + 'T00:00:00Z')) / 86400000);
+}
+
 /** 一条 entry 覆盖的所有坐标 */
 function cellsOf(entry) {
     const out = [];
@@ -49,6 +65,7 @@ Page({
         loading: true,
         errMsg: '',
         date: '',
+        dayOffset: 0,       // 相对今天第几天，头部显示用
         board: [],          // [[{ on, ch, locked, active, focus, no }]]
         entries: [],        // [{ no, r, c, dir, len, clue, solved, word }]
         // 字池项预先算好 used 标记：WXML 里用变量当键取对象值（usedChars[item]）不保险，
@@ -70,6 +87,7 @@ Page({
     },
 
     onLoad() {
+        this._date = null;   // null = 今天，由服务端按中国时区判定
         this.refresh();
     },
 
@@ -85,9 +103,11 @@ Page({
     async refresh() {
         this.setData({ loading: true, errMsg: '' });
         try {
+            // _date 为空表示「今天」，交给服务端按中国时区算，前端不猜
+            const d = this._date || undefined;
             const [puzzleRes, stateRes] = await Promise.all([
-                wx.cloud.callFunction({ name: 'getGuessPuzzle', data: { mode: MODE } }),
-                wx.cloud.callFunction({ name: 'submitGuess', data: { action: 'state', mode: MODE } })
+                wx.cloud.callFunction({ name: 'getGuessPuzzle', data: { mode: MODE, date: d } }),
+                wx.cloud.callFunction({ name: 'submitGuess', data: { action: 'state', mode: MODE, date: d } })
             ]);
             const p = puzzleRes.result || {};
             if (!p.success) throw new Error(p.error || '题目加载失败');
@@ -101,6 +121,8 @@ Page({
             this.setData({
                 loading: false,
                 date: puzzle.date || '',
+                // 第一次拿到的日期就是「今天」（那次没传 date），后面切日期都相对它算
+                dayOffset: this._today ? dayDiff(this._today, puzzle.date || this._today) : 0,
                 entries,
                 chips: (puzzle.charPool || []).map(function (ch) { return { ch: ch, used: false }; }),
                 currentNo: entries.length ? entries[0].no : 0,
@@ -110,6 +132,7 @@ Page({
                 score: rec.score || 0,
                 finished: !!rec.finished
             });
+            if (!this._today) this._today = puzzle.date || '';
             this._buildBoard();
             // 断线重连：把已答出的条目填回盘面
             this._applySolved(st.solved || []);
@@ -121,7 +144,7 @@ Page({
     async _loadState() {
         try {
             const res = await wx.cloud.callFunction({
-                name: 'submitGuess', data: { action: 'state', mode: MODE }
+                name: 'submitGuess', data: { action: 'state', mode: MODE, date: this._date || undefined }
             });
             const st = res.result || {};
             if (!st.success) return;
@@ -201,6 +224,22 @@ Page({
             } : null,
             canSubmit: !!cur && !cur.solved && filled === cur.len && !this.data.submitting
         });
+    },
+
+    prevDay() { this._shiftDay(-1); },
+    nextDay() { this._shiftDay(1); },
+
+    /**
+     * 切到相邻日期。题目是按日期备好的（prepare 备了 30 天），所以切日期就等于换一关；
+     * 进度也是按 openid+mode+date 存的，换日期自然是一局新的。
+     * 没备到的日期不会报错 —— getGuessPuzzle 会现出一道并落库。
+     */
+    _shiftDay(delta) {
+        if (this.data.loading || !this.data.date) return;
+        this._date = shiftDate(this.data.date, delta);
+        // 切关时把上一关残留的「答对了」横幅收掉
+        this.setData({ lastCorrect: null });
+        this.refresh();
     },
 
     onTapClue(e) {

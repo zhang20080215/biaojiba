@@ -1,42 +1,83 @@
 /* 每日填字 · 纵横交叉
-   配色沿用 pages/guess/grid 那套中性米白 + 墨绿点缀，两个玩法放在一起不违和 */
+   配色沿用 pages/guess/grid 那套中性米白 + 墨绿点缀，两个玩法放在一起不违和
+
+   纵向预算是这个页面最容易翻车的地方，按 750×1624rpx（iPhone 常见比例）算：
+     头部 116 + 计数 76 + 标签 104 + 线索 183 + 网格 668 = 1147
+     底部固定字池 = 16 + 4 行×88 + 12 + 72 + 16 ≈ 468（字池每行 6 个 → 24 字排 4 行）
+   合计 1615，勉强放得下；再紧就先牺牲网格（可滚动），线索一定要露出来。字池比想象中高得多（24 个字每行 8 个要 3 行），
+   第一版按 240rpx 估的，实际约 480rpx，正好把线索卡整个盖住 ——
+   所以线索现在放在网格**上面**，即便预算再算错也盖不到它。 */
 
 page { background: #FFFCF5; }
 
-/* 底部留白要盖过固定字池（两行字池 + 操作条约 240rpx） */
-.page { padding: 24rpx 24rpx 280rpx; box-sizing: border-box; }
+.page { padding: 16rpx 24rpx 500rpx; box-sizing: border-box; }
 
-/* —— 头部 */
-.hd { padding: 12rpx 8rpx 20rpx; }
-.hd-title { font-size: 44rpx; font-weight: 700; color: #2D2D2B; letter-spacing: 2rpx; }
-.hd-sub { margin-top: 8rpx; font-size: 24rpx; color: #A7A498; }
+/* —— 头部：左右箭头翻看别的日期 */
+.hd { display: flex; align-items: center; padding: 8rpx 0 16rpx; }
+.hd-mid { flex: 1; text-align: center; }
+.hd-title { font-size: 36rpx; font-weight: 700; color: #2D2D2B; letter-spacing: 2rpx; }
+.hd-sub { margin-top: 4rpx; font-size: 22rpx; color: #A7A498; }
+.nav {
+  width: 72rpx; height: 72rpx; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: #fff; color: #6B6A62; font-size: 40rpx; line-height: 1;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+}
 
 .state { padding: 80rpx 0; text-align: center; font-size: 28rpx; color: #A7A498; }
 .state.err { color: #C0603F; }
 
-/* —— 计数条 */
+/* —— 计数条：一行文字，不再是三个大块 */
 .meter {
-  display: flex; background: #fff; border-radius: 20rpx;
-  padding: 20rpx 0; margin-bottom: 24rpx;
+  display: flex; align-items: center; justify-content: center;
+  background: #fff; border-radius: 16rpx; padding: 16rpx 0;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+  font-size: 24rpx; color: #A7A498;
+}
+.m-num { font-size: 30rpx; font-weight: 700; color: #6F8244; }
+.m-dot { margin: 0 16rpx; color: #DCDACE; }
+
+/* —— 条目切换标签：一行 */
+.tabs { display: flex; margin-top: 16rpx; }
+.tab {
+  flex: 1; margin: 0 5rpx; padding: 10rpx 0; border-radius: 12rpx;
+  background: #fff; display: flex; flex-direction: column; align-items: center;
   box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 }
-.meter-item { flex: 1; display: flex; flex-direction: column; align-items: center; }
-.meter-num { font-size: 36rpx; font-weight: 700; color: #6F8244; }
-.meter-lab { margin-top: 4rpx; font-size: 22rpx; color: #A7A498; }
+.tab-no { font-size: 28rpx; font-weight: 700; color: #6B6A62; line-height: 1.2; }
+.tab-dir { margin-top: 2rpx; font-size: 20rpx; color: #A7A498; }
+.tab.cur { background: #6F8244; }
+.tab.cur .tab-no, .tab.cur .tab-dir { color: #fff; }
+/* 已答出：压暗，但仍可点开回看线索 */
+.tab.solved { background: #EEF1E5; }
+.tab.solved .tab-no { color: #9AAB65; }
+.tab.solved.cur { background: #9AAB65; }
+.tab.solved.cur .tab-no, .tab.solved.cur .tab-dir { color: #fff; }
+
+/* —— 当前那条的线索（一次只显示一条，且在网格上方） */
+.clue-cur {
+  margin-top: 16rpx; background: #fff; border-radius: 16rpx;
+  padding: 18rpx 24rpx; border-left: 6rpx solid #6F8244;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+}
+.clue-head { display: flex; align-items: center; }
+.clue-meta { font-size: 22rpx; color: #A7A498; }
+.clue-answer { margin-left: auto; font-size: 26rpx; font-weight: 700; color: #6F8244; }
+.clue-text { margin-top: 8rpx; font-size: 27rpx; line-height: 1.55; color: #4A4942; }
 
 /* —— 7×7 网格
-   宽度算法：页面 750 − 左右 padding 48 = 702；面板内边距 12×2 = 24 → 678。
-   7 格每格 margin 3rpx（左右合 6）→ 格宽 (678 − 42) / 7 ≈ 90。 */
+   宽度：750 − 页面 padding 48 = 702；面板内边距 12×2 → 678。
+   每格 margin 3rpx（左右合 6）→ (678 − 42) / 7 ≈ 90，取 88 留点余量。 */
 .board {
-  background: #fff; border-radius: 20rpx; padding: 12rpx;
+  margin-top: 16rpx; background: #fff; border-radius: 20rpx; padding: 12rpx;
   box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 }
 .board-row { display: flex; justify-content: center; }
 .bcell {
-  width: 90rpx; height: 90rpx; margin: 3rpx; box-sizing: border-box;
+  width: 88rpx; height: 88rpx; margin: 3rpx; box-sizing: border-box;
   display: flex; align-items: center; justify-content: center;
   position: relative; border-radius: 8rpx;
-  font-size: 40rpx; color: #2D2D2B;
+  font-size: 38rpx; color: #2D2D2B;
 }
 /* 不参与填写的格子：留白，不画框，网格才有填字的样子 */
 .bcell.off { background: transparent; }
@@ -53,49 +94,17 @@ page { background: #FFFCF5; }
   font-size: 18rpx; line-height: 1; color: #C9C6BA;
 }
 
-/* —— 条目切换标签：只占一行，把纵向空间让给网格和字池 */
-.tabs { display: flex; margin-top: 20rpx; }
-.tab {
-  flex: 1; margin: 0 6rpx; padding: 12rpx 0; border-radius: 12rpx;
-  background: #fff; display: flex; flex-direction: column; align-items: center;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
-}
-.tab-no { font-size: 28rpx; font-weight: 700; color: #6B6A62; line-height: 1.2; }
-.tab-dir { margin-top: 2rpx; font-size: 20rpx; color: #A7A498; }
-.tab.cur { background: #6F8244; }
-.tab.cur .tab-no, .tab.cur .tab-dir { color: #fff; }
-/* 已答出：压暗，但仍可点开回看线索 */
-.tab.solved { background: #EEF1E5; }
-.tab.solved .tab-no { color: #9AAB65; }
-.tab.solved.cur { background: #9AAB65; }
-.tab.solved.cur .tab-no, .tab.solved.cur .tab-dir { color: #fff; }
-
-/* —— 当前那条的线索（一次只显示一条） */
-.clue-cur {
-  margin-top: 20rpx; background: #fff; border-radius: 16rpx;
-  padding: 20rpx 24rpx; border-left: 6rpx solid #6F8244;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
-}
-.clue-head { display: flex; align-items: center; }
-.clue-meta { font-size: 22rpx; color: #A7A498; }
-.clue-answer { margin-left: auto; font-size: 26rpx; font-weight: 700; color: #6F8244; }
-.clue-text { margin-top: 10rpx; font-size: 27rpx; line-height: 1.6; color: #4A4942; }
-
 /* —— 结束面板 */
 .over {
-  margin-top: 28rpx; background: #fff; border-radius: 20rpx; padding: 32rpx;
+  margin-top: 24rpx; background: #fff; border-radius: 20rpx; padding: 32rpx;
   text-align: center; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 }
 .over-title { font-size: 34rpx; font-weight: 700; color: #2D2D2B; }
 .over-sub { margin-top: 10rpx; font-size: 26rpx; color: #A7A498; }
-.over-list { margin-top: 20rpx; display: flex; flex-direction: column; }
-.over-item { font-size: 26rpx; color: #6B6A62; line-height: 1.9; }
-
-.tip { margin-top: 24rpx; padding: 0 12rpx; font-size: 22rpx; line-height: 1.6; color: #B5B2A6; }
 
 /* —— 答对后顺手标记 */
 .mark-bar {
-  position: fixed; left: 24rpx; right: 24rpx; bottom: 280rpx; z-index: 20;
+  position: fixed; left: 24rpx; right: 24rpx; bottom: 500rpx; z-index: 20;
   background: rgba(45,45,43,0.94); border-radius: 16rpx;
   padding: 20rpx 24rpx; display: flex; align-items: center;
 }
@@ -107,27 +116,29 @@ page { background: #FFFCF5; }
 }
 .mark-btn.ghost { background: transparent; color: #C9C6BA; }
 
-/* —— 底部字池（固定，网格不被挡住靠 .page 的 padding-bottom） */
+/* —— 底部字池（固定；页面靠 .page 的 padding-bottom 让位）
+   每行 6 个：字格 104 + margin 5×2 = 114 宽，6×114 = 684 ≤ 702。
+   24 个字排 4 行；格子做成扁的（104×76）以省纵向空间，4 行 = 352rpx。 */
 .dock {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
   background: #fff; border-top: 2rpx solid #EFEDE4;
-  padding: 20rpx 24rpx calc(20rpx + env(safe-area-inset-bottom));
+  padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom));
   box-shadow: 0 -4rpx 20rpx rgba(0,0,0,0.05);
 }
-.dock-pool { display: flex; flex-wrap: wrap; }
+.dock-pool { display: flex; flex-wrap: wrap; justify-content: center; }
 .chip {
-  width: 76rpx; height: 76rpx; margin: 6rpx;
+  width: 104rpx; height: 76rpx; margin: 5rpx;
   display: flex; align-items: center; justify-content: center;
   background: #F6F5EE; border-radius: 12rpx;
   font-size: 34rpx; color: #2D2D2B;
 }
 /* 已经填在盘面上的字：淡一档，但仍可点（同一个字可能要填两处） */
 .chip.used { color: #C9C6BA; background: #FAFAF6; }
-.dock-ops { display: flex; margin-top: 16rpx; }
+.dock-ops { display: flex; margin-top: 12rpx; }
 .op {
-  flex: 1; margin: 0 6rpx; height: 76rpx; border-radius: 14rpx;
+  flex: 1; margin: 0 6rpx; height: 72rpx; border-radius: 14rpx;
   display: flex; align-items: center; justify-content: center;
   font-size: 28rpx; background: #6F8244; color: #fff;
 }
-.op.ghost { background: #F6F5EE; color: #6B6A62; flex: 0 0 160rpx; }
+.op.ghost { background: #F6F5EE; color: #6B6A62; flex: 0 0 150rpx; }
 .op.disabled { background: #DCDACE; color: #fff; }
