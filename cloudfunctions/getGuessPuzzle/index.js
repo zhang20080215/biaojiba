@@ -141,9 +141,13 @@ function buildPredicates(pool, opts) {
     const minPerson = o.minPersonFilms || MIN_PERSON_FILMS;
     const personTop = o.personTop || PERSON_CANDIDATE_TOP;
     const maxAttr = Math.floor(pool.length * (o.maxAttrRatio || MAX_ATTR_RATIO));
+    // 属性列的覆盖下限。这是交集厚度最灵敏的旋钮：一个只覆盖 25 部（1.4%）的列
+    // 和一个 12 部片的演员求交，期望值才 0.17，必然出空格；
+    // 抬高它能直接让格子变厚，而且不用牺牲每格解数。
+    const minAttr = o.minAttrFilms || MIN_ATTR_FILMS;
     // 属性谓词统一走这里，好把上下限判断收在一处
     const pushAttr = (p) => {
-        if (p.ids.length >= MIN_ATTR_FILMS && p.ids.length <= maxAttr) attrAxis.push(p);
+        if (p.ids.length >= minAttr && p.ids.length <= maxAttr) attrAxis.push(p);
     };
 
     const countBy = (getList) => {
@@ -242,47 +246,56 @@ function generateGrid(pool, rnd, opts) {
 
     const idSet = p => (p._idSet || (p._idSet = new Set(p.ids)));
 
-    // 两级放宽：先要求每格 3 解，凑不出来再退到 2。压测可用 opts.cellTargets 覆盖。
-    // bestMin 记录所有尝试里「最小格」能达到的最好值 —— 失败时靠它判断该退到几，
-    // 否则只知道「凑不出来」，不知道差 1 个解还是差 3 个。
+    // 单趟搜索 + 全程保留最优。
+    // 原先是「按每格 3 解试 400 次，不行再按 2 解重新试 400 次」两趟独立随机，
+    // 问题是第一趟里凑出的 minSeen=2 组合因为 2<3 被直接丢掉，第二趟重新随机未必再撞上 ——
+    // 真实片库压测里 60 天有 2 天就死在这：明明见过合格解，却报凑不出来。
+    // 改成只随机一趟，记住见过的最好组合，末尾按它实际达到的水平判定；
+    // 撞上理想档就提前收工。顺带把最坏开销从 800 次试探砍到 400 次。
     const targets = (opts && opts.cellTargets) || CELL_TARGETS;
-    let bestMin = -1;
-    for (const minCell of targets) {
-        for (let tries = 0; tries < MAX_GENERATE_TRIES; tries++) {
-            const rows = shuffled(personAxis, rnd).slice(0, 3);
-            const cols = shuffled(attrAxis, rnd).slice(0, 3);
-            // 同类属性不要同时出现在三列里（「2010 年代」和「2000 年代」并排会让人
-            // 以为要选两个年代，而且这两列的交集约束其实高度相关）
-            if (new Set(cols.map(c => c.type)).size < 3) continue;
+    const wanted = targets[0];                        // 理想：够了就收
+    const floor = targets[targets.length - 1];        // 底线：低于它才算失败
+    const strip = p => ({ key: p.key, type: p.type, label: p.label, value: p.value, poolCount: p.ids.length });
 
-            // 9 个交集全算完再判定（不提前退出）：交集本身很廉价，
-            // 而算满才能拿到 minSeen，这是失败时唯一有诊断价值的数。
-            const cells = [];
-            let minSeen = Infinity;
-            for (let r = 0; r < 3; r++) {
-                for (let c = 0; c < 3; c++) {
-                    const cs = idSet(cols[c]);
-                    const answerIds = rows[r].ids.filter(id => cs.has(id));
-                    if (answerIds.length < minSeen) minSeen = answerIds.length;
-                    cells.push({ r, c, answerIds, count: answerIds.length });
-                }
+    let best = null, bestMin = -1;
+    for (let tries = 0; tries < MAX_GENERATE_TRIES; tries++) {
+        const rows = shuffled(personAxis, rnd).slice(0, 3);
+        const cols = shuffled(attrAxis, rnd).slice(0, 3);
+        // 同类属性不要同时出现在三列里（「2010 年代」和「2000 年代」并排会让人
+        // 以为要选两个年代，而且这两列的交集约束其实高度相关）
+        if (new Set(cols.map(c => c.type)).size < 3) continue;
+
+        // 9 个交集全算完再判定（不提前退出）：交集本身很廉价，
+        // 而算满才拿得到 minSeen —— 既是择优的依据，也是失败时唯一有诊断价值的数。
+        const cells = [];
+        let minSeen = Infinity;
+        for (let r = 0; r < 3; r++) {
+            for (let c = 0; c < 3; c++) {
+                const cs = idSet(cols[c]);
+                const answerIds = rows[r].ids.filter(id => cs.has(id));
+                if (answerIds.length < minSeen) minSeen = answerIds.length;
+                cells.push({ r, c, answerIds, count: answerIds.length });
             }
-            if (minSeen > bestMin) bestMin = minSeen;
-            if (minSeen < minCell) continue;
-
-            const strip = p => ({ key: p.key, type: p.type, label: p.label, value: p.value, poolCount: p.ids.length });
-            return {
-                rows: rows.map(strip), cols: cols.map(strip), cells,
-                minCellAnswers: minCell,
-                hardestCell: Math.min.apply(null, cells.map(c => c.count))
-            };
         }
+        if (minSeen > bestMin) {
+            bestMin = minSeen;
+            best = { rows: rows.map(strip), cols: cols.map(strip), cells };
+        }
+        if (bestMin >= wanted) break;
     }
-    return {
-        bestMinCell: bestMin,
-        error: '每格 ' + targets.join('/') + ' 解各试了 ' + MAX_GENERATE_TRIES +
-            ' 次都没凑出 3×3。片库太小或谓词门槛太高，先确认 buildMovieFacts 跑完了'
-    };
+
+    if (!best || bestMin < floor) {
+        return {
+            bestMinCell: bestMin,
+            error: '试了 ' + MAX_GENERATE_TRIES + ' 次，最小格最多只到 ' + bestMin +
+                ' 解（底线 ' + floor + '）。片库太小或谓词门槛太高，先确认 buildMovieFacts 跑完了'
+        };
+    }
+    // minCellAnswers 记它实际满足的档位，hardestCell 记真实最小值（两者常相等）
+    let tier = floor;
+    for (let i = 0; i < targets.length; i++) if (bestMin >= targets[i]) { tier = targets[i]; break; }
+    return Object.assign({}, best, { minCellAnswers: tier, hardestCell: bestMin });
+
 }
 
 /**
@@ -403,7 +416,8 @@ exports.main = async (event) => {
                 minPersonFilms: Number(ev.minPersonFilms) || MIN_PERSON_FILMS,
                 personTop: Number(ev.personTop) || PERSON_CANDIDATE_TOP,
                 maxAttrRatio: Number(ev.maxAttrRatio) || MAX_ATTR_RATIO,
-                cellTargets: Array.isArray(ev.cellTargets) && ev.cellTargets.length ? ev.cellTargets : CELL_TARGETS
+                cellTargets: Array.isArray(ev.cellTargets) && ev.cellTargets.length ? ev.cellTargets : CELL_TARGETS,
+                minAttrFilms: Number(ev.minAttrFilms) || MIN_ATTR_FILMS
             };
             const axes = buildPredicates(mp, opts);
             const gopts = Object.assign({}, opts, { axes });
