@@ -32,6 +32,19 @@ const CN_TZ_OFFSET_MS = 8 * 60 * 60 * 1000;
 const MAX_GUESSES = 9;          // 与 moviegrid 一致：一局 9 次机会
 const SUGGEST_LIMIT = 10;
 
+/**
+ * 从 doc(id).get() 的返回里取出那一份文档，取不到给 null。
+ * 云函数端 doc().get() 的 data 是**数组**，文档不存在时是空数组，而 [] 是 truthy ——
+ * 直接 if (res.data) 会把「不存在」判成「存在」，且拿到的是个空数组而不是文档。
+ * 本文件三处都踩过：首次作答的进度记录、当天题目、按 id 取影片事实。
+ * getGuessPuzzle 里有一份同样的实现，改一处记得两边一起改。
+ */
+function oneDoc(res) {
+    const d = res && res.data;
+    if (Array.isArray(d)) return d.length ? d[0] : null;
+    return d || null;
+}
+
 function cnDateStr(ms) {
     const d = new Date((ms == null ? Date.now() : ms) + CN_TZ_OFFSET_MS);
     const p = n => (n < 10 ? '0' : '') + n;
@@ -141,8 +154,8 @@ function buildHint(cellAnswerFacts, cellKey, level) {
 async function loadRecord(openid, mode, date) {
     const id = openid + '_' + mode + '_' + date;
     try {
-        const got = await db.collection(RECORD_COLLECTION).doc(id).get();
-        if (got && got.data) return got.data;
+        const rec = oneDoc(await db.collection(RECORD_COLLECTION).doc(id).get());
+        if (rec) return rec;
     } catch (e) { /* 首次作答 */ }
     return {
         _id: id, openid, mode, date,
@@ -214,8 +227,7 @@ exports.main = async (event) => {
 
         let puzzle;
         try {
-            const got = await db.collection(PUZZLE_COLLECTION).doc(mode + '_' + date).get();
-            puzzle = got && got.data;
+            puzzle = oneDoc(await db.collection(PUZZLE_COLLECTION).doc(mode + '_' + date).get());
         } catch (e) { /* below */ }
         if (!puzzle) return { success: false, error: '今天的题还没生成，先调 getGuessPuzzle' };
 
@@ -245,7 +257,7 @@ exports.main = async (event) => {
         }
 
         const fact = ev.guessId
-            ? (await db.collection(FACTS_COLLECTION).doc(String(ev.guessId)).get().catch(() => null) || {}).data
+            ? oneDoc(await db.collection(FACTS_COLLECTION).doc(String(ev.guessId)).get().catch(() => null))
             : await resolveGuess(ev.guessTitle);
 
         if (!fact) {

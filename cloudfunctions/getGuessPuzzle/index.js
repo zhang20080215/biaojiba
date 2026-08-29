@@ -100,6 +100,19 @@ function shuffled(arr, rnd) {
     return a;
 }
 
+/**
+ * 从 doc(id).get() 的返回里取出那一份文档，取不到给 null。
+ * 云函数端 doc().get() 的 data 是**数组**，文档不存在时是空数组 —— 而 [] 是 truthy，
+ * 直接写 if (res.data) 会把「不存在」判成「存在」。两处都踩过：
+ * prepare 的跳过判断会跳过全部 30 天，线上路径则会拿 [] 去 sanitize 返回一道空题、
+ * 永远走不到「现出一道」的分支。
+ */
+function oneDoc(res) {
+    const d = res && res.data;
+    if (Array.isArray(d)) return d.length ? d[0] : null;
+    return d || null;
+}
+
 /** 读全量 movie_facts（出题用，字段裁到最小） */
 async function readPool() {
     const out = [];
@@ -447,7 +460,7 @@ exports.main = async (event) => {
 
                 if (!overwrite) {
                     let exists = false;
-                    try { const g = await db.collection(PUZZLE_COLLECTION).doc(docId).get(); exists = !!(g && g.data); }
+                    try { exists = !!oneDoc(await db.collection(PUZZLE_COLLECTION).doc(docId).get()); }
                     catch (e) { /* 不存在 */ }
                     if (exists) { skipped.push(date); continue; }
                 }
@@ -565,12 +578,12 @@ exports.main = async (event) => {
         // 已有就直接返回（每日一题：所有人看到同一道）
         if (ev.regenerate !== true) {
             try {
-                const got = await db.collection(PUZZLE_COLLECTION).doc(docId).get();
-                if (got && got.data) {
-                    if (ev.inspect === true) return { success: true, puzzle: got.data };
+                const existing = oneDoc(await db.collection(PUZZLE_COLLECTION).doc(docId).get());
+                if (existing) {
+                    if (ev.inspect === true) return { success: true, puzzle: existing };
                     return {
                         success: true,
-                        puzzle: mode === 'grid' ? sanitizeGrid(got.data) : sanitizeClue(got.data, ev.revealed)
+                        puzzle: mode === 'grid' ? sanitizeGrid(existing) : sanitizeClue(existing, ev.revealed)
                     };
                 }
             } catch (e) { /* 文档不存在，往下现出一道 */ }
