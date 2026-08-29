@@ -164,6 +164,9 @@ Page({
         const lives = r.lives == null ? this.data.lives : r.lives;
         const stars = [];
         for (let i = 0; i < maxLives; i++) stars.push(i < lives);
+        // 提示是**从头逐字揭开**的（第 n 次揭前 n 个字），文案要把这点说清楚，
+        // 所以得知道当前这条已经揭到第几个字了
+        this._hints = rec.hints || this._hints || [];
         this.setData({
             lives: lives,
             maxLives: maxLives,
@@ -425,7 +428,7 @@ Page({
                 wx.showToast({ title: '今天的提示次数已用完', icon: 'none' });
                 return;
             }
-            const ok = await this._confirm('提示次数用完了', '观看一段视频可再得一次提示机会。');
+            const ok = await this._confirm('提示次数用完了', '观看一段视频可再得一次提示机会。用掉时同样扣 5 分。');
             if (!ok) return;
             const watched = await rewardedAdManager.show(AD_SLOT, this);
             if (!watched) return;
@@ -436,7 +439,17 @@ Page({
             }
             this._applyStatus(g);
         } else {
-            const ok = await this._confirm('求提示', '揭开这条的下一个字，扣 5 分。');
+            const used = (this._hints || []).filter(function (h) { return h.entryNo === cur.no; }).length;
+            if (used >= cur.len - 1) {
+                wx.showToast({ title: '这条已经提示到头了', icon: 'none' });
+                return;
+            }
+            // 「下一个字」有歧义 —— 会让人以为跟光标位置或已填内容有关。
+            // 实际是从片名开头往后逐字揭开，所以直接把第几个字、亮出几个字说明白。
+            const ok = await this._confirm(
+                '求提示',
+                '亮出片名的第 ' + (used + 1) + ' 个字（第 1~' + (used + 1) + ' 个字都会显示），扣 5 分。'
+            );
             if (!ok) return;
         }
 

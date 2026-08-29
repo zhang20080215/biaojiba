@@ -359,8 +359,9 @@ exports.main = async (event) => {
                 if (hintsLeft <= 0) {
                     return wrap({ hinted: false, needAd: (rec.hintQuota || 0) < CROSS_MAX_HINTS, error: '提示次数用完了' });
                 }
-                // 每求一次多揭一个字，从头开始揭。同一条反复求提示是逐步揭开，
-                // 不是每次换个位置——后者会让「求两次」直接凑出大半个片名。
+                // 每求一次多揭一个字，**从片名开头往后揭**：第 n 次揭出前 n 个字。
+                // 不是每次换个位置揭 —— 后者求两次就能凑出大半个片名。
+                // 前端文案必须照这个口径写：说「下一个字」会被理解成跟光标位置有关。
                 const used = (rec.hints || []).filter(function (h) { return h.entryNo === e.no; }).length;
                 if (used >= e.len - 1) {
                     return wrap({ hinted: false, error: '这条已经提示到头了，再揭就是白给答案' });
