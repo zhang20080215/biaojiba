@@ -33,7 +33,16 @@ const STATS_COLLECTION = 'guess_stats';
 const CN_TZ_OFFSET_MS = 8 * 60 * 60 * 1000;
 const MAX_GUESSES = 9;          // 与 moviegrid 一致：一局 9 次机会
 // 填字给宽一点：一局要答出 5 条，且求提示同样扣机会，9 次会让「卡在一条上」直接终局。
-const CROSS_MAX_GUESSES = 12;
+// —— 填字的规则常数（和另外两个玩法完全不共用）
+const CROSS_LIVES = 3;          // 生命值：答错一次扣一颗，扣完失败
+const CROSS_FREE_HINTS = 2;     // 每天免费提示次数
+// 提示/复活的上限是**反作弊的一部分**，不是运营参数：看广告能换次数，
+// 不封顶的话看几次广告就能错几次、揭几个字，三条命就形同虚设。
+const CROSS_MAX_HINTS = 5;      // 含免费的，看广告最多再换 3 次
+const CROSS_MAX_REVIVES = 2;    // 复活上限，即一天最多错 5 次
+const SCORE_CORRECT = 20;
+const SCORE_WRONG = -10;
+const SCORE_HINT = -5;
 const SUGGEST_LIMIT = 10;
 
 /**
@@ -155,16 +164,33 @@ function buildHint(cellAnswerFacts, cellKey, level) {
 }
 
 /** 取（或初始化）某人在某题上的进度 */
+/**
+ * cross 的字段补默认值。既覆盖首次作答，也覆盖规则改动之前存下的老记录 ——
+ * 老记录没有 lives/hintQuota，不补的话 lives 是 undefined，一减就成 NaN，
+ * 生命值和分数会一起烂掉。
+ */
+function normalizeCross(rec) {
+    if (rec.lives == null) rec.lives = CROSS_LIVES;
+    if (rec.hintQuota == null) rec.hintQuota = CROSS_FREE_HINTS;
+    if (rec.hintsUsed == null) rec.hintsUsed = 0;
+    if (rec.revives == null) rec.revives = 0;
+    if (rec.score == null) rec.score = 0;
+    if (!Array.isArray(rec.filled)) rec.filled = [];
+    if (!Array.isArray(rec.hints)) rec.hints = [];
+    return rec;
+}
+
 async function loadRecord(openid, mode, date) {
     const id = openid + '_' + mode + '_' + date;
     try {
         const rec = oneDoc(await db.collection(RECORD_COLLECTION).doc(id).get());
-        if (rec) return rec;
+        if (rec) return mode === 'cross' ? normalizeCross(rec) : rec;
     } catch (e) { /* 首次作答 */ }
-    return {
+    const fresh = {
         _id: id, openid, mode, date,
         guessesUsed: 0, filled: [], wrongGuesses: [], hints: [], score: 0, finished: false
     };
+    return mode === 'cross' ? normalizeCross(fresh) : fresh;
 }
 
 async function saveRecord(rec) {
@@ -230,13 +256,21 @@ exports.main = async (event) => {
                 const solved = ((p && p.entries) || [])
                     .filter(function (e) { return done.indexOf(e.no) >= 0; })
                     .map(function (e) { return { no: e.no, r: e.r, c: e.c, dir: e.dir, len: e.len, word: e.word }; });
-                return { success: true, record: rec, solved: solved, maxGuesses: maxGuesses };
+                return {
+                    success: true, record: rec, solved: solved,
+                    lives: rec.lives, maxLives: CROSS_LIVES,
+                    hintsLeft: Math.max(0, (rec.hintQuota || 0) - (rec.hintsUsed || 0)),
+                    canBuyHint: (rec.hintQuota || 0) < CROSS_MAX_HINTS,
+                    canRevive: (rec.revives || 0) < CROSS_MAX_REVIVES
+                };
             }
             return { success: true, record: rec, maxGuesses: MAX_GUESSES };
         }
 
         // —— 作答
-        if (rec.finished || rec.guessesUsed >= maxGuesses) {
+        // cross 有自己的结束判定（生命值），而且结束之后还要能调 revive，
+        // 所以不走这条通用早退
+        if (mode !== 'cross' && (rec.finished || rec.guessesUsed >= maxGuesses)) {
             return { success: true, finished: true, record: rec, reason: 'NO_GUESSES_LEFT' };
         }
 
@@ -247,66 +281,117 @@ exports.main = async (event) => {
         if (!puzzle) return { success: false, error: '今天的题还没生成，先调 getGuessPuzzle' };
 
         // ====================================================================
-        // 纵横填字的作答 / 提示 / 进度
+        // 纵横填字：计分 / 生命值 / 提示次数
         //
-        // 按**整条**校验而不是按格校验，这是刻意的：逐格告诉玩家「这个字对不对」
-        // 等于开放暴力试错——字池就那二十来个字，一格一格试几轮就能填满整盘。
-        // 整条提交则每错一次扣一次机会，和另外两个玩法的代价模型一致。
+        // 计分：答对 +20、答错 −10、用一次提示 −5，初始 0。5 条一次做对 = 满分 100。
         //
-        // 答对后把该条的字和坐标回给前端，让它把格子锁上；交叉格因此会被顺带填上，
-        // 这正是填字的乐趣所在，不需要额外处理。
+        // **全部状态只认服务端这份记录**（openid+mode+date 一天一条，答完即锁）。
+        // 这既是防作弊的根本，也是「多次尝试试出答案再一次性填对刷分」这条路走不通的原因：
+        // 同一天没有第二次机会，而当天的尝试次数被生命值卡死。
+        //
+        // 生命值 3 颗星，答错一次扣一颗，扣完即失败。看激励视频可复活，
+        // **但复活次数必须有上限** —— 不封顶的话看几次广告就能错几次，
+        // 三条命的反作弊作用会被完全抹掉。提示同理，无限提示等于白给答案。
         // ====================================================================
         if (mode === 'cross') {
             const entries = puzzle.entries || [];
             const solvedNos = (rec.filled || []).map(Number);
+            const hintsLeft = Math.max(0, (rec.hintQuota || 0) - (rec.hintsUsed || 0));
             const viewOf = function (e) {
                 return { no: e.no, r: e.r, c: e.c, dir: e.dir, len: e.len, word: e.word };
             };
+            const wrap = function (extra) {
+                return Object.assign({
+                    success: true,
+                    record: rec,
+                    lives: rec.lives,
+                    maxLives: CROSS_LIVES,
+                    hintsLeft: Math.max(0, (rec.hintQuota || 0) - (rec.hintsUsed || 0)),
+                    canBuyHint: (rec.hintQuota || 0) < CROSS_MAX_HINTS,
+                    canRevive: (rec.revives || 0) < CROSS_MAX_REVIVES
+                }, extra || {});
+            };
+
+            // —— 看完激励视频换一次提示机会。
+            // 广告是否真的看完只有客户端知道（本项目没有服务端回调），所以这里靠上限兜底，
+            // 而不是靠信任：hintQuota 最多加到 CROSS_MAX_HINTS 为止。
+            if (action === 'grantHint') {
+                if ((rec.hintQuota || 0) >= CROSS_MAX_HINTS) {
+                    return wrap({ granted: false, error: '今天的提示次数已经用到上限了' });
+                }
+                rec.hintQuota = (rec.hintQuota || 0) + 1;
+                await saveRecord(rec);
+                return wrap({ granted: true });
+            }
+
+            // —— 看完激励视频复活一颗星
+            if (action === 'revive') {
+                if ((rec.revives || 0) >= CROSS_MAX_REVIVES) {
+                    return wrap({ revived: false, error: '今天的复活次数已经用完了' });
+                }
+                if ((rec.lives || 0) >= CROSS_LIVES) {
+                    return wrap({ revived: false, error: '生命值是满的，不用复活' });
+                }
+                rec.lives = (rec.lives || 0) + 1;
+                rec.revives = (rec.revives || 0) + 1;
+                // 因为没命而结束的那局可以继续；已经答完的那局不会被复活「解锁」
+                if (rec.finished && solvedNos.length < entries.length) rec.finished = false;
+                await saveRecord(rec);
+                return wrap({ revived: true });
+            }
+
+            if (rec.finished) {
+                return wrap({
+                    finished: true,
+                    reason: (rec.lives || 0) <= 0 ? 'NO_LIVES' : 'ALL_SOLVED'
+                });
+            }
 
             if (action === 'hint') {
                 const e = entries.find(function (x) { return x.no === Number(ev.entryNo); });
                 if (!e) return { success: false, error: '没有第 ' + ev.entryNo + ' 条' };
                 if (solvedNos.indexOf(e.no) >= 0) return { success: false, error: '这条已经答出来了' };
+                if (hintsLeft <= 0) {
+                    return wrap({ hinted: false, needAd: (rec.hintQuota || 0) < CROSS_MAX_HINTS, error: '提示次数用完了' });
+                }
                 // 每求一次多揭一个字，从头开始揭。同一条反复求提示是逐步揭开，
                 // 不是每次换个位置——后者会让「求两次」直接凑出大半个片名。
                 const used = (rec.hints || []).filter(function (h) { return h.entryNo === e.no; }).length;
                 if (used >= e.len - 1) {
-                    return { success: false, error: '这条已经提示到头了，再揭就是白给答案' };
+                    return wrap({ hinted: false, error: '这条已经提示到头了，再揭就是白给答案' });
                 }
                 const revealed = e.word.slice(0, used + 1);
                 rec.hints = (rec.hints || []).concat([{ entryNo: e.no, chars: revealed }]);
-                rec.guessesUsed = (rec.guessesUsed || 0) + 1;
-                rec.finished = rec.guessesUsed >= maxGuesses;
+                rec.hintsUsed = (rec.hintsUsed || 0) + 1;
+                rec.score = (rec.score || 0) + SCORE_HINT;
                 await saveRecord(rec);
-                return {
-                    success: true, costGuess: true,
-                    hint: { entryNo: e.no, r: e.r, c: e.c, dir: e.dir, chars: revealed },
-                    record: rec, maxGuesses: maxGuesses
-                };
+                return wrap({
+                    hinted: true,
+                    hint: { entryNo: e.no, r: e.r, c: e.c, dir: e.dir, chars: revealed }
+                });
             }
 
             // —— 作答：提交一整条
             const e = entries.find(function (x) { return x.no === Number(ev.entryNo); });
             if (!e) return { success: false, error: '没有第 ' + ev.entryNo + ' 条' };
             if (solvedNos.indexOf(e.no) >= 0) {
-                return { success: true, correct: true, already: true, entry: viewOf(e), record: rec, maxGuesses: maxGuesses };
+                return wrap({ correct: true, already: true, entry: viewOf(e) });
             }
             const submitted = Array.isArray(ev.chars) ? ev.chars.join('') : String(ev.chars || '');
             if (!submitted) return { success: false, error: '没有提交内容' };
 
             if (submitted !== e.word) {
-                rec.guessesUsed = (rec.guessesUsed || 0) + 1;
+                rec.lives = Math.max(0, (rec.lives || 0) - 1);
+                rec.score = (rec.score || 0) + SCORE_WRONG;
                 rec.wrongGuesses = (rec.wrongGuesses || []).concat([{ entryNo: e.no, text: submitted }]);
-                rec.finished = rec.guessesUsed >= maxGuesses;
+                rec.finished = rec.lives <= 0;
                 await saveRecord(rec);
-                return { success: true, correct: false, record: rec, maxGuesses: maxGuesses };
+                return wrap({ correct: false, finished: rec.finished, reason: rec.finished ? 'NO_LIVES' : '' });
             }
 
-            // 答对：不扣机会（和 grid 一致——答对是奖励，不是消耗）
             rec.filled = (rec.filled || []).concat([e.no]);
-            // 长片名更值钱；错得越多得分越低
-            rec.score = (rec.score || 0) + Math.max(10, 20 + e.len * 5 - (rec.guessesUsed || 0) * 2);
-            rec.finished = rec.filled.length >= entries.length || rec.guessesUsed >= maxGuesses;
+            rec.score = (rec.score || 0) + SCORE_CORRECT;
+            rec.finished = rec.filled.length >= entries.length;
             await saveRecord(rec);
             await bumpStats(mode, date, 'entry' + e.no, e.id);
             // 老的 puzzle 文档没存 movieIds（加这个字段之前备的题），回查兜一下
@@ -315,13 +400,12 @@ exports.main = async (event) => {
                 const fct = oneDoc(await db.collection(FACTS_COLLECTION).doc(String(e.id)).get().catch(function () { return null; }));
                 movieIds = (fct && fct.movieIds) || [];
             }
-            return {
-                success: true, correct: true,
+            return wrap({
+                correct: true,
                 entry: viewOf(e),
                 movieId: e.id, movieIds: movieIds,
-                allSolved: rec.filled.length >= entries.length,
-                record: rec, maxGuesses: maxGuesses
-            };
+                allSolved: rec.finished
+            });
         }
 
         // —— 求提示（只有格子玩法有；线索玩法本身就是逐条给线索）

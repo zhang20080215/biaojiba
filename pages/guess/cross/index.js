@@ -14,7 +14,12 @@
 // 答案同样只在服务端：getGuessPuzzle 下发的是 mask（哪些格子要填）+ 线索 + 字池，
 // 不含 entries[].word。进度存 guess_records（openid+mode+date），切后台/换设备能续上。
 
+const rewardedAdManager = require('../../../utils/rewardedAdManager');
+
 const MODE = 'cross';
+// 广告位名。adConfig 里没配这个位时 rewardedAdManager.show() 直接返回 true（放行），
+// 所以开发期不配也能测；真正拦住滥用的是服务端的次数上限，不是广告本身。
+const AD_SLOT = 'guess_extra_rewarded';
 
 /**
  * 日期加减。用 UTC 解析 + UTC 取值，避免真机时区把 '2026-08-29' 解析成本地零点后
@@ -64,8 +69,12 @@ Page({
         canSubmit: false,
         submitting: false,
         solvedCount: 0,
-        guessesLeft: 12,
-        maxGuesses: 12,
+        lives: 3,
+        maxLives: 3,
+        hintsLeft: 2,
+        canBuyHint: true,
+        canRevive: true,
+        stars: [],          // 渲染用：[true,true,false] = 还剩两颗
         score: 0,
         finished: false
     },
@@ -115,11 +124,10 @@ Page({
                 // 不在这里归零的话上一关的「已答出 3/5」会留在计数条上
                 solvedCount: 0,
                 current: null,
-                maxGuesses: st.maxGuesses || 12,
-                guessesLeft: Math.max(0, (st.maxGuesses || 12) - (rec.guessesUsed || 0)),
                 score: rec.score || 0,
                 finished: !!rec.finished
             });
+            this._applyStatus(st);
             if (!this._today) this._today = puzzle.date || '';
             this._buildBoard();
             // 断线重连：把已答出的条目填回盘面
@@ -137,14 +145,32 @@ Page({
             const st = res.result || {};
             if (!st.success) return;
             const rec = st.record || {};
-            this.setData({
-                maxGuesses: st.maxGuesses || this.data.maxGuesses,
-                guessesLeft: Math.max(0, (st.maxGuesses || this.data.maxGuesses) - (rec.guessesUsed || 0)),
-                score: rec.score || 0,
-                finished: !!rec.finished
-            });
+            this._applyStatus(st);
             this._applySolved(st.solved || []);
         } catch (e) { /* 静默：进度刷新失败不该打断正在玩的这局 */ }
+    },
+
+    /**
+     * 把服务端回来的局面字段（生命/提示/分数）落到 data。
+     * 这些值**只认服务端**：前端改本地变量刷不了分，也偷不到提示次数。
+     */
+    _applyStatus(r) {
+        if (!r) return;
+        const rec = r.record || {};
+        const maxLives = r.maxLives || this.data.maxLives || 3;
+        const lives = r.lives == null ? this.data.lives : r.lives;
+        const stars = [];
+        for (let i = 0; i < maxLives; i++) stars.push(i < lives);
+        this.setData({
+            lives: lives,
+            maxLives: maxLives,
+            stars: stars,
+            hintsLeft: r.hintsLeft == null ? this.data.hintsLeft : r.hintsLeft,
+            canBuyHint: !!r.canBuyHint,
+            canRevive: !!r.canRevive,
+            score: rec.score == null ? this.data.score : rec.score,
+            finished: !!rec.finished
+        });
     },
 
     /** 按 mask 铺盘，并把每条的起始格标上序号 */
@@ -354,20 +380,16 @@ Page({
             });
             const r = res.result || {};
             if (!r.success) throw new Error(r.error || '提交失败');
-            const rec = r.record || {};
-            this.setData({
-                submitting: false,
-                guessesLeft: Math.max(0, (r.maxGuesses || this.data.maxGuesses) - (rec.guessesUsed || 0)),
-                score: rec.score || 0,
-                finished: !!rec.finished
-            });
+            this.setData({ submitting: false });
+            this._applyStatus(r);
             if (r.correct) {
                 this._applySolved([r.entry]);
                 wx.showToast({ title: '答对了：' + r.entry.word, icon: 'none' });
             } else {
                 // 错了就把这条清空重来（锁定的交叉格留着）
                 this._clearEntry(cur);
-                wx.showToast({ title: '不对，再想想', icon: 'none' });
+                if (r.finished) this._offerRevive();
+                else wx.showToast({ title: '不对，扣一颗星', icon: 'none' });
             }
         } catch (e) {
             this.setData({ submitting: false });
@@ -386,51 +408,99 @@ Page({
         this._syncActive();
     },
 
+    /**
+     * 求提示。每天 2 次免费，用完可以看激励视频再换一次（服务端封顶）。
+     * 提示按「逐字揭开当前这条」发放，每次 −5 分。
+     */
     async onHint() {
         if (this.data.finished) return;
         const cur = this.data.entries.find(x => x.no === this.data.currentNo);
         if (!cur || cur.solved) return;
-        const ok = await new Promise(resolve => {
+
+        if (this.data.hintsLeft <= 0) {
+            if (!this.data.canBuyHint) {
+                wx.showToast({ title: '今天的提示次数已用完', icon: 'none' });
+                return;
+            }
+            const ok = await this._confirm('提示次数用完了', '观看一段视频可再得一次提示机会。');
+            if (!ok) return;
+            const watched = await rewardedAdManager.show(AD_SLOT, this);
+            if (!watched) return;
+            const g = await this._call({ action: 'grantHint' });
+            if (!g || !g.granted) {
+                wx.showToast({ title: (g && g.error) || '没能换到提示', icon: 'none' });
+                return;
+            }
+            this._applyStatus(g);
+        } else {
+            const ok = await this._confirm('求提示', '揭开这条的下一个字，扣 5 分。');
+            if (!ok) return;
+        }
+
+        const r = await this._call({ action: 'hint', entryNo: cur.no });
+        if (!r || !r.success) { wx.showToast({ title: (r && r.error) || '提示失败', icon: 'none' }); return; }
+        if (!r.hinted) { wx.showToast({ title: r.error || '这条提示不了了', icon: 'none' }); this._applyStatus(r); return; }
+        const board = this.data.board;
+        const chips = this.data.chips;
+        const pts = cellsOf(cur);
+        // hint.chars 是从头揭开的前 N 个字，直接盖上去（并从字池扣掉相应份数）
+        (r.hint.chars || '').split('').forEach((ch, i) => {
+            if (!pts[i]) return;
+            const cell = board[pts[i].r][pts[i].c];
+            if (cell.locked || cell.ch === ch) return;
+            this._freeCell(cell, chips);
+            cell.chip = this._takeChip(ch, chips);
+            cell.ch = ch;
+        });
+        this.setData({ board, chips, focusIdx: this._firstEmptyIdx(cur) });
+        this._applyStatus(r);
+        this._syncActive();
+    },
+
+    /** 三颗星扣完后问要不要看广告复活 */
+    async _offerRevive() {
+        if (!this.data.canRevive) {
+            wx.showToast({ title: '今天的复活次数已用完', icon: 'none' });
+            return;
+        }
+        const ok = await this._confirm('三颗星都用完了', '观看一段视频可以复活一颗星，继续这一关。');
+        if (!ok) return;
+        const watched = await rewardedAdManager.show(AD_SLOT, this);
+        if (!watched) return;
+        const r = await this._call({ action: 'revive' });
+        if (!r || !r.revived) {
+            wx.showToast({ title: (r && r.error) || '复活失败', icon: 'none' });
+            return;
+        }
+        this._applyStatus(r);
+        wx.showToast({ title: '复活了一颗星', icon: 'none' });
+    },
+
+    /** 结束面板上的复活按钮 */
+    onRevive() { this._offerRevive(); },
+
+    _confirm(title, content) {
+        return new Promise(resolve => {
             wx.showModal({
-                title: '求提示',
-                content: '揭开这条的下一个字，消耗一次机会。',
+                title: title, content: content,
                 success: r => resolve(!!r.confirm),
                 fail: () => resolve(false)
             });
         });
-        if (!ok) return;
+    },
+
+    /** submitGuess 调用的统一出口：mode 和 date 一处补齐，免得又漏传日期 */
+    async _call(data) {
         try {
             const res = await wx.cloud.callFunction({
                 name: 'submitGuess',
-                data: { action: 'hint', mode: MODE, entryNo: cur.no, date: this._date || undefined }
+                data: Object.assign({ mode: MODE, date: this._date || undefined }, data)
             });
-            const r = res.result || {};
-            if (!r.success) { wx.showToast({ title: r.error || '提示失败', icon: 'none' }); return; }
-            const rec = r.record || {};
-            const board = this.data.board;
-            const chips = this.data.chips;
-            const pts = cellsOf(cur);
-            // hint.chars 是从头揭开的前 N 个字，直接盖上去（并从字池扣掉相应份数）
-            (r.hint.chars || '').split('').forEach((ch, i) => {
-                if (!pts[i]) return;
-                const cell = board[pts[i].r][pts[i].c];
-                if (cell.locked || cell.ch === ch) return;
-                this._freeCell(cell, chips);
-                cell.chip = this._takeChip(ch, chips);
-                cell.ch = ch;
-            });
-            this.setData({
-                board, chips,
-                guessesLeft: Math.max(0, (r.maxGuesses || this.data.maxGuesses) - (rec.guessesUsed || 0)),
-                finished: !!rec.finished,
-                focusIdx: this._firstEmptyIdx(cur)
-            });
-            this._syncActive();
+            return res.result || null;
         } catch (e) {
-            wx.showToast({ title: '提示失败', icon: 'none' });
+            return null;
         }
     },
-
     onShareAppMessage() {
         return {
             title: '每日填字 · 5 部电影横竖交叉，来试试',

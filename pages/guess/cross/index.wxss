@@ -35,6 +35,10 @@ page { background: #FFFCF5; }
   font-size: 24rpx; color: #A7A498;
 }
 .m-num { font-size: 30rpx; font-weight: 700; color: #6F8244; }
+/* 生命值：亮的是还剩的，暗的是扣掉的 */
+.stars { display: flex; align-items: center; }
+.star { font-size: 28rpx; color: #E3E0D6; margin-right: 2rpx; }
+.star.on { color: #C0603F; }
 .m-dot { margin: 0 16rpx; color: #DCDACE; }
 
 /* —— 条目切换标签：一行 */
@@ -101,6 +105,10 @@ page { background: #FFFCF5; }
 }
 .over-title { font-size: 34rpx; font-weight: 700; color: #2D2D2B; }
 .over-sub { margin-top: 10rpx; font-size: 26rpx; color: #A7A498; }
+.over-btn {
+  margin-top: 24rpx; background: #6F8244; color: #fff;
+  border-radius: 999rpx; padding: 20rpx 0; font-size: 28rpx;
+}
 
 /* —— 底部字池（固定；页面靠 .page 的 padding-bottom 让位）
    **每行 6 个靠百分比保证，不靠算宽度**：按 104rpx 固定宽算出来该是 6 个，

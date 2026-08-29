@@ -15,9 +15,13 @@
   <block wx:else>
     <!-- 计数条：压成一行，纵向空间全留给网格和字池 -->
     <view class="meter">
+      <view class="stars">
+        <text wx:for="{{stars}}" wx:key="index" class="star {{item ? 'on' : ''}}">★</text>
+      </view>
+      <text class="m-dot">·</text>
       <text class="m-seg"><text class="m-num">{{solvedCount}}/{{entries.length}}</text> 已答出</text>
       <text class="m-dot">·</text>
-      <text class="m-seg"><text class="m-num">{{guessesLeft}}</text> 次机会</text>
+      <text class="m-seg">提示 <text class="m-num">{{hintsLeft}}</text></text>
       <text class="m-dot">·</text>
       <text class="m-seg"><text class="m-num">{{score}}</text> 分</text>
     </view>
@@ -56,8 +60,9 @@
     </view>
 
     <view wx:if="{{finished}}" class="over">
-      <view class="over-title">{{solvedCount === entries.length ? '全部答出！' : '今天到此为止'}}</view>
+      <view class="over-title">{{solvedCount === entries.length ? '全部答出！' : '三颗星用完了'}}</view>
       <view class="over-sub">答出 {{solvedCount}}/{{entries.length}} 条 · 得分 {{score}}</view>
+      <view wx:if="{{solvedCount < entries.length && canRevive}}" class="over-btn" bindtap="onRevive">看视频复活一颗星</view>
     </view>
   </block>
 
@@ -71,7 +76,7 @@
     </view>
     <view class="dock-ops">
       <view class="op ghost" bindtap="onBackspace">删除</view>
-      <view class="op ghost" bindtap="onHint">提示</view>
+      <view class="op ghost" bindtap="onHint">提示{{hintsLeft > 0 ? ' ' + hintsLeft : ''}}</view>
       <view class="op {{canSubmit ? '' : 'disabled'}}" bindtap="onSubmit">
         {{submitting ? '校验中…' : '提交这条'}}
       </view>
