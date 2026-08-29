@@ -28,6 +28,7 @@
 //   { forceRefresh: true }       —— 连已有的一起重拉（豆瓣评分会漂，隔季度刷一次）
 //   { verify: true }             —— 只读回查，看 movie_facts 现状
 //   { poolStats: true }          —— 出题池体检：剔掉剧集后还剩多少部、各阈值下人物轴有多少人可用
+//   { prune: true, dryRun: true } —— 对账：列出 movie_facts 里已不在骨架中的孤儿（如剧集遗留），去掉 dryRun 才真删
 //
 // 注：控制台「云端测试」面板常返回 [UPSTREAM] Upstream error (ret=-3)，那是面板网关抖动，
 // 函数照常跑完，结果去「云函数 → 日志」按时间捞（每个出口都打了 RESULT 日志）。
@@ -62,6 +63,12 @@ const GID_FROM_ID = {
 };
 
 // 没有 theme 字段的集合，用集合名映射出主题 id（memberOf 里要能区分来源）
+// 剧集不进猜片玩法，从骨架阶段就排掉，不是拉回来再按 subtype 丢弃 ——
+// 后者会让这 758 条永远不在 movie_facts 里，于是每次增量跑都被当成「待建」反复重拉。
+// 注意这里排的是**行**不是**片**：一部电影若同时在剧集主题和电影榜单里，
+// 仍会从电影那行被收进来，只是 memberOf 里不带剧集主题。
+const EXCLUDED_THEMES = new Set(['doubanTvCn', 'doubanTvForeign', 'doubanTvAnime']);
+
 const THEME_OF_COLLECTION = {
     movies: 'douban',
     oscar_movies: 'oscar',
@@ -179,6 +186,7 @@ async function collectSkeletons() {
             // 「入选奥斯卡最佳影片/最佳动画长片」两个谓词直接不会出现在题面上。
             // 表里只有这 4 个老集合的键，generic_theme_movies 不在其中，仍然走 row.theme。
             const themeId = THEME_OF_COLLECTION[collection] || row.theme || collection;
+            if (EXCLUDED_THEMES.has(themeId)) continue;
             let ent = byGid.get(gid);
             if (!ent) {
                 ent = { doubanId: gid, memberOf: [], movieIds: [], cover: '', title: row.title || '', year: row.year || null };
@@ -261,6 +269,45 @@ exports.main = async (event) => {
     const startedAt = Date.now();
     const done_ = (r) => { console.log('[buildMovieFacts] RESULT ' + JSON.stringify(r)); return r; };
     const ev = event || {};
+
+    // —— 清理孤儿：movie_facts 里有、但当前骨架里已经没有的条目，删掉。
+    // 直接触发场景是剧集三主题被移出 SOURCES 后遗留的 758 条，
+    // 但写成通用的「按骨架对账」而不是「删 subtype=tv」，是因为后者会误伤
+    // 从电影榜单进来的剧集型条目（视与听里的《双峰：回归》《电影史》那类），
+    // 删掉后它们仍在骨架里，下次增量跑又会被重新拉回来，白费一次豆瓣配额。
+    // { prune: true, dryRun: true } 先看要删什么，{ prune: true } 才真删。
+    if (ev.prune === true) {
+        const { movies } = await collectSkeletons();
+        const keep = new Set(movies.map(m => m.doubanId));
+        const existingIds = Array.from((await readExistingIds()).keys());
+        const orphans = existingIds.filter(id => !keep.has(String(id)));
+        if (ev.dryRun === true) {
+            return done_({
+                success: true, mode: 'prune-dryRun',
+                inFacts: existingIds.length,
+                inSkeleton: keep.size,
+                toDelete: orphans.length,
+                sample: orphans.slice(0, 10),
+                note: 'dryRun 不删。确认数目对得上后去掉 dryRun 再跑一次'
+            });
+        }
+        let deleted = 0, failed = 0, stoppedEarly = false;
+        for (let i = 0; i < orphans.length; i += CONCURRENCY) {
+            if (Date.now() - startedAt > TIME_BUDGET_MS) { stoppedEarly = true; break; }
+            const batch = orphans.slice(i, i + CONCURRENCY);
+            const rs = await Promise.all(batch.map(async id => {
+                try { await db.collection(FACTS_COLLECTION).doc(String(id)).remove(); return true; }
+                catch (e) { console.warn('[buildMovieFacts] 删除失败 ' + id + ': ' + (e && e.message)); return false; }
+            }));
+            rs.forEach(ok => { if (ok) deleted++; else failed++; });
+        }
+        return done_({
+            success: true, mode: 'prune',
+            toDelete: orphans.length, deleted, failed, stoppedEarly,
+            remaining: orphans.length - deleted - failed,
+            note: stoppedEarly ? '未删完，再跑一次同样的参数即可续上' : '已删完'
+        });
+    }
 
     // —— 出题池体检：剧集占比 + 人物轴可行性。
     // getGuessPuzzle 用 subtype!=='tv' 过滤，所以 movie_facts 的 total 不等于出题池；
