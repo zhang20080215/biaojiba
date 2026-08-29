@@ -133,8 +133,9 @@ Page({
             this._applyStatus(st);
             if (!this._today) this._today = puzzle.date || '';
             this._buildBoard();
-            // 断线重连：把已答出的条目填回盘面
+            // 断线重连：先把已答出的整条填回盘面，再补上花分揭开的零散字
             this._applySolved(st.solved || []);
+            this._applyRevealed(st.revealed || []);
         } catch (e) {
             this.setData({ loading: false, errMsg: (e && e.message) || '加载失败' });
         }
@@ -150,6 +151,7 @@ Page({
             const rec = st.record || {};
             this._applyStatus(st);
             this._applySolved(st.solved || []);
+            this._applyRevealed(st.revealed || []);
         } catch (e) { /* 静默：进度刷新失败不该打断正在玩的这局 */ }
     },
 
@@ -164,9 +166,6 @@ Page({
         const lives = r.lives == null ? this.data.lives : r.lives;
         const stars = [];
         for (let i = 0; i < maxLives; i++) stars.push(i < lives);
-        // 提示是**从头逐字揭开**的（第 n 次揭前 n 个字），文案要把这点说清楚，
-        // 所以得知道当前这条已经揭到第几个字了
-        this._hints = rec.hints || this._hints || [];
         this.setData({
             lives: lives,
             maxLives: maxLives,
@@ -439,17 +438,9 @@ Page({
             }
             this._applyStatus(g);
         } else {
-            const used = (this._hints || []).filter(function (h) { return h.entryNo === cur.no; }).length;
-            if (used >= cur.len - 1) {
-                wx.showToast({ title: '这条已经提示到头了', icon: 'none' });
-                return;
-            }
-            // 「下一个字」有歧义 —— 会让人以为跟光标位置或已填内容有关。
-            // 实际是从片名开头往后逐字揭开，所以直接把第几个字、亮出几个字说明白。
-            const ok = await this._confirm(
-                '求提示',
-                '亮出片名的第 ' + (used + 1) + ' 个字（第 1~' + (used + 1) + ' 个字都会显示），扣 5 分。'
-            );
+            // 能不能揭、还能揭几个，判断全在服务端（要考虑交叉格带来的已知位，
+            // 前端再算一遍必然走样）。这里只说清楚会发生什么。
+            const ok = await this._confirm('求提示', '随机亮出这条里还没揭开的一个字，扣 5 分。');
             if (!ok) return;
         }
 
@@ -458,18 +449,35 @@ Page({
         if (!r.hinted) { wx.showToast({ title: r.error || '这条提示不了了', icon: 'none' }); this._applyStatus(r); return; }
         const board = this.data.board;
         const chips = this.data.chips;
-        const pts = cellsOf(cur);
-        // hint.chars 是从头揭开的前 N 个字，直接盖上去（并从字池扣掉相应份数）
-        (r.hint.chars || '').split('').forEach((ch, i) => {
-            if (!pts[i]) return;
-            const cell = board[pts[i].r][pts[i].c];
-            if (cell.locked || cell.ch === ch) return;
-            this._freeCell(cell, chips);
-            cell.chip = this._takeChip(ch, chips);
-            cell.ch = ch;
-        });
+        this._revealCell(board, chips, r.hint);
         this.setData({ board, chips, focusIdx: this._firstEmptyIdx(cur) });
         this._applyStatus(r);
+        this._syncActive();
+    },
+
+    /**
+     * 把一个揭出来的字放进格子并锁住：提示是花分买的，不该被误删或被别的字覆盖。
+     * 同样要从字池扣掉一份，否则玩家手上会凭空多出可用的字。
+     */
+    _revealCell(board, chips, h) {
+        if (!h || h.r == null || h.c == null) return;
+        const cell = board[h.r] && board[h.r][h.c];
+        if (!cell || cell.locked) return;
+        if (cell.ch !== h.ch) {
+            this._freeCell(cell, chips);
+            cell.chip = this._takeChip(h.ch, chips);
+            cell.ch = h.ch;
+        }
+        cell.locked = true;
+    },
+
+    /** 断线重进时把之前花分揭出来的字复原 */
+    _applyRevealed(revealed) {
+        if (!revealed || !revealed.length) return;
+        const board = this.data.board;
+        const chips = this.data.chips;
+        revealed.forEach(h => this._revealCell(board, chips, h));
+        this.setData({ board, chips });
         this._syncActive();
     },
 

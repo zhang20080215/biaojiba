@@ -183,6 +183,32 @@ function normalizeCross(rec) {
     return rec;
 }
 
+/**
+ * 一条 entry 里玩家**已经知道**的位置集合（0 起）。两个来源：
+ *   ① 之前提示揭开过的；② 与已答出的其它条交叉、那一格早就填上了。
+ * 随机揭字要从这个集合之外挑 —— 否则会出现「花 5 分揭出一个早就看得见的字」。
+ */
+function knownPositions(entry, solvedEntries, hints) {
+    const known = new Set();
+    (hints || []).forEach(function (h) {
+        if (h.entryNo === entry.no && typeof h.pos === 'number') known.add(h.pos);
+    });
+    for (let i = 0; i < entry.len; i++) {
+        const r = entry.r + (entry.dir === 'V' ? i : 0);
+        const c = entry.c + (entry.dir === 'H' ? i : 0);
+        const covered = solvedEntries.some(function (o) {
+            for (let k = 0; k < o.len; k++) {
+                const or = o.r + (o.dir === 'V' ? k : 0);
+                const oc = o.c + (o.dir === 'H' ? k : 0);
+                if (or === r && oc === c) return true;
+            }
+            return false;
+        });
+        if (covered) known.add(i);
+    }
+    return known;
+}
+
 async function loadRecord(openid, mode, date) {
     const id = openid + '_' + mode + '_' + date;
     try {
@@ -261,8 +287,21 @@ exports.main = async (event) => {
                 const solved = ((p && p.entries) || [])
                     .filter(function (e) { return done.indexOf(e.no) >= 0; })
                     .map(function (e) { return { no: e.no, r: e.r, c: e.c, dir: e.dir, len: e.len, word: e.word }; });
+                // 揭过的字也要带回去，否则退出重进后花掉的提示就白花了
+                const revealedCells = (rec.hints || [])
+                    .filter(function (h) { return typeof h.pos === 'number'; })
+                    .map(function (h) {
+                        const en = ((p && p.entries) || []).find(function (x) { return x.no === h.entryNo; });
+                        if (!en) return null;
+                        return {
+                            entryNo: h.entryNo, ch: h.ch,
+                            r: en.r + (en.dir === 'V' ? h.pos : 0),
+                            c: en.c + (en.dir === 'H' ? h.pos : 0)
+                        };
+                    })
+                    .filter(Boolean);
                 return {
-                    success: true, record: rec, solved: solved,
+                    success: true, record: rec, solved: solved, revealed: revealedCells,
                     lives: rec.lives, maxLives: CROSS_LIVES,
                     hintsLeft: Math.max(0, (rec.hintQuota || 0) - (rec.hintsUsed || 0)),
                     canBuyHint: (rec.hintQuota || 0) < CROSS_MAX_HINTS,
@@ -359,21 +398,43 @@ exports.main = async (event) => {
                 if (hintsLeft <= 0) {
                     return wrap({ hinted: false, needAd: (rec.hintQuota || 0) < CROSS_MAX_HINTS, error: '提示次数用完了' });
                 }
-                // 每求一次多揭一个字，**从片名开头往后揭**：第 n 次揭出前 n 个字。
-                // 不是每次换个位置揭 —— 后者求两次就能凑出大半个片名。
-                // 前端文案必须照这个口径写：说「下一个字」会被理解成跟光标位置有关。
-                const used = (rec.hints || []).filter(function (h) { return h.entryNo === e.no; }).length;
-                if (used >= e.len - 1) {
-                    return wrap({ hinted: false, error: '这条已经提示到头了，再揭就是白给答案' });
+                // **随机揭一个玩家还不知道的字**，而不是从头顺着揭。
+                // 顺着揭有两个毛病：第 n 个位置很可能已经被交叉的另一条填好了，
+                // 5 分换来一个早就看得见的字；而且前缀效应太强 ——《柏林苍穹下》
+                // 揭两次就是「柏林」，基本等于送答案。
+                // （早先注释里「换位置揭会让求两次凑出大半个片名」是错的：
+                //   揭两个字就是两个字，位置在哪信息量一样。）
+                const solvedEntries = entries.filter(function (x) { return solvedNos.indexOf(x.no) >= 0; });
+                const known = knownPositions(e, solvedEntries, rec.hints);
+                const candidates = [];
+                for (let i = 0; i < e.len; i++) if (!known.has(i)) candidates.push(i);
+
+                // 两道闸，都是为了别让提示变成「白给答案」：
+                // ① 揭完之后至少还要剩 2 个字不知道。只剩 1 个未知时那个字根本不用猜 ——
+                //    四个字揭掉三个等于把答案念出来。candidates 已经排除了交叉格带来的
+                //    已知位，所以这道闸是按**真实未知数**算的，不是按提示次数算的。
+                // ② 单条最多揭一半，长片名不能靠连揭把自己揭穿。
+                const usedOnEntry = (rec.hints || []).filter(function (h) { return h.entryNo === e.no; }).length;
+                if (candidates.length < 3) {
+                    return wrap({ hinted: false, error: '这条只剩两个字没揭开了，自己想想' });
                 }
-                const revealed = e.word.slice(0, used + 1);
-                rec.hints = (rec.hints || []).concat([{ entryNo: e.no, chars: revealed }]);
+                if (usedOnEntry >= Math.floor(e.len / 2)) {
+                    return wrap({ hinted: false, error: '这条的提示用到上限了（一条最多揭一半）' });
+                }
+
+                const pos = candidates[Math.floor(Math.random() * candidates.length)];
+                const ch = e.word[pos];
+                rec.hints = (rec.hints || []).concat([{ entryNo: e.no, pos: pos, ch: ch }]);
                 rec.hintsUsed = (rec.hintsUsed || 0) + 1;
                 rec.score = (rec.score || 0) + SCORE_HINT;
                 await saveRecord(rec);
                 return wrap({
                     hinted: true,
-                    hint: { entryNo: e.no, r: e.r, c: e.c, dir: e.dir, chars: revealed }
+                    hint: {
+                        entryNo: e.no, pos: pos, ch: ch,
+                        r: e.r + (e.dir === 'V' ? pos : 0),
+                        c: e.c + (e.dir === 'H' ? pos : 0)
+                    }
                 });
             }
 
