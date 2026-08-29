@@ -92,6 +92,15 @@ page { background: #FFFCF5; }
 .bcell.focus { border-color: #6F8244; border-width: 4rpx; background: #F3F6EA; }
 /* 已答出、锁定 */
 .bcell.locked { background: #fff; border-color: #9AAB65; color: #6F8244; font-weight: 700; }
+/* 刚被提示揭出来的格子：闪一下再落定。
+   随机揭字会落在任意一格，没有这个动画用户找不到哪儿变了。 */
+@keyframes cellFlash {
+  0%   { background: #F2C14E; transform: scale(1.18); }
+  60%  { background: #F7E3A8; transform: scale(1); }
+  100% { background: #fff; transform: scale(1); }
+}
+.bcell.flash { animation: cellFlash 1.2s ease-out; }
+
 /* 条目序号，标在该条起始格左上角 */
 .bcell-no {
   position: absolute; top: 2rpx; left: 6rpx;
@@ -139,4 +148,6 @@ page { background: #FFFCF5; }
   font-size: 28rpx; background: #6F8244; color: #fff;
 }
 .op.ghost { background: #F6F5EE; color: #6B6A62; flex: 0 0 150rpx; }
+/* 提示次数用完、但还能看视频再换：换个颜色，让人看得出还有路可走 */
+.op.ghost.ad { background: #FBF1DC; color: #B98E56; font-size: 24rpx; }
 .op.disabled { background: #DCDACE; color: #fff; }

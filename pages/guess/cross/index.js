@@ -87,6 +87,10 @@ Page({
         this.refresh();
     },
 
+    onUnload() {
+        this._destroyed = true;
+    },
+
     onShow() {
         // 题目一天不变，但进度可能在别的端变了
         if (!this.data.loading && this.data.date) this._loadState();
@@ -183,7 +187,7 @@ Page({
         const mask = this._mask || [];
         // chip = 填这一格的字池下标，−1 表示空；退格要靠它把那一份字还回去
         const board = mask.map(row => row.map(m => ({
-            on: !!m, ch: '', chip: -1, locked: false, active: false, focus: false, no: 0
+            on: !!m, ch: '', chip: -1, locked: false, active: false, focus: false, flash: false, no: 0
         })));
         this.data.entries.forEach(e => {
             if (board[e.r] && board[e.r][e.c]) board[e.r][e.c].no = e.no;
@@ -453,8 +457,9 @@ Page({
         if (!r.hinted) { wx.showToast({ title: r.error || '这条提示不了了', icon: 'none' }); this._applyStatus(r); return; }
         const board = this.data.board;
         const chips = this.data.chips;
-        this._revealCell(board, chips, r.hint);
+        this._revealCell(board, chips, r.hint, true);
         this.setData({ board, chips, focusIdx: this._firstEmptyIdx(cur) });
+        this._flashCell(r.hint.r, r.hint.c);
         this._applyStatus(r);
         this._syncActive();
     },
@@ -463,7 +468,7 @@ Page({
      * 把一个揭出来的字放进格子并锁住：提示是花分买的，不该被误删或被别的字覆盖。
      * 同样要从字池扣掉一份，否则玩家手上会凭空多出可用的字。
      */
-    _revealCell(board, chips, h) {
+    _revealCell(board, chips, h, flash) {
         if (!h || h.r == null || h.c == null) return;
         const cell = board[h.r] && board[h.r][h.c];
         if (!cell || cell.locked) return;
@@ -473,6 +478,22 @@ Page({
             cell.ch = h.ch;
         }
         cell.locked = true;
+        if (flash) cell.flash = true;
+    },
+
+    /**
+     * 让刚揭出来的格子闪一下。
+     * 随机揭字之后这个提示是必需的：字会落在这条的任意一格，而格子在页面上方、
+     * 离底部按钮很远，不给视觉反馈的话用户看完广告回来根本不知道哪儿变了。
+     */
+    _flashCell(r, c) {
+        const key = 'board[' + r + '][' + c + '].flash';
+        setTimeout(() => {
+            if (this._destroyed) return;
+            const patch = {};
+            patch[key] = false;
+            this.setData(patch);
+        }, 1400);
     },
 
     /** 断线重进时把之前花分揭出来的字复原 */
@@ -480,7 +501,7 @@ Page({
         if (!revealed || !revealed.length) return;
         const board = this.data.board;
         const chips = this.data.chips;
-        revealed.forEach(h => this._revealCell(board, chips, h));
+        revealed.forEach(h => this._revealCell(board, chips, h, false));
         this.setData({ board, chips });
         this._syncActive();
     },

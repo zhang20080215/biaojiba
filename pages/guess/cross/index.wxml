@@ -51,7 +51,7 @@
       <view class="board-row" wx:for="{{board}}" wx:for-item="row" wx:for-index="r" wx:key="r">
         <view
           wx:for="{{row}}" wx:for-item="cell" wx:for-index="c" wx:key="c"
-          class="bcell {{cell.on ? 'on' : 'off'}} {{cell.locked ? 'locked' : ''}} {{cell.active ? 'active' : ''}} {{cell.focus ? 'focus' : ''}}"
+          class="bcell {{cell.on ? 'on' : 'off'}} {{cell.locked ? 'locked' : ''}} {{cell.active ? 'active' : ''}} {{cell.focus ? 'focus' : ''}} {{cell.flash ? 'flash' : ''}}"
           data-r="{{r}}" data-c="{{c}}" bindtap="onTapCell">
           <text wx:if="{{cell.on && cell.ch}}">{{cell.ch}}</text>
           <text wx:if="{{cell.no}}" class="bcell-no">{{cell.no}}</text>
@@ -76,7 +76,10 @@
     </view>
     <view class="dock-ops">
       <view class="op ghost" bindtap="onBackspace">删除</view>
-      <view class="op ghost" bindtap="onHint">提示{{hintsLeft > 0 ? ' ' + hintsLeft : ''}}</view>
+      <!-- 次数用完但还能换时要看得出来，否则用户以为没了就直接不点了 -->
+      <view class="op ghost {{hintsLeft === 0 && canBuyHint ? 'ad' : ''}}" bindtap="onHint">
+        {{hintsLeft > 0 ? '提示 ' + hintsLeft : (canBuyHint ? '提示·视频' : '提示')}}
+      </view>
       <view class="op {{canSubmit ? '' : 'disabled'}}" bindtap="onSubmit">
         {{submitting ? '校验中…' : '提交这条'}}
       </view>
