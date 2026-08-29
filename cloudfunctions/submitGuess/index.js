@@ -40,6 +40,9 @@ const CROSS_FREE_HINTS = 2;     // 每天免费提示次数
 // 不封顶的话看几次广告就能错几次、揭几个字，三条命就形同虚设。
 const CROSS_MAX_HINTS = 5;      // 含免费的，看广告最多再换 3 次
 const CROSS_MAX_REVIVES = 2;    // 复活上限，即一天最多错 5 次
+// 初始 100 分是为了不出现负分：扣分项被上限卡死 —— 最多错 5 次(−50)、
+// 最多用 5 次提示(−25)，合计 −75，所以垫 100 分底就一定为正（最差 25 分）。
+const CROSS_START_SCORE = 100;
 const SCORE_CORRECT = 20;
 const SCORE_WRONG = -10;
 const SCORE_HINT = -5;
@@ -174,7 +177,7 @@ function normalizeCross(rec) {
     if (rec.hintQuota == null) rec.hintQuota = CROSS_FREE_HINTS;
     if (rec.hintsUsed == null) rec.hintsUsed = 0;
     if (rec.revives == null) rec.revives = 0;
-    if (rec.score == null) rec.score = 0;
+    if (rec.score == null) rec.score = CROSS_START_SCORE;
     if (!Array.isArray(rec.filled)) rec.filled = [];
     if (!Array.isArray(rec.hints)) rec.hints = [];
     return rec;
@@ -188,7 +191,9 @@ async function loadRecord(openid, mode, date) {
     } catch (e) { /* 首次作答 */ }
     const fresh = {
         _id: id, openid, mode, date,
-        guessesUsed: 0, filled: [], wrongGuesses: [], hints: [], score: 0, finished: false
+        guessesUsed: 0, filled: [], wrongGuesses: [], hints: [],
+        score: mode === 'cross' ? CROSS_START_SCORE : 0,
+        finished: false
     };
     return mode === 'cross' ? normalizeCross(fresh) : fresh;
 }

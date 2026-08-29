@@ -75,7 +75,7 @@ Page({
         canBuyHint: true,
         canRevive: true,
         stars: [],          // 渲染用：[true,true,false] = 还剩两颗
-        score: 0,
+        score: 100,      // 初始分，服务端同一口径（CROSS_START_SCORE）
         finished: false
     },
 
