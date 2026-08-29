@@ -10,6 +10,8 @@
 // action：
 //   'suggest' —— { keyword } 输入联想，返回片库里匹配的候选（前端下拉用）
 //   'answer'  —— { mode, date, guessId|guessTitle, r, c } 提交作答
+//   'cross' 玩法：answer 传 { mode:'cross', entryNo, chars } 按整条校验；
+//                hint 传 { mode:'cross', entryNo } 逐字揭开该条（每次多揭一个，不是换位置）
 //   'state'   —— { mode, date } 取当前用户在这道题上的进度（切后台回来/换设备要能续上）
 //   'hint'    —— { mode:'grid', date, r, c } 求提示：透露该格某个正确答案的一个侧面，扣一次机会
 //
@@ -30,6 +32,8 @@ const STATS_COLLECTION = 'guess_stats';
 
 const CN_TZ_OFFSET_MS = 8 * 60 * 60 * 1000;
 const MAX_GUESSES = 9;          // 与 moviegrid 一致：一局 9 次机会
+// 填字给宽一点：一局要答出 5 条，且求提示同样扣机会，9 次会让「卡在一条上」直接终局。
+const CROSS_MAX_GUESSES = 12;
 const SUGGEST_LIMIT = 10;
 
 /**
@@ -210,18 +214,29 @@ exports.main = async (event) => {
             return { success: true, candidates: await suggest(ev.keyword) };
         }
 
-        const mode = ev.mode === 'clue' ? 'clue' : 'grid';
+        const mode = (ev.mode === 'clue' || ev.mode === 'cross') ? ev.mode : 'grid';
+        const maxGuesses = mode === 'cross' ? CROSS_MAX_GUESSES : MAX_GUESSES;
         const date = /^\d{4}-\d{2}-\d{2}$/.test(ev.date || '') ? ev.date : cnDateStr();
         if (!openid) return { success: false, error: '没有拿到 openid' };
 
         const rec = await loadRecord(openid, mode, date);
 
         if (action === 'state') {
+            if (mode === 'cross') {
+                // 断线重连要能把已答出的条目重新填回格子，所以 state 得连字一起给回来
+                let p = null;
+                try { p = oneDoc(await db.collection(PUZZLE_COLLECTION).doc(mode + '_' + date).get()); } catch (e) { /* 还没出题 */ }
+                const done = (rec.filled || []).map(Number);
+                const solved = ((p && p.entries) || [])
+                    .filter(function (e) { return done.indexOf(e.no) >= 0; })
+                    .map(function (e) { return { no: e.no, r: e.r, c: e.c, dir: e.dir, len: e.len, word: e.word }; });
+                return { success: true, record: rec, solved: solved, maxGuesses: maxGuesses };
+            }
             return { success: true, record: rec, maxGuesses: MAX_GUESSES };
         }
 
         // —— 作答
-        if (rec.finished || rec.guessesUsed >= MAX_GUESSES) {
+        if (rec.finished || rec.guessesUsed >= maxGuesses) {
             return { success: true, finished: true, record: rec, reason: 'NO_GUESSES_LEFT' };
         }
 
@@ -230,6 +245,78 @@ exports.main = async (event) => {
             puzzle = oneDoc(await db.collection(PUZZLE_COLLECTION).doc(mode + '_' + date).get());
         } catch (e) { /* below */ }
         if (!puzzle) return { success: false, error: '今天的题还没生成，先调 getGuessPuzzle' };
+
+        // ====================================================================
+        // 纵横填字的作答 / 提示 / 进度
+        //
+        // 按**整条**校验而不是按格校验，这是刻意的：逐格告诉玩家「这个字对不对」
+        // 等于开放暴力试错——字池就那二十来个字，一格一格试几轮就能填满整盘。
+        // 整条提交则每错一次扣一次机会，和另外两个玩法的代价模型一致。
+        //
+        // 答对后把该条的字和坐标回给前端，让它把格子锁上；交叉格因此会被顺带填上，
+        // 这正是填字的乐趣所在，不需要额外处理。
+        // ====================================================================
+        if (mode === 'cross') {
+            const entries = puzzle.entries || [];
+            const solvedNos = (rec.filled || []).map(Number);
+            const viewOf = function (e) {
+                return { no: e.no, r: e.r, c: e.c, dir: e.dir, len: e.len, word: e.word };
+            };
+
+            if (action === 'hint') {
+                const e = entries.find(function (x) { return x.no === Number(ev.entryNo); });
+                if (!e) return { success: false, error: '没有第 ' + ev.entryNo + ' 条' };
+                if (solvedNos.indexOf(e.no) >= 0) return { success: false, error: '这条已经答出来了' };
+                // 每求一次多揭一个字，从头开始揭。同一条反复求提示是逐步揭开，
+                // 不是每次换个位置——后者会让「求两次」直接凑出大半个片名。
+                const used = (rec.hints || []).filter(function (h) { return h.entryNo === e.no; }).length;
+                if (used >= e.len - 1) {
+                    return { success: false, error: '这条已经提示到头了，再揭就是白给答案' };
+                }
+                const revealed = e.word.slice(0, used + 1);
+                rec.hints = (rec.hints || []).concat([{ entryNo: e.no, chars: revealed }]);
+                rec.guessesUsed = (rec.guessesUsed || 0) + 1;
+                rec.finished = rec.guessesUsed >= maxGuesses;
+                await saveRecord(rec);
+                return {
+                    success: true, costGuess: true,
+                    hint: { entryNo: e.no, r: e.r, c: e.c, dir: e.dir, chars: revealed },
+                    record: rec, maxGuesses: maxGuesses
+                };
+            }
+
+            // —— 作答：提交一整条
+            const e = entries.find(function (x) { return x.no === Number(ev.entryNo); });
+            if (!e) return { success: false, error: '没有第 ' + ev.entryNo + ' 条' };
+            if (solvedNos.indexOf(e.no) >= 0) {
+                return { success: true, correct: true, already: true, entry: viewOf(e), record: rec, maxGuesses: maxGuesses };
+            }
+            const submitted = Array.isArray(ev.chars) ? ev.chars.join('') : String(ev.chars || '');
+            if (!submitted) return { success: false, error: '没有提交内容' };
+
+            if (submitted !== e.word) {
+                rec.guessesUsed = (rec.guessesUsed || 0) + 1;
+                rec.wrongGuesses = (rec.wrongGuesses || []).concat([{ entryNo: e.no, text: submitted }]);
+                rec.finished = rec.guessesUsed >= maxGuesses;
+                await saveRecord(rec);
+                return { success: true, correct: false, record: rec, maxGuesses: maxGuesses };
+            }
+
+            // 答对：不扣机会（和 grid 一致——答对是奖励，不是消耗）
+            rec.filled = (rec.filled || []).concat([e.no]);
+            // 长片名更值钱；错得越多得分越低
+            rec.score = (rec.score || 0) + Math.max(10, 20 + e.len * 5 - (rec.guessesUsed || 0) * 2);
+            rec.finished = rec.filled.length >= entries.length || rec.guessesUsed >= maxGuesses;
+            await saveRecord(rec);
+            await bumpStats(mode, date, 'entry' + e.no, e.id);
+            return {
+                success: true, correct: true,
+                entry: viewOf(e),
+                movieId: e.id,
+                allSolved: rec.filled.length >= entries.length,
+                record: rec, maxGuesses: maxGuesses
+            };
+        }
 
         // —— 求提示（只有格子玩法有；线索玩法本身就是逐条给线索）
         if (action === 'hint') {

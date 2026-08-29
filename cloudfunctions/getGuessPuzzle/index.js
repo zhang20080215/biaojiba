@@ -462,20 +462,70 @@ function crossWordPool(pool, opts) {
         return f.subtype !== 'tv'
             && crossUsableTitle(f.title)
             && String(f.intro || '').length >= 20
-            && Number(f.ratingCount) >= minVotes;
+            && Number(f.ratingCount) >= minVotes
+            && crossClueOk(crossClue(f));
     });
 }
 
-/** 取简介的第一句当线索，并把片名/演员/导演打码 */
+/**
+ * 把一句简介加工成填字线索。比 grid/clue 玩法的打码严格得多，原因是这里泄露的
+ * 是**要填的那几个字本身**，不是「哪部片」——漏一点点就等于白送格子。
+ *
+ * 实测（2026-08-29 那道题）暴露的三个泄露源，缺一道都不行：
+ *   ① 片名子串。maskSpoilers 只替换完整片名，而中文片名的片段极常出现在简介里：
+ *      《柏林苍穹下》的简介第一句就是「柏林由两位天使守护着」，答案前两字直接白送；
+ *      《奇幻森林》的「茂密的原始森林中」同理。所以要按片名的**所有 2 字以上子串**打码。
+ *   ② 括号里的演职员。「（███ Scarlett Johansson 饰）」中文名打了码、拉丁原名还在，
+ *      等于点名。而这段对线索本身毫无价值，整段删掉最干净，顺带省出字数。
+ *   ③ 兜底：剩下的长串拉丁字母一律去掉（简介里偶尔直接写外文原名）。
+ */
 function crossClue(fact) {
-    const masked = maskSpoilers(fact.intro, fact);
-    const parts = masked.split(/[。！？；\n]/).map(function (x) { return x.trim(); }).filter(Boolean);
-    let s = '';
-    for (let i = 0; i < parts.length && s.length < 16; i++) s += (s ? '，' : '') + parts[i];
-    if (!s) s = masked;
-    if (s.length > CROSS_CLUE_MAXLEN) s = s.slice(0, CROSS_CLUE_MAXLEN) + '…';
-    return s;
+    let s = String(fact.intro || '');
+    // ② 括号连内容一起删（中英文括号都有）
+    s = s.replace(/[（(][^）)]*[）)]/g, '');
+    // ① 片名 / 原名 / 人名，以及片名的所有 2 字以上子串
+    const secrets = [];
+    const pushWord = function (w) {
+        if (w && String(w).length >= 2) secrets.push(String(w));
+    };
+    [fact.title, fact.originalTitle].forEach(function (t) {
+        const str = String(t || '');
+        for (let len = str.length; len >= 2; len--) {
+            for (let i = 0; i + len <= str.length; i++) pushWord(str.slice(i, i + len));
+        }
+    });
+    (fact.actors || []).forEach(pushWord);
+    (fact.directors || []).forEach(pushWord);
+    // 长的先替换，否则短子串会先把长串打散
+    secrets.sort(function (a, b) { return b.length - a.length; });
+    secrets.forEach(function (w) {
+        const parts = s.split(w);
+        if (parts.length > 1) s = parts.join('███');
+    });
+    // ③ 残留的拉丁字母串
+    s = s.replace(/[A-Za-z][A-Za-z.'\- ]{2,}/g, '');
+    // 连续的码合并，免得出现 ██████████ 这种长条
+    s = s.replace(/(?:███)+/g, '███').replace(/\s+/g, ' ');
+
+    const parts = s.split(/[。！？；\n]/).map(function (x) { return x.trim(); }).filter(Boolean);
+    let out = '';
+    for (let i = 0; i < parts.length && out.length < 16; i++) out += (out ? '，' : '') + parts[i];
+    if (!out) out = s.trim();
+    if (out.length > CROSS_CLUE_MAXLEN) out = out.slice(0, CROSS_CLUE_MAXLEN) + '…';
+    return out;
 }
+
+/**
+ * 线索可用吗。打完码后可能只剩一堆 ███ 或者短得毫无信息，
+ * 这种片直接不进词库 —— 填字里一条没法推的线索会卡死整盘。
+ */
+function crossClueOk(clue) {
+    const s = String(clue || '');
+    if (s.length < 14) return false;
+    const masked = (s.match(/███/g) || []).length * 3;
+    return masked / s.length < 0.35;
+}
+
 
 /** 汉字 -> [{ id, title, pos }]，交叉点从这里找 */
 function crossCharIndex(words) {
