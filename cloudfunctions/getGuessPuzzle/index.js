@@ -53,7 +53,16 @@ const MIN_ATTR_FILMS = 25;
 // 属性覆盖上限：一列若覆盖了大半个片库（比如「入选豆瓣 TOP250」在一个以豆瓣为主的库里），
 // 这一列就等于没有约束，该格答案就是行的全部作品——题目看着有三列，实际只考了一维。
 const MAX_ATTR_RATIO = 0.6;
-const MAX_GENERATE_TRIES = 400;
+// 每次试探 = 随机抽 3 人 + 3 属性再验 9 个交集。从 60 天实测反推，合法组合出现率约 1/2400，
+// 所以 400 次远远不够 —— 当初 43/60 天「凑不出来」不是片库撑不起，是搜索预算太小提早放弃。
+// 抽 2 万次期望命中 8 次以上，失败概率约万分之二，耗时约 0.2 秒。
+const MAX_GENERATE_TRIES = 20000;
+
+// 批量备题时的跨天去重冷却：同一个演员/导演 7 天内不再当行，同一个属性 3 天内不再当列。
+// 按天现出题做不到这件事（没有跨天记忆），实测 17 个成功日里一个人能独占 6 天。
+const PERSON_COOLDOWN_DAYS = 7;
+const ATTR_COOLDOWN_DAYS = 3;
+const PREPARE_BUDGET_MS = 50000;
 
 /** 中国时区自然日 'YYYY-MM-DD' */
 function cnDateStr(ms) {
@@ -394,12 +403,101 @@ function sanitizeClue(doc, revealed) {
 }
 
 exports.main = async (event) => {
+    const startedAt = Date.now();
     const ev = event || {};
     const mode = ev.mode === 'clue' ? 'clue' : 'grid';
     const date = /^\d{4}-\d{2}-\d{2}$/.test(ev.date || '') ? ev.date : cnDateStr();
     const docId = mode + '_' + date;
 
     try {
+        // —— 批量备题：一次备好未来 N 天，写进 guess_puzzles。
+        //
+        // 这是这个玩法的正式出题方式，按天现出题只作兜底。理由有两条：
+        //   1. 单个种子凑不出 3×3 是常态（合法组合出现率约 1/2400），现出题一旦失败
+        //      那天就没题了；批量备题里失败无所谓，换个种子接着抽，只留成功的。
+        //   2. 跨天去重只有批量时做得到。按天现出题没有跨天记忆，实测 17 个成功日里
+        //      尼古拉斯·凯奇独占 6 天。这里对人物/属性各设冷却天数，直接从候选里剔掉。
+        //
+        // { prepare: true, days: 30 }                     —— 从今天起备 30 天，已有的跳过
+        // { prepare: true, days: 30, from: '2026-09-01' } —— 指定起始日
+        // { prepare: true, days: 30, overwrite: true }    —— 连已有的一起重出
+        if (ev.prepare === true) {
+            const pool = await readPool();
+            if (!pool.length) return { success: false, error: 'movie_facts 是空的，先跑 buildMovieFacts' };
+            const mp = pool.filter(f => f.subtype !== 'tv');
+            const days = Math.max(1, Math.min(Number(ev.days) || 30, 60));
+            const from = /^\d{4}-\d{2}-\d{2}$/.test(ev.from || '') ? ev.from : cnDateStr();
+            const overwrite = ev.overwrite === true;
+            const personCool = ev.personCooldown == null ? PERSON_COOLDOWN_DAYS : Number(ev.personCooldown);
+            const attrCool = ev.attrCooldown == null ? ATTR_COOLDOWN_DAYS : Number(ev.attrCooldown);
+
+            const axes = buildPredicates(mp);
+            try { await db.createCollection(PUZZLE_COLLECTION); } catch (e) { /* 已存在 */ }
+
+            const fromMs = Date.parse(from + 'T00:00:00Z');
+            const lastPerson = new Map();   // key -> 上次用它的天序号
+            const lastAttr = new Map();
+            const made = [], skipped = [], failedDays = [];
+            let stoppedEarly = false;
+
+            for (let i = 0; i < days; i++) {
+                if (Date.now() - startedAt > PREPARE_BUDGET_MS) { stoppedEarly = true; break; }
+                const date = cnDateStr(fromMs - CN_TZ_OFFSET_MS + i * 86400000);
+                const docId = 'grid_' + date;
+
+                if (!overwrite) {
+                    let exists = false;
+                    try { const g = await db.collection(PUZZLE_COLLECTION).doc(docId).get(); exists = !!(g && g.data); }
+                    catch (e) { /* 不存在 */ }
+                    if (exists) { skipped.push(date); continue; }
+                }
+
+                // 冷却期内用过的人物/属性直接不进候选
+                const usable = {
+                    personAxis: axes.personAxis.filter(p => !(lastPerson.has(p.key) && i - lastPerson.get(p.key) < personCool)),
+                    attrAxis: axes.attrAxis.filter(p => !(lastAttr.has(p.key) && i - lastAttr.get(p.key) < attrCool))
+                };
+                // 冷却把候选削太狠时退回全量，宁可重复也不能没题
+                const gopts = {
+                    axes: (usable.personAxis.length >= 6 && usable.attrAxis.length >= 6) ? usable : axes
+                };
+
+                let g = null;
+                for (let salt = 0; salt < 8; salt++) {
+                    const cand = generateGrid(mp, seededRandom('grid|' + date + (salt ? '|p' + salt : '')), gopts);
+                    if (!cand.error) { g = cand; break; }
+                }
+                if (!g) { failedDays.push(date); continue; }
+
+                g.rows.forEach(r => lastPerson.set(r.key, i));
+                g.cols.forEach(c => lastAttr.set(c.key, i));
+
+                const doc = {
+                    mode: 'grid', date, rows: g.rows, cols: g.cols, cells: g.cells,
+                    minCellAnswers: g.minCellAnswers, hardestCell: g.hardestCell,
+                    poolSize: mp.length, createdAt: db.serverDate()
+                };
+                await db.collection(PUZZLE_COLLECTION).doc(docId).set({ data: doc });
+                made.push({ date, hardestCell: g.hardestCell, rows: g.rows.map(r => r.label) });
+            }
+
+            const persons = new Map();
+            made.forEach(m => m.rows.forEach(l => persons.set(l, (persons.get(l) || 0) + 1)));
+            return {
+                success: true, mode: 'prepare',
+                from, days, poolSize: mp.length,
+                generated: made.length, skipped: skipped.length, failed: failedDays.length,
+                failedDays,
+                stoppedEarly,
+                note: stoppedEarly ? '未备完，用同样参数再跑一次会跳过已有的接着备' : '已备完',
+                distinctPersons: persons.size,
+                topPersons: Array.from(persons.entries()).sort((a, b) => b[1] - a[1]).slice(0, 5)
+                    .map(e => e[0] + '×' + e[1]),
+                hardestCellDist: made.reduce((m, x) => { m['最难格=' + x.hardestCell] = (m['最难格=' + x.hardestCell] || 0) + 1; return m; }, {}),
+                sample: made.slice(0, 3)
+            };
+        }
+
         // —— 压测：只算不写，按真实片库复核 MIN_PERSON_FILMS 这几个常数。
         // 原始的 8/200/0.6 是拿「约 4000 部」的合成片库压出来的，而实到的 moviePool 只有 1800 上下，
         // 常数不能照搬。跑 N 个虚构日期（不是真实日期，所以不落库、随便跑），看三件事：
