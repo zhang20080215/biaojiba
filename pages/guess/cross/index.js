@@ -127,6 +127,11 @@ Page({
                 chips: (puzzle.charPool || []).map(function (ch) { return { ch: ch, used: false }; }),
                 currentNo: entries.length ? entries[0].no : 0,
                 focusIdx: 0,
+                // 切关要清干净：_applySolved 在没有已答条目时会直接 return，
+                // 不在这里归零的话上一关的「已答出 3/5」会留在计数条上
+                solvedCount: 0,
+                current: null,
+                lastCorrect: null,
                 maxGuesses: st.maxGuesses || 12,
                 guessesLeft: Math.max(0, (st.maxGuesses || 12) - (rec.guessesUsed || 0)),
                 score: rec.score || 0,
@@ -174,7 +179,7 @@ Page({
 
     /** 把服务端回来的已答出条目写进盘面并锁死 */
     _applySolved(solved) {
-        if (!solved || !solved.length) return;
+        if (!solved) solved = [];
         const board = this.data.board;
         const entries = this.data.entries.slice();
         solved.forEach(s => {
@@ -186,13 +191,15 @@ Page({
                 board[pt.r][pt.c].locked = true;
             });
         });
-        // 光标挪到第一条没答出的
-        const next = entries.find(e => !e.solved);
+        // 当前这条要是还没答出就别动它 —— onShow 回到页面时也会走这里，
+        // 无条件重置会把玩家正在填的那条选择弄丢。
+        const keep = entries.find(e => e.no === this.data.currentNo && !e.solved);
+        const next = keep || entries.find(e => !e.solved);
         this.setData({
             board, entries,
             solvedCount: entries.filter(e => e.solved).length,
             currentNo: next ? next.no : (entries.length ? entries[0].no : 0),
-            focusIdx: 0
+            focusIdx: keep ? this.data.focusIdx : 0
         });
         this._syncActive();
     },
@@ -328,7 +335,9 @@ Page({
         try {
             const res = await wx.cloud.callFunction({
                 name: 'submitGuess',
-                data: { action: 'answer', mode: MODE, entryNo: cur.no, chars }
+                // ⚠ date 必须带上：submitGuess 里 date 缺省取今天，翻到别的日期做题时
+                // 会拿今天那道题的第 N 条来比对，判错且串词
+                data: { action: 'answer', mode: MODE, entryNo: cur.no, chars, date: this._date || undefined }
             });
             const r = res.result || {};
             if (!r.success) throw new Error(r.error || '提交失败');
@@ -385,7 +394,7 @@ Page({
         try {
             const res = await wx.cloud.callFunction({
                 name: 'submitGuess',
-                data: { action: 'hint', mode: MODE, entryNo: cur.no }
+                data: { action: 'hint', mode: MODE, entryNo: cur.no, date: this._date || undefined }
             });
             const r = res.result || {};
             if (!r.success) { wx.showToast({ title: r.error || '提示失败', icon: 'none' }); return; }
