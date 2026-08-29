@@ -246,7 +246,7 @@ exports.main = async (event) => {
         }
 
         const mode = (ev.mode === 'clue' || ev.mode === 'cross') ? ev.mode : 'grid';
-        const maxGuesses = mode === 'cross' ? CROSS_MAX_GUESSES : MAX_GUESSES;
+        // 只有 grid/clue 还用「机会数」这套；cross 改成了生命值，走自己那一套判定
         const date = /^\d{4}-\d{2}-\d{2}$/.test(ev.date || '') ? ev.date : cnDateStr();
         if (!openid) return { success: false, error: '没有拿到 openid' };
 
@@ -275,7 +275,7 @@ exports.main = async (event) => {
         // —— 作答
         // cross 有自己的结束判定（生命值），而且结束之后还要能调 revive，
         // 所以不走这条通用早退
-        if (mode !== 'cross' && (rec.finished || rec.guessesUsed >= maxGuesses)) {
+        if (mode !== 'cross' && (rec.finished || rec.guessesUsed >= MAX_GUESSES)) {
             return { success: true, finished: true, record: rec, reason: 'NO_GUESSES_LEFT' };
         }
 
