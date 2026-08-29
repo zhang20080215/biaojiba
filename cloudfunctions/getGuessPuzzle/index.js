@@ -686,6 +686,8 @@ exports.main = async (event) => {
             const mp0 = pool0.filter(function (f) { return f.subtype !== 'tv'; });
             const pureTitle = mp0.filter(function (f) { return crossUsableTitle(f.title); });
             const withIntro = pureTitle.filter(function (f) { return String(f.intro || '').length >= 20; });
+            const minV = ev.minVotes == null ? CROSS_MIN_VOTES : Number(ev.minVotes);
+            const afterVotes = withIntro.filter(function (f) { return Number(f.ratingCount) >= minV; });
             const words = crossWordPool(mp0, ev);
             const byLen = {};
             words.forEach(function (w) { byLen[w.title.length] = (byLen[w.title.length] || 0) + 1; });
@@ -700,14 +702,21 @@ exports.main = async (event) => {
                 moviePool: mp0.length,
                 afterPureTitle: pureTitle.length,      // 纯汉字 2~7 字
                 afterIntro: withIntro.length,          // 再要求有简介
-                wordPool: words.length,                // 再要求评分人数达标 = 最终词库
+                afterVotes: afterVotes.length,         // 再要求评分人数达标
+                wordPool: words.length,                // 再过线索质量闸门 = 最终词库
+                droppedByClue: afterVotes.length - words.length,
                 lenDist: byLen,
                 seeds: words.filter(function (w) { return w.title.length >= 4 && w.title.length <= 6; }).length,
                 distinctChars: cf.size,
                 crossableChars: crossable,             // 出现在 ≥2 部片名里，能当交叉点
                 topChars: Array.from(cf.entries()).sort(function (a, b) { return b[1] - a[1]; })
                     .slice(0, 12).map(function (e) { return e[0] + ':' + e[1]; }),
-                sampleTitles: words.slice(0, 12).map(function (w) { return w.title; })
+                sampleTitles: words.slice(0, 12).map(function (w) { return w.title; }),
+                // 打完码的线索长什么样，直接在这看，不用再单独 inspect
+                sampleClues: words.slice(0, 5).map(function (w) { return w.title + ' → ' + crossClue(w); }),
+                // 被闸门刷掉的样本：确认刷的是该刷的（简介太短/全是码）
+                droppedSamples: afterVotes.filter(function (f) { return !crossClueOk(crossClue(f)); })
+                    .slice(0, 5).map(function (w) { return w.title + ' → ' + crossClue(w); })
             };
         }
 
