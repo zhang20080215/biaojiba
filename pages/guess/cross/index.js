@@ -394,7 +394,11 @@ Page({
                 // 错了就把这条清空重来（锁定的交叉格留着）
                 this._clearEntry(cur);
                 if (r.finished) this._offerRevive();
-                else wx.showToast({ title: '不对，扣一颗星', icon: 'none' });
+                else {
+                    // 剩几次用服务端回的 lives，不用本地推算 —— 复活/多端作答都可能让它对不上
+                    const left = r.lives == null ? this.data.lives : r.lives;
+                    wx.showToast({ title: '不对，扣一颗星，还剩 ' + left + ' 次机会', icon: 'none' });
+                }
             }
         } catch (e) {
             this.setData({ submitting: false });
