@@ -133,10 +133,14 @@ function cnTitleLen(title) {
  * 分两个轴：人物轴（演员/导演）当行，属性轴当列——这也是 moviegrid 的排布，
  * 「某演员 ∩ 某类型」比「某类型 ∩ 某年代」有意思得多，后者往往一堆答案。
  */
-function buildPredicates(pool) {
+function buildPredicates(pool, opts) {
     const personAxis = [];
     const attrAxis = [];
-    const maxAttr = Math.floor(pool.length * MAX_ATTR_RATIO);
+    // opts 只有压测模式会传，线上调用一律走常数
+    const o = opts || {};
+    const minPerson = o.minPersonFilms || MIN_PERSON_FILMS;
+    const personTop = o.personTop || PERSON_CANDIDATE_TOP;
+    const maxAttr = Math.floor(pool.length * (o.maxAttrRatio || MAX_ATTR_RATIO));
     // 属性谓词统一走这里，好把上下限判断收在一处
     const pushAttr = (p) => {
         if (p.ids.length >= MIN_ATTR_FILMS && p.ids.length <= maxAttr) attrAxis.push(p);
@@ -154,12 +158,12 @@ function buildPredicates(pool) {
 
     // —— 人物轴
     countBy(f => f.actors).forEach((ids, name) => {
-        if (ids.length >= MIN_PERSON_FILMS) {
+        if (ids.length >= minPerson) {
             personAxis.push({ key: 'actor:' + name, type: 'actor', label: name, value: name, ids });
         }
     });
     countBy(f => f.directors).forEach((ids, name) => {
-        if (ids.length >= MIN_PERSON_FILMS) {
+        if (ids.length >= minPerson) {
             personAxis.push({ key: 'director:' + name, type: 'director', label: name + '（导演）', value: name, ids });
         }
     });
@@ -218,7 +222,7 @@ function buildPredicates(pool) {
     // 人物轴按作品数降序截断：见 PERSON_CANDIDATE_TOP 的注释，
     // 不截断的话随机抽样几乎必然抽到三个作品数刚过下限的人，凑不出可解的三行三列。
     personAxis.sort((a, b) => b.ids.length - a.ids.length);
-    return { personAxis: personAxis.slice(0, PERSON_CANDIDATE_TOP), attrAxis };
+    return { personAxis: personAxis.slice(0, personTop), attrAxis };
 }
 
 /**
@@ -227,8 +231,8 @@ function buildPredicates(pool) {
  * 不满足就整体重来。纯随机重试而不是回溯搜索——谓词只有几百个，
  * 实测几十次内基本能中，代码简单得多。
  */
-function generateGrid(pool, rnd) {
-    const { personAxis, attrAxis } = buildPredicates(pool);
+function generateGrid(pool, rnd, opts) {
+    const { personAxis, attrAxis } = buildPredicates(pool, opts);
     if (personAxis.length < 3 || attrAxis.length < 3) {
         return { error: '谓词不足：人物 ' + personAxis.length + ' 个 / 属性 ' + attrAxis.length + ' 个，片库可能还没建好' };
     }
@@ -372,6 +376,60 @@ exports.main = async (event) => {
     const docId = mode + '_' + date;
 
     try {
+        // —— 压测：只算不写，按真实片库复核 MIN_PERSON_FILMS 这几个常数。
+        // 原始的 8/200/0.6 是拿「约 4000 部」的合成片库压出来的，而实到的 moviePool 只有 1800 上下，
+        // 常数不能照搬。跑 N 个虚构日期（不是真实日期，所以不落库、随便跑），看三件事：
+        //   failed —— 凑不出 3×3 的天数，>0 就说明门槛偏高
+        //   hardestCellMedian —— 最难那格的解数中位数，当初压测的目标是 3
+        //   distinctPersons —— N 天里一共用到几个不同的人，这才是「会不会天天德尼罗」的判据
+        // 可用 minPersonFilms/personTop/maxAttrRatio 覆盖常数，一次调用试一档，不用改代码重部署。
+        if (ev.stress === true) {
+            const pool0 = await readPool();
+            const mp = pool0.filter(f => f.subtype !== 'tv');
+            if (!mp.length) return { success: false, error: 'movie_facts 是空的，先跑 buildMovieFacts' };
+            const days = Math.max(1, Math.min(Number(ev.days) || 120, 400));
+            const opts = {
+                minPersonFilms: Number(ev.minPersonFilms) || MIN_PERSON_FILMS,
+                personTop: Number(ev.personTop) || PERSON_CANDIDATE_TOP,
+                maxAttrRatio: Number(ev.maxAttrRatio) || MAX_ATTR_RATIO
+            };
+            const axes = buildPredicates(mp, opts);
+            let failed = 0;
+            const hardest = [];
+            const cellTarget = {};
+            const persons = new Map();
+            const attrs = new Map();
+            for (let i = 0; i < days; i++) {
+                const d = 'stress-' + i;
+                let g = generateGrid(mp, seededRandom('grid|' + d), opts);
+                for (let salt = 1; g.error && salt <= 5; salt++) {
+                    g = generateGrid(mp, seededRandom('grid|' + d + '|retry' + salt), opts);
+                }
+                if (g.error) { failed++; continue; }
+                hardest.push(g.hardestCell);
+                const k = '每格>=' + g.minCellAnswers;
+                cellTarget[k] = (cellTarget[k] || 0) + 1;
+                g.rows.forEach(r => persons.set(r.label, (persons.get(r.label) || 0) + 1));
+                g.cols.forEach(c => attrs.set(c.label, (attrs.get(c.label) || 0) + 1));
+            }
+            hardest.sort((a, b) => a - b);
+            const topN = (m, n) => Array.from(m.entries()).sort((a, b) => b[1] - a[1])
+                .slice(0, n).map(e => e[0] + '×' + e[1]);
+            return {
+                success: true, mode: 'stress',
+                opts, poolSize: mp.length, days,
+                predicates: { person: axes.personAxis.length, attr: axes.attrAxis.length },
+                failed,
+                cellTarget,
+                hardestCellMedian: hardest.length ? hardest[Math.floor(hardest.length / 2)] : 0,
+                hardestCellMin: hardest.length ? hardest[0] : 0,
+                distinctPersons: persons.size,
+                distinctAttrs: attrs.size,
+                topPersons: topN(persons, 8),
+                topAttrs: topN(attrs, 8)
+            };
+        }
+
         // 已有就直接返回（每日一题：所有人看到同一道）
         if (ev.regenerate !== true) {
             try {
