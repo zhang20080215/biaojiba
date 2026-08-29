@@ -632,16 +632,21 @@ function generateCross(pool, rnd, opts) {
                 movieIds: f.movieIds || []
             };
         });
-        const solutionChars = new Set();
-        g.forEach(function (row) { row.forEach(function (ch) { if (ch) solutionChars.add(ch); }); });
-        // 干扰字从别的片名里取，且不能和答案字重复
+        // 字池**按格子逐个给**，不是按不同的字给：每个字只能用一次，
+        // 所以《虫虫危机》那种重复字的片名要给两个「虫」才填得满。
+        // 交叉格只算一次（它本来就只有一个格子），这一点由「遍历格子」天然保证。
+        const poolChars = [];
+        g.forEach(function (row) { row.forEach(function (ch) { if (ch) poolChars.push(ch); }); });
+        const solutionChars = new Set(poolChars);
+        // 干扰字从别的片名里取，且不能和答案里的字重复 —— 否则玩家拿它去填反而是对的，
+        // 就不是干扰而是多给了一份
         const distract = [];
         const allChars = Array.from(byChar.keys());
         for (let i = 0; i < CROSS_DISTRACTORS * 20 && distract.length < CROSS_DISTRACTORS; i++) {
             const ch = pick(allChars);
             if (!solutionChars.has(ch) && distract.indexOf(ch) < 0) distract.push(ch);
         }
-        const charPool = shuffled(Array.from(solutionChars).concat(distract), rnd);
+        const charPool = shuffled(poolChars.concat(distract), rnd);
 
         return {
             grid: g.map(function (row) { return row.slice(); }),

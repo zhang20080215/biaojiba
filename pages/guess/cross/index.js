@@ -3,6 +3,10 @@
 // 7×7 网格里横竖交叉着 5 部电影的中文片名，线索是打过码的豆瓣简介第一句。
 // 玩家点一条线索选中它，再从底部字池点字往格子里填，填满一条后整条提交。
 //
+// 字池是**多重集**：一个格子一份字，重复的字给多份（《虫虫危机》给两个「虫」），
+// 每份只能用一次，另混入若干干扰字。所以字池按**下标**操作而不是按字操作 ——
+// 同一个字可能有好几份，用掉哪一份、退回哪一份必须对得上。
+//
 // **校验按整条走，不按格。** 逐格反馈「这个字对不对」等于开放暴力试错——
 // 字池就二十来个字，一格格试几轮就能填满整盘。整条提交则错一次扣一次机会。
 // 所以前端拿不到任何单字的对错，只有提交后服务端给的整条结果。
@@ -11,26 +15,6 @@
 // 不含 entries[].word。进度存 guess_records（openid+mode+date），切后台/换设备能续上。
 
 const MODE = 'cross';
-
-/**
- * 取 openid。
- * batchUpdateMarks 是**前端传 openid** 的（缺了直接返回「参数不完整」，静默失败），
- * 而 app.ensureOpenid() 不返回值也不返回 promise，所以这里自己兜一层。
- * 猜题相关的云函数不需要——submitGuess 自己从 wxContext 取。
- */
-async function resolveOpenid() {
-    const app = getApp();
-    const cached = app && app.globalData && app.globalData.openid;
-    if (cached) return cached;
-    try {
-        const res = await wx.cloud.callFunction({ name: 'getOpenid' });
-        const openid = (res && res.result && res.result.openid) || '';
-        if (openid && app && app.globalData) app.globalData.openid = openid;
-        return openid;
-    } catch (e) {
-        return '';
-    }
-}
 
 /**
  * 日期加减。用 UTC 解析 + UTC 取值，避免真机时区把 '2026-08-29' 解析成本地零点后
@@ -68,9 +52,10 @@ Page({
         dayOffset: 0,       // 相对今天第几天，头部显示用
         board: [],          // [[{ on, ch, locked, active, focus, no }]]
         entries: [],        // [{ no, r, c, dir, len, clue, solved, word }]
-        // 字池项预先算好 used 标记：WXML 里用变量当键取对象值（usedChars[item]）不保险，
-        // 直接给数组更稳，也少一层绑定
-        chips: [],          // [{ ch, used }]
+        // 字池是**多重集**：一个格子一个字，重复的字给多份（《虫虫危机》给两个「虫」），
+        // 每份只能用一次。所以按下标操作，不能按字操作 —— 同一个字可能有好几份，
+        // 用掉哪一份、退回哪一份必须对得上。
+        chips: [],          // [{ ch, used }]，下标即身份
         currentNo: 0,
         // 只展示当前选中那条的线索：五条堆在一起会被底部字池盖住，
         // 切换靠上面那排编号标签（和点格子）
@@ -82,8 +67,7 @@ Page({
         guessesLeft: 12,
         maxGuesses: 12,
         score: 0,
-        finished: false,
-        lastCorrect: null
+        finished: false
     },
 
     onLoad() {
@@ -131,7 +115,6 @@ Page({
                 // 不在这里归零的话上一关的「已答出 3/5」会留在计数条上
                 solvedCount: 0,
                 current: null,
-                lastCorrect: null,
                 maxGuesses: st.maxGuesses || 12,
                 guessesLeft: Math.max(0, (st.maxGuesses || 12) - (rec.guessesUsed || 0)),
                 score: rec.score || 0,
@@ -167,8 +150,9 @@ Page({
     /** 按 mask 铺盘，并把每条的起始格标上序号 */
     _buildBoard() {
         const mask = this._mask || [];
+        // chip = 填这一格的字池下标，−1 表示空；退格要靠它把那一份字还回去
         const board = mask.map(row => row.map(m => ({
-            on: !!m, ch: '', locked: false, active: false, focus: false, no: 0
+            on: !!m, ch: '', chip: -1, locked: false, active: false, focus: false, no: 0
         })));
         this.data.entries.forEach(e => {
             if (board[e.r] && board[e.r][e.c]) board[e.r][e.c].no = e.no;
@@ -181,14 +165,22 @@ Page({
     _applySolved(solved) {
         if (!solved) solved = [];
         const board = this.data.board;
+        const chips = this.data.chips;
         const entries = this.data.entries.slice();
         solved.forEach(s => {
             const idx = entries.findIndex(e => e.no === s.no);
             if (idx >= 0) entries[idx] = Object.assign({}, entries[idx], { solved: true, word: s.word });
             cellsOf(s).forEach((pt, i) => {
                 if (!board[pt.r] || !board[pt.r][pt.c]) return;
-                board[pt.r][pt.c].ch = s.word[i];
-                board[pt.r][pt.c].locked = true;
+                const cell = board[pt.r][pt.c];
+                if (cell.locked) return;                 // 交叉格可能已被另一条锁过
+                // 玩家自己填对的那一格保留原来占用的份数，别重复扣
+                if (cell.ch !== s.word[i]) {
+                    this._freeCell(cell, chips);
+                    cell.chip = this._takeChip(s.word[i], chips);
+                    cell.ch = s.word[i];
+                }
+                cell.locked = true;
             });
         });
         // 当前这条要是还没答出就别动它 —— onShow 回到页面时也会走这里，
@@ -196,7 +188,7 @@ Page({
         const keep = entries.find(e => e.no === this.data.currentNo && !e.solved);
         const next = keep || entries.find(e => !e.solved);
         this.setData({
-            board, entries,
+            board, chips, entries,
             solvedCount: entries.filter(e => e.solved).length,
             currentNo: next ? next.no : (entries.length ? entries[0].no : 0),
             focusIdx: keep ? this.data.focusIdx : 0
@@ -204,7 +196,25 @@ Page({
         this._syncActive();
     },
 
-    /** 重算高亮 / 光标 / 字池淡色 / 提交可用，盘面变了就调一次 */
+    /**
+     * 从字池里领一份字（优先没用过的），返回下标；领不到给 −1。
+     * 提示和「续上已答出的条目」都会直接往格子里写字，也要走这里扣掉相应的份数，
+     * 否则玩家手上会凭空多出可用的字。
+     */
+    _takeChip(ch, chips) {
+        const i = chips.findIndex(function (x) { return x.ch === ch && !x.used; });
+        if (i >= 0) chips[i].used = true;
+        return i;
+    },
+
+    /** 清空一格，并把它占用的那份字还回字池 */
+    _freeCell(cell, chips) {
+        if (cell.chip >= 0 && chips[cell.chip]) chips[cell.chip].used = false;
+        cell.ch = '';
+        cell.chip = -1;
+    },
+
+    /** 重算高亮 / 光标 / 提交可用，盘面变了就调一次 */
     _syncActive() {
         const board = this.data.board;
         const cur = this.data.entries.find(e => e.no === this.data.currentNo);
@@ -220,11 +230,8 @@ Page({
                 if (i === this.data.focusIdx) cell.focus = true;
             });
         }
-        const used = {};
-        board.forEach(row => row.forEach(cell => { if (cell.ch) used[cell.ch] = true; }));
-        const chips = this.data.chips.map(function (x) { return { ch: x.ch, used: !!used[x.ch] }; });
         this.setData({
-            board, chips,
+            board,
             current: cur ? {
                 no: cur.no, dir: cur.dir, len: cur.len,
                 clue: cur.clue, solved: cur.solved, word: cur.word
@@ -244,8 +251,6 @@ Page({
     _shiftDay(delta) {
         if (this.data.loading || !this.data.date) return;
         this._date = shiftDate(this.data.date, delta);
-        // 切关时把上一关残留的「答对了」横幅收掉
-        this.setData({ lastCorrect: null });
         this.refresh();
     },
 
@@ -289,7 +294,10 @@ Page({
 
     onTapChar(e) {
         if (this.data.finished) return;
-        const ch = e.currentTarget.dataset.ch;
+        const idx = Number(e.currentTarget.dataset.i);
+        const chips = this.data.chips;
+        const chip = chips[idx];
+        if (!chip || chip.used) return;          // 用过的那一份点不动
         const cur = this.data.entries.find(x => x.no === this.data.currentNo);
         if (!cur || cur.solved) return;
         const pts = cellsOf(cur);
@@ -303,11 +311,15 @@ Page({
             this._syncActive();
             return;
         }
-        cell.ch = ch;
+        // 这一格原本有字就先把那一份还回去，再放新的
+        this._freeCell(cell, chips);
+        chip.used = true;
+        cell.ch = chip.ch;
+        cell.chip = idx;
         // 光标自动往后挪到下一个空位，全填满就停在最后
         let next = this.data.focusIdx + 1;
         while (next < pts.length && board[pts[next].r][pts[next].c].locked) next++;
-        this.setData({ board, focusIdx: Math.min(next, pts.length - 1) });
+        this.setData({ board, chips, focusIdx: Math.min(next, pts.length - 1) });
         this._syncActive();
     },
 
@@ -321,8 +333,9 @@ Page({
         if (i >= pts.length || !board[pts[i].r][pts[i].c].ch) i--;
         while (i >= 0 && board[pts[i].r][pts[i].c].locked) i--;
         if (i < 0) return;
-        board[pts[i].r][pts[i].c].ch = '';
-        this.setData({ board, focusIdx: i });
+        const chips = this.data.chips;
+        this._freeCell(board[pts[i].r][pts[i].c], chips);
+        this.setData({ board, chips, focusIdx: i });
         this._syncActive();
     },
 
@@ -350,13 +363,7 @@ Page({
             });
             if (r.correct) {
                 this._applySolved([r.entry]);
-                this.setData({
-                    lastCorrect: {
-                        word: r.entry.word,
-                        movieIds: r.movieIds || []
-                    }
-                });
-                wx.showToast({ title: '答对了', icon: 'success' });
+                wx.showToast({ title: '答对了：' + r.entry.word, icon: 'none' });
             } else {
                 // 错了就把这条清空重来（锁定的交叉格留着）
                 this._clearEntry(cur);
@@ -370,11 +377,12 @@ Page({
 
     _clearEntry(entry) {
         const board = this.data.board;
+        const chips = this.data.chips;
         cellsOf(entry).forEach(p => {
             const cell = board[p.r][p.c];
-            if (cell && !cell.locked) cell.ch = '';
+            if (cell && !cell.locked) this._freeCell(cell, chips);
         });
-        this.setData({ board, focusIdx: this._firstEmptyIdx(entry) });
+        this.setData({ board, chips, focusIdx: this._firstEmptyIdx(entry) });
         this._syncActive();
     },
 
@@ -400,13 +408,19 @@ Page({
             if (!r.success) { wx.showToast({ title: r.error || '提示失败', icon: 'none' }); return; }
             const rec = r.record || {};
             const board = this.data.board;
+            const chips = this.data.chips;
             const pts = cellsOf(cur);
-            // hint.chars 是从头揭开的前 N 个字，直接盖上去
+            // hint.chars 是从头揭开的前 N 个字，直接盖上去（并从字池扣掉相应份数）
             (r.hint.chars || '').split('').forEach((ch, i) => {
-                if (pts[i]) board[pts[i].r][pts[i].c].ch = ch;
+                if (!pts[i]) return;
+                const cell = board[pts[i].r][pts[i].c];
+                if (cell.locked || cell.ch === ch) return;
+                this._freeCell(cell, chips);
+                cell.chip = this._takeChip(ch, chips);
+                cell.ch = ch;
             });
             this.setData({
-                board,
+                board, chips,
                 guessesLeft: Math.max(0, (r.maxGuesses || this.data.maxGuesses) - (rec.guessesUsed || 0)),
                 finished: !!rec.finished,
                 focusIdx: this._firstEmptyIdx(cur)
@@ -415,32 +429,6 @@ Page({
         } catch (e) {
             wx.showToast({ title: '提示失败', icon: 'none' });
         }
-    },
-
-    async markWatched() {
-        const lc = this.data.lastCorrect;
-        if (!lc || !lc.movieIds.length) {
-            wx.showToast({ title: '这部片没有可标记的榜单记录', icon: 'none' });
-            this.setData({ lastCorrect: null });
-            return;
-        }
-        try {
-            const openid = await resolveOpenid();
-            if (!openid) { wx.showToast({ title: '标记失败：没拿到身份', icon: 'none' }); return; }
-            const res = await wx.cloud.callFunction({
-                name: 'batchUpdateMarks',
-                data: { movieIds: lc.movieIds, status: 'watched', openid }
-            });
-            if (!(res.result && res.result.success)) throw new Error((res.result && res.result.error) || '标记失败');
-            wx.showToast({ title: '已标记为看过', icon: 'success' });
-            this.setData({ lastCorrect: null });
-        } catch (e) {
-            wx.showToast({ title: (e && e.message) || '标记失败', icon: 'none' });
-        }
-    },
-
-    dismissCorrect() {
-        this.setData({ lastCorrect: null });
     },
 
     onShareAppMessage() {

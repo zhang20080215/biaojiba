@@ -102,24 +102,11 @@ page { background: #FFFCF5; }
 .over-title { font-size: 34rpx; font-weight: 700; color: #2D2D2B; }
 .over-sub { margin-top: 10rpx; font-size: 26rpx; color: #A7A498; }
 
-/* —— 答对后顺手标记 */
-.mark-bar {
-  position: fixed; left: 24rpx; right: 24rpx; bottom: 500rpx; z-index: 20;
-  background: rgba(45,45,43,0.94); border-radius: 16rpx;
-  padding: 20rpx 24rpx; display: flex; align-items: center;
-}
-.mark-text { flex: 1; font-size: 26rpx; color: #fff; }
-.mark-btns { display: flex; }
-.mark-btn {
-  margin-left: 12rpx; padding: 10rpx 24rpx; border-radius: 999rpx;
-  font-size: 24rpx; background: #9AAB65; color: #fff;
-}
-.mark-btn.ghost { background: transparent; color: #C9C6BA; }
-
 /* —— 底部字池（固定；页面靠 .page 的 padding-bottom 让位）
    **每行 6 个靠百分比保证，不靠算宽度**：按 104rpx 固定宽算出来该是 6 个，
    真机上实际排了 4 个 —— 说明对容器可用宽度的假设不对，而这个没法在源码里量。
-   改成 calc(16.666% − 10rpx) + 10rpx 边距，六格恰好占满 100%，与容器实际多宽无关。 */
+   改成 calc(12.5% − 8rpx) + 8rpx 边距，八格恰好占满 100%，与容器实际多宽无关。
+   字池是多重集（一格一份字 + 干扰字），约 24~28 份，八个一行排 3~4 行。 */
 .dock {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
   background: #fff; border-top: 2rpx solid #EFEDE4;
@@ -129,13 +116,13 @@ page { background: #FFFCF5; }
 /* 左对齐：居中会让不满的最后一行和上面几行错开，看着像乱码 */
 .dock-pool { display: flex; flex-wrap: wrap; }
 .chip {
-  width: calc(16.666% - 10rpx); height: 76rpx; margin: 5rpx; box-sizing: border-box;
+  width: calc(12.5% - 8rpx); height: 76rpx; margin: 4rpx; box-sizing: border-box;
   display: flex; align-items: center; justify-content: center;
   background: #F6F5EE; border-radius: 12rpx;
   font-size: 34rpx; color: #2D2D2B;
 }
-/* 已经填在盘面上的字：淡一档，但仍可点（同一个字可能要填两处） */
-.chip.used { color: #C9C6BA; background: #FAFAF6; }
+/* 用掉的那一份：置灰且点不动。退格会把它还回来 */
+.chip.used { color: #DCDACE; background: #FAFAF6; }
 .dock-ops { display: flex; margin-top: 12rpx; }
 .op {
   flex: 1; margin: 0 6rpx; height: 72rpx; border-radius: 14rpx;

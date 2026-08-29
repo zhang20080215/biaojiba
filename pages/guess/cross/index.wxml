@@ -61,22 +61,13 @@
     </view>
   </block>
 
-  <!-- 答对后顺手标记 -->
-  <view wx:if="{{lastCorrect}}" class="mark-bar">
-    <text class="mark-text">答对了：{{lastCorrect.word}}</text>
-    <view class="mark-btns">
-      <view class="mark-btn ghost" bindtap="dismissCorrect">不用</view>
-      <view class="mark-btn" bindtap="markWatched">标记看过</view>
-    </view>
-  </view>
-
   <!-- 底部字池 -->
   <view wx:if="{{!loading && !errMsg && !finished}}" class="dock">
     <view class="dock-pool">
       <view
-        wx:for="{{chips}}" wx:key="ch"
+        wx:for="{{chips}}" wx:key="index"
         class="chip {{item.used ? 'used' : ''}}"
-        data-ch="{{item.ch}}" bindtap="onTapChar">{{item.ch}}</view>
+        data-i="{{index}}" bindtap="onTapChar">{{item.ch}}</view>
     </view>
     <view class="dock-ops">
       <view class="op ghost" bindtap="onBackspace">删除</view>
