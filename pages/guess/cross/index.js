@@ -55,6 +55,9 @@ Page({
         // 直接给数组更稳，也少一层绑定
         chips: [],          // [{ ch, used }]
         currentNo: 0,
+        // 只展示当前选中那条的线索：五条堆在一起会被底部字池盖住，
+        // 切换靠上面那排编号标签（和点格子）
+        current: null,      // { no, dir, len, clue, solved, word }
         focusIdx: 0,        // 光标在当前条目的第几个字
         canSubmit: false,
         submitting: false,
@@ -192,6 +195,10 @@ Page({
         const chips = this.data.chips.map(function (x) { return { ch: x.ch, used: !!used[x.ch] }; });
         this.setData({
             board, chips,
+            current: cur ? {
+                no: cur.no, dir: cur.dir, len: cur.len,
+                clue: cur.clue, solved: cur.solved, word: cur.word
+            } : null,
             canSubmit: !!cur && !cur.solved && filled === cur.len && !this.data.submitting
         });
     },
@@ -199,8 +206,9 @@ Page({
     onTapClue(e) {
         const no = Number(e.currentTarget.dataset.no);
         const entry = this.data.entries.find(x => x.no === no);
-        if (!entry || entry.solved) return;
-        this.setData({ currentNo: no, focusIdx: this._firstEmptyIdx(entry) });
+        if (!entry) return;
+        // 已答出的也让点开看：线索区只显示当前这条，不给看就没法回顾了
+        this.setData({ currentNo: no, focusIdx: entry.solved ? 0 : this._firstEmptyIdx(entry) });
         this._syncActive();
     },
 

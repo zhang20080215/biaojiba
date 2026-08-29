@@ -3,7 +3,8 @@
 
 page { background: #FFFCF5; }
 
-.page { padding: 24rpx 24rpx 260rpx; box-sizing: border-box; }
+/* 底部留白要盖过固定字池（两行字池 + 操作条约 240rpx） */
+.page { padding: 24rpx 24rpx 280rpx; box-sizing: border-box; }
 
 /* —— 头部 */
 .hd { padding: 12rpx 8rpx 20rpx; }
@@ -52,25 +53,33 @@ page { background: #FFFCF5; }
   font-size: 18rpx; line-height: 1; color: #C9C6BA;
 }
 
-/* —— 线索 */
-.clues { margin-top: 24rpx; }
-.clue {
-  background: #fff; border-radius: 16rpx; padding: 20rpx 24rpx; margin-bottom: 14rpx;
-  border-left: 6rpx solid transparent;
+/* —— 条目切换标签：只占一行，把纵向空间让给网格和字池 */
+.tabs { display: flex; margin-top: 20rpx; }
+.tab {
+  flex: 1; margin: 0 6rpx; padding: 12rpx 0; border-radius: 12rpx;
+  background: #fff; display: flex; flex-direction: column; align-items: center;
   box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 }
-.clue.cur { border-left-color: #6F8244; }
-.clue.solved { opacity: 0.6; }
-.clue-head { display: flex; align-items: center; }
-.clue-no {
-  width: 36rpx; height: 36rpx; border-radius: 50%;
-  background: #EFEDE4; color: #6B6A62; font-size: 22rpx;
-  display: flex; align-items: center; justify-content: center; margin-right: 12rpx;
+.tab-no { font-size: 28rpx; font-weight: 700; color: #6B6A62; line-height: 1.2; }
+.tab-dir { margin-top: 2rpx; font-size: 20rpx; color: #A7A498; }
+.tab.cur { background: #6F8244; }
+.tab.cur .tab-no, .tab.cur .tab-dir { color: #fff; }
+/* 已答出：压暗，但仍可点开回看线索 */
+.tab.solved { background: #EEF1E5; }
+.tab.solved .tab-no { color: #9AAB65; }
+.tab.solved.cur { background: #9AAB65; }
+.tab.solved.cur .tab-no, .tab.solved.cur .tab-dir { color: #fff; }
+
+/* —— 当前那条的线索（一次只显示一条） */
+.clue-cur {
+  margin-top: 20rpx; background: #fff; border-radius: 16rpx;
+  padding: 20rpx 24rpx; border-left: 6rpx solid #6F8244;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 }
-.clue.cur .clue-no { background: #6F8244; color: #fff; }
+.clue-head { display: flex; align-items: center; }
 .clue-meta { font-size: 22rpx; color: #A7A498; }
 .clue-answer { margin-left: auto; font-size: 26rpx; font-weight: 700; color: #6F8244; }
-.clue-text { margin-top: 10rpx; font-size: 26rpx; line-height: 1.6; color: #4A4942; }
+.clue-text { margin-top: 10rpx; font-size: 27rpx; line-height: 1.6; color: #4A4942; }
 
 /* —— 结束面板 */
 .over {

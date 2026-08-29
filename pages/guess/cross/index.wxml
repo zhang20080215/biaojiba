@@ -36,27 +36,30 @@
       </view>
     </view>
 
-    <!-- 线索 -->
-    <view class="clues">
+    <!-- 条目切换：只有编号，占一行 -->
+    <view class="tabs">
       <view
         wx:for="{{entries}}" wx:key="no"
-        class="clue {{item.no === currentNo ? 'cur' : ''}} {{item.solved ? 'solved' : ''}}"
+        class="tab {{item.no === currentNo ? 'cur' : ''}} {{item.solved ? 'solved' : ''}}"
         data-no="{{item.no}}" bindtap="onTapClue">
-        <view class="clue-head">
-          <text class="clue-no">{{item.no}}</text>
-          <text class="clue-meta">{{item.dir === 'H' ? '横' : '竖'}} · {{item.len}} 字</text>
-          <text wx:if="{{item.solved}}" class="clue-answer">{{item.word}}</text>
-        </view>
-        <view class="clue-text">{{item.clue}}</view>
+        <text class="tab-no">{{item.no}}</text>
+        <text class="tab-dir">{{item.dir === 'H' ? '横' : '竖'}}{{item.len}}</text>
       </view>
+    </view>
+
+    <!-- 只展示当前选中那条的线索 -->
+    <view wx:if="{{current}}" class="clue-cur">
+      <view class="clue-head">
+        <text class="clue-meta">第 {{current.no}} 条 · {{current.dir === 'H' ? '横' : '竖'}}向 {{current.len}} 字</text>
+        <text wx:if="{{current.solved}}" class="clue-answer">{{current.word}}</text>
+      </view>
+      <view class="clue-text">{{current.clue}}</view>
     </view>
 
     <view wx:if="{{finished}}" class="over">
       <view class="over-title">{{solvedCount === entries.length ? '全部答出！' : '今天到此为止'}}</view>
       <view class="over-sub">答出 {{solvedCount}}/{{entries.length}} 条 · 得分 {{score}}</view>
     </view>
-
-    <view class="tip">答案都在标记吧片库里 · 点线索选一条，再从下方字池点字填格</view>
   </block>
 
   <!-- 答对后顺手标记 -->
