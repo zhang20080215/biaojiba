@@ -446,7 +446,12 @@ function sanitizeClue(doc, revealed) {
 const CROSS_N = 7;                  // 网格边长
 const CROSS_TARGET_WORDS = 5;       // 每天放几部片
 const CROSS_MIN_VOTES = 50000;      // 片名要够有名，见上面第 2 条
-const CROSS_DISTRACTORS = 8;        // 候选字池里混几个干扰字
+// 字池尺寸：必须是 8 的倍数且不少于 24 —— 前端每行排 8 个，凑整才不会出现
+// 最后一行只剩两三个字的豁口。答案字（一格一份）之外的都用干扰字补齐，
+// 但至少要留 CROSS_MIN_DISTRACTORS 个干扰字，否则字池刚好等于答案，等于没难度。
+const CROSS_POOL_STEP = 8;
+const CROSS_POOL_MIN = 24;
+const CROSS_MIN_DISTRACTORS = 4;
 const CROSS_CLUE_MAXLEN = 44;       // 一句剧情的字数上限
 const CROSS_COOLDOWN_DAYS = 20;     // 同一部片多少天内不重复出现
 
@@ -638,13 +643,27 @@ function generateCross(pool, rnd, opts) {
         const poolChars = [];
         g.forEach(function (row) { row.forEach(function (ch) { if (ch) poolChars.push(ch); }); });
         const solutionChars = new Set(poolChars);
+        // 目标尺寸：答案份数 + 至少几个干扰字，再向上取到 8 的倍数，且不低于 24。
+        // ⚠ 不能叫 target —— 函数顶上已经有个 target 是「目标片数」，同名会在这个块里
+        // 造成 TDZ，让上面 placed.length < target 那句直接抛错。
+        const poolTarget = Math.max(
+            CROSS_POOL_MIN,
+            Math.ceil((poolChars.length + CROSS_MIN_DISTRACTORS) / CROSS_POOL_STEP) * CROSS_POOL_STEP
+        );
         // 干扰字从别的片名里取，且不能和答案里的字重复 —— 否则玩家拿它去填反而是对的，
         // 就不是干扰而是多给了一份
         const distract = [];
         const allChars = Array.from(byChar.keys());
-        for (let i = 0; i < CROSS_DISTRACTORS * 20 && distract.length < CROSS_DISTRACTORS; i++) {
+        const need = poolTarget - poolChars.length;
+        for (let i = 0; i < need * 60 && distract.length < need; i++) {
             const ch = pick(allChars);
             if (!solutionChars.has(ch) && distract.indexOf(ch) < 0) distract.push(ch);
+        }
+        // 极端情况下不同的干扰字凑不够（片库字数有限），允许重复 —— 重复的干扰字
+        // 照样是错的，但尺寸必须凑够 8 的倍数，否则前端最后一行会缺口
+        while (distract.length < need && allChars.length) {
+            const ch = pick(allChars);
+            if (!solutionChars.has(ch)) distract.push(ch);
         }
         const charPool = shuffled(poolChars.concat(distract), rnd);
 
