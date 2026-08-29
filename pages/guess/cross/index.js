@@ -81,6 +81,9 @@ Page({
 
     onLoad() {
         this._date = null;   // null = 今天，由服务端按中国时区判定
+        // 提前把激励视频素材拉起来：提示/复活是用户点了才弹，现拉会让人干等几秒。
+        // preload 内部有「页面不在栈顶就不 create」的守卫，不会绑错页面。
+        rewardedAdManager.preload(AD_SLOT, this);
         this.refresh();
     },
 

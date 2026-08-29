@@ -48,6 +48,10 @@ const adConfig = {
     // 是仅次于分类页的第二大内容页面，此前完全没有广告位。后台广告位名「每日电影-底部Banner」。
     daily_movie_banner: { unitId: 'adunit-999e7d872a4458ba', type: 'banner', enabled: true },
     save_image_rewarded: { unitId: 'adunit-16f5506ef74be138', type: 'rewarded', enabled: true },
+    // 每日填字：提示次数用完后换一次提示、三颗星扣完后复活一颗。
+    // 与保存海报那个位刻意分开：两处的曝光量级和用户心态差很远，共用一个位会把数据搅在一起，
+    // 也没法单独关停其中一个。
+    guess_extra_rewarded: { unitId: 'adunit-44d18de5a36e9e9b', type: 'rewarded', enabled: true },
     // 已下线：育儿结果页曝光近乎为零（40天仅98次、eCPM 1.02），且该页漏斗本就需减负
     growth_result_native: { unitId: 'adunit-a0fdcfcd4703f705', type: 'native', enabled: false },
     // 已下线：仅在未命中激励门（无 openid）的少数用户触发，价值极低；育儿保存统一走激励视频门
