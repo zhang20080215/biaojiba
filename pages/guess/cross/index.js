@@ -67,6 +67,9 @@ Page({
         current: null,      // { no, dir, len, clue, solved, word }
         focusIdx: 0,        // 光标在当前条目的第几个字
         canSubmit: false,
+        curFilled: 0,       // 当前这条已经填了几格，提交按钮上显示「还差 N 个字」
+        answers: [],        // 结束后服务端给的五条答案
+
         submitting: false,
         solvedCount: 0,
         lives: 3,
@@ -131,6 +134,8 @@ Page({
                 // 不在这里归零的话上一关的「已答出 3/5」会留在计数条上
                 solvedCount: 0,
                 current: null,
+                // 切关不清的话，上一关的答案清单会跟过来（虽然 finished 为假时不显示，但仍是脏数据）
+                answers: [],
                 score: rec.score || 0,
                 finished: !!rec.finished
             });
@@ -177,6 +182,7 @@ Page({
             hintsLeft: r.hintsLeft == null ? this.data.hintsLeft : r.hintsLeft,
             canBuyHint: !!r.canBuyHint,
             canRevive: !!r.canRevive,
+            answers: r.answers || this.data.answers || [],
             score: rec.score == null ? this.data.score : rec.score,
             finished: !!rec.finished
         });
@@ -267,6 +273,7 @@ Page({
         }
         this.setData({
             board,
+            curFilled: filled,
             current: cur ? {
                 no: cur.no, dir: cur.dir, len: cur.len,
                 clue: cur.clue, solved: cur.solved, word: cur.word
@@ -393,6 +400,7 @@ Page({
             this._applyStatus(r);
             if (r.correct) {
                 this._applySolved([r.entry]);
+                this._flashEntry(r.entry);
                 wx.showToast({ title: '答对了《' + r.entry.word + '》', icon: 'none' });
             } else {
                 // 错了就把这条清空重来（锁定的交叉格留着）
@@ -490,6 +498,17 @@ Page({
             patch[key] = false;
             this.setData(patch);
         }, 1400);
+    },
+
+    /** 答对一整条时把这条逐格点亮一下，比只弹个 toast 有交代得多 */
+    _flashEntry(entry) {
+        const board = this.data.board;
+        cellsOf(entry).forEach((pt, i) => {
+            const cell = board[pt.r] && board[pt.r][pt.c];
+            if (cell) cell.flash = true;
+            this._flashCell(pt.r, pt.c);
+        });
+        this.setData({ board });
     },
 
     /** 断线重进时把之前花分揭出来的字复原 */

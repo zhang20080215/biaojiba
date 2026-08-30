@@ -1,4 +1,4 @@
-<view class="page">
+<view class="page {{finished ? 'done' : ''}}">
   <!-- 左右箭头翻看别的日期：题目是按日期备好的，切日期等于换一关 -->
   <view class="hd">
     <view class="nav" bindtap="prevDay">‹</view>
@@ -65,6 +65,14 @@
     <view wx:if="{{finished}}" class="over">
       <view class="over-title">{{solvedCount === entries.length ? '全部答出' : '♥ 用完了'}}</view>
       <view class="over-sub">答出 {{solvedCount}}/{{entries.length}} 条 · 得分 {{score}}</view>
+      <!-- 做完或做砸都把五部片列出来，这是这一局的交代 -->
+      <view wx:if="{{answers.length}}" class="answers">
+        <view wx:for="{{answers}}" wx:key="no" class="ans">
+          <text class="ans-no">{{item.no}}</text>
+          <text class="ans-word">{{item.word}}</text>
+          <text wx:if="{{item.year}}" class="ans-year">{{item.year}}</text>
+        </view>
+      </view>
       <!-- 复活不限次数，只要没做完就一直给这个入口 -->
       <view wx:if="{{solvedCount < entries.length}}" class="over-btn" bindtap="onRevive">看视频补回一颗♥</view>
     </view>
@@ -85,7 +93,7 @@
         {{hintsLeft > 0 ? '提示 ' + hintsLeft : (canBuyHint ? '提示·视频' : '提示')}}
       </view>
       <view class="op {{canSubmit ? '' : 'disabled'}}" bindtap="onSubmit">
-        {{submitting ? '提交中…' : '提交这条'}}
+        {{submitting ? '提交中…' : (canSubmit ? '提交这条' : (current ? '还差 ' + (current.len - curFilled) + ' 个字' : '提交这条'))}}
       </view>
     </view>
   </view>

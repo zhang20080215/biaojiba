@@ -301,8 +301,12 @@ exports.main = async (event) => {
                         };
                     })
                     .filter(Boolean);
+                const allEntries = (p && p.entries) || [];
                 return {
                     success: true, record: rec, solved: solved, revealed: revealedCells,
+                    answers: rec.finished
+                        ? allEntries.map(function (x) { return { no: x.no, word: x.word, year: x.year }; })
+                        : null,
                     lives: rec.lives, maxLives: CROSS_LIVES,
                     hintsLeft: Math.max(0, (rec.hintQuota || 0) - (rec.hintsUsed || 0)),
                     canBuyHint: true,
@@ -346,7 +350,14 @@ exports.main = async (event) => {
                 return { no: e.no, r: e.r, c: e.c, dir: e.dir, len: e.len, word: e.word };
             };
             const wrap = function (extra) {
+                // 一局已经结束就把五条答案都给出来：填字做完（或做砸）之后，
+                // 玩家最想看的就是「到底是哪五部片」。这不构成泄题 —— 当天这份记录
+                // 已经锁死，看到答案也换不回分数。
+                const answers = rec.finished
+                    ? entries.map(function (x) { return { no: x.no, word: x.word, year: x.year }; })
+                    : null;
                 return Object.assign({
+                    answers: answers,
                     success: true,
                     record: rec,
                     lives: rec.lives,

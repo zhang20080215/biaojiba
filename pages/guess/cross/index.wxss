@@ -11,6 +11,8 @@
 page { background: #FFFCF5; }
 
 .page { padding: 16rpx 24rpx 500rpx; box-sizing: border-box; }
+/* 结束后底部字池整个消失，那 500rpx 的让位空间就成了一大片空白 */
+.page.done { padding-bottom: 60rpx; }
 
 /* —— 头部：左右箭头翻看别的日期 */
 .hd { display: flex; align-items: center; padding: 8rpx 0 16rpx; }
@@ -121,6 +123,20 @@ page { background: #FFFCF5; }
 }
 .over-title { font-size: 34rpx; font-weight: 700; color: #2D2D2B; }
 .over-sub { margin-top: 10rpx; font-size: 26rpx; color: #A7A498; }
+/* 结束后列出五部片：填字做完之后玩家最想看的就是这个 */
+.answers { margin-top: 24rpx; border-top: 2rpx solid #F0EEE5; padding-top: 8rpx; }
+.ans {
+  display: flex; align-items: center;
+  padding: 12rpx 4rpx; border-bottom: 2rpx solid #F6F5EE;
+}
+.ans-no {
+  width: 36rpx; height: 36rpx; border-radius: 50%; flex: none;
+  background: #EFEDE4; color: #6B6A62; font-size: 22rpx;
+  display: flex; align-items: center; justify-content: center;
+}
+.ans-word { margin-left: 16rpx; font-size: 28rpx; color: #2D2D2B; }
+.ans-year { margin-left: auto; font-size: 22rpx; color: #B5B2A6; }
+
 .over-btn {
   margin-top: 24rpx; background: #6F8244; color: #fff;
   border-radius: 999rpx; padding: 20rpx 0; font-size: 28rpx;
