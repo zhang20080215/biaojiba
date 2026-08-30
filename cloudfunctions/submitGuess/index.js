@@ -372,7 +372,7 @@ exports.main = async (event) => {
             if (action === 'revive') {
                 // 不限次数。revives 仍然累计，只用来看「一局要复活几次」这类分布。
                 if ((rec.lives || 0) >= CROSS_LIVES) {
-                    return wrap({ revived: false, error: '爱心是满的，不用补' });
+                    return wrap({ revived: false, error: '♥ 已经是满的' });
                 }
                 rec.lives = (rec.lives || 0) + 1;
                 rec.revives = (rec.revives || 0) + 1;

@@ -63,10 +63,10 @@
     </view>
 
     <view wx:if="{{finished}}" class="over">
-      <view class="over-title">{{solvedCount === entries.length ? '全部答出' : '爱心用完了'}}</view>
+      <view class="over-title">{{solvedCount === entries.length ? '全部答出' : '♥ 用完了'}}</view>
       <view class="over-sub">答出 {{solvedCount}}/{{entries.length}} 条 · 得分 {{score}}</view>
       <!-- 复活不限次数，只要没做完就一直给这个入口 -->
-      <view wx:if="{{solvedCount < entries.length}}" class="over-btn" bindtap="onRevive">看视频复活一颗爱心</view>
+      <view wx:if="{{solvedCount < entries.length}}" class="over-btn" bindtap="onRevive">看视频补回一颗♥</view>
     </view>
   </block>
 

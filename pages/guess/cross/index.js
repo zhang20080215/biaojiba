@@ -401,7 +401,7 @@ Page({
                 else {
                     // 剩几次用服务端回的 lives，不用本地推算 —— 复活/多端作答都可能让它对不上
                     const left = r.lives == null ? this.data.lives : r.lives;
-                    wx.showToast({ title: '不对，扣一颗爱心，还剩 ' + left + ' 颗', icon: 'none' });
+                    wx.showToast({ title: '不对，扣一颗♥，还剩 ' + left + ' 颗', icon: 'none' });
                 }
             }
         } catch (e) {
@@ -506,20 +506,20 @@ Page({
     async _offerRevive() {
         // 复活不限次数，这里只挡「生命值已满」这种没意义的调用
         if (!this.data.canRevive) {
-            wx.showToast({ title: '爱心是满的', icon: 'none' });
+            wx.showToast({ title: '♥ 已经是满的', icon: 'none' });
             return;
         }
-        const ok = await this._confirm('爱心用完了', '看一段视频可以补回一颗爱心，接着答。答错照样扣 10 分。');
+        const ok = await this._confirm('♥ 用完了', '看一段视频可以补回一颗♥，接着答。答错照样扣 10 分。');
         if (!ok) return;
         const watched = await rewardedAdManager.show(AD_SLOT, this);
         if (!watched) return;
         const r = await this._call({ action: 'revive' });
         if (!r || !r.revived) {
-            wx.showToast({ title: (r && r.error) || '没能补回爱心', icon: 'none' });
+            wx.showToast({ title: (r && r.error) || '没能补回♥', icon: 'none' });
             return;
         }
         this._applyStatus(r);
-        wx.showToast({ title: '补回一颗爱心', icon: 'none' });
+        wx.showToast({ title: '补回一颗♥', icon: 'none' });
     },
 
     /** 结束面板上的复活按钮 */
