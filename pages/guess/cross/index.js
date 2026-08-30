@@ -431,11 +431,7 @@ Page({
         if (!cur || cur.solved) return;
 
         if (this.data.hintsLeft <= 0) {
-            if (!this.data.canBuyHint) {
-                wx.showToast({ title: '今天的提示次数已用完', icon: 'none' });
-                return;
-            }
-            const ok = await this._confirm('提示次数用完了', '观看一段视频可再得一次提示机会。用掉时同样扣 5 分。');
+            const ok = await this._confirm('提示次数用完了', '观看一段视频可再得一次提示机会，可反复观看。用掉时同样扣 5 分。');
             if (!ok) return;
             const watched = await rewardedAdManager.show(AD_SLOT, this);
             if (!watched) return;

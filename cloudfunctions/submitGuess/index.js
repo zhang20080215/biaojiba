@@ -36,11 +36,10 @@ const MAX_GUESSES = 9;          // 与 moviegrid 一致：一局 9 次机会
 // —— 填字的规则常数（和另外两个玩法完全不共用）
 const CROSS_LIVES = 3;          // 生命值：答错一次扣一颗，扣完失败
 const CROSS_FREE_HINTS = 2;     // 每天免费提示次数
-// 提示次数有上限，复活**没有**。区别在于分数能不能为负：
-// 复活不封顶时，靠反复看广告试出全部答案的人会被扣到很低的分 —— 分数本身就是威慑，
-// 比硬上限更自然，也不冤枉那些真心想做完的人。而提示是「直接揭字」，
-// 揭出来的信息不会因为扣分而消失，所以那边仍然要封顶。
-const CROSS_MAX_HINTS = 5;      // 含免费的，看广告最多再换 3 次
+// 提示和复活都不限次数，代价交给分数。
+// 防「揭穿答案」靠的**不是每天几次**，而是单条的两道闸（最多揭一半、且至少留 2 个字未知）——
+// 那是结构性的：5 条片名加起来最多也就揭 8 个字，跟买了几次无关。
+// 每日总次数上限只会限制广告库存，不增加任何安全性，所以拆掉。
 // 初始 100 分是为了不出现负分：扣分项被上限卡死 —— 最多错 5 次(−50)、
 // 最多用 5 次提示(−25)，合计 −75，所以垫 100 分底就一定为正（最差 25 分）。
 const CROSS_START_SCORE = 100;
@@ -305,7 +304,7 @@ exports.main = async (event) => {
                     success: true, record: rec, solved: solved, revealed: revealedCells,
                     lives: rec.lives, maxLives: CROSS_LIVES,
                     hintsLeft: Math.max(0, (rec.hintQuota || 0) - (rec.hintsUsed || 0)),
-                    canBuyHint: (rec.hintQuota || 0) < CROSS_MAX_HINTS,
+                    canBuyHint: true,
                     canRevive: (rec.lives || 0) < CROSS_LIVES
                 };
             }
@@ -352,19 +351,17 @@ exports.main = async (event) => {
                     lives: rec.lives,
                     maxLives: CROSS_LIVES,
                     hintsLeft: Math.max(0, (rec.hintQuota || 0) - (rec.hintsUsed || 0)),
-                    canBuyHint: (rec.hintQuota || 0) < CROSS_MAX_HINTS,
+                    canBuyHint: true,
                     // 复活不限次；生命值满的时候没必要复活，也就没必要显示入口
                     canRevive: (rec.lives || 0) < CROSS_LIVES
                 }, extra || {});
             };
 
             // —— 看完激励视频换一次提示机会。
-            // 广告是否真的看完只有客户端知道（本项目没有服务端回调），所以这里靠上限兜底，
-            // 而不是靠信任：hintQuota 最多加到 CROSS_MAX_HINTS 为止。
+            // 广告是否真的看完只有客户端知道（本项目没有服务端回调）。不设次数上限，
+            // 因为多换几次也只是让人更快撞上单条那两道闸，且每揭一次实打实扣 5 分。
             if (action === 'grantHint') {
-                if ((rec.hintQuota || 0) >= CROSS_MAX_HINTS) {
-                    return wrap({ granted: false, error: '今天的提示次数已经用到上限了' });
-                }
+                // 不限次数；能不能真的揭出字由单条那两道闸决定
                 rec.hintQuota = (rec.hintQuota || 0) + 1;
                 await saveRecord(rec);
                 return wrap({ granted: true });
@@ -396,7 +393,7 @@ exports.main = async (event) => {
                 if (!e) return { success: false, error: '没有第 ' + ev.entryNo + ' 条' };
                 if (solvedNos.indexOf(e.no) >= 0) return { success: false, error: '这条已经答出来了' };
                 if (hintsLeft <= 0) {
-                    return wrap({ hinted: false, needAd: (rec.hintQuota || 0) < CROSS_MAX_HINTS, error: '提示次数用完了' });
+                    return wrap({ hinted: false, needAd: true, error: '提示次数用完了' });
                 }
                 // **随机揭一个玩家还不知道的字**，而不是从头顺着揭。
                 // 顺着揭有两个毛病：第 n 个位置很可能已经被交叉的另一条填好了，
