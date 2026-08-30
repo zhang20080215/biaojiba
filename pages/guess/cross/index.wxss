@@ -35,11 +35,18 @@ page { background: #FFFCF5; }
   font-size: 24rpx; color: #A7A498;
 }
 .m-num { font-size: 30rpx; font-weight: 700; color: #6F8244; }
-/* 生命值：亮的是还剩的，暗的是扣掉的 */
-.stars { display: flex; align-items: center; }
-.star { font-size: 28rpx; color: #E3E0D6; margin-right: 2rpx; }
-.star.on { color: #C0603F; }
+/* 生命值：实心 ♥ 是还剩的，空心 ♡ 是扣掉的 —— 用字形区分而不是只靠颜色，
+   色弱用户和截图转灰度时都还认得出 */
+.hearts { display: flex; align-items: center; }
+.heart { font-size: 28rpx; color: #E0DDD2; margin-right: 2rpx; }
+.heart.on { color: #D0524A; }
 .m-dot { margin: 0 16rpx; color: #DCDACE; }
+
+/* 玩法说明，只在开局显示一次 */
+.howto {
+  margin-top: 14rpx; text-align: center;
+  font-size: 22rpx; color: #B5B2A6; letter-spacing: 1rpx;
+}
 
 /* —— 条目切换标签：一行 */
 .tabs { display: flex; margin-top: 16rpx; }

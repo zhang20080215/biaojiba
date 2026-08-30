@@ -274,7 +274,8 @@ exports.main = async (event) => {
         const mode = (ev.mode === 'clue' || ev.mode === 'cross') ? ev.mode : 'grid';
         // 只有 grid/clue 还用「机会数」这套；cross 改成了生命值，走自己那一套判定
         const date = /^\d{4}-\d{2}-\d{2}$/.test(ev.date || '') ? ev.date : cnDateStr();
-        if (!openid) return { success: false, error: '没有拿到 openid' };
+        // 这句会原样弹给用户，别写成开发者口吻
+        if (!openid) return { success: false, error: '没能识别身份，退出重进试试' };
 
         const rec = await loadRecord(openid, mode, date);
 
@@ -322,7 +323,7 @@ exports.main = async (event) => {
         try {
             puzzle = oneDoc(await db.collection(PUZZLE_COLLECTION).doc(mode + '_' + date).get());
         } catch (e) { /* below */ }
-        if (!puzzle) return { success: false, error: '今天的题还没生成，先调 getGuessPuzzle' };
+        if (!puzzle) return { success: false, error: '这天的题还没准备好，稍后再试' };
 
         // ====================================================================
         // 纵横填字：计分 / 生命值 / 提示次数
@@ -371,7 +372,7 @@ exports.main = async (event) => {
             if (action === 'revive') {
                 // 不限次数。revives 仍然累计，只用来看「一局要复活几次」这类分布。
                 if ((rec.lives || 0) >= CROSS_LIVES) {
-                    return wrap({ revived: false, error: '生命值是满的，不用复活' });
+                    return wrap({ revived: false, error: '爱心是满的，不用补' });
                 }
                 rec.lives = (rec.lives || 0) + 1;
                 rec.revives = (rec.revives || 0) + 1;
@@ -393,7 +394,7 @@ exports.main = async (event) => {
                 if (!e) return { success: false, error: '没有第 ' + ev.entryNo + ' 条' };
                 if (solvedNos.indexOf(e.no) >= 0) return { success: false, error: '这条已经答出来了' };
                 if (hintsLeft <= 0) {
-                    return wrap({ hinted: false, needAd: true, error: '提示次数用完了' });
+                    return wrap({ hinted: false, needAd: true, error: '提示用完了' });
                 }
                 // **随机揭一个玩家还不知道的字**，而不是从头顺着揭。
                 // 顺着揭有两个毛病：第 n 个位置很可能已经被交叉的另一条填好了，
@@ -413,10 +414,10 @@ exports.main = async (event) => {
                 // ② 单条最多揭一半，长片名不能靠连揭把自己揭穿。
                 const usedOnEntry = (rec.hints || []).filter(function (h) { return h.entryNo === e.no; }).length;
                 if (candidates.length < 3) {
-                    return wrap({ hinted: false, error: '这条只剩两个字没揭开了，自己想想' });
+                    return wrap({ hinted: false, error: '这条只剩两个字没揭开，不能再提示了' });
                 }
                 if (usedOnEntry >= Math.floor(e.len / 2)) {
-                    return wrap({ hinted: false, error: '这条的提示用到上限了（一条最多揭一半）' });
+                    return wrap({ hinted: false, error: '一条最多揭一半，这条揭不动了' });
                 }
 
                 const pos = candidates[Math.floor(Math.random() * candidates.length)];

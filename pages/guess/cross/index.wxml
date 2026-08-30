@@ -4,7 +4,7 @@
     <view class="nav" bindtap="prevDay">‹</view>
     <view class="hd-mid">
       <view class="hd-title">每日填字</view>
-      <view class="hd-sub">{{date}}{{dayOffset === 0 ? ' · 今天' : (dayOffset > 0 ? ' · 第 +' + dayOffset + ' 天' : ' · ' + dayOffset + ' 天')}}</view>
+      <view class="hd-sub">{{date}} · {{dayOffset === 0 ? '今天' : (dayOffset > 0 ? dayOffset + ' 天后' : (0 - dayOffset) + ' 天前')}}</view>
     </view>
     <view class="nav" bindtap="nextDay">›</view>
   </view>
@@ -15,13 +15,13 @@
   <block wx:else>
     <!-- 计数条：压成一行，纵向空间全留给网格和字池 -->
     <view class="meter">
-      <view class="stars">
-        <text wx:for="{{stars}}" wx:key="index" class="star {{item ? 'on' : ''}}">★</text>
+      <view class="hearts">
+        <text wx:for="{{lifeIcons}}" wx:key="index" class="heart {{item ? 'on' : ''}}">{{item ? '♥' : '♡'}}</text>
       </view>
       <text class="m-dot">·</text>
       <text class="m-seg"><text class="m-num">{{solvedCount}}/{{entries.length}}</text> 已答出</text>
       <text class="m-dot">·</text>
-      <text class="m-seg">提示 <text class="m-num">{{hintsLeft}}</text></text>
+      <text class="m-seg">{{hintsLeft > 0 ? '提示 ' : '提示已用完'}}<text wx:if="{{hintsLeft > 0}}" class="m-num">{{hintsLeft}}</text></text>
       <text class="m-dot">·</text>
       <text class="m-seg"><text class="m-num">{{score}}</text> 分</text>
     </view>
@@ -36,6 +36,9 @@
         <text class="tab-dir">{{item.dir === 'H' ? '横' : '竖'}}{{item.len}}</text>
       </view>
     </view>
+
+    <!-- 只在还没答出任何一条时出现，占一行，答出第一条就让位给网格 -->
+    <view wx:if="{{solvedCount === 0}}" class="howto">选一条线索 → 从下方选字填格 → 填满后提交</view>
 
     <!-- 线索放在网格**上面**：底部字池是浮层，放下面容易被盖住 -->
     <view wx:if="{{current}}" class="clue-cur">
@@ -60,10 +63,10 @@
     </view>
 
     <view wx:if="{{finished}}" class="over">
-      <view class="over-title">{{solvedCount === entries.length ? '全部答出！' : '三颗星用完了'}}</view>
+      <view class="over-title">{{solvedCount === entries.length ? '全部答出' : '爱心用完了'}}</view>
       <view class="over-sub">答出 {{solvedCount}}/{{entries.length}} 条 · 得分 {{score}}</view>
       <!-- 复活不限次数，只要没做完就一直给这个入口 -->
-      <view wx:if="{{solvedCount < entries.length}}" class="over-btn" bindtap="onRevive">看视频复活一颗星</view>
+      <view wx:if="{{solvedCount < entries.length}}" class="over-btn" bindtap="onRevive">看视频复活一颗爱心</view>
     </view>
   </block>
 
@@ -82,7 +85,7 @@
         {{hintsLeft > 0 ? '提示 ' + hintsLeft : (canBuyHint ? '提示·视频' : '提示')}}
       </view>
       <view class="op {{canSubmit ? '' : 'disabled'}}" bindtap="onSubmit">
-        {{submitting ? '校验中…' : '提交这条'}}
+        {{submitting ? '提交中…' : '提交这条'}}
       </view>
     </view>
   </view>

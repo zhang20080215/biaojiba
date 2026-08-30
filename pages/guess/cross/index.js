@@ -74,7 +74,7 @@ Page({
         hintsLeft: 2,
         canBuyHint: true,
         canRevive: true,
-        stars: [],          // 渲染用：[true,true,false] = 还剩两颗
+        lifeIcons: [],      // 渲染用：[true,true,false] = 还剩两颗爱心
         score: 100,      // 初始分，服务端同一口径（CROSS_START_SCORE）
         finished: false
     },
@@ -168,12 +168,12 @@ Page({
         const rec = r.record || {};
         const maxLives = r.maxLives || this.data.maxLives || 3;
         const lives = r.lives == null ? this.data.lives : r.lives;
-        const stars = [];
-        for (let i = 0; i < maxLives; i++) stars.push(i < lives);
+        const lifeIcons = [];
+        for (let i = 0; i < maxLives; i++) lifeIcons.push(i < lives);
         this.setData({
             lives: lives,
             maxLives: maxLives,
-            stars: stars,
+            lifeIcons: lifeIcons,
             hintsLeft: r.hintsLeft == null ? this.data.hintsLeft : r.hintsLeft,
             canBuyHint: !!r.canBuyHint,
             canRevive: !!r.canRevive,
@@ -393,7 +393,7 @@ Page({
             this._applyStatus(r);
             if (r.correct) {
                 this._applySolved([r.entry]);
-                wx.showToast({ title: '答对了：' + r.entry.word, icon: 'none' });
+                wx.showToast({ title: '答对了《' + r.entry.word + '》', icon: 'none' });
             } else {
                 // 错了就把这条清空重来（锁定的交叉格留着）
                 this._clearEntry(cur);
@@ -401,7 +401,7 @@ Page({
                 else {
                     // 剩几次用服务端回的 lives，不用本地推算 —— 复活/多端作答都可能让它对不上
                     const left = r.lives == null ? this.data.lives : r.lives;
-                    wx.showToast({ title: '不对，扣一颗星，还剩 ' + left + ' 次机会', icon: 'none' });
+                    wx.showToast({ title: '不对，扣一颗爱心，还剩 ' + left + ' 颗', icon: 'none' });
                 }
             }
         } catch (e) {
@@ -431,26 +431,26 @@ Page({
         if (!cur || cur.solved) return;
 
         if (this.data.hintsLeft <= 0) {
-            const ok = await this._confirm('提示次数用完了', '观看一段视频可再得一次提示机会，可反复观看。用掉时同样扣 5 分。');
+            const ok = await this._confirm('提示用完了', '看一段视频可以再得一次提示，可以反复看。每用一次提示扣 5 分。');
             if (!ok) return;
             const watched = await rewardedAdManager.show(AD_SLOT, this);
             if (!watched) return;
             const g = await this._call({ action: 'grantHint' });
             if (!g || !g.granted) {
-                wx.showToast({ title: (g && g.error) || '没能换到提示', icon: 'none' });
+                wx.showToast({ title: (g && g.error) || '没能拿到提示', icon: 'none' });
                 return;
             }
             this._applyStatus(g);
         } else {
             // 能不能揭、还能揭几个，判断全在服务端（要考虑交叉格带来的已知位，
             // 前端再算一遍必然走样）。这里只说清楚会发生什么。
-            const ok = await this._confirm('求提示', '随机亮出这条里还没揭开的一个字，扣 5 分。');
+            const ok = await this._confirm('用一次提示', '在这条里随机亮出一个还没揭开的字，扣 5 分。');
             if (!ok) return;
         }
 
         const r = await this._call({ action: 'hint', entryNo: cur.no });
         if (!r || !r.success) { wx.showToast({ title: (r && r.error) || '提示失败', icon: 'none' }); return; }
-        if (!r.hinted) { wx.showToast({ title: r.error || '这条提示不了了', icon: 'none' }); this._applyStatus(r); return; }
+        if (!r.hinted) { wx.showToast({ title: r.error || '这条没法再提示了', icon: 'none' }); this._applyStatus(r); return; }
         const board = this.data.board;
         const chips = this.data.chips;
         this._revealCell(board, chips, r.hint, true);
@@ -502,24 +502,24 @@ Page({
         this._syncActive();
     },
 
-    /** 三颗星扣完后问要不要看广告复活 */
+    /** 爱心扣完后问要不要看广告补一颗 */
     async _offerRevive() {
         // 复活不限次数，这里只挡「生命值已满」这种没意义的调用
         if (!this.data.canRevive) {
-            wx.showToast({ title: '生命值是满的', icon: 'none' });
+            wx.showToast({ title: '爱心是满的', icon: 'none' });
             return;
         }
-        const ok = await this._confirm('星星用完了', '观看一段视频可以复活一颗星，继续这一关。答错仍会扣分。');
+        const ok = await this._confirm('爱心用完了', '看一段视频可以补回一颗爱心，接着答。答错照样扣 10 分。');
         if (!ok) return;
         const watched = await rewardedAdManager.show(AD_SLOT, this);
         if (!watched) return;
         const r = await this._call({ action: 'revive' });
         if (!r || !r.revived) {
-            wx.showToast({ title: (r && r.error) || '复活失败', icon: 'none' });
+            wx.showToast({ title: (r && r.error) || '没能补回爱心', icon: 'none' });
             return;
         }
         this._applyStatus(r);
-        wx.showToast({ title: '复活了一颗星', icon: 'none' });
+        wx.showToast({ title: '补回一颗爱心', icon: 'none' });
     },
 
     /** 结束面板上的复活按钮 */
@@ -549,7 +549,7 @@ Page({
     },
     onShareAppMessage() {
         return {
-            title: '每日填字 · 5 部电影横竖交叉，来试试',
+            title: '每日填字 · 五部电影横竖交叉，看剧情猜片名',
             path: '/pages/guess/cross/index'
         };
     }
