@@ -36,10 +36,11 @@ const MAX_GUESSES = 9;          // 与 moviegrid 一致：一局 9 次机会
 // —— 填字的规则常数（和另外两个玩法完全不共用）
 const CROSS_LIVES = 3;          // 生命值：答错一次扣一颗，扣完失败
 const CROSS_FREE_HINTS = 2;     // 每天免费提示次数
-// 提示/复活的上限是**反作弊的一部分**，不是运营参数：看广告能换次数，
-// 不封顶的话看几次广告就能错几次、揭几个字，三条命就形同虚设。
+// 提示次数有上限，复活**没有**。区别在于分数能不能为负：
+// 复活不封顶时，靠反复看广告试出全部答案的人会被扣到很低的分 —— 分数本身就是威慑，
+// 比硬上限更自然，也不冤枉那些真心想做完的人。而提示是「直接揭字」，
+// 揭出来的信息不会因为扣分而消失，所以那边仍然要封顶。
 const CROSS_MAX_HINTS = 5;      // 含免费的，看广告最多再换 3 次
-const CROSS_MAX_REVIVES = 2;    // 复活上限，即一天最多错 5 次
 // 初始 100 分是为了不出现负分：扣分项被上限卡死 —— 最多错 5 次(−50)、
 // 最多用 5 次提示(−25)，合计 −75，所以垫 100 分底就一定为正（最差 25 分）。
 const CROSS_START_SCORE = 100;
@@ -305,7 +306,7 @@ exports.main = async (event) => {
                     lives: rec.lives, maxLives: CROSS_LIVES,
                     hintsLeft: Math.max(0, (rec.hintQuota || 0) - (rec.hintsUsed || 0)),
                     canBuyHint: (rec.hintQuota || 0) < CROSS_MAX_HINTS,
-                    canRevive: (rec.revives || 0) < CROSS_MAX_REVIVES
+                    canRevive: (rec.lives || 0) < CROSS_LIVES
                 };
             }
             return { success: true, record: rec, maxGuesses: MAX_GUESSES };
@@ -352,7 +353,8 @@ exports.main = async (event) => {
                     maxLives: CROSS_LIVES,
                     hintsLeft: Math.max(0, (rec.hintQuota || 0) - (rec.hintsUsed || 0)),
                     canBuyHint: (rec.hintQuota || 0) < CROSS_MAX_HINTS,
-                    canRevive: (rec.revives || 0) < CROSS_MAX_REVIVES
+                    // 复活不限次；生命值满的时候没必要复活，也就没必要显示入口
+                    canRevive: (rec.lives || 0) < CROSS_LIVES
                 }, extra || {});
             };
 
@@ -370,9 +372,7 @@ exports.main = async (event) => {
 
             // —— 看完激励视频复活一颗星
             if (action === 'revive') {
-                if ((rec.revives || 0) >= CROSS_MAX_REVIVES) {
-                    return wrap({ revived: false, error: '今天的复活次数已经用完了' });
-                }
+                // 不限次数。revives 仍然累计，只用来看「一局要复活几次」这类分布。
                 if ((rec.lives || 0) >= CROSS_LIVES) {
                     return wrap({ revived: false, error: '生命值是满的，不用复活' });
                 }

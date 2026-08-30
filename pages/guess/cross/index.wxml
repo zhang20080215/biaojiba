@@ -62,7 +62,8 @@
     <view wx:if="{{finished}}" class="over">
       <view class="over-title">{{solvedCount === entries.length ? '全部答出！' : '三颗星用完了'}}</view>
       <view class="over-sub">答出 {{solvedCount}}/{{entries.length}} 条 · 得分 {{score}}</view>
-      <view wx:if="{{solvedCount < entries.length && canRevive}}" class="over-btn" bindtap="onRevive">看视频复活一颗星</view>
+      <!-- 复活不限次数，只要没做完就一直给这个入口 -->
+      <view wx:if="{{solvedCount < entries.length}}" class="over-btn" bindtap="onRevive">看视频复活一颗星</view>
     </view>
   </block>
 

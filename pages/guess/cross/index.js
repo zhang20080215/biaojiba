@@ -508,11 +508,12 @@ Page({
 
     /** 三颗星扣完后问要不要看广告复活 */
     async _offerRevive() {
+        // 复活不限次数，这里只挡「生命值已满」这种没意义的调用
         if (!this.data.canRevive) {
-            wx.showToast({ title: '今天的复活次数已用完', icon: 'none' });
+            wx.showToast({ title: '生命值是满的', icon: 'none' });
             return;
         }
-        const ok = await this._confirm('三颗星都用完了', '观看一段视频可以复活一颗星，继续这一关。');
+        const ok = await this._confirm('星星用完了', '观看一段视频可以复活一颗星，继续这一关。答错仍会扣分。');
         if (!ok) return;
         const watched = await rewardedAdManager.show(AD_SLOT, this);
         if (!watched) return;
