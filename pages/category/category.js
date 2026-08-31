@@ -17,6 +17,15 @@ var DAILY_BLOCK_META = {
 };
 var DAILY_BLOCK_SOON = { emoji: '✨', color: '#EFE9DD', label: '#A89B85' };
 
+// 玩法专区（「每日猜电影」一栏）：三个玩法横排，样式复用每日主题的横排块。
+// 玩法卡不是榜单卡——没有 collection，不参与 _countThemeUsers / DYNAMIC_COVER_THEMES，
+// 也不进下方主题网格，所以直接写死在这里，不放 themes 数组。
+var GAME_BLOCKS = [
+  { key: 'guess_grid',  title: '交叉填格', emoji: '🎬', color: '#E7EBD5', label: '#5E7238', url: '/pages/guess/grid/index' },
+  { key: 'guess_cross', title: '纵横填字', emoji: '🔤', color: '#DEE6EF', label: '#46617F', url: '/pages/guess/cross/index' },
+  { key: 'guess_clue',  title: '线索猜片', emoji: '🔍', color: '#EDE4F0', label: '#6B5A8C', url: '/pages/guess/clue/index' }
+];
+
 // 没有静态设计封面的主题：用榜单 rank=1 那部电影的封面做卡片图（整图铺满裁剪+主题色叠色，
 // 见 category.wxss 的 .cover-tint）。主题色变体由各主题对象自带的 tintClass 决定
 // ——加载/匹配失败前，category.wxml 里同 id 的 .cover-placeholder 兜底占位符照常显示。
@@ -59,6 +68,7 @@ Page({
     tempNickname: '',
     activeTab: 'all',
     dailyBlocks: [],
+    gameBlocks: GAME_BLOCKS,
     themeClass: '',
     showThemePicker: false,
     // 会员码（= openid）。展示用的截断串；完整串放实例字段 _memberCode，不进 data
@@ -80,34 +90,6 @@ Page({
       category_native: adConfig.getAdUnitId('category_native') || '',
     },
     themes: [
-      {
-        // 玩法卡，不是榜单卡：没有 collection 也不参与 _countThemeUsers / DYNAMIC_COVER_THEMES，
-        // 走 category.wxml 里 id === 'guess_movie' 那条占位卡分支渲染
-        id: 'guess_movie',
-        title: '每日猜电影',
-        description: '9 个格子 9 次机会，用你的片单储备填满它',
-        image: '',
-        tintClass: 'guess',
-        userCount: 0,
-        tag: '玩法',
-        category: 'movie',
-        isNew: true,
-        url: '/pages/guess/grid/index'
-      },
-      {
-        // 同为玩法卡：没有 collection，不参与 _countThemeUsers / DYNAMIC_COVER_THEMES，
-        // 渲染分支见 category.wxml 里 id === 'guess_cross' 的两处占位（封面模式 + 列表模式）
-        id: 'guess_cross',
-        title: '每日填字',
-        description: '五部电影横竖交叉，看剧情线索把片名填进格子',
-        image: '',
-        tintClass: 'cross',
-        userCount: 0,
-        tag: '玩法',
-        category: 'movie',
-        isNew: true,
-        url: '/pages/guess/cross/index'
-      },
       {
         id: 'scenic_5a',
         title: '全国5A旅游景区',

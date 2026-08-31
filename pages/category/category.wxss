@@ -869,22 +869,6 @@
 .cover-placeholder.city {
   background: linear-gradient(135deg, #E0A06E 0%, #C9743A 100%);
 }
-.cover-placeholder.guess {
-  background: linear-gradient(135deg, #8FA35C 0%, #5E7238 100%);
-}
-.cover-placeholder.cross {
-  background: linear-gradient(135deg, #7E97B8 0%, #46617F 100%);
-}
-.cover-placeholder.cross .placeholder-text {
-  color: rgba(255, 255, 255, 0.95);
-  font-weight: 600;
-  letter-spacing: 2rpx;
-}
-.cover-placeholder.guess .placeholder-text {
-  color: rgba(255, 255, 255, 0.95);
-  font-weight: 600;
-  letter-spacing: 2rpx;
-}
 .cover-placeholder .placeholder-emoji {
   font-size: 56rpx;
   line-height: 1;
