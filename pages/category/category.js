@@ -20,10 +20,12 @@ var DAILY_BLOCK_SOON = { emoji: '✨', color: '#EFE9DD', label: '#A89B85' };
 // 玩法专区（「每日猜电影」一栏）：三个玩法横排，样式复用每日主题的横排块。
 // 玩法卡不是榜单卡——没有 collection，不参与 _countThemeUsers / DYNAMIC_COVER_THEMES，
 // 也不进下方主题网格，所以直接写死在这里，不放 themes 数组。
+// hidden 的玩法随包发布但不给入口：交叉填格和线索猜片的完成度还没到填字这一档
+// （线索猜片连预备题都没有，是打开时现出的），先只放填字。删掉 hidden 那一项即开放。
 var GAME_BLOCKS = [
-  { key: 'guess_grid',  title: '交叉填格', emoji: '🎬', color: '#E7EBD5', label: '#5E7238', url: '/pages/guess/grid/index' },
-  { key: 'guess_cross', title: '纵横填字', emoji: '🔤', color: '#DEE6EF', label: '#46617F', url: '/pages/guess/cross/index' },
-  { key: 'guess_clue',  title: '线索猜片', emoji: '🔍', color: '#EDE4F0', label: '#6B5A8C', url: '/pages/guess/clue/index' }
+  { key: 'guess_cross', title: '每日电影填词', sub: '五部电影横竖交叉，每天一局', emoji: '🔤', color: '#DEE6EF', label: '#46617F', url: '/pages/guess/cross/index' },
+  { key: 'guess_grid',  title: '交叉填格', emoji: '🎬', color: '#E7EBD5', label: '#5E7238', url: '/pages/guess/grid/index', hidden: true },
+  { key: 'guess_clue',  title: '线索猜片', emoji: '🔍', color: '#EDE4F0', label: '#6B5A8C', url: '/pages/guess/clue/index', hidden: true }
 ];
 
 // 没有静态设计封面的主题：用榜单 rank=1 那部电影的封面做卡片图（整图铺满裁剪+主题色叠色，
@@ -68,7 +70,7 @@ Page({
     tempNickname: '',
     activeTab: 'all',
     dailyBlocks: [],
-    gameBlocks: GAME_BLOCKS,
+    gameBlocks: GAME_BLOCKS.filter(function (g) { return !g.hidden; }),
     themeClass: '',
     showThemePicker: false,
     // 会员码（= openid）。展示用的截断串；完整串放实例字段 _memberCode，不进 data

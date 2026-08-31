@@ -526,6 +526,15 @@
   white-space: nowrap;
   letter-spacing: 1rpx;
 }
+/* 玩法专区只剩一个时的通栏样式：图标在左、标题+副标题在右 */
+.daily-block.game-solo {
+  flex-direction: row; justify-content: flex-start; align-items: center;
+  height: 140rpx; padding: 0 32rpx; gap: 24rpx;
+}
+.game-solo-body { display: flex; flex-direction: column; min-width: 0; }
+.game-solo-title { font-size: 30rpx; font-weight: 700; letter-spacing: 1rpx; }
+.game-solo-sub { margin-top: 6rpx; font-size: 22rpx; opacity: 0.75; }
+
 .daily-block-soon {
   box-shadow: none;
   border: 2rpx dashed rgba(168, 155, 133, 0.55);

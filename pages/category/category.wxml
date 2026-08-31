@@ -88,13 +88,18 @@
       <navigator
         wx:for="{{gameBlocks}}"
         wx:key="key"
-        class="daily-block"
+        class="daily-block {{gameBlocks.length === 1 ? 'game-solo' : ''}}"
         style="background:{{item.color}}"
         url="{{item.url}}"
         hover-class="daily-block-hover"
       >
         <view class="daily-icon"><text class="daily-emoji">{{item.emoji}}</text></view>
-        <text class="daily-label" style="color:{{item.label}}">{{item.title}}</text>
+        <!-- 只剩一个玩法时横排成一张通栏卡：竖排的方块独占一行会很空 -->
+        <view wx:if="{{gameBlocks.length === 1}}" class="game-solo-body">
+          <text class="game-solo-title" style="color:{{item.label}}">{{item.title}}</text>
+          <text wx:if="{{item.sub}}" class="game-solo-sub" style="color:{{item.label}}">{{item.sub}}</text>
+        </view>
+        <text wx:else class="daily-label" style="color:{{item.label}}">{{item.title}}</text>
       </navigator>
     </view>
   </view>
