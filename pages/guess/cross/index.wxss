@@ -1,0 +1,195 @@
+/* 每日填字 · 纵横交叉
+   配色沿用 pages/guess/grid 那套中性米白 + 墨绿点缀，两个玩法放在一起不违和
+
+   纵向预算是这个页面最容易翻车的地方，按 750×1624rpx（iPhone 常见比例）算：
+     计数 72（日期已并入这一行，头部标题整行去掉）+ 标签 104 + 线索 183 + 网格 668 = 1027
+     底部固定字池 = 16 + 4 行×88 + 12 + 72 + 16 ≈ 468（字池每行 6 个 → 24 字排 4 行）
+   合计约 1495，留了点余量；再紧就先牺牲网格（可滚动），线索一定要露出来。字池比想象中高得多（24 个字每行 8 个要 3 行），
+   第一版按 240rpx 估的，实际约 480rpx，正好把线索卡整个盖住 ——
+   所以线索现在放在网格**上面**，即便预算再算错也盖不到它。 */
+
+page { background: #FFFCF5; }
+
+.page {
+  padding: 16rpx 24rpx 500rpx; box-sizing: border-box;
+  /* 纵向 flex：线索与字池之间剩下多少高度，都交给 .board-wrap 去居中棋盘 */
+  min-height: 100vh; display: flex; flex-direction: column;
+}
+/* 结束后底部字池整个消失，那 500rpx 的让位空间就成了一大片空白 */
+.page.done { padding-bottom: 60rpx; }
+
+/* —— 翻日期的左右箭头：并进计数条两端，不再单占一行 */
+.nav {
+  flex: 0 0 auto;
+  width: 48rpx; height: 48rpx; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: #F6F5EE; color: #6B6A62; font-size: 32rpx; line-height: 1;
+}
+/* 到今天了就压暗，示意再往后没有——但按钮照样可点，点了是订阅弹窗 */
+.nav-off { color: #D2CEC3; }
+
+.state { padding: 80rpx 0; text-align: center; font-size: 28rpx; color: #A7A498; }
+.state.err { color: #C0603F; }
+
+/* —— 计数条：一行文字，不再是三个大块 */
+.meter {
+  display: flex; align-items: center; justify-content: space-between;
+  background: #fff; border-radius: 16rpx; padding: 12rpx 16rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+  font-size: 24rpx; color: #A7A498;
+}
+/* 日期和局面挤一行，横向很紧：分隔点收窄，「已答出」这类字样一并省掉 */
+.m-mid { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; }
+.m-date { font-size: 24rpx; font-weight: 700; color: #6B6A62; }
+.m-day { margin-left: 6rpx; font-size: 20rpx; color: #A7A498; }
+.m-num { font-size: 30rpx; font-weight: 700; color: #6F8244; }
+/* 生命值：实心 ♥ 是还剩的，空心 ♡ 是扣掉的 —— 用字形区分而不是只靠颜色，
+   色弱用户和截图转灰度时都还认得出 */
+.hearts { display: flex; align-items: center; }
+.heart { font-size: 28rpx; color: #E0DDD2; margin-right: 2rpx; }
+.heart.on { color: #D0524A; }
+.m-dot { margin: 0 10rpx; color: #DCDACE; }
+
+/* 玩法说明，只在开局显示一次 */
+.howto {
+  margin-top: 14rpx; text-align: center;
+  font-size: 22rpx; color: #B5B2A6; letter-spacing: 1rpx;
+}
+
+/* —— 条目切换标签：一行 */
+.tabs { display: flex; margin-top: 16rpx; }
+.tab {
+  flex: 1; margin: 0 5rpx; padding: 10rpx 0; border-radius: 12rpx;
+  background: #fff; display: flex; flex-direction: column; align-items: center;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+}
+.tab-no { font-size: 28rpx; font-weight: 700; color: #6B6A62; line-height: 1.2; }
+.tab-dir { margin-top: 2rpx; font-size: 20rpx; color: #A7A498; }
+.tab.cur { background: #6F8244; }
+.tab.cur .tab-no, .tab.cur .tab-dir { color: #fff; }
+/* 已答出：压暗，但仍可点开回看线索 */
+.tab.solved { background: #EEF1E5; }
+.tab.solved .tab-no { color: #9AAB65; }
+.tab.solved.cur { background: #9AAB65; }
+.tab.solved.cur .tab-no, .tab.solved.cur .tab-dir { color: #fff; }
+
+/* —— 当前那条的线索（一次只显示一条，且在网格上方） */
+.clue-cur {
+  margin-top: 16rpx; background: #fff; border-radius: 16rpx;
+  padding: 18rpx 24rpx; border-left: 6rpx solid #6F8244;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+}
+.clue-head { display: flex; align-items: center; }
+.clue-meta { font-size: 22rpx; color: #A7A498; }
+.clue-answer { margin-left: auto; font-size: 26rpx; font-weight: 700; color: #6F8244; }
+/* 高度写死两行：线索长短不一，不定高的话每切一条片子下面的棋盘就跟着弹一次。
+   两行是算出来的够用值——线索云端上限 44 字（CROSS_CLUE_MAXLEN），
+   卡片可用宽约 648rpx、字号 27rpx，一行约 24 字，44 字正好两行落地。 */
+.clue-text {
+  margin-top: 8rpx; font-size: 27rpx; line-height: 1.55; color: #4A4942;
+  height: 84rpx; overflow: hidden;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+}
+
+/* —— 7×7 网格
+   宽度：750 − 页面 padding 48 = 702；面板内边距 8×2 → 686。
+   每格 margin 3rpx（左右合 6）→ (686 − 42) / 7 ≈ 92，取 90 留点余量。
+   格子大小是被宽度卡死的（7 列必须并排），高度再富余也只能给卡面，不能给格子。 */
+/* 线索与字池之间剩下的高度全部归填字区：白卡自己撑满（flex:1），格子在卡内上下居中。
+   早先是白卡贴着内容、剩余高度变成卡上下两坨空白——看着就是「间距不合理」。
+   现在上下只留 12rpx 的固定间距，其余都是卡面。 */
+.board-wrap { flex: 1; display: flex; flex-direction: column; }
+.board {
+  flex: 1; display: flex; flex-direction: column; justify-content: center;
+  margin: 12rpx 0; background: #fff; border-radius: 20rpx; padding: 8rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+}
+.board-row { display: flex; justify-content: center; }
+.bcell {
+  width: 90rpx; height: 90rpx; margin: 3rpx; box-sizing: border-box;
+  display: flex; align-items: center; justify-content: center;
+  position: relative; border-radius: 8rpx;
+  font-size: 38rpx; color: #2D2D2B;
+}
+/* 不参与填写的格子：留白，不画框，网格才有填字的样子 */
+.bcell.off { background: transparent; }
+.bcell.on { background: #FEFDFA; border: 2rpx solid #E3E0D6; }
+/* 当前选中那一条所覆盖的格子 */
+.bcell.active { border-color: #9AAB65; background: #FBFCF6; }
+/* 光标所在格 */
+.bcell.focus { border-color: #6F8244; border-width: 4rpx; background: #F3F6EA; }
+/* 已答出、锁定 */
+.bcell.locked { background: #fff; border-color: #9AAB65; color: #6F8244; font-weight: 700; }
+/* 刚被提示揭出来的格子：闪一下再落定。
+   随机揭字会落在任意一格，没有这个动画用户找不到哪儿变了。 */
+@keyframes cellFlash {
+  0%   { background: #F2C14E; transform: scale(1.18); }
+  60%  { background: #F7E3A8; transform: scale(1); }
+  100% { background: #fff; transform: scale(1); }
+}
+.bcell.flash { animation: cellFlash 1.2s ease-out; }
+
+/* 条目序号，标在该条起始格左上角 */
+.bcell-no {
+  position: absolute; top: 2rpx; left: 6rpx;
+  font-size: 18rpx; line-height: 1; color: #C9C6BA;
+}
+
+/* —— 结束面板 */
+.over {
+  margin-top: 24rpx; background: #fff; border-radius: 20rpx; padding: 32rpx;
+  text-align: center; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+}
+.over-title { font-size: 34rpx; font-weight: 700; color: #2D2D2B; }
+.over-sub { margin-top: 10rpx; font-size: 26rpx; color: #A7A498; }
+/* 结束后列出五部片：填字做完之后玩家最想看的就是这个 */
+.answers { margin-top: 24rpx; border-top: 2rpx solid #F0EEE5; padding-top: 8rpx; }
+.ans {
+  display: flex; align-items: center;
+  padding: 12rpx 4rpx; border-bottom: 2rpx solid #F6F5EE;
+}
+.ans-no {
+  width: 36rpx; height: 36rpx; border-radius: 50%; flex: none;
+  background: #EFEDE4; color: #6B6A62; font-size: 22rpx;
+  display: flex; align-items: center; justify-content: center;
+}
+.ans-word { margin-left: 16rpx; font-size: 28rpx; color: #2D2D2B; }
+.ans-year { margin-left: auto; font-size: 22rpx; color: #B5B2A6; }
+
+.over-btn {
+  margin-top: 24rpx; background: #6F8244; color: #fff;
+  border-radius: 999rpx; padding: 20rpx 0; font-size: 28rpx;
+}
+
+/* —— 底部字池（固定；页面靠 .page 的 padding-bottom 让位）
+   **每行 6 个靠百分比保证，不靠算宽度**：按 104rpx 固定宽算出来该是 6 个，
+   真机上实际排了 4 个 —— 说明对容器可用宽度的假设不对，而这个没法在源码里量。
+   改成 calc(12.5% − 8rpx) + 8rpx 边距，八格恰好占满 100%，与容器实际多宽无关。
+   字池尺寸由服务端保证是 8 的倍数且不少于 24，所以永远是整行，
+   不会出现最后一行只剩两三个字的豁口。实测多数题落在 24（3 行）。 */
+.dock {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+  background: #fff; border-top: 2rpx solid #EFEDE4;
+  padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom));
+  box-shadow: 0 -4rpx 20rpx rgba(0,0,0,0.05);
+}
+/* 左对齐：居中会让不满的最后一行和上面几行错开，看着像乱码 */
+.dock-pool { display: flex; flex-wrap: wrap; }
+.chip {
+  width: calc(12.5% - 8rpx); height: 76rpx; margin: 4rpx; box-sizing: border-box;
+  display: flex; align-items: center; justify-content: center;
+  background: #F6F5EE; border-radius: 12rpx;
+  font-size: 34rpx; color: #2D2D2B;
+}
+/* 用掉的那一份：置灰且点不动。退格会把它还回来 */
+.chip.used { color: #DCDACE; background: #FAFAF6; }
+.dock-ops { display: flex; margin-top: 12rpx; }
+.op {
+  flex: 1; margin: 0 6rpx; height: 72rpx; border-radius: 14rpx;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28rpx; background: #6F8244; color: #fff;
+}
+.op.ghost { background: #F6F5EE; color: #6B6A62; flex: 0 0 150rpx; }
+/* 提示次数用完、但还能看视频再换：换个颜色，让人看得出还有路可走 */
+.op.ghost.ad { background: #FBF1DC; color: #B98E56; font-size: 24rpx; }
+.op.disabled { background: #DCDACE; color: #fff; }

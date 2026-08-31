@@ -1,0 +1,104 @@
+<view class="page">
+
+  <view class="hd">
+    <view class="hd-title">每日猜电影</view>
+    <view class="hd-sub">{{date}} · 每格填一部同时满足行列条件的电影</view>
+  </view>
+
+  <view wx:if="{{loading}}" class="state">题目加载中…</view>
+  <view wx:elif="{{errMsg}}" class="state err">{{errMsg}}</view>
+
+  <block wx:else>
+    <view class="meter">
+      <view class="meter-item"><text class="meter-num">{{guessesLeft}}</text><text class="meter-lab">剩余机会</text></view>
+      <view class="meter-item"><text class="meter-num">{{filledCount}}/9</text><text class="meter-lab">已填</text></view>
+      <view class="meter-item"><text class="meter-num">{{score}}</text><text class="meter-lab">得分</text></view>
+    </view>
+
+    <!-- 4×4 版式：左上角空位 + 三个列标签，其后每行一个行标签 + 三个格子 -->
+    <view class="grid">
+      <view class="grid-line">
+        <view class="corner"></view>
+        <view class="col-head" wx:for="{{cols}}" wx:key="key">{{item.label}}</view>
+      </view>
+
+      <view class="grid-line" wx:for="{{gridRows}}" wx:for-item="row" wx:key="label">
+        <view class="row-head">{{row.label}}</view>
+        <view
+          class="cell {{cell.filled ? 'done' : ''}} {{finished && !cell.filled ? 'miss' : ''}}"
+          wx:for="{{row.cells}}" wx:for-item="cell" wx:key="key"
+          data-r="{{cell.r}}" data-c="{{cell.c}}" bindtap="onTapCell">
+          <block wx:if="{{cell.filled}}">
+            <image class="cell-cover" src="{{cell.filled.cover}}" mode="aspectFill" lazy-load />
+            <view class="cell-name">{{cell.filled.title}}</view>
+            <view class="cell-score">+{{cell.filled.score}}</view>
+          </block>
+          <block wx:else>
+            <view class="cell-plus">＋</view>
+            <view class="cell-count">{{cell.count}} 种解</view>
+            <view wx:if="{{cell.hint}}" class="cell-hinted">已提示</view>
+          </block>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{finished}}" class="over">
+      <view class="over-title">本局结束</view>
+      <view class="over-sub">填出 {{filledCount}}/9 格，得分 {{score}}</view>
+      <button class="over-share" open-type="share">晒一下战绩</button>
+    </view>
+
+    <view class="switch" bindtap="goClueMode">换个玩法：线索猜片 →</view>
+
+    <view class="tip">
+      答案需在标记吧片库内（豆瓣 TOP250、奥斯卡、票房榜等榜单里的电影）。越冷门的答案得分越高。
+    </view>
+  </block>
+
+  <!-- 答对提示条：顺手把这部标记成看过 -->
+  <view wx:if="{{lastCorrect}}" class="correct-bar">
+    <image class="cb-cover" src="{{lastCorrect.movie.cover}}" mode="aspectFill" />
+    <view class="cb-mid">
+      <view class="cb-title">《{{lastCorrect.movie.title}}》</view>
+      <view class="cb-sub">+{{lastCorrect.gained}} 分</view>
+    </view>
+    <view class="cb-btn" bindtap="onMarkWatched">标记看过</view>
+    <view class="cb-close" bindtap="dismissCorrect">×</view>
+  </view>
+
+  <!-- 作答弹窗 -->
+  <view wx:if="{{picker.show}}" class="mask" bindtap="closePicker">
+    <view class="sheet" catchtap="noop">
+      <view class="sheet-hd">
+        <text class="sheet-cond">{{picker.rowLabel}}</text>
+        <text class="sheet-x">×</text>
+        <text class="sheet-cond">{{picker.colLabel}}</text>
+      </view>
+
+      <input class="sheet-input" placeholder="输入电影名" value="{{picker.keyword}}"
+             bindinput="onKeywordInput" confirm-type="search" focus />
+
+      <view wx:if="{{picker.hint}}" class="sheet-hint">💡 {{picker.hint}}</view>
+
+      <scroll-view class="sheet-list" scroll-y>
+        <view wx:if="{{picker.searching}}" class="sheet-state">搜索中…</view>
+        <view wx:elif="{{picker.keyword && picker.candidates.length === 0}}" class="sheet-state">
+          片库里没有匹配的电影
+        </view>
+        <view class="cand" wx:for="{{picker.candidates}}" wx:key="id"
+              data-id="{{item.id}}" bindtap="onPickCandidate">
+          <image class="cand-cover" src="{{item.cover}}" mode="aspectFill" lazy-load />
+          <view class="cand-mid">
+            <view class="cand-title">{{item.title}}</view>
+            <view class="cand-year">{{item.year}}</view>
+          </view>
+        </view>
+      </scroll-view>
+
+      <view class="sheet-ft">
+        <view class="sheet-hintbtn" bindtap="onWantHint">求提示（扣 1 次机会）</view>
+      </view>
+    </view>
+  </view>
+
+</view>

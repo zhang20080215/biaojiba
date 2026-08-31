@@ -1,0 +1,73 @@
+<view class="page">
+
+  <view class="hd">
+    <view class="hd-title">线索猜片</view>
+    <view class="hd-sub">{{date}} · 每猜错一次，多解锁一条线索</view>
+  </view>
+
+  <view wx:if="{{loading}}" class="state">题目加载中…</view>
+  <view wx:elif="{{errMsg}}" class="state err">{{errMsg}}</view>
+
+  <block wx:else>
+    <view class="meter">
+      <view class="meter-item"><text class="meter-num">{{guessesLeft}}</text><text class="meter-lab">剩余机会</text></view>
+      <view class="meter-item"><text class="meter-num">{{clues.length}}/{{totalClues}}</text><text class="meter-lab">已解锁线索</text></view>
+      <view class="meter-item"><text class="meter-num">{{score}}</text><text class="meter-lab">得分</text></view>
+    </view>
+
+    <view class="clues">
+      <view class="clue" wx:for="{{clues}}" wx:key="order">
+        <view class="clue-no">{{item.order}}</view>
+        <view class="clue-body">
+          <view class="clue-label">{{item.label}}</view>
+          <view class="clue-text">{{item.text}}</view>
+        </view>
+      </view>
+      <view wx:if="{{clues.length < totalClues && !finished}}" class="clue locked">
+        <view class="clue-no">?</view>
+        <view class="clue-body"><view class="clue-text muted">猜错一次解锁下一条</view></view>
+      </view>
+    </view>
+
+    <!-- 结束：亮答案 -->
+    <view wx:if="{{finished}}" class="over">
+      <view class="over-title">{{won ? '猜中了！' : '本局结束'}}</view>
+      <block wx:if="{{answer}}">
+        <image class="over-cover" src="{{answer.cover}}" mode="aspectFill" />
+        <view class="over-name">《{{answer.title}}》{{answer.year}}</view>
+      </block>
+      <view class="over-sub">得分 {{score}}</view>
+      <view wx:if="{{won}}" class="over-mark" bindtap="onMarkWatched">标记为看过</view>
+      <button class="over-share" open-type="share">晒一下战绩</button>
+    </view>
+
+    <!-- 作答区 -->
+    <block wx:if="{{!finished}}">
+      <input class="guess-input" placeholder="输入你猜的电影名" value="{{keyword}}"
+             bindinput="onKeywordInput" confirm-type="search" />
+      <view wx:if="{{searching}}" class="state small">搜索中…</view>
+      <view wx:elif="{{keyword && candidates.length === 0}}" class="state small">片库里没有匹配的电影</view>
+      <view class="cands">
+        <view class="cand" wx:for="{{candidates}}" wx:key="id"
+              data-id="{{item.id}}" bindtap="onPickCandidate">
+          <image class="cand-cover" src="{{item.cover}}" mode="aspectFill" lazy-load />
+          <view class="cand-mid">
+            <view class="cand-title">{{item.title}}</view>
+            <view class="cand-year">{{item.year}}</view>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <!-- 猜错记录 -->
+    <view wx:if="{{record && record.wrongGuesses.length}}" class="wrongs">
+      <view class="wrongs-hd">猜过</view>
+      <view class="wrong" wx:for="{{record.wrongGuesses}}" wx:key="n">《{{item.title}}》</view>
+    </view>
+
+    <view class="switch" bindtap="goGridMode">换个玩法：交叉填格 →</view>
+
+    <view class="tip">答案取自标记吧片库里的高知名度电影（进过 2 个以上榜单）。</view>
+  </block>
+
+</view>

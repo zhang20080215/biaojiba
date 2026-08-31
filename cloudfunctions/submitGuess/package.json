@@ -1,0 +1,7 @@
+{
+  "name": "submitGuess",
+  "version": "1.0.0",
+  "description": "猜电影作答校验",
+  "main": "index.js",
+  "dependencies": { "wx-server-sdk": "^3.0.1" }
+}

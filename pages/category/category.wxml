@@ -81,6 +81,29 @@
     </navigator>
   </view>
 
+  <!-- 每日猜电影（玩法专区：三个玩法横排，样式沿用每日主题的横排块） -->
+  <view class="section-head">每日猜电影</view>
+  <view class="daily-section">
+    <view class="daily-row">
+      <navigator
+        wx:for="{{gameBlocks}}"
+        wx:key="key"
+        class="daily-block {{gameBlocks.length === 1 ? 'game-solo' : ''}}"
+        style="background:{{item.color}}"
+        url="{{item.url}}"
+        hover-class="daily-block-hover"
+      >
+        <view class="daily-icon"><text class="daily-emoji">{{item.emoji}}</text></view>
+        <!-- 只剩一个玩法时横排成一张通栏卡：竖排的方块独占一行会很空 -->
+        <view wx:if="{{gameBlocks.length === 1}}" class="game-solo-body">
+          <text class="game-solo-title" style="color:{{item.label}}">{{item.title}}</text>
+          <text wx:if="{{item.sub}}" class="game-solo-sub" style="color:{{item.label}}">{{item.sub}}</text>
+        </view>
+        <text wx:else class="daily-label" style="color:{{item.label}}">{{item.title}}</text>
+      </navigator>
+    </view>
+  </view>
+
   <!-- 主题标记 -->
   <view class="section-head section-head-row">
     <text class="section-head-title">主题标记</text>

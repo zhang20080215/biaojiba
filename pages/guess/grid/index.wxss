@@ -1,0 +1,132 @@
+/* 每日猜电影 · 交叉填格
+   配色沿用项目里海报页那套中性米白 + 墨绿点缀，跟榜单页放在一起不违和 */
+
+page { background: #FFFCF5; }
+
+.page { padding: 24rpx 24rpx 60rpx; box-sizing: border-box; }
+
+/* —— 头部 */
+.hd { padding: 12rpx 8rpx 20rpx; }
+.hd-title { font-size: 44rpx; font-weight: 700; color: #2D2D2B; letter-spacing: 2rpx; }
+.hd-sub { margin-top: 8rpx; font-size: 24rpx; color: #A7A498; }
+
+.state { padding: 80rpx 0; text-align: center; font-size: 28rpx; color: #A7A498; }
+.state.err { color: #C0603F; }
+
+/* —— 计数条 */
+.meter {
+  display: flex; background: #fff; border-radius: 20rpx;
+  padding: 20rpx 0; margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+}
+.meter-item { flex: 1; display: flex; flex-direction: column; align-items: center; }
+.meter-num { font-size: 36rpx; font-weight: 700; color: #6F8244; }
+.meter-lab { margin-top: 4rpx; font-size: 22rpx; color: #A7A498; }
+
+/* —— 网格：4 列等分（角落 + 3 列），行同理 */
+.grid { background: #fff; border-radius: 20rpx; padding: 12rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04); }
+.grid-line { display: flex; }
+.corner { width: 22%; }
+.col-head, .row-head {
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  font-size: 20rpx; line-height: 1.25; color: #6B6A62; padding: 8rpx 4rpx; box-sizing: border-box;
+}
+.col-head { width: 26%; height: 92rpx; font-weight: 600; }
+.row-head { width: 22%; font-weight: 600; }
+
+.cell {
+  width: 26%; height: 180rpx; margin: 4rpx; box-sizing: border-box;
+  border: 2rpx dashed #E3E0D6; border-radius: 12rpx;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  position: relative; overflow: hidden; background: #FEFDFA;
+}
+.cell.done { border-style: solid; border-color: #9AAB65; background: #fff; }
+.cell.miss { opacity: 0.5; }
+
+.cell-plus { font-size: 40rpx; color: #C9C6BA; line-height: 1; }
+.cell-count { margin-top: 8rpx; font-size: 18rpx; color: #C9C6BA; }
+.cell-hinted { margin-top: 4rpx; font-size: 18rpx; color: #B98E56; }
+
+.cell-cover { width: 100%; height: 118rpx; }
+.cell-name {
+  width: 100%; padding: 4rpx 6rpx; box-sizing: border-box;
+  font-size: 18rpx; line-height: 1.2; color: #2D2D2B; text-align: center;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.cell-score {
+  position: absolute; top: 4rpx; right: 4rpx;
+  background: rgba(111,130,68,0.9); color: #fff;
+  font-size: 16rpx; padding: 2rpx 8rpx; border-radius: 20rpx;
+}
+
+/* —— 结束面板 */
+.over {
+  margin-top: 28rpx; background: #fff; border-radius: 20rpx; padding: 32rpx;
+  text-align: center; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+}
+.over-title { font-size: 34rpx; font-weight: 700; color: #2D2D2B; }
+.over-sub { margin-top: 10rpx; font-size: 26rpx; color: #A7A498; }
+.over-share {
+  margin-top: 24rpx; background: #6F8244; color: #fff;
+  font-size: 28rpx; border-radius: 40rpx; line-height: 2.6;
+}
+.over-share::after { border: none; }
+
+.switch {
+  margin-top: 28rpx; text-align: center; font-size: 26rpx; color: #6F8244;
+  padding: 20rpx; background: #fff; border-radius: 20rpx;
+}
+
+.tip { margin-top: 24rpx; padding: 0 12rpx; font-size: 22rpx; line-height: 1.6; color: #B5B2A6; }
+
+/* —— 答对提示条 */
+.correct-bar {
+  position: fixed; left: 24rpx; right: 24rpx; bottom: 40rpx; z-index: 20;
+  display: flex; align-items: center; background: #fff; border-radius: 20rpx;
+  padding: 16rpx; box-shadow: 0 6rpx 24rpx rgba(0,0,0,0.12);
+}
+.cb-cover { width: 64rpx; height: 90rpx; border-radius: 8rpx; background: #EFEDE6; }
+.cb-mid { flex: 1; margin-left: 16rpx; min-width: 0; }
+.cb-title { font-size: 26rpx; color: #2D2D2B; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cb-sub { margin-top: 4rpx; font-size: 22rpx; color: #6F8244; }
+.cb-btn {
+  padding: 12rpx 22rpx; background: #6F8244; color: #fff;
+  font-size: 24rpx; border-radius: 30rpx;
+}
+.cb-close { padding: 0 8rpx 0 16rpx; font-size: 34rpx; color: #C9C6BA; }
+
+/* —— 作答弹窗 */
+.mask {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 30;
+  display: flex; align-items: flex-end;
+}
+.sheet {
+  width: 100%; background: #FFFCF5; border-radius: 28rpx 28rpx 0 0;
+  padding: 32rpx 32rpx 40rpx; box-sizing: border-box;
+}
+.sheet-hd { display: flex; align-items: center; justify-content: center; margin-bottom: 24rpx; }
+.sheet-cond {
+  font-size: 26rpx; color: #2D2D2B; font-weight: 600;
+  background: #F1EFE7; padding: 10rpx 20rpx; border-radius: 30rpx;
+}
+.sheet-x { margin: 0 16rpx; font-size: 24rpx; color: #A7A498; }
+
+.sheet-input {
+  background: #fff; border: 2rpx solid #E3E0D6; border-radius: 16rpx;
+  padding: 20rpx 24rpx; font-size: 28rpx; color: #2D2D2B;
+}
+.sheet-hint {
+  margin-top: 16rpx; padding: 16rpx 20rpx; background: #FBF3E3;
+  border-radius: 12rpx; font-size: 24rpx; color: #8C6239; line-height: 1.5;
+}
+
+.sheet-list { max-height: 520rpx; margin-top: 20rpx; }
+.sheet-state { padding: 40rpx 0; text-align: center; font-size: 24rpx; color: #A7A498; }
+.cand { display: flex; align-items: center; padding: 14rpx 8rpx; border-bottom: 2rpx solid #F1EFE7; }
+.cand-cover { width: 60rpx; height: 84rpx; border-radius: 8rpx; background: #EFEDE6; flex-shrink: 0; }
+.cand-mid { margin-left: 18rpx; min-width: 0; }
+.cand-title { font-size: 28rpx; color: #2D2D2B; }
+.cand-year { margin-top: 4rpx; font-size: 22rpx; color: #A7A498; }
+
+.sheet-ft { margin-top: 24rpx; text-align: center; }
+.sheet-hintbtn { display: inline-block; font-size: 24rpx; color: #B98E56; padding: 12rpx 24rpx; }

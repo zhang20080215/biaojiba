@@ -1,0 +1,7 @@
+{
+  "name": "getGuessPuzzle",
+  "version": "1.0.0",
+  "description": "猜电影出题引擎",
+  "main": "index.js",
+  "dependencies": { "wx-server-sdk": "^3.0.1" }
+}

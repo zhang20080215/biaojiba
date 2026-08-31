@@ -1,0 +1,105 @@
+<!-- 底部内边距按字池实测高度给（见 _measureDock）：写死 500rpx 时字池 3 行只占 380rpx，
+     多出来的一截会让棋盘看着偏上、上下留白也不对称 -->
+<view class="page {{finished ? 'done' : ''}}" style="{{finished ? '' : 'padding-bottom:' + dockPad + 'px'}}">
+  <view wx:if="{{loading}}" class="state">题目加载中…</view>
+  <view wx:elif="{{errMsg}}" class="state err">{{errMsg}}</view>
+
+  <block wx:else>
+    <!-- 计数条：压成一行，纵向空间全留给网格和字池。
+         日期也并进这一行——页面标题微信导航栏已经有了，站内不必再占一行 -->
+    <view class="meter">
+      <view class="nav" bindtap="prevDay">‹</view>
+      <view class="m-mid">
+        <text class="m-date">{{dateShort}}</text>
+        <text class="m-day">{{dayOffset === 0 ? '今天' : (dayOffset > 0 ? dayOffset + '天后' : (0 - dayOffset) + '天前')}}</text>
+        <text class="m-dot">·</text>
+        <view class="hearts">
+          <text wx:for="{{lifeIcons}}" wx:key="index" class="heart {{item ? 'on' : ''}}">{{item ? '♥' : '♡'}}</text>
+        </view>
+        <text class="m-dot">·</text>
+        <text class="m-seg"><text class="m-num">{{solvedCount}}/{{entries.length}}</text></text>
+        <text class="m-dot">·</text>
+        <text class="m-seg">{{hintsLeft > 0 ? '提示 ' : '提示已用完'}}<text wx:if="{{hintsLeft > 0}}" class="m-num">{{hintsLeft}}</text></text>
+        <text class="m-dot">·</text>
+        <text class="m-seg"><text class="m-num">{{score}}</text> 分</text>
+      </view>
+      <!-- 已经是今天时压暗，但仍可点——点了走订阅弹窗，而不是死按钮 -->
+      <view class="nav {{dayOffset >= 0 ? 'nav-off' : ''}}" bindtap="nextDay">›</view>
+    </view>
+
+    <!-- 条目切换 -->
+    <view class="tabs">
+      <view
+        wx:for="{{entries}}" wx:key="no"
+        class="tab {{item.no === currentNo ? 'cur' : ''}} {{item.solved ? 'solved' : ''}}"
+        data-no="{{item.no}}" bindtap="onTapClue">
+        <text class="tab-no">{{item.no}}</text>
+        <text class="tab-dir">{{item.dir === 'H' ? '横' : '竖'}}{{item.len}}</text>
+      </view>
+    </view>
+
+    <!-- 只在还没答出任何一条时出现，占一行，答出第一条就让位给网格 -->
+    <view wx:if="{{solvedCount === 0}}" class="howto">选一条线索 → 从下方选字填格 → 填满后提交</view>
+
+    <!-- 线索放在网格**上面**：底部字池是浮层，放下面容易被盖住 -->
+    <view wx:if="{{current}}" class="clue-cur">
+      <view class="clue-head">
+        <text class="clue-meta">第 {{current.no}} 条 · {{current.dir === 'H' ? '横' : '竖'}}向 {{current.len}} 字</text>
+        <text wx:if="{{current.solved}}" class="clue-answer">{{current.word}}</text>
+      </view>
+      <view class="clue-text">{{current.clue}}</view>
+    </view>
+
+    <!-- 网格：外层 board-wrap 吃掉线索与字池之间的剩余高度，让棋盘上下居中。
+         viewRows 是「有格子的那几行」的绝对行号——7×7 里空着的整行不渲染，
+         否则棋盘顶部会留一大片白。r/c 一律用绝对坐标，点击逻辑不受裁剪影响 -->
+    <view class="board-wrap">
+    <view class="board">
+      <view class="board-row" wx:for="{{viewRows}}" wx:for-item="r" wx:key="*this">
+        <view
+          wx:for="{{board[r]}}" wx:for-item="cell" wx:for-index="c" wx:key="c"
+          class="bcell {{cell.on ? 'on' : 'off'}} {{cell.locked ? 'locked' : ''}} {{cell.active ? 'active' : ''}} {{cell.focus ? 'focus' : ''}} {{cell.flash ? 'flash' : ''}}"
+          data-r="{{r}}" data-c="{{c}}" bindtap="onTapCell">
+          <text wx:if="{{cell.on && cell.ch}}">{{cell.ch}}</text>
+          <text wx:if="{{cell.no}}" class="bcell-no">{{cell.no}}</text>
+        </view>
+      </view>
+    </view>
+    </view>
+
+    <view wx:if="{{finished}}" class="over">
+      <view class="over-title">{{solvedCount === entries.length ? '全部答出' : '♥ 用完了'}}</view>
+      <view class="over-sub">答出 {{solvedCount}}/{{entries.length}} 条 · 得分 {{score}}</view>
+      <!-- 做完或做砸都把五部片列出来，这是这一局的交代 -->
+      <view wx:if="{{answers.length}}" class="answers">
+        <view wx:for="{{answers}}" wx:key="no" class="ans">
+          <text class="ans-no">{{item.no}}</text>
+          <text class="ans-word">{{item.word}}</text>
+          <text wx:if="{{item.year}}" class="ans-year">{{item.year}}</text>
+        </view>
+      </view>
+      <!-- 复活不限次数，只要没做完就一直给这个入口 -->
+      <view wx:if="{{solvedCount < entries.length}}" class="over-btn" bindtap="onRevive">看视频补回一颗♥</view>
+    </view>
+  </block>
+
+  <!-- 底部字池 -->
+  <view wx:if="{{!loading && !errMsg && !finished}}" class="dock">
+    <view class="dock-pool">
+      <view
+        wx:for="{{chips}}" wx:key="index"
+        class="chip {{item.used ? 'used' : ''}}"
+        data-i="{{index}}" bindtap="onTapChar">{{item.ch}}</view>
+    </view>
+    <view class="dock-ops">
+      <view class="op ghost" bindtap="onBackspace">删除</view>
+      <!-- 次数用完但还能换时要看得出来，否则用户以为没了就直接不点了 -->
+      <view class="op ghost {{hintsLeft === 0 && canBuyHint ? 'ad' : ''}}" bindtap="onHint">
+        {{hintsLeft > 0 ? '提示 ' + hintsLeft : (canBuyHint ? '提示·视频' : '提示')}}
+      </view>
+      <view class="op {{canSubmit ? '' : 'disabled'}}" bindtap="onSubmit">
+        {{submitting ? '提交中…' : (canSubmit ? '提交这条' : (current ? '还差 ' + (current.len - curFilled) + ' 个字' : '提交这条'))}}
+      </view>
+    </view>
+  </view>
+</view>
