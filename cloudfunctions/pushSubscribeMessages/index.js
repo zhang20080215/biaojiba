@@ -1,6 +1,8 @@
 // 通用订阅消息推送：扫 push_events 未推送事件，按 topic 派发到对应模板
 // 加新 topic 只需在 TOPIC_CONFIG 表里加一行 + 给云函数加对应环境变量，不需要新建云函数 / 定时器
-// 定时触发器挂在每日 09:30（北京时间），且函数内部守卫只允许 09:00-22:00 推送
+// 定时触发器挂在每日 09:30 和 10:00（北京时间），且函数内部守卫只允许 09:00-22:00 推送
+// 10:00 那趟额外负责「每日填字新题」——它不是事件驱动的（每天都有新题，没有"发生了什么"），
+// 所以由本函数自己按天补一条 push_events，再照常走下面的分发/配额/重试逻辑
 // 之所以加守卫：cron 改了还能被手动调用 / 将来被其它路径调用，统一限制更稳
 
 const cloud = require('wx-server-sdk');
@@ -18,6 +20,13 @@ function isInPushWindow(date) {
   // 云函数运行环境通常是 UTC，需要加 8 小时换算北京时间
   const beijingHour = (date.getUTCHours() + 8) % 24;
   return beijingHour >= PUSH_WINDOW_START_HOUR && beijingHour < PUSH_WINDOW_END_HOUR;
+}
+
+/** 北京时间的 YYYY-MM-DD */
+function cnDateStr(date) {
+  const bj = new Date(date.getTime() + 8 * 3600 * 1000);
+  const p = n => (n < 10 ? '0' : '') + n;
+  return bj.getUTCFullYear() + '-' + p(bj.getUTCMonth() + 1) + '-' + p(bj.getUTCDate());
 }
 
 function formatBeijingTime(date) {
@@ -55,6 +64,17 @@ const TOPIC_CONFIG = {
       thing3: { value: '该喝水啦' }
     })
   },
+  // 每日填字：每天 10:00 推给订阅过的人，一次授权推一条（配额自减）
+  // ⚠ 模板与 top250NewEntry 是同一个，字段结构必须一致（任务名称/提醒时间/备注）
+  guessCrossDaily: {
+    envVar: 'GUESS_CROSS_DAILY_TPL_ID',
+    page: 'pages/guess/cross/index',
+    render: () => ({
+      thing1: { value: '每日电影填词更新啦' },
+      time7: { value: formatBeijingTime(new Date()) },
+      thing10: { value: '今天的填字已更新，来玩' }
+    })
+  },
   top250RankChange: {
     envVar: 'TOP250_RANK_CHANGE_TPL_ID',
     page: 'pages/douban/list/list',
@@ -74,6 +94,31 @@ const TOPIC_CONFIG = {
     }
   }
 };
+
+// 每日填字的「新题已更新」事件：本函数在 10:00 那趟自己补一条，按日期做 _id 天然幂等。
+// 早于 GUESS_PUSH_HOUR 不补，否则 09:30 那趟就把当天的推掉了，跟约定的「10 点提醒」对不上。
+const GUESS_TOPIC = 'guessCrossDaily';
+const GUESS_PUSH_HOUR = 10;
+
+async function ensureGuessDailyEvent(now) {
+  const beijingHour = (now.getUTCHours() + 8) % 24;
+  if (beijingHour < GUESS_PUSH_HOUR) return null;
+  const date = cnDateStr(now);
+  const _id = 'guess_cross_daily_' + date;
+  try {
+    const exist = await db.collection('push_events').doc(_id).get();
+    if (exist && exist.data) return null;          // 今天已经补过
+  } catch (e) { /* 取不到 = 还没有，往下建 */ }
+  try {
+    await db.collection('push_events').add({
+      data: { _id, topic: GUESS_TOPIC, eventDate: date, payload: {}, pushedAt: null, createdAt: db.serverDate() }
+    });
+    return _id;
+  } catch (e) {
+    // 并发下另一趟已经建了，忽略即可
+    return null;
+  }
+}
 
 async function readAll(collection, query) {
   const countRes = await query.count();
@@ -102,6 +147,9 @@ exports.main = async (event, context) => {
       window: `${PUSH_WINDOW_START_HOUR}:00-${PUSH_WINDOW_END_HOUR}:00`
     };
   }
+
+  // 填字是「每天都有新题」而不是「发生了某件事」，没有别的函数会替它写事件，这里自己补
+  try { await ensureGuessDailyEvent(now); } catch (e) { console.error('补每日填字事件失败:', e && e.message); }
 
   let pendingEvents;
   try {
@@ -148,6 +196,11 @@ exports.main = async (event, context) => {
       console.error(`读 SubscribeQuota 失败 (topic=${evt.topic}):`, e && e.message);
       continue;
     }
+
+    // notBeforeDate：订阅时说好「明天才提醒」的，今天不推（每日填字的弹窗就是这么承诺的）。
+    // 没有这个字段的老记录一律视为立即可用。
+    const todayCN = cnDateStr(now);
+    quotaUsers = quotaUsers.filter(u => !u.notBeforeDate || u.notBeforeDate <= todayCN);
 
     let data;
     try {
