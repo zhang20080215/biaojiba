@@ -15,6 +15,7 @@
 // 不含 entries[].word。进度存 guess_records（openid+mode+date），切后台/换设备能续上。
 
 const rewardedAdManager = require('../../../utils/rewardedAdManager');
+const subscribeConfig = require('../../../utils/subscribeConfig');
 
 const MODE = 'cross';
 // 广告位名。adConfig 里没配这个位时 rewardedAdManager.show() 直接返回 true（放行），
@@ -54,8 +55,11 @@ Page({
         loading: true,
         errMsg: '',
         date: '',
+        dateShort: '',      // 日期去掉年份，计数条那一行放得下
         dayOffset: 0,       // 相对今天第几天，头部显示用
-        board: [],          // [[{ on, ch, locked, active, focus, no }]]
+        board: [],          // [[{ on, ch, locked, active, focus, no }]]，下标即绝对坐标
+        viewRows: [],       // 实际渲染哪几行（绝对行号）——空行不画，见 _buildBoard
+        dockPad: 250,       // 底部为固定字池让出的高度（px），实测后覆盖，见 _measureDock
         entries: [],        // [{ no, r, c, dir, len, clue, solved, word }]
         // 字池是**多重集**：一个格子一个字，重复的字给多份（《虫虫危机》给两个「虫」），
         // 每份只能用一次。所以按下标操作，不能按字操作 —— 同一个字可能有好几份，
@@ -124,6 +128,7 @@ Page({
             this.setData({
                 loading: false,
                 date: puzzle.date || '',
+                dateShort: (puzzle.date || '').slice(5),
                 // 第一次拿到的日期就是「今天」（那次没传 date），后面切日期都相对它算
                 dayOffset: this._today ? dayDiff(this._today, puzzle.date || this._today) : 0,
                 entries,
@@ -140,7 +145,10 @@ Page({
                 finished: !!rec.finished
             });
             this._applyStatus(st);
-            if (!this._today) this._today = puzzle.date || '';
+            // 这一趟没传 date 就意味着请求的是「今天」，返回的日期即服务端认定的今天。
+            // 每次都更新而不是只认第一次：页面挂在后台跨了零点再下拉刷新时，
+            // _today 还停在昨天的话，往后翻会把新的今天也拦掉。
+            if (!this._date) this._today = puzzle.date || this._today || '';
             this._buildBoard();
             // 断线重连：先把已答出的整条填回盘面，再补上花分揭开的零散字
             this._applySolved(st.solved || []);
@@ -188,6 +196,19 @@ Page({
         });
     },
 
+    /**
+     * 量一下底部字池实际多高，据此给页面底部留白。
+     * 写死一个值不行：字池行数随字数变（24 字 3 行、32 字 4 行），
+     * 留多了棋盘偏上、上下留白不对称，留少了字池盖住棋盘最后一行。
+     */
+    _measureDock() {
+        wx.createSelectorQuery().in(this).select('.dock').boundingClientRect(rect => {
+            if (!rect || !rect.height) return;
+            const pad = Math.ceil(rect.height) + 12;   // 12px 呼吸位，别让棋盘贴着字池
+            if (pad !== this.data.dockPad) this.setData({ dockPad: pad });
+        }).exec();
+    },
+
     /** 按 mask 铺盘，并把每条的起始格标上序号 */
     _buildBoard() {
         const mask = this._mask || [];
@@ -198,8 +219,17 @@ Page({
         this.data.entries.forEach(e => {
             if (board[e.r] && board[e.r][e.c]) board[e.r][e.c].no = e.no;
         });
-        this.setData({ board });
+        // 7×7 里只放五部片，顶上/底下常有整行空着，全画出来棋盘就顶着一大片白。
+        // 只渲染「第一个有格子的行 ~ 最后一个有格子的行」，中间的空行保留（那是题面的一部分）。
+        // 存绝对行号，点击照旧按绝对坐标走——裁剪只影响画，不影响算。
+        const used = board.map(row => row.some(c => c.on));
+        const first = used.indexOf(true);
+        const last = used.lastIndexOf(true);
+        const viewRows = [];
+        for (let r = first < 0 ? 0 : first; r <= (last < 0 ? board.length - 1 : last); r++) viewRows.push(r);
+        this.setData({ board, viewRows });
         this._syncActive();
+        this._measureDock();
     },
 
     /** 把服务端回来的已答出条目写进盘面并锁死 */
@@ -288,12 +318,53 @@ Page({
     /**
      * 切到相邻日期。题目是按日期备好的（prepare 备了 30 天），所以切日期就等于换一关；
      * 进度也是按 openid+mode+date 存的，换日期自然是一局新的。
-     * 没备到的日期不会报错 —— getGuessPuzzle 会现出一道并落库。
+     *
+     * **往后翻不能越过今天。** 后面 30 天的题在库里都是现成的，不拦就等于把明天的
+     * 答案提前发出去，每日一题也就没有「每日」可言了。今天以后的日期一律转成订阅弹窗。
      */
     _shiftDay(delta) {
         if (this.data.loading || !this.data.date) return;
-        this._date = shiftDate(this.data.date, delta);
+        const target = shiftDate(this.data.date, delta);
+        if (delta > 0 && this._today && target > this._today) {
+            this._offerTomorrow();
+            return;
+        }
+        this._date = target;
         this.refresh();
+    },
+
+    /**
+     * 想看明天的题时的去处：明天零点才开，顺手给个订阅入口。
+     * 订阅走 deferToNextDay —— 用户要的是「明天有新题了叫我」，当天再推一条没有意义。
+     */
+    async _offerTomorrow() {
+        const tplId = subscribeConfig.getTemplateId('guessCrossDaily');
+        if (!tplId) {
+            wx.showToast({ title: '明天零点更新新题', icon: 'none' });
+            return;
+        }
+        const ok = await this._confirm(
+            '明天的题还没开',
+            '每天零点更新一局新的。订阅提醒的话，明天上午 10 点叫你来玩。'
+        );
+        if (!ok) return;
+        wx.requestSubscribeMessage({
+            tmplIds: [tplId],
+            success: res => {
+                if (res[tplId] !== 'accept') {
+                    wx.showToast({ title: '没订阅上，明天记得来', icon: 'none' });
+                    return;
+                }
+                wx.cloud.callFunction({
+                    name: 'subscribeMessage',
+                    data: { topic: 'guessCrossDaily', templateId: tplId, accepted: true, theme: MODE, deferToNextDay: true }
+                }).then(r => {
+                    const done = r && r.result && r.result.success;
+                    wx.showToast({ title: done ? '订好了，明早 10 点见' : '没记上，稍后再试', icon: 'none' });
+                }).catch(() => wx.showToast({ title: '没记上，稍后再试', icon: 'none' }));
+            },
+            fail: () => wx.showToast({ title: '订阅没成功', icon: 'none' })
+        });
     },
 
     onTapClue(e) {

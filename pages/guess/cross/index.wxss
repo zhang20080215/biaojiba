@@ -2,47 +2,53 @@
    配色沿用 pages/guess/grid 那套中性米白 + 墨绿点缀，两个玩法放在一起不违和
 
    纵向预算是这个页面最容易翻车的地方，按 750×1624rpx（iPhone 常见比例）算：
-     头部 116 + 计数 76 + 标签 104 + 线索 183 + 网格 668 = 1147
+     计数 72（日期已并入这一行，头部标题整行去掉）+ 标签 104 + 线索 183 + 网格 668 = 1027
      底部固定字池 = 16 + 4 行×88 + 12 + 72 + 16 ≈ 468（字池每行 6 个 → 24 字排 4 行）
-   合计 1615，勉强放得下；再紧就先牺牲网格（可滚动），线索一定要露出来。字池比想象中高得多（24 个字每行 8 个要 3 行），
+   合计约 1495，留了点余量；再紧就先牺牲网格（可滚动），线索一定要露出来。字池比想象中高得多（24 个字每行 8 个要 3 行），
    第一版按 240rpx 估的，实际约 480rpx，正好把线索卡整个盖住 ——
    所以线索现在放在网格**上面**，即便预算再算错也盖不到它。 */
 
 page { background: #FFFCF5; }
 
-.page { padding: 16rpx 24rpx 500rpx; box-sizing: border-box; }
+.page {
+  padding: 16rpx 24rpx 500rpx; box-sizing: border-box;
+  /* 纵向 flex：线索与字池之间剩下多少高度，都交给 .board-wrap 去居中棋盘 */
+  min-height: 100vh; display: flex; flex-direction: column;
+}
 /* 结束后底部字池整个消失，那 500rpx 的让位空间就成了一大片空白 */
 .page.done { padding-bottom: 60rpx; }
 
-/* —— 头部：左右箭头翻看别的日期 */
-.hd { display: flex; align-items: center; padding: 8rpx 0 16rpx; }
-.hd-mid { flex: 1; text-align: center; }
-.hd-title { font-size: 36rpx; font-weight: 700; color: #2D2D2B; letter-spacing: 2rpx; }
-.hd-sub { margin-top: 4rpx; font-size: 22rpx; color: #A7A498; }
+/* —— 翻日期的左右箭头：并进计数条两端，不再单占一行 */
 .nav {
-  width: 72rpx; height: 72rpx; border-radius: 50%;
+  flex: 0 0 auto;
+  width: 48rpx; height: 48rpx; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  background: #fff; color: #6B6A62; font-size: 40rpx; line-height: 1;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+  background: #F6F5EE; color: #6B6A62; font-size: 32rpx; line-height: 1;
 }
+/* 到今天了就压暗，示意再往后没有——但按钮照样可点，点了是订阅弹窗 */
+.nav-off { color: #D2CEC3; }
 
 .state { padding: 80rpx 0; text-align: center; font-size: 28rpx; color: #A7A498; }
 .state.err { color: #C0603F; }
 
 /* —— 计数条：一行文字，不再是三个大块 */
 .meter {
-  display: flex; align-items: center; justify-content: center;
-  background: #fff; border-radius: 16rpx; padding: 16rpx 0;
+  display: flex; align-items: center; justify-content: space-between;
+  background: #fff; border-radius: 16rpx; padding: 12rpx 16rpx;
   box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
   font-size: 24rpx; color: #A7A498;
 }
+/* 日期和局面挤一行，横向很紧：分隔点收窄，「已答出」这类字样一并省掉 */
+.m-mid { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; }
+.m-date { font-size: 24rpx; font-weight: 700; color: #6B6A62; }
+.m-day { margin-left: 6rpx; font-size: 20rpx; color: #A7A498; }
 .m-num { font-size: 30rpx; font-weight: 700; color: #6F8244; }
 /* 生命值：实心 ♥ 是还剩的，空心 ♡ 是扣掉的 —— 用字形区分而不是只靠颜色，
    色弱用户和截图转灰度时都还认得出 */
 .hearts { display: flex; align-items: center; }
 .heart { font-size: 28rpx; color: #E0DDD2; margin-right: 2rpx; }
 .heart.on { color: #D0524A; }
-.m-dot { margin: 0 16rpx; color: #DCDACE; }
+.m-dot { margin: 0 10rpx; color: #DCDACE; }
 
 /* 玩法说明，只在开局显示一次 */
 .howto {
@@ -76,18 +82,31 @@ page { background: #FFFCF5; }
 .clue-head { display: flex; align-items: center; }
 .clue-meta { font-size: 22rpx; color: #A7A498; }
 .clue-answer { margin-left: auto; font-size: 26rpx; font-weight: 700; color: #6F8244; }
-.clue-text { margin-top: 8rpx; font-size: 27rpx; line-height: 1.55; color: #4A4942; }
+/* 高度写死两行：线索长短不一，不定高的话每切一条片子下面的棋盘就跟着弹一次。
+   两行是算出来的够用值——线索云端上限 44 字（CROSS_CLUE_MAXLEN），
+   卡片可用宽约 648rpx、字号 27rpx，一行约 24 字，44 字正好两行落地。 */
+.clue-text {
+  margin-top: 8rpx; font-size: 27rpx; line-height: 1.55; color: #4A4942;
+  height: 84rpx; overflow: hidden;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+}
 
 /* —— 7×7 网格
-   宽度：750 − 页面 padding 48 = 702；面板内边距 12×2 → 678。
-   每格 margin 3rpx（左右合 6）→ (678 − 42) / 7 ≈ 90，取 88 留点余量。 */
+   宽度：750 − 页面 padding 48 = 702；面板内边距 8×2 → 686。
+   每格 margin 3rpx（左右合 6）→ (686 − 42) / 7 ≈ 92，取 90 留点余量。
+   格子大小是被宽度卡死的（7 列必须并排），高度再富余也只能给卡面，不能给格子。 */
+/* 线索与字池之间剩下的高度全部归填字区：白卡自己撑满（flex:1），格子在卡内上下居中。
+   早先是白卡贴着内容、剩余高度变成卡上下两坨空白——看着就是「间距不合理」。
+   现在上下只留 12rpx 的固定间距，其余都是卡面。 */
+.board-wrap { flex: 1; display: flex; flex-direction: column; }
 .board {
-  margin-top: 16rpx; background: #fff; border-radius: 20rpx; padding: 12rpx;
+  flex: 1; display: flex; flex-direction: column; justify-content: center;
+  margin: 12rpx 0; background: #fff; border-radius: 20rpx; padding: 8rpx;
   box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 }
 .board-row { display: flex; justify-content: center; }
 .bcell {
-  width: 88rpx; height: 88rpx; margin: 3rpx; box-sizing: border-box;
+  width: 90rpx; height: 90rpx; margin: 3rpx; box-sizing: border-box;
   display: flex; align-items: center; justify-content: center;
   position: relative; border-radius: 8rpx;
   font-size: 38rpx; color: #2D2D2B;
