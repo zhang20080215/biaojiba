@@ -847,6 +847,10 @@ exports.main = async (event) => {
                     made.push({ date: date, hardestCell: g.hardestCell, rows: g.rows.map(r => r.label) });
                 }
 
+                // ⚠ 这一句原本漏了：批量备题只在内存里出题，报完 generated 就扔掉，
+                // 库里一道没多。表现是「prepare 说备完 30 天，页面拿到的还是旧题」——
+                // 因为页面实际吃的是下面按天现出题那条兜底路径（全文件只有它 set 过库）。
+                await db.collection(PUZZLE_COLLECTION).doc(docId).set({ data: doc });
             }
 
             const base = {
