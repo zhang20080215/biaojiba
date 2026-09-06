@@ -115,11 +115,13 @@ function progressRingUri(pct, opts) {
   return 'data:image/svg+xml,' + encodeURIComponent(svg);
 }
 
-// 从 meta 归一化阅读进度，返回 { totalPages, currentPage, progressPct, progressLabel }
+// 从 meta 归一化阅读进度，返回 { totalPages, currentPage, progressPct, progressLabel, readDays, ... }
 // progressLabel：有分母→「已读 120/362 页」，只有当前页→「已读 120 页」，都没有→''
+// readDays：这本书累计读了几天（老记录没有这个字段 → 0 → 不展示）
 function buildProgress(meta) {
   const totalPages = Number(meta && meta.totalPages) || 0;
   const currentPage = Number(meta && meta.currentPage) || 0;
+  const readDays = Number(meta && meta.readDays) || 0;
   const hasPct = totalPages > 0 && currentPage > 0;
   let progressLabel = '';
   if (currentPage > 0) {
@@ -127,12 +129,43 @@ function buildProgress(meta) {
       ? `已读 ${currentPage}/${totalPages} 页`
       : `已读 ${currentPage} 页`;
   }
+  const readDaysLabel = readDays > 0 ? `已读 ${readDays} 天` : '';
   return {
     totalPages,
     currentPage,
     progressPct: hasPct ? Math.min(100, Math.round(currentPage / totalPages * 100)) : 0,
-    progressLabel
+    progressLabel,
+    readDays,
+    readDaysLabel,
+    // 页数 + 天数合成一行（时间轴那种窄位置用），任一缺失都不会留下空的分隔符
+    progressLine: [progressLabel, readDaysLabel].filter(Boolean).join(' · ')
   };
+}
+
+// 已读天数的建议值：以这本书「最近一条记录」为基准 —— 同一天再记一次不加天数，换一天才 +1。
+// days = syncDailyLog getAll 的返回；老记录没有 readDays 字段时，退回「这本书出现过的不同日期数」折算。
+// 补记更早的日期同样走 +1（凭一条记录推不出该插在第几天），交给用户手动改。
+function suggestReadDays(days, doubanId, date) {
+  const id = String(doubanId || '');
+  if (!id) return 1;
+  const dateSet = new Set();
+  let latest = null;   // 按日期取最近一条，同一天取 ts 最大的那条
+  (days || []).forEach(d => {
+    (d.entries || []).forEach(en => {
+      const m = (en && en.meta) || {};
+      if (String(m.doubanId || '') !== id) return;
+      dateSet.add(d.date);
+      const ts = (en && en.ts) || 0;
+      if (!latest || d.date > latest.date || (d.date === latest.date && ts > latest.ts)) {
+        latest = { date: d.date, ts, readDays: Number(m.readDays) || 0 };
+      }
+    });
+  });
+  if (!latest) return 1;
+  if (latest.readDays > 0) {
+    return latest.date === date ? latest.readDays : latest.readDays + 1;
+  }
+  return dateSet.size + (dateSet.has(date) ? 0 : 1);
 }
 
 function normalizeBookEntry(entry, date) {
@@ -201,6 +234,7 @@ module.exports = {
   formatDateCN,
   ratingText,
   progressRingUri,
+  suggestReadDays,
   normalizeBookEntry,
   flattenBooks,
   getReadThemeView

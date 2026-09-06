@@ -504,6 +504,17 @@ page {
   color: #A89E8C;
   font-weight: 700;
 }
+/* 已读天数：挂在进度行末尾的小标（只填天数没填页数时，它就是这行的全部内容） */
+.rp-days {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 2rpx 12rpx;
+  border-radius: 999rpx;
+  background: #FBF3DC;
+  font-size: 20rpx;
+  color: #8A6A00;
+  font-weight: 700;
+}
 
 /* 全平台评分小标签：四个一行，不换行 */
 .plat-row {
@@ -859,6 +870,29 @@ page {
 }
 .mood-chip.active .mood-label {
   color: #1A1A1A;
+}
+
+/* 已读天数 */
+.edit-days-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+.edit-days-input {
+  width: 150rpx;
+  height: 72rpx;
+  padding: 0 20rpx;
+  box-sizing: border-box;
+  border-radius: 16rpx;
+  background: #FAF6EB;
+  border: 2rpx solid #E8E0CC;
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #1A1A1A;
+}
+.edit-days-unit {
+  font-size: 24rpx;
+  color: #A89E8C;
 }
 
 /* 短评 */
