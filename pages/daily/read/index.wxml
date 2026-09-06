@@ -407,10 +407,7 @@
       </view>
 
       <view class="edit-field">
-        <view class="edit-field-head">
-          <text class="edit-label">已读天数</text>
-          <text class="edit-count">留空则不记</text>
-        </view>
+        <text class="edit-label">已读天数</text>
         <view class="edit-days-row">
           <input class="edit-days-input"
                  type="number"

@@ -147,10 +147,7 @@
 
       <!-- 已读天数：按这本书上次记录 +1 自动给（同一天再记不加），可手动改 -->
       <view class="field">
-        <view class="field-head">
-          <text class="field-label">已读天数</text>
-          <text class="count">按上次记录自动 +1，可改</text>
-        </view>
+        <text class="field-label">已读天数</text>
         <view class="progress-row">
           <input class="page-input"
                  type="number"
