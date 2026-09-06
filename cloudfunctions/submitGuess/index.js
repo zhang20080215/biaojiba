@@ -286,6 +286,27 @@ exports.main = async (event) => {
                     .end();
                 const players = {};
                 (res.list || []).forEach(function (r) { players[r._id] = r.total; });
+                // { detail: true } 只给控制台排查用：拆出「玩过的人 / 通关过的人 / 总局数」，
+                // 用来核对 players 到底是哪个口径（前端不传这个开关，返回结构不受影响）
+                if (ev.detail === true) {
+                    const fin = await db.collection(RECORD_COLLECTION).aggregate()
+                        .match({ finished: true })
+                        .group({ _id: { mode: '$mode', openid: '$openid' } })
+                        .group({ _id: '$_id.mode', total: $.sum(1) })
+                        .end();
+                    const rounds = await db.collection(RECORD_COLLECTION).aggregate()
+                        .group({ _id: '$mode', total: $.sum(1) })
+                        .end();
+                    const pick = function (list) {
+                        const o = {};
+                        (list || []).forEach(function (r) { o[r._id] = r.total; });
+                        return o;
+                    };
+                    return {
+                        success: true, players,
+                        detail: { finishedPlayers: pick(fin.list), rounds: pick(rounds.list) }
+                    };
+                }
                 return { success: true, players };
             } catch (e) {
                 // 集合还没建（一个人都没玩过）也会走到这儿。给空表，前端自己降级成不显示人数
