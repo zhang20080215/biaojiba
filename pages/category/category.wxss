@@ -534,6 +534,26 @@
 .game-solo-body { display: flex; flex-direction: column; min-width: 0; }
 .game-solo-title { font-size: 30rpx; font-weight: 700; letter-spacing: 1rpx; }
 .game-solo-sub { margin-top: 6rpx; font-size: 22rpx; opacity: 0.75; }
+/* 参与人数：通栏卡右端的小胶囊（margin-left:auto 顶到右边，卡片是 flex-start 排的） */
+.game-solo-count {
+  margin-left: auto;
+  flex: 0 0 auto;
+  padding: 6rpx 16rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.72);
+  font-size: 20rpx;
+  font-weight: 700;
+  white-space: nowrap;
+  opacity: 0.92;
+}
+/* 放开另外两个玩法后是竖排小方块，人数只能缩到标题下面一行 */
+.game-tile-count {
+  margin-top: 2rpx;
+  font-size: 19rpx;
+  font-weight: 700;
+  white-space: nowrap;
+  opacity: 0.7;
+}
 
 .daily-block-soon {
   box-shadow: none;

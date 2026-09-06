@@ -14,6 +14,7 @@
 //                hint 传 { mode:'cross', entryNo } 逐字揭开该条（每次多揭一个，不是换位置）
 //   'state'   —— { mode, date } 取当前用户在这道题上的进度（切后台回来/换设备要能续上）
 //   'hint'    —— { mode:'grid', date, r, c } 求提示：透露该格某个正确答案的一个侧面，扣一次机会
+//   'players' —— {} 各玩法的参与人数（分类页玩法卡展示），不认人、不写库
 //
 // 集合：
 //   guess_records  _id = `${openid}_${mode}_${date}` —— 每人每题一份进度
@@ -269,6 +270,49 @@ exports.main = async (event) => {
     try {
         if (action === 'suggest') {
             return { success: true, candidates: await suggest(ev.keyword) };
+        }
+
+        // 参与人数。放在 openid 校验之前：这是个公开读数，不认人也不写库。
+        // guess_records 是「每人每局一条」(openid+mode+date)，所以先按 (mode, openid) 去重
+        // 再按 mode 计数——同一个人玩了多少天都只算一个人。
+        // **必须在服务端算**：这张表是各人自己的进度，小程序端直接聚合受集合读权限限制，
+        // 拿回来的很可能只有调用者自己那几条。
+        if (action === 'players') {
+            try {
+                const $ = db.command.aggregate;
+                const res = await db.collection(RECORD_COLLECTION).aggregate()
+                    .group({ _id: { mode: '$mode', openid: '$openid' } })
+                    .group({ _id: '$_id.mode', total: $.sum(1) })
+                    .end();
+                const players = {};
+                (res.list || []).forEach(function (r) { players[r._id] = r.total; });
+                // { detail: true } 只给控制台排查用：拆出「玩过的人 / 通关过的人 / 总局数」，
+                // 用来核对 players 到底是哪个口径（前端不传这个开关，返回结构不受影响）
+                if (ev.detail === true) {
+                    const fin = await db.collection(RECORD_COLLECTION).aggregate()
+                        .match({ finished: true })
+                        .group({ _id: { mode: '$mode', openid: '$openid' } })
+                        .group({ _id: '$_id.mode', total: $.sum(1) })
+                        .end();
+                    const rounds = await db.collection(RECORD_COLLECTION).aggregate()
+                        .group({ _id: '$mode', total: $.sum(1) })
+                        .end();
+                    const pick = function (list) {
+                        const o = {};
+                        (list || []).forEach(function (r) { o[r._id] = r.total; });
+                        return o;
+                    };
+                    return {
+                        success: true, players,
+                        detail: { finishedPlayers: pick(fin.list), rounds: pick(rounds.list) }
+                    };
+                }
+                return { success: true, players };
+            } catch (e) {
+                // 集合还没建（一个人都没玩过）也会走到这儿。给空表，前端自己降级成不显示人数
+                console.warn('[submitGuess] 参与人数统计失败:', e && (e.errMsg || e.message));
+                return { success: true, players: {} };
+            }
         }
 
         const mode = (ev.mode === 'clue' || ev.mode === 'cross') ? ev.mode : 'grid';
