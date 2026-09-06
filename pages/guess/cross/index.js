@@ -22,6 +22,11 @@ const MODE = 'cross';
 // 所以开发期不配也能测；真正拦住滥用的是服务端的次数上限，不是广告本身。
 const AD_SLOT = 'guess_extra_rewarded';
 
+// 往前最多回看几天（今天不算）。更早的题在库里还留着，但「每日一题」的意思是今天这一局；
+// 放开无限回翻等于把它变成一个可以坐下来刷完的关卡包，也就没人惦记明天了。
+// 三天够补上错过的一个周末，再往前意义不大。
+const MAX_PAST_DAYS = 3;
+
 /**
  * 日期加减。用 UTC 解析 + UTC 取值，避免真机时区把 '2026-08-29' 解析成本地零点后
  * 又按另一个时区格式化，跨月/跨年时会差一天。服务端 cnDateStr 也是同一套做法。
@@ -57,6 +62,7 @@ Page({
         date: '',
         dateShort: '',      // 日期去掉年份，计数条那一行放得下
         dayOffset: 0,       // 相对今天第几天，头部显示用
+        atOldest: false,    // 已经翻到可回看的最早一天，左箭头压暗
         board: [],          // [[{ on, ch, locked, active, focus, no }]]，下标即绝对坐标
         viewRows: [],       // 实际渲染哪几行（绝对行号）——空行不画，见 _buildBoard
         dockPad: 250,       // 底部为固定字池让出的高度（px），实测后覆盖，见 _measureDock
@@ -125,12 +131,19 @@ Page({
             const st = stateRes.result || {};
             const rec = st.record || {};
 
+            // 这一趟没传 date 就意味着请求的是「今天」，返回的日期即服务端认定的今天。
+            // 每次都更新而不是只认第一次：页面挂在后台跨了零点再下拉刷新时，
+            // _today 还停在昨天的话，往后翻会把新的今天也拦掉。
+            if (!this._date) this._today = puzzle.date || this._today || '';
+            // 负数 = 往前第几天。要在 _today 更新之后算，跨零点刷新才不会把「今天」算成「1天后」
+            const dayOffset = this._today ? dayDiff(this._today, puzzle.date || this._today) : 0;
+
             this.setData({
                 loading: false,
                 date: puzzle.date || '',
                 dateShort: (puzzle.date || '').slice(5),
-                // 第一次拿到的日期就是「今天」（那次没传 date），后面切日期都相对它算
-                dayOffset: this._today ? dayDiff(this._today, puzzle.date || this._today) : 0,
+                dayOffset,
+                atOldest: dayOffset <= -MAX_PAST_DAYS,
                 entries,
                 chips: (puzzle.charPool || []).map(function (ch) { return { ch: ch, used: false }; }),
                 currentNo: entries.length ? entries[0].no : 0,
@@ -145,10 +158,6 @@ Page({
                 finished: !!rec.finished
             });
             this._applyStatus(st);
-            // 这一趟没传 date 就意味着请求的是「今天」，返回的日期即服务端认定的今天。
-            // 每次都更新而不是只认第一次：页面挂在后台跨了零点再下拉刷新时，
-            // _today 还停在昨天的话，往后翻会把新的今天也拦掉。
-            if (!this._date) this._today = puzzle.date || this._today || '';
             this._buildBoard();
             // 断线重连：先把已答出的整条填回盘面，再补上花分揭开的零散字
             this._applySolved(st.solved || []);
@@ -321,12 +330,18 @@ Page({
      *
      * **往后翻不能越过今天。** 后面 30 天的题在库里都是现成的，不拦就等于把明天的
      * 答案提前发出去，每日一题也就没有「每日」可言了。今天以后的日期一律转成订阅弹窗。
+     *
+     * **往前最多 MAX_PAST_DAYS 天。** 见常量处的说明。
      */
     _shiftDay(delta) {
         if (this.data.loading || !this.data.date) return;
         const target = shiftDate(this.data.date, delta);
         if (delta > 0 && this._today && target > this._today) {
             this._offerTomorrow();
+            return;
+        }
+        if (delta < 0 && this._today && dayDiff(target, this._today) > MAX_PAST_DAYS) {
+            wx.showToast({ title: '只能回看最近 ' + MAX_PAST_DAYS + ' 天的题', icon: 'none' });
             return;
         }
         this._date = target;
