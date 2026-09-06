@@ -282,6 +282,29 @@ Page({
     this._resetSelection();
   },
 
+  // 调一次搜索。失败得快（几秒内）多半是弱网/切后台把请求丢了，重试一次基本就回来了；
+  // 失败得慢说明是上游超时，再来一次只是让人多等一轮，直接放弃。
+  // 用户在地铁电梯里点搜索的失败率本来就不低，这一次重试比什么服务端优化都管用。
+  _callSearch(keyword) {
+    return wx.cloud.callFunction({
+      name: 'searchMovieByTitle',
+      // includeMtime：豆瓣被登录墙挡掉的正片（如蓝丝绒/巴黎野玫瑰）用时光网兜底补进候选
+      data: { keyword, includeMtime: true }
+    });
+  },
+
+  async _searchWithRetry(keyword) {
+    const startedAt = Date.now();
+    try {
+      return await this._callSearch(keyword);
+    } catch (e) {
+      const fastFail = Date.now() - startedAt < 3000;
+      if (!fastFail) throw e;
+      console.warn('daily movie search 快速失败，重试一次', e && (e.errMsg || e.message));
+      return await this._callSearch(keyword);
+    }
+  },
+
   async onSearch() {
     const keyword = (this.data.keyword || '').trim();
     if (!keyword) {
@@ -292,11 +315,7 @@ Page({
     this.setData({ searching: true, searched: false, error: '', candidates: [] });
     this._resetSelection();
     try {
-      const res = await wx.cloud.callFunction({
-        name: 'searchMovieByTitle',
-        // includeMtime：豆瓣被登录墙挡掉的正片（如蓝丝绒/巴黎野玫瑰）用时光网兜底补进候选
-        data: { keyword, includeMtime: true }
-      });
+      const res = await this._searchWithRetry(keyword);
       const result = res && res.result;
       if (!result || !result.success) {
         this.setData({
