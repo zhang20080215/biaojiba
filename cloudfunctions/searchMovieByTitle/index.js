@@ -17,6 +17,39 @@ const cheerio = require('cheerio');
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
+// ── 时间预算 ──────────────────────────────────────────────
+// ⚠️ 下面这些预算的前提是**线上函数超时真的是 config.json 里那个 25s**。
+//    2026-09-06 实测过一次反例：源码写 25，线上跑的是 3s（创建时的默认值，
+//    「上传并部署」只传了代码没改函数配置）。日志长这样：
+//        Result: Invoking task timed out after 3 seconds / Duration: 3000ms
+//    豆瓣搜索页正常返回就要 1~3s，再加 700ms 冷启动，等于每次调用都在 3s 线上掷硬币，
+//    快了就成功、慢了就被平台杀掉，客户端只看到「网络异常」。
+//    ⇒ 改这里的数字之前，先去云开发控制台确认线上超时是多少，config.json 不作数。
+// 单次抓取的超时不能按「网络最慢能有多慢」来给，要按「串起来不能超过函数上限」倒推。
+// 原来是搜索页 12s 串 suggest 10s = 22s，几乎贴着 25s 上限，本身也不安全；
+// 但真正把线上打挂的是上面那个 3s。两件事都得治，光调这里没用。
+// 现在两段加起来 12s，再用 TOTAL_BUDGET 兜一道底：宁可少几条候选，也必须把结果返回去。
+const SEARCH_TIMEOUT = 7000;
+const SUGGEST_TIMEOUT = 5000;
+const MTIME_TIMEOUT = 6000;
+const TOTAL_BUDGET = 15000;   // 远低于函数 25s 上限，留足冷启动 + 解析时间
+
+// 到点就拿 fallback 交差，绝不让上游把整个函数拖到被平台杀掉。
+// 注意：超时后原 promise 还在跑，但它的结果已经没人要了——云函数会等事件循环空了才结束，
+// axios 那边最多再挂 SEARCH_TIMEOUT 就自己断，仍在函数上限内。
+function withDeadline(promise, ms, fallback, label) {
+  let timer = null;
+  return Promise.race([
+    promise.then(v => { clearTimeout(timer); return v; }),
+    new Promise(resolve => {
+      timer = setTimeout(() => {
+        console.warn('[searchMovieByTitle] ' + label + ' 超预算 ' + ms + 'ms，先返回已有结果');
+        resolve(fallback);
+      }, ms);
+    })
+  ]);
+}
+
 const DESKTOP_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
 const SUGGEST_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/91.0';
 
@@ -82,7 +115,7 @@ async function searchViaSearchPage(keyword) {
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       'Accept-Language': 'zh-CN,zh;q=0.9'
     },
-    timeout: 12000,
+    timeout: SEARCH_TIMEOUT,
     responseType: 'text',
     transformResponse: x => x,
     validateStatus: () => true
@@ -123,7 +156,7 @@ async function searchViaMtime(keyword) {
       'Accept': 'application/json, text/plain, */*',
       'Accept-Language': 'zh-CN,zh;q=0.9'
     },
-    timeout: 10000,
+    timeout: MTIME_TIMEOUT,
     responseType: 'json',
     validateStatus: () => true
   });
@@ -154,13 +187,37 @@ async function searchViaMtime(keyword) {
     });
 }
 
-// 归一化「片名+年份」用于跨源去重：去空白/标点、小写；年份直接比字符串
-function dedupeKeyOf(title, year) {
-  const t = String(title || '')
+// 时光网最多补几条。它是兜底，不是第二份搜索结果——豆瓣正常时一条都不该冒出来。
+const MTIME_MAX = 5;
+
+// 时光网候选的相关性闸门。
+// 时光网搜索是**拆字匹配**的：搜「蓝丝绒」它按「蓝」和「丝绒」各自去撞，
+// 于是《蓝莓之夜》《碧海蓝天》《蓝精灵》《魂断蓝桥》《丝绒爪》全回来；
+// 搜「盗梦空间」则把所有带「空间」的片倒出来。这些条目还都没有评分，
+// 混在豆瓣结果后面看着像一堆坏数据。
+// 规则：片名必须整体包含关键词，或关键词整体包含片名（后者管「搜得比片名长」的情况）。
+// 对照实测：「蓝丝绒」只留《蓝丝绒》；「盗梦空间」时光网一条都不留（豆瓣那 5 条本来就够）。
+function mtimeRelevant(keyword, title) {
+  const k = normalizeForMatch(keyword);
+  const t = normalizeForMatch(title);
+  if (!k || !t) return false;
+  if (t.indexOf(k) >= 0) return true;          // 片名整体包含关键词
+  // 反向（关键词比片名长）只容忍差一个字，多半是用户带了序号：「教父2」→《教父》。
+  // 放宽一点就会把单字片名放进来 ——《蓝》能命中「蓝丝绒」、《空间》能命中「盗梦空间」。
+  return k.indexOf(t) >= 0 && t.length >= 2 && t.length >= k.length - 1;
+}
+
+// 匹配/去重共用的归一化：去空白与常见标点、小写
+function normalizeForMatch(text) {
+  return String(text || '')
     .replace(/[\s　]+/g, '')
     .replace(/[·・:：\-—_（）()【】\[\]"'"'!！?？、,，.。/]/g, '')
     .toLowerCase();
-  return `${t}@${String(year || '')}`;
+}
+
+// 归一化「片名+年份」用于跨源去重：去空白/标点、小写；年份直接比字符串
+function dedupeKeyOf(title, year) {
+  return `${normalizeForMatch(title)}@${String(year || '')}`;
 }
 
 // 回退：电影 suggest（前缀匹配，仅标题/年份/封面，无评分）
@@ -168,7 +225,7 @@ async function suggestFallback(keyword) {
   try {
     const res = await axios.get(`https://movie.douban.com/j/subject_suggest?q=${encodeURIComponent(keyword)}`, {
       headers: { 'User-Agent': SUGGEST_UA, 'Referer': 'https://movie.douban.com/' },
-      timeout: 10000, responseType: 'json', validateStatus: () => true
+      timeout: SUGGEST_TIMEOUT, responseType: 'json', validateStatus: () => true
     });
     const raw = Array.isArray(res.data) ? res.data : [];
     return raw
@@ -217,7 +274,13 @@ exports.main = async (event, context) => {
       ? searchViaMtime(keyword).catch(e => { console.warn('时光网搜索失败:', e && e.message); return []; })
       : Promise.resolve([]);
 
-    const [doubanRaw, mtimeRaw] = await Promise.all([doubanPromise, mtimePromise]);
+    // 整体再兜一道：到点就用已有的交差，保证函数一定能返回而不是被平台杀掉
+    const [doubanRaw, mtimeRaw] = await withDeadline(
+      Promise.all([doubanPromise, mtimePromise]),
+      TOTAL_BUDGET,
+      [[], []],
+      '整体'
+    );
 
     // 豆瓣候选：按 doubanId 去重、保序，打上 source/key
     const seenId = new Set();
@@ -230,12 +293,20 @@ exports.main = async (event, context) => {
       candidates.push({ ...c, source: 'douban', key: `db${c.doubanId}` });
     });
 
-    // 时光网候选：豆瓣已有（同片名+年份）的跳过，其余追加到末尾（无评分）
+    // 时光网候选：先过相关性闸门，再跳过豆瓣已有的，最多补 MTIME_MAX 条（都无评分）。
+    // 这里的去重比豆瓣侧松一档 —— **只比片名不比年份**：同名不同年多半是两边元数据差一年
+    // （豆瓣《重访蓝丝绒》2016 / 时光网 2015 就是同一部），按 片名+年份 比会放它重复进来。
+    const seenTitle = new Set();
+    candidates.forEach(c => seenTitle.add(normalizeForMatch(c.title)));
+    let mtimeAdded = 0;
     mtimeRaw.forEach(m => {
-      const k = dedupeKeyOf(m.title, m.year);
-      if (seenKey.has(k)) return;
-      seenKey.add(k);
+      if (mtimeAdded >= MTIME_MAX) return;
+      if (!mtimeRelevant(keyword, m.title)) return;
+      const t = normalizeForMatch(m.title);
+      if (seenTitle.has(t)) return;
+      seenTitle.add(t);
       candidates.push({ ...m, key: `mt${m.mtimeId}` });
+      mtimeAdded++;
     });
 
     return { success: true, candidates, keyword };
