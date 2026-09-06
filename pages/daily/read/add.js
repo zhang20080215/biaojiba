@@ -1,7 +1,7 @@
 const toast = require('../../../utils/dailyToast.js');
 const imageCache = require('../../../utils/imageCacheManager.js');
 const { addThousandSep } = require('../../../utils/bookFormat.js');
-const { getNavMetrics, todayStr } = require('./common.js');
+const { getNavMetrics, todayStr, suggestReadDays } = require('./common.js');
 const { trackDaily } = require('../../../utils/track.js');
 
 const MOOD_OPTIONS = [
@@ -95,6 +95,7 @@ Page({
     totalPages: 0,        // 0 = 未知（详情没给页数）
     currentPage: '',      // 输入框原文，空串 = 未填
     progressText: '',     // 「当前页/总页数」都有时才显示的百分比
+    readDays: '',         // 已读天数，选中书后按历史自动给，用户可改
     rating: 0,
     ratingLabel: '未评分',
     stars: buildStars(0),
@@ -122,17 +123,35 @@ Page({
     this._loadContinueReading();
   },
 
-  // 拉取该用户所有读书记录，派生「未读完的书」列表（静默失败，不影响添加）
+  // 拉取该用户所有读书记录，派生「未读完的书」列表（静默失败，不影响添加）。
+  // 全量记录同时留给 _applySuggestedReadDays 算「这本书已读几天」——两处共用这一次请求
   _loadContinueReading() {
     wx.cloud.callFunction({
       name: 'syncDailyLog',
       data: { action: 'getAll', theme: 'read' },
       success: res => {
         const days = (res && res.result && res.result.days) || [];
+        this._allDays = days;
         this.setData({ continueList: this._deriveContinue(days) });
+        // 用户可能在历史回来之前就选好了书，这里补算一次
+        this._applySuggestedReadDays();
       },
-      fail: () => {}
+      // 拉不到历史就按「第 1 天」给，别让这一格空着
+      fail: () => {
+        this._allDays = this._allDays || [];
+        this._applySuggestedReadDays();
+      }
     });
+  },
+
+  // 已读天数建议值：同一天重复记不加天数，换一天才 +1（详见 common.js suggestReadDays）。
+  // 历史还没回来时先不填，等 getAll 成功再补；用户手改过就不再覆盖
+  _applySuggestedReadDays() {
+    if (this._readDaysTouched) return;
+    const selected = this.data.selected;
+    if (!selected || !this._allDays) return;
+    const n = suggestReadDays(this._allDays, selected.doubanId, this.data.date);
+    this.setData({ readDays: String(n) });
   },
 
   // 按 doubanId 归并全部记录：仅已知总页数的书，取最大已读页；未读完(1 <= 已读 < 总页数)才进列表，
@@ -204,8 +223,11 @@ Page({
       selected,
       totalPages: item.totalPages,
       currentPage: String(item.lastPage || ''),
-      progressText: ''
+      progressText: '',
+      readDays: ''
     });
+    this._readDaysTouched = false;
+    this._applySuggestedReadDays();
     this._syncProgress();
     this._fetchBookDetail(item.doubanId);
   },
@@ -266,8 +288,11 @@ Page({
       }),
       totalPages: 0,
       currentPage: '',
-      progressText: ''
+      progressText: '',
+      readDays: ''
     });
+    this._readDaysTouched = false;
+    this._applySuggestedReadDays();
     this._fetchBookDetail(doubanId);
   },
 
@@ -322,7 +347,8 @@ Page({
   // 重新选择：退回候选列表，保留已有搜索结果
   onReselect() {
     this._detailSeq = (this._detailSeq || 0) + 1;   // 作废在途的详情请求
-    this.setData({ selected: null, totalPages: 0, currentPage: '', progressText: '' });
+    this._readDaysTouched = false;
+    this.setData({ selected: null, totalPages: 0, currentPage: '', progressText: '', readDays: '' });
   },
 
   // 豆瓣封面有防盗链（小程序直连返回 418），加载失败退回占位图
@@ -337,7 +363,8 @@ Page({
 
   onDateChange(e) {
     const date = e.detail.value;
-    this.setData({ date, dateText: formatDateText(date) });
+    // 「同一天不加天数」的判定依赖日期，改完日期要重算一次建议值
+    this.setData({ date, dateText: formatDateText(date) }, () => this._applySuggestedReadDays());
   },
 
   // 五角星评分：半星点按——每颗星左半热区=X.5、右半=X.0（data-value 已算好），一点即准
@@ -395,6 +422,15 @@ Page({
     return currentPage;   // 返回值回写 input，越界时输入框即时纠正
   },
 
+  // 已读天数：只留数字，1~9999；手改过之后不再被自动建议值覆盖
+  onReadDaysInput(e) {
+    const digits = String(e.detail.value || '').replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+    const readDays = digits.slice(0, 4);
+    this._readDaysTouched = true;
+    this.setData({ readDays });
+    return readDays;   // 返回值回写 input，去掉非法字符时输入框即时纠正
+  },
+
   // 进度读数：仅在「当前页 + 总页数」都有时给百分比
   _syncProgress() {
     const total = Number(this.data.totalPages) || 0;
@@ -434,6 +470,7 @@ Page({
       pubDate: selected.year || '',
       totalPages,      // 0 = 未知
       currentPage,     // 0 = 未填
+      readDays: Number(this.data.readDays) || 0,   // 这本书累计读了几天，0 = 未填
       rating: Number(this.data.rating) || 0,
       mood: this.data.mood || '',
       moodEmoji: moodOpt ? moodOpt.emoji : '',

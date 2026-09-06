@@ -119,6 +119,7 @@ Page({
     editMood: '',
     editNote: '',
     editNoteCount: 0,
+    editReadDays: '',
     editSaving: false
   },
 
@@ -633,6 +634,7 @@ Page({
     const rating = Number(this._editRawMeta.rating) || 0;
     const mood = this._editRawMeta.mood || '';
     const note = this._editRawMeta.note || '';
+    const readDays = Number(this._editRawMeta.readDays) || 0;
     this.setData({
       swipedKey: '',
       editModal: true,
@@ -644,7 +646,8 @@ Page({
       editStars: buildStars(rating),
       editMood: mood,
       editNote: note,
-      editNoteCount: note.length
+      editNoteCount: note.length,
+      editReadDays: readDays > 0 ? String(readDays) : ''
     });
   },
 
@@ -688,6 +691,14 @@ Page({
     this.setData({ editNote: note, editNoteCount: note.length });
   },
 
+  // 已读天数：只留数字，1~9999（留空 = 不记）
+  onEditReadDaysInput(e) {
+    const digits = String(e.detail.value || '').replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+    const editReadDays = digits.slice(0, 4);
+    this.setData({ editReadDays });
+    return editReadDays;
+  },
+
   onEditSave() {
     if (this.data.editSaving) return;
     const date = this.data.editDate;
@@ -700,6 +711,7 @@ Page({
     meta.moodEmoji = moodOpt ? moodOpt.emoji : '';
     meta.moodLabel = moodOpt ? moodOpt.label : '';
     meta.note = (this.data.editNote || '').trim();
+    meta.readDays = Number(this.data.editReadDays) || 0;
     this.setData({ editSaving: true });
     // 先加新（云端 addEntry 无每日上限），成功后删旧；删失败仅留重复可手动删，避免丢数据
     wx.cloud.callFunction({

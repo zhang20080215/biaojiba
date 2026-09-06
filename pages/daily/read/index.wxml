@@ -81,7 +81,7 @@
                   <text class="tl-title">{{mv.title}}</text>
                   <text wx:if="{{mv.year}}" class="tl-year">{{mv.year}}</text>
                 </view>
-                <text wx:if="{{mv.progressLabel}}" class="tl-progress">{{mv.progressLabel}}</text>
+                <text wx:if="{{mv.progressLine}}" class="tl-progress">{{mv.progressLine}}</text>
                 <view wx:if="{{mv.rating > 0}}" class="tl-rating">
                   <view class="stars">
                     <text class="stars-bg">★★★★★</text>
@@ -178,13 +178,14 @@
               </view>
               <text wx:if="{{movie.author}}" class="movie-meta">作者：{{movie.author}}</text>
 
-              <!-- 阅读进度：已读页数（+ 有分母时的进度条/百分比） -->
-              <view wx:if="{{movie.progressLabel}}" class="read-progress">
-                <text class="rp-label">{{movie.progressLabel}}</text>
+              <!-- 阅读进度：已读页数（+ 有分母时的进度条/百分比）+ 已读天数 -->
+              <view wx:if="{{movie.progressLabel || movie.readDaysLabel}}" class="read-progress">
+                <text wx:if="{{movie.progressLabel}}" class="rp-label">{{movie.progressLabel}}</text>
                 <view wx:if="{{movie.progressPct}}" class="rp-bar">
                   <view class="rp-fill" style="width: {{movie.progressPct}}%"></view>
                 </view>
                 <text wx:if="{{movie.progressPct}}" class="rp-pct">{{movie.progressPct}}%</text>
+                <text wx:if="{{movie.readDaysLabel}}" class="rp-days">{{movie.readDaysLabel}}</text>
               </view>
 
               <!-- 全平台评分（客观，有则展示） -->
@@ -343,7 +344,7 @@
                     <text class="tl-title">{{mv.title}}</text>
                     <text wx:if="{{mv.year}}" class="tl-year">{{mv.year}}</text>
                   </view>
-                  <text wx:if="{{mv.progressLabel}}" class="tl-progress">{{mv.progressLabel}}</text>
+                  <text wx:if="{{mv.progressLine}}" class="tl-progress">{{mv.progressLine}}</text>
                   <view wx:if="{{mv.rating > 0}}" class="tl-rating">
                     <view class="stars">
                       <text class="stars-bg">★★★★★</text>
@@ -380,7 +381,7 @@
     </block>
   </view>
 
-  <!-- 轻编辑弹窗：只改 评分 / 心情 / 短评 -->
+  <!-- 轻编辑弹窗：只改 评分 / 已读天数 / 心情 / 短评 -->
   <view class="edit-modal" wx:if="{{editModal}}">
     <view class="edit-mask" bindtap="onCloseEdit" catchtouchmove="true"></view>
     <view class="edit-sheet">
@@ -402,6 +403,23 @@
             <view class="star-hit star-hit-l" catchtap="onEditStarTap" data-value="{{index + 0.5}}"></view>
             <view class="star-hit star-hit-r" catchtap="onEditStarTap" data-value="{{index + 1}}"></view>
           </view>
+        </view>
+      </view>
+
+      <view class="edit-field">
+        <view class="edit-field-head">
+          <text class="edit-label">已读天数</text>
+          <text class="edit-count">留空则不记</text>
+        </view>
+        <view class="edit-days-row">
+          <input class="edit-days-input"
+                 type="number"
+                 value="{{editReadDays}}"
+                 placeholder="1"
+                 placeholder-class="edit-note-ph"
+                 maxlength="4"
+                 bindinput="onEditReadDaysInput" />
+          <text class="edit-days-unit">天</text>
         </view>
       </view>
 
