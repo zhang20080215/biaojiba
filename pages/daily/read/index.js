@@ -600,8 +600,11 @@ Page({
     }
   },
 
-  onTapMovieCard() {
-    if (this.data.swipedKey) this.setData({ swipedKey: '' });
+  onTapMovieCard(e) {
+    // 有卡片处于左滑露出状态时，点击先收起，不误触编辑
+    if (this.data.swipedKey) { this.setData({ swipedKey: '' }); return; }
+    const { date, ts, title } = e.currentTarget.dataset;
+    this.openEditModal(date, Number(ts), title);
   },
 
   // 豆瓣封面防盗链 418 兜底：失败退占位图（一般只会命中本次镜像前的老数据）
@@ -623,10 +626,13 @@ Page({
     this.confirmDelete(date, Number(ts), title);
   },
 
-  // ── 轻编辑：左滑「编辑」打开弹窗，只改 评分 / 心情 / 短评 ──
+  // ── 轻编辑：点条目 / 左滑「编辑」都进这个弹窗，只改 评分 / 已读天数 / 心情 / 短评 ──
   onSwipeEdit(e) {
     const { date, ts, title } = e.currentTarget.dataset;
-    const tsNum = Number(ts);
+    this.openEditModal(date, Number(ts), title);
+  },
+
+  openEditModal(date, tsNum, title) {
     const day = (this._lastDays || []).find(d => d.date === date);
     const raw = day && (day.entries || []).find(en => en.ts === tsNum);
     if (!raw) { toast.show(this, '记录不存在'); return; }
