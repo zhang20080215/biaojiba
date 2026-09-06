@@ -25,7 +25,8 @@ page { background: #FFFCF5; }
   display: flex; align-items: center; justify-content: center;
   background: #F6F5EE; color: #6B6A62; font-size: 32rpx; line-height: 1;
 }
-/* 到今天了就压暗，示意再往后没有——但按钮照样可点，点了是订阅弹窗 */
+/* 到边界（往后=今天、往前=可回看的最早一天）就压暗，示意再翻没有了——
+   但按钮照样可点，点了给弹窗/提示，不做成死按钮 */
 .nav-off { color: #D2CEC3; }
 
 .state { padding: 80rpx 0; text-align: center; font-size: 28rpx; color: #A7A498; }
