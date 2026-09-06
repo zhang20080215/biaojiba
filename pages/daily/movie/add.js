@@ -310,7 +310,15 @@ Page({
       this.setData({ searching: false, searched: true, candidates, error: '' });
     } catch (e) {
       console.error('daily movie search fail', e);
-      this.setData({ searching: false, searched: true, error: '网络异常，请稍后重试' });
+      // 超时和真断网要说不同的话：前者重试有用（豆瓣时好时坏），后者重试没用。
+      // 云函数被平台超时杀掉时 errMsg 里带 -504003 / timed out
+      const msg = String((e && (e.errMsg || e.message)) || '');
+      const timedOut = /504003|timed out|timeout|超时/i.test(msg);
+      this.setData({
+        searching: false,
+        searched: true,
+        error: timedOut ? '搜索超时了，再试一次' : '网络异常，请稍后重试'
+      });
     }
   },
 

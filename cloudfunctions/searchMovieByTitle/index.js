@@ -17,6 +17,32 @@ const cheerio = require('cheerio');
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
+// ── 时间预算 ──────────────────────────────────────────────
+// 单次抓取的超时不能按「网络最慢能有多慢」来给，要按「串起来不能超过函数上限」倒推。
+// 原来是搜索页 12s 串 suggest 10s = 22s，撞 config.json 的 25s 上限：豆瓣一挂住，
+// 加上冷启动就会被平台杀掉，客户端只能拿到 reject 弹「网络异常」——这是报错的主因。
+// 现在两段加起来 12s，再用 TOTAL_BUDGET 兜一道底：宁可少几条候选，也必须把结果返回去。
+const SEARCH_TIMEOUT = 7000;
+const SUGGEST_TIMEOUT = 5000;
+const MTIME_TIMEOUT = 6000;
+const TOTAL_BUDGET = 15000;   // 远低于函数 25s 上限，留足冷启动 + 解析时间
+
+// 到点就拿 fallback 交差，绝不让上游把整个函数拖到被平台杀掉。
+// 注意：超时后原 promise 还在跑，但它的结果已经没人要了——云函数会等事件循环空了才结束，
+// axios 那边最多再挂 SEARCH_TIMEOUT 就自己断，仍在函数上限内。
+function withDeadline(promise, ms, fallback, label) {
+  let timer = null;
+  return Promise.race([
+    promise.then(v => { clearTimeout(timer); return v; }),
+    new Promise(resolve => {
+      timer = setTimeout(() => {
+        console.warn('[searchMovieByTitle] ' + label + ' 超预算 ' + ms + 'ms，先返回已有结果');
+        resolve(fallback);
+      }, ms);
+    })
+  ]);
+}
+
 const DESKTOP_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
 const SUGGEST_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/91.0';
 
@@ -82,7 +108,7 @@ async function searchViaSearchPage(keyword) {
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       'Accept-Language': 'zh-CN,zh;q=0.9'
     },
-    timeout: 12000,
+    timeout: SEARCH_TIMEOUT,
     responseType: 'text',
     transformResponse: x => x,
     validateStatus: () => true
@@ -123,7 +149,7 @@ async function searchViaMtime(keyword) {
       'Accept': 'application/json, text/plain, */*',
       'Accept-Language': 'zh-CN,zh;q=0.9'
     },
-    timeout: 10000,
+    timeout: MTIME_TIMEOUT,
     responseType: 'json',
     validateStatus: () => true
   });
@@ -168,7 +194,7 @@ async function suggestFallback(keyword) {
   try {
     const res = await axios.get(`https://movie.douban.com/j/subject_suggest?q=${encodeURIComponent(keyword)}`, {
       headers: { 'User-Agent': SUGGEST_UA, 'Referer': 'https://movie.douban.com/' },
-      timeout: 10000, responseType: 'json', validateStatus: () => true
+      timeout: SUGGEST_TIMEOUT, responseType: 'json', validateStatus: () => true
     });
     const raw = Array.isArray(res.data) ? res.data : [];
     return raw
@@ -217,7 +243,13 @@ exports.main = async (event, context) => {
       ? searchViaMtime(keyword).catch(e => { console.warn('时光网搜索失败:', e && e.message); return []; })
       : Promise.resolve([]);
 
-    const [doubanRaw, mtimeRaw] = await Promise.all([doubanPromise, mtimePromise]);
+    // 整体再兜一道：到点就用已有的交差，保证函数一定能返回而不是被平台杀掉
+    const [doubanRaw, mtimeRaw] = await withDeadline(
+      Promise.all([doubanPromise, mtimePromise]),
+      TOTAL_BUDGET,
+      [[], []],
+      '整体'
+    );
 
     // 豆瓣候选：按 doubanId 去重、保序，打上 source/key
     const seenId = new Set();
