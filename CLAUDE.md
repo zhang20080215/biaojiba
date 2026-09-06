@@ -203,8 +203,8 @@ This project uses **WeChat Developer Tools** (微信开发者工具) for buildin
 `timeout: 25`，线上跑的是 3s —— 豆瓣搜索页正常返回就要 1~3s，加上 700ms 冷启动，等于每次调用
 都在 3 秒线上掷硬币，快了成功、慢了被平台杀掉，客户端只看到「网络异常」，表现为「搜索经常报错」。
 日志特征是 `Result: Invoking task timed out after 3 seconds` + `Duration: 3000ms`。
-⇒ **任何有外网抓取或大批量 DB 读的函数，部署后都要去云开发控制台确认线上超时值**，别信 config.json。
-尤其是用户热路径上的：`searchMovieByTitle` / `searchBookByTitle` / `fetchMovieFullInfo` /
+注意**两个方向都可能对不上**：出问题的 `searchMovieByTitle` 是有 config.json 的（写 25 跑 3），而没有 config.json 的 `syncDailyLog` 线上是 60s。所以不是「没写 config 就危险」，是**一律以控制台为准**。⇒ 任何有外网抓取或大批量 DB 读的函数，部署后核一遍线上超时值，尤其是
+用户热路径上的：`searchMovieByTitle` / `searchBookByTitle` / `fetchMovieFullInfo` /
 `fetchBookFullInfo` / `syncDailyLog`（写入时会镜像封面）/ `getMoviesData`（循环分页读 250 条）。
 
 **Data scraping:** `douban_spyder/` contains Python scripts for fetching Douban Top 250 data; one-shot scripts at root (`parseGrowthData.js`, `view_excel.py`, `test_imdb.js`) and the `data-raw/` folder are dev-time only.
