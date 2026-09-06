@@ -180,13 +180,37 @@ async function searchViaMtime(keyword) {
     });
 }
 
-// 归一化「片名+年份」用于跨源去重：去空白/标点、小写；年份直接比字符串
-function dedupeKeyOf(title, year) {
-  const t = String(title || '')
+// 时光网最多补几条。它是兜底，不是第二份搜索结果——豆瓣正常时一条都不该冒出来。
+const MTIME_MAX = 5;
+
+// 时光网候选的相关性闸门。
+// 时光网搜索是**拆字匹配**的：搜「蓝丝绒」它按「蓝」和「丝绒」各自去撞，
+// 于是《蓝莓之夜》《碧海蓝天》《蓝精灵》《魂断蓝桥》《丝绒爪》全回来；
+// 搜「盗梦空间」则把所有带「空间」的片倒出来。这些条目还都没有评分，
+// 混在豆瓣结果后面看着像一堆坏数据。
+// 规则：片名必须整体包含关键词，或关键词整体包含片名（后者管「搜得比片名长」的情况）。
+// 对照实测：「蓝丝绒」只留《蓝丝绒》；「盗梦空间」时光网一条都不留（豆瓣那 5 条本来就够）。
+function mtimeRelevant(keyword, title) {
+  const k = normalizeForMatch(keyword);
+  const t = normalizeForMatch(title);
+  if (!k || !t) return false;
+  if (t.indexOf(k) >= 0) return true;          // 片名整体包含关键词
+  // 反向（关键词比片名长）只容忍差一个字，多半是用户带了序号：「教父2」→《教父》。
+  // 放宽一点就会把单字片名放进来 ——《蓝》能命中「蓝丝绒」、《空间》能命中「盗梦空间」。
+  return k.indexOf(t) >= 0 && t.length >= 2 && t.length >= k.length - 1;
+}
+
+// 匹配/去重共用的归一化：去空白与常见标点、小写
+function normalizeForMatch(text) {
+  return String(text || '')
     .replace(/[\s　]+/g, '')
     .replace(/[·・:：\-—_（）()【】\[\]"'"'!！?？、,，.。/]/g, '')
     .toLowerCase();
-  return `${t}@${String(year || '')}`;
+}
+
+// 归一化「片名+年份」用于跨源去重：去空白/标点、小写；年份直接比字符串
+function dedupeKeyOf(title, year) {
+  return `${normalizeForMatch(title)}@${String(year || '')}`;
 }
 
 // 回退：电影 suggest（前缀匹配，仅标题/年份/封面，无评分）
@@ -262,12 +286,20 @@ exports.main = async (event, context) => {
       candidates.push({ ...c, source: 'douban', key: `db${c.doubanId}` });
     });
 
-    // 时光网候选：豆瓣已有（同片名+年份）的跳过，其余追加到末尾（无评分）
+    // 时光网候选：先过相关性闸门，再跳过豆瓣已有的，最多补 MTIME_MAX 条（都无评分）。
+    // 这里的去重比豆瓣侧松一档 —— **只比片名不比年份**：同名不同年多半是两边元数据差一年
+    // （豆瓣《重访蓝丝绒》2016 / 时光网 2015 就是同一部），按 片名+年份 比会放它重复进来。
+    const seenTitle = new Set();
+    candidates.forEach(c => seenTitle.add(normalizeForMatch(c.title)));
+    let mtimeAdded = 0;
     mtimeRaw.forEach(m => {
-      const k = dedupeKeyOf(m.title, m.year);
-      if (seenKey.has(k)) return;
-      seenKey.add(k);
+      if (mtimeAdded >= MTIME_MAX) return;
+      if (!mtimeRelevant(keyword, m.title)) return;
+      const t = normalizeForMatch(m.title);
+      if (seenTitle.has(t)) return;
+      seenTitle.add(t);
       candidates.push({ ...m, key: `mt${m.mtimeId}` });
+      mtimeAdded++;
     });
 
     return { success: true, candidates, keyword };
