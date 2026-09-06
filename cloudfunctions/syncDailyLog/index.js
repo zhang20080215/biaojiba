@@ -11,6 +11,7 @@
 //
 // 入参约定（所有 action 都必填 theme）：
 //   action: 'getToday' | 'addEntry' | 'removeEntry' | 'updateEntry' | 'reorderEntries' | 'setGoal' | 'setPresets' | 'getRange' | 'getYear' | 'getAll'
+//   另有运维动作 'stats'（各主题参与人数，不需要 openid，从云函数控制台跑）
 //   theme:  'water' | 'milktea' | ...
 
 const cloud = require('wx-server-sdk');
@@ -360,6 +361,76 @@ async function upsertDay(openid, theme, date, mutate) {
     return { openid, theme, date, total_value: 0, entries: [], unit, updated_at: now };
 }
 
+// ── 运维统计：各每日主题有多少人在用 ──
+// DailyLogs 是「一人一主题一天一条」，所以：
+//   players  = 独立 openid —— 打过卡的人（只打开页面不记录不写库，所以是真在用的人）
+//   dayLogs  = 文档数 = 人×天 —— 累计打卡天数
+//   entries  = 明细条数 —— 看了多少部电影 / 读了多少本书 / 练了多少次（喝水则是喝水次数）
+//   active30 = 近 30 天有过打卡的独立 openid —— 总量看存量，这个看还剩多少人在动
+// entries 那一路单独兜底：老数据里 entries 可能缺字段，$.size 会炸，炸了就只是少这一列。
+async function dailyStats(event) {
+    const $ = db.command.aggregate;
+    const one = event && event.theme;
+    const match = one ? { theme: one } : { theme: _.exists(true) };
+    const toMap = list => {
+        const o = {};
+        (list || []).forEach(r => { o[r._id] = r; });
+        return o;
+    };
+
+    const playersRes = await db.collection('DailyLogs').aggregate()
+        .match(match)
+        .group({ _id: { theme: '$theme', openid: '$openid' } })
+        .group({ _id: '$_id.theme', total: $.sum(1) })
+        .end();
+
+    // 近 30 天（含今天）活跃：date 是 'YYYY-MM-DD' 字符串，按字典序比大小即可
+    const since = new Date(Date.now() + 8 * 3600 * 1000 - 29 * 86400000).toISOString().slice(0, 10);
+    let activeMap = {};
+    try {
+        const activeRes = await db.collection('DailyLogs').aggregate()
+            .match(Object.assign({ date: _.gte(since) }, match))
+            .group({ _id: { theme: '$theme', openid: '$openid' } })
+            .group({ _id: '$_id.theme', total: $.sum(1) })
+            .end();
+        activeMap = toMap(activeRes.list);
+    } catch (e) {
+        console.warn('[syncDailyLog] 活跃统计失败:', e && (e.errMsg || e.message));
+    }
+
+    let daysMap = {};
+    try {
+        const daysRes = await db.collection('DailyLogs').aggregate()
+            .match(match)
+            .group({
+                _id: '$theme',
+                total: $.sum(1),
+                entries: $.sum($.size($.ifNull(['$entries', []])))
+            })
+            .end();
+        daysMap = toMap(daysRes.list);
+    } catch (e) {
+        console.warn('[syncDailyLog] 打卡天数统计失败:', e && (e.errMsg || e.message));
+    }
+
+    const stats = {};
+    (playersRes.list || []).forEach(r => {
+        const theme = r._id;
+        const players = r.total || 0;
+        const d = daysMap[theme] || {};
+        const dayLogs = d.total || 0;
+        stats[theme] = {
+            players,
+            active30: (activeMap[theme] || {}).total || 0,
+            dayLogs,
+            entries: d.entries || 0,
+            // 人均打卡天数：留一位小数，用来横向比各主题黏性
+            daysPerPlayer: players ? Math.round(dayLogs / players * 10) / 10 : 0
+        };
+    });
+    return { success: true, since30: since, stats };
+}
+
 exports.main = async (event, context) => {
     const wxContext = cloud.getWXContext();
     const openid = wxContext.OPENID;
@@ -372,6 +443,17 @@ exports.main = async (event, context) => {
         } catch (err) {
             console.error('migrateCovers error', err);
             return { success: false, error: err && err.message };
+        }
+    }
+
+    // 运维统计：各主题参与人数。跟 migrateCovers 一样不需要 openid，从云函数控制台跑。
+    // { action: 'stats' } 全部主题；{ action: 'stats', theme: 'read' } 只看一个
+    if (action === 'stats') {
+        try {
+            return await dailyStats(event);
+        } catch (err) {
+            console.error('dailyStats error', err);
+            return { success: false, error: err && (err.errMsg || err.message) };
         }
     }
 
