@@ -8,7 +8,8 @@
     <!-- 计数条：压成一行，纵向空间全留给网格和字池。
          日期也并进这一行——页面标题微信导航栏已经有了，站内不必再占一行 -->
     <view class="meter">
-      <view class="nav" bindtap="prevDay">‹</view>
+      <!-- 翻到可回看的最早一天就压暗，但仍可点——点了给一句说明，而不是死按钮 -->
+      <view class="nav {{atOldest ? 'nav-off' : ''}}" bindtap="prevDay">‹</view>
       <view class="m-mid">
         <text class="m-date">{{dateShort}}</text>
         <text class="m-day">{{dayOffset === 0 ? '今天' : (dayOffset > 0 ? dayOffset + '天后' : (0 - dayOffset) + '天前')}}</text>
