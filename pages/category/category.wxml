@@ -99,7 +99,12 @@
           <text class="game-solo-title" style="color:{{item.label}}">{{item.title}}</text>
           <text wx:if="{{item.sub}}" class="game-solo-sub" style="color:{{item.label}}">{{item.sub}}</text>
         </view>
-        <text wx:else class="daily-label" style="color:{{item.label}}">{{item.title}}</text>
+        <block wx:else>
+          <text class="daily-label" style="color:{{item.label}}">{{item.title}}</text>
+          <text wx:if="{{item.userCountText}}" class="game-tile-count" style="color:{{item.label}}">{{item.userCountText}}人玩</text>
+        </block>
+        <!-- 参与人数：通栏卡时靠右成一枚胶囊（人数还没回来就不占位） -->
+        <text wx:if="{{gameBlocks.length === 1 && item.userCountText}}" class="game-solo-count" style="color:{{item.label}}">{{item.userCountText}} 人参与</text>
       </navigator>
     </view>
   </view>

@@ -22,10 +22,11 @@ var DAILY_BLOCK_SOON = { emoji: '✨', color: '#EFE9DD', label: '#A89B85' };
 // 也不进下方主题网格，所以直接写死在这里，不放 themes 数组。
 // hidden 的玩法随包发布但不给入口：交叉填格和线索猜片的完成度还没到填字这一档
 // （线索猜片连预备题都没有，是打开时现出的），先只放填字。删掉 hidden 那一项即开放。
+// mode 是 guess_records 里的玩法字段，参与人数按它分组统计（见 _loadGamePlayerCounts）
 var GAME_BLOCKS = [
-  { key: 'guess_cross', title: '每日电影填词', sub: '五部电影横竖交叉，每天一局', emoji: '🔤', color: '#DEE6EF', label: '#46617F', url: '/pages/guess/cross/index' },
-  { key: 'guess_grid',  title: '交叉填格', emoji: '🎬', color: '#E7EBD5', label: '#5E7238', url: '/pages/guess/grid/index', hidden: true },
-  { key: 'guess_clue',  title: '线索猜片', emoji: '🔍', color: '#EDE4F0', label: '#6B5A8C', url: '/pages/guess/clue/index', hidden: true }
+  { key: 'guess_cross', mode: 'cross', title: '每日电影填词', sub: '五部电影横竖交叉，每天一局', emoji: '🔤', color: '#DEE6EF', label: '#46617F', url: '/pages/guess/cross/index' },
+  { key: 'guess_grid',  mode: 'grid',  title: '交叉填格', emoji: '🎬', color: '#E7EBD5', label: '#5E7238', url: '/pages/guess/grid/index', hidden: true },
+  { key: 'guess_clue',  mode: 'clue',  title: '线索猜片', emoji: '🔍', color: '#EDE4F0', label: '#6B5A8C', url: '/pages/guess/clue/index', hidden: true }
 ];
 
 // 没有静态设计封面的主题：用榜单 rank=1 那部电影的封面做卡片图（整图铺满裁剪+主题色叠色，
@@ -1146,6 +1147,9 @@ Page({
   async loadUserCounts() {
     const db = wx.cloud.database();
     const _ = db.command;
+    // 玩法卡的人数走另一条路（云函数），跟下面三十多个主题的聚合互不依赖，
+    // 不 await 是为了让它先于主题人数落地——玩法专区在页面上更靠上
+    this._loadGamePlayerCounts();
       const themeConfigs = [
         { id: 'douban_movies', collection: 'movies', topFiltered: true },
         { id: 'imdb_movies', collection: 'imdb_movies', topFiltered: true },
@@ -1254,6 +1258,31 @@ Page({
     const themes = this.data.themes.map(t => countUpdates[t.id] ? { ...t, ...countUpdates[t.id] } : t);
     this.setData({ themes });
     this.filterThemes(this.data.activeTab);
+  },
+
+  // 玩法专区（每日猜电影）的参与人数。
+  // 口径是「玩过的人」而不是「打开过的人」：guess_records 只有真作答/求提示才落库，
+  // 光打开页面不写。去重和分组在云函数里做——那张表是各人自己的进度，
+  // 小程序端直接聚合受集合读权限限制，很可能只数得到自己那几条。
+  // 展示上 +100 后按百位取整，与主题卡同一口径（formatUserCount）。
+  async _loadGamePlayerCounts() {
+    const blocks = this.data.gameBlocks || [];
+    if (!blocks.length) return;
+    try {
+      const res = await wx.cloud.callFunction({ name: 'submitGuess', data: { action: 'players' } });
+      const players = (res && res.result && res.result.players) || {};
+      const gameBlocks = blocks.map(g => {
+        const displayCount = (Number(players[g.mode]) || 0) + 100;
+        return Object.assign({}, g, {
+          userCount: displayCount,
+          userCountText: this.formatUserCount(displayCount)
+        });
+      });
+      this.setData({ gameBlocks });
+    } catch (e) {
+      // 静默降级：卡片照常进得去，只是不显示人数
+      console.error('加载玩法参与人数失败:', e);
+    }
   },
 
   async _countThemeUsers(db, _, config) {
