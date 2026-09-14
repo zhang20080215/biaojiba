@@ -80,7 +80,6 @@ Page({
     statusBarHeight: 20,
     navBarHeight: 48,
     navOffset: 68,
-    navRightInset: 96,
 
     today: '',
     year: 2026,
@@ -145,7 +144,6 @@ Page({
       statusBarHeight: nav.statusBarHeight,
       navBarHeight: nav.navBarHeight,
       navOffset: nav.navOffset,
-      navRightInset: nav.navRightInset,
       today,
       year,
       month,
@@ -632,9 +630,11 @@ Page({
     this.confirmDelete(date, Number(ts), title);
   },
 
-  // 右上角「海报」：进多选页挑若干部 → 分享页按 2~3 部纵向 / 4 部以上网格渲染
-  onOpenPosterSelect() {
-    wx.navigateTo({ url: '/pages/daily/movie/select' });
+  // 「海报」：范围海报（默认当前年度，分享页里可切年度/月度、前后翻），不经过选片
+  onOpenPoster() {
+    const app = getApp();
+    if (app && app.globalData) app.globalData.moviePosterSelection = null;   // 清掉单部分享残留
+    wx.navigateTo({ url: `/pages/daily/movie/share?year=${this.data.year}&month=${this.data.month}` });
   },
 
   // 条目「分享」：只把这一部放进 selection → 分享页按单部渲染成单张海报

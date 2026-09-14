@@ -61,9 +61,6 @@ page {
   justify-content: center;
 }
 .nav-btn-left { left: 22rpx; }
-/* 右上角「海报」：right 由 navRightInset 内联给，避开胶囊 */
-.nav-btn-right { width: auto; padding: 0 22rpx; }
-.nav-poster { font-size: 28rpx; font-weight: 700; color: #B8873B; }
 .nav-chev {
   font-size: 56rpx;
   font-weight: 300;
@@ -301,6 +298,22 @@ page {
 .month-arrow.is-disabled {
   opacity: 0.25;
 }
+/* 分享海报入口：贴行右缘（与 .top-controls 里靠右的 .seg 同一条右边线） */
+.poster-btn {
+  margin-left: auto;
+  height: 56rpx;
+  padding: 0 20rpx;
+  border-radius: 18rpx;
+  border: 2rpx solid #E8E0CC;
+  background: #FFFFFF;
+  color: #6B6356;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+.poster-btn-ico { font-size: 26rpx; line-height: 1; }
 .month-label {
   text-align: center;
   font-size: 32rpx;

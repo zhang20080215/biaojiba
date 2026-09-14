@@ -32,7 +32,6 @@
     "pages/daily/movie/index",
     "pages/daily/movie/add",
     "pages/daily/movie/stats",
-    "pages/daily/movie/select",
     "pages/daily/movie/share",
     "pages/daily/read/index",
     "pages/daily/read/add",

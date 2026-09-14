@@ -14,6 +14,8 @@
  *
  * layout（仅多部生效）：whole 整体一张（2~3 部纵向 / 4+ 网格）| month 按月份分区 | rating 按星级分区 | calendar 单月日历（需同月，见 isSingleMonth）
  * data.customTitle：自定义标题（≤20 字）；空则各版式用默认标题
+ * data.periodLead：数据范围前缀（「2026年度」/「2026年6月」），长图标题 = 前缀 + 观影总结；空则按电影日期推
+ * movies 为空时画空态（背景 + 0 部统计 + 提示文字）
  *
  * data = {
  *   title:        '我的观影记录',
@@ -28,56 +30,27 @@
  * coverNodes = { [key]: ImageNode|null }   // 预加载好的封面（canvas.createImage），失败为 null → 占位
  */
 
-// ============ 主题（含深色「影院」默认 + 3 套浅色） ============
+// ============ 主题：对齐豆瓣 TOP250 海报页（pages/douban/share）的三套背景渐变 ============
+//   文字/元素色固定（标题 #2D2D2B、次要 #7A776D、淡 #9C998F、星 #D4A828），切换只换背景。
+const INK = {
+  isDark: false,
+  panel: 'rgba(255,255,255,0.55)', panelEdge: 'rgba(255,255,255,0.58)',
+  ink: '#2D2D2B', inkSoft: '#7A776D', inkFaint: '#9C998F',
+  accent: '#B8952F', accentRgb: '184,149,47',
+  star: '#D4A828', starEmpty: 'rgba(45,45,43,0.14)',
+  chipBg: 'rgba(255,255,255,0.62)', chipInk: '#2D2D2B',
+  ph1: '#F2F0EA', ph2: '#E4E0D5', borderRgb: '255,255,255',
+  decoRgb: '255,255,255'
+};
 const THEMES = {
-  cinema: {
-    id: 'cinema', name: '影院', swatch: '#E5B85C', isDark: true,
-    bgTop: '#232833', bgBot: '#0D0F14',
-    panel: '#1B1F29', panelEdge: 'rgba(229,184,92,0.16)',
-    ink: '#F4EEDD', inkSoft: '#A79E86', inkFaint: '#6E6858',
-    accent: '#E5B85C', accentRgb: '229,184,92',
-    star: '#F1C453', starEmpty: 'rgba(244,238,221,0.18)',
-    chipBg: 'rgba(229,184,92,0.12)', chipInk: '#E7CE97',
-    ph1: '#2A2F3B', ph2: '#171A22', borderRgb: '229,184,92',
-    decoRgb: '229,184,92'
-  },
-  noir: {
-    id: 'noir', name: '午夜蓝', swatch: '#6FA8FF', isDark: true,
-    bgTop: '#1C2740', bgBot: '#0A0F1C',
-    panel: '#141C30', panelEdge: 'rgba(111,168,255,0.16)',
-    ink: '#EAF1FC', inkSoft: '#96A6C6', inkFaint: '#5C6A88',
-    accent: '#6FA8FF', accentRgb: '111,168,255',
-    star: '#8CC0FF', starEmpty: 'rgba(234,241,252,0.16)',
-    chipBg: 'rgba(111,168,255,0.14)', chipInk: '#AFCCFF',
-    ph1: '#1E2942', ph2: '#0E1526', borderRgb: '111,168,255',
-    decoRgb: '111,168,255'
-  },
-  cream: {
-    id: 'cream', name: '奶油', swatch: '#B8873B', isDark: false,
-    bgTop: '#FBF7EF', bgBot: '#EDE2CE',
-    panel: '#FFFFFF', panelEdge: 'rgba(184,135,59,0.18)',
-    ink: '#2A2620', inkSoft: '#8C8474', inkFaint: '#B7AE9B',
-    accent: '#B8873B', accentRgb: '184,135,59',
-    star: '#E0A93B', starEmpty: 'rgba(42,38,32,0.14)',
-    chipBg: 'rgba(184,135,59,0.12)', chipInk: '#9A6F2E',
-    ph1: '#EFE6D5', ph2: '#E2D6C0', borderRgb: '184,135,59',
-    decoRgb: '184,135,59'
-  },
-  rose: {
-    id: 'rose', name: '胭脂', swatch: '#E6738F', isDark: false,
-    bgTop: '#FFF6F5', bgBot: '#F6E1E4',
-    panel: '#FFFFFF', panelEdge: 'rgba(230,115,143,0.18)',
-    ink: '#3A2A2E', inkSoft: '#9A7E86', inkFaint: '#C6AEB4',
-    accent: '#E6738F', accentRgb: '230,115,143',
-    star: '#EA8AA1', starEmpty: 'rgba(58,42,46,0.14)',
-    chipBg: 'rgba(230,115,143,0.14)', chipInk: '#C25576',
-    ph1: '#F7E3E7', ph2: '#EFD2D8', borderRgb: '230,115,143',
-    decoRgb: '230,115,143'
-  }
+  pinkBlue: Object.assign({ id: 'pinkBlue', name: '粉蓝', bgTop: '#FDECEC', bgBot: '#D2F1FE' }, INK),
+  goldSand: Object.assign({ id: 'goldSand', name: '暖金', bgTop: '#FEEFBF', bgBot: '#F8F3E7' }, INK),
+  greenMist: Object.assign({ id: 'greenMist', name: '青雾', bgTop: '#E1E6D1', bgBot: '#EAF0F9' }, INK)
 };
 
-const DEFAULT_THEME = 'cinema';
-const THEME_LIST = Object.keys(THEMES).map(k => ({ id: THEMES[k].id, name: THEMES[k].name, swatch: THEMES[k].swatch }));
+const DEFAULT_THEME = 'pinkBlue';
+// swatch 给前端色点用：直接是 CSS 渐变串
+const THEME_LIST = Object.keys(THEMES).map(k => ({ id: THEMES[k].id, name: THEMES[k].name, swatch: `linear-gradient(135deg, ${THEMES[k].bgTop}, ${THEMES[k].bgBot})` }));
 
 // ============ 布局：三种模式（画布始终 3:4）============
 //   n === 1        cover —— 海报满幅做背景 + 蒙版 + 悬浮文字（同「全网评分查询」详情）
@@ -301,6 +274,7 @@ class MoviePosterDrawer {
 
   // 长图类版式（month / rating / calendar）的画布尺寸：高随内容变，需要拿到 movies（含 date / rating）
   static computeLayoutSize(layout, movies) {
+    if (!movies || !movies.length) return { width: SECTION_W, height: Math.round(SECTION_W * 4 / 3), cols: 1 };
     const l = layout === 'month' ? computeMonthLayout(movies)
       : layout === 'rating' ? computeRatingLayout(movies)
       : layout === 'calendar' ? computeCalendarLayout(movies)
@@ -321,8 +295,10 @@ class MoviePosterDrawer {
     const d = data || {};
     const movies = (d.movies || []).slice(0, 60);
     this.customTitle = String(d.customTitle || '').trim().slice(0, 20);
+    this.periodLead = String(d.periodLead || '');   // 「2026年度」/「2026年6月」，有则长图标题不再从日期推
 
-    if (movies.length > 1) {
+    if (!movies.length) { this._drawEmptyPoster(); return; }
+    if (layout !== 'whole' && movies.length >= 1) {
       if (layout === 'month') { this._drawSectionPoster(movies, computeMonthLayout(movies)); return; }
       if (layout === 'rating') { this._drawSectionPoster(movies, computeRatingLayout(movies)); return; }
       if (layout === 'calendar') { this._drawCalendarPoster(movies, computeCalendarLayout(movies)); return; }
@@ -717,7 +693,9 @@ class MoviePosterDrawer {
       if (ym && months.indexOf(ym) < 0) months.push(ym);
     });
     const stats = [{ num: String(movies.length), label: '部' }];
-    if (rated.length) {
+    if (!movies.length) {
+      stats.push({ num: '–', label: '平均分' });
+    } else if (rated.length) {
       const avg = rated.reduce((a, m) => a + Number(m.rating), 0) / rated.length;
       stats.push({ num: (avg * 2).toFixed(1), label: '平均分' });
     } else {
@@ -764,7 +742,7 @@ class MoviePosterDrawer {
   _drawSectionPoster(movies, L) {
     const ctx = this.ctx, C = this.C, s = L.s, W = L.W;
     this._drawBackground({ noSparkle: true });
-    const hline = this._drawSummaryHeader(movies, L, this._yearLead(movies));
+    const hline = this._drawSummaryHeader(movies, L, this.periodLead || this._yearLead(movies));
 
     const gridX = L.PAD + L.labelW;
     L.secs.forEach(sec => {
@@ -821,7 +799,7 @@ class MoviePosterDrawer {
   _drawCalendarPoster(movies, L) {
     const ctx = this.ctx, C = this.C, s = L.s, W = L.W;
     this._drawBackground({ noSparkle: true });
-    const lead = L.year && L.month ? `${L.year}年${L.month}月` : this._yearLead(movies);
+    const lead = this.periodLead || (L.year && L.month ? `${L.year}年${L.month}月` : this._yearLead(movies));
     this._drawSummaryHeader(movies, L, lead);
 
     // 星期表头
@@ -884,6 +862,21 @@ class MoviePosterDrawer {
     }
 
     this._drawWatermark(W / 2, L.H - L.FOOTER / 2);
+  }
+
+  // ============ 空态：范围内没有观影记录 ============
+  _drawEmptyPoster() {
+    const ctx = this.ctx, C = this.C;
+    const W = this.w, s = W / 1080;
+    const L = { s, W, PAD: Math.round(W * 0.06) };
+    this._drawBackground({ noSparkle: true });
+    this._drawSummaryHeader([], L, this.periodLead);
+    ctx.font = `500 ${Math.round(30 * s)}px sans-serif`;
+    ctx.fillStyle = C.inkFaint;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('这段时间还没有观影记录', W / 2, this.h * 0.5);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    this._drawWatermark(W / 2, this.h - Math.round(60 * s));
   }
 
   // 带阴影的圆角封面（长图版式共用）
