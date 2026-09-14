@@ -10,6 +10,10 @@
         <text class="nav-chev">‹</text>
       </view>
       <text class="nav-title">标记吧：每日电影</text>
+      <!-- 多部分享海报：进 select 多选页挑电影 -->
+      <view class="nav-btn nav-btn-right" style="right: {{navRightInset}}px;" bindtap="onOpenPosterSelect" hover-class="nav-btn-active">
+        <text class="nav-poster">海报</text>
+      </view>
     </view>
   </view>
 

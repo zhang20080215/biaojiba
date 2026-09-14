@@ -16,31 +16,52 @@
   <!-- canvas 原生组件无法用 opacity 隐藏：backing store = 导出分辨率（computeSize），CSS 缩放到 previewW×previewH 显示，
        屏幕上这块 canvas 即预览图；导出的临时文件仅供「保存到相册」。 -->
   <view class="content" style="padding-top: {{navOffset}}px;">
+    <!-- 顶部选项面板：多部 = 版式 + 配色；单部 = 比例 + 评分开关 -->
+    <view class="opt-panel" wx:if="{{!loading}}">
+      <block wx:if="{{singleMovie}}">
+        <view class="opt-row">
+          <text class="opt-label">比例</text>
+          <view class="mode-row">
+            <view class="mode-tab {{posterMode === 'xhs' ? 'is-active' : ''}}" bindtap="onPickMode" data-mode="xhs">小红书</view>
+            <view class="mode-tab {{posterMode === 'raw' ? 'is-active' : ''}}" bindtap="onPickMode" data-mode="raw">原始海报</view>
+          </view>
+        </view>
+        <view class="opt-row" wx:if="{{hasRatings}}">
+          <text class="opt-label">评分</text>
+          <view class="douban-row" bindtap="onToggleRatings">
+            <view class="douban-switch {{hideRatings ? 'is-on' : ''}}"><view class="douban-knob"></view></view>
+            <text class="douban-label">隐藏平台评分</text>
+          </view>
+        </view>
+      </block>
+      <block wx:else>
+        <view class="opt-row">
+          <text class="opt-label">版式</text>
+          <view class="mode-row">
+            <view class="mode-tab {{posterLayout === 'whole' ? 'is-active' : ''}}" bindtap="onPickLayout" data-layout="whole">整体</view>
+            <view class="mode-tab {{posterLayout === 'month' ? 'is-active' : ''}}" bindtap="onPickLayout" data-layout="month">按月份</view>
+          </view>
+        </view>
+        <view class="opt-row">
+          <text class="opt-label">配色</text>
+          <view class="theme-row">
+            <view wx:for="{{themes}}" wx:key="id"
+                  class="theme-dot {{themeId === item.id ? 'is-active' : ''}}"
+                  style="background: {{item.swatch}};"
+                  bindtap="onPickTheme" data-id="{{item.id}}">
+              <text wx:if="{{themeId === item.id}}" class="theme-check">✓</text>
+            </view>
+          </view>
+        </view>
+      </block>
+    </view>
+
     <view class="preview-slot" style="height: {{slotH}}px;">
       <view class="preview-wrap" style="width: {{previewW}}px; height: {{previewH}}px;">
         <canvas type="2d" id="movieCard" class="poster-canvas" style="width: {{previewW}}px; height: {{previewH}}px;"></canvas>
       </view>
     </view>
     <text class="preview-tip">{{ready ? '点下方「保存到相册」即可保存这张观影海报' : (loading ? '加载记录中…' : '生成海报中…')}}</text>
-
-    <view class="mode-row" wx:if="{{!loading && singleMovie}}">
-      <view class="mode-tab {{posterMode === 'xhs' ? 'is-active' : ''}}" bindtap="onPickMode" data-mode="xhs">小红书</view>
-      <view class="mode-tab {{posterMode === 'raw' ? 'is-active' : ''}}" bindtap="onPickMode" data-mode="raw">原始海报</view>
-    </view>
-
-    <view class="douban-row" wx:if="{{!loading && singleMovie && hasRatings}}" bindtap="onToggleRatings">
-      <view class="douban-switch {{hideRatings ? 'is-on' : ''}}"><view class="douban-knob"></view></view>
-      <text class="douban-label">隐藏评分</text>
-    </view>
-
-    <view class="theme-row" wx:if="{{!loading && !singleMovie}}">
-      <view wx:for="{{themes}}" wx:key="id"
-            class="theme-dot {{themeId === item.id ? 'is-active' : ''}}"
-            style="background: {{item.swatch}};"
-            bindtap="onPickTheme" data-id="{{item.id}}">
-        <text wx:if="{{themeId === item.id}}" class="theme-check">✓</text>
-      </view>
-    </view>
   </view>
 
   <view class="action-bar">

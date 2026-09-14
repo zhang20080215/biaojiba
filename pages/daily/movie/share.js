@@ -7,6 +7,7 @@ const { getNavMetrics, getWindowInfoCompat, formatDateCN } = require('./common.j
 const THEME_STORAGE_KEY = 'movieShareTheme';
 const MODE_STORAGE_KEY = 'moviePosterMode';   // 'xhs'(小红书 3:4) | 'raw'(原始海报比例)
 const HIDE_RATINGS_KEY = 'moviePosterHideRatings';   // 单部海报是否隐藏全部平台评分（豆瓣/IMDb/烂番茄）
+const LAYOUT_STORAGE_KEY = 'moviePosterLayout';       // 多部版式：'whole'(整体一张) | 'month'(按月份分区长图)
 
 function keyOf(m) { return `${m.date}-${m.ts}`; }
 
@@ -43,6 +44,7 @@ Page({
     // 单部海报比例：xhs=小红书 3:4（可能裁切海报）/ raw=原始海报比例（不裁）
     singleMovie: false,
     posterMode: 'xhs',
+    posterLayout: 'whole',   // 多部版式：整体 / 按月份
     hasRatings: false,   // 单部电影是否有平台评分（决定是否显示开关）
     hideRatings: false   // 单部电影是否隐藏全部平台评分
   },
@@ -65,12 +67,15 @@ Page({
 
     let themeId = MoviePosterDrawer.DEFAULT_THEME;
     let posterMode = 'xhs';
+    let posterLayout = 'whole';
     let hideRatings = false;
     try {
       const saved = wx.getStorageSync(THEME_STORAGE_KEY);
       if (saved && this.data.themes.some(t => t.id === saved)) themeId = saved;
       const savedMode = wx.getStorageSync(MODE_STORAGE_KEY);
       if (savedMode === 'xhs' || savedMode === 'raw') posterMode = savedMode;
+      const savedLayout = wx.getStorageSync(LAYOUT_STORAGE_KEY);
+      if (savedLayout === 'whole' || savedLayout === 'month') posterLayout = savedLayout;
       hideRatings = !!wx.getStorageSync(HIDE_RATINGS_KEY);
     } catch (e) {}
     this._hideRatings = hideRatings;
@@ -83,6 +88,7 @@ Page({
       navOffset: nav.navOffset,
       themeId,
       posterMode,
+      posterLayout,
       hideRatings
     };
     wx.setNavigationBarTitle({ title: '分享观影卡片' });
@@ -136,6 +142,7 @@ Page({
     }
     const movies = selection.map(m => ({
       key: keyOf(m),
+      date: m.date,          // 'YYYY-MM-DD'，「按月份」版式分组用
       title: m.title,
       year: m.year,
       director: m.director || '',
@@ -203,6 +210,15 @@ Page({
     this.generatePoster();
   },
 
+  onPickLayout(e) {
+    const layout = e.currentTarget.dataset.layout;
+    if (!layout || layout === this.data.posterLayout) return;
+    if (!this.data.ready) return;
+    try { wx.setStorageSync(LAYOUT_STORAGE_KEY, layout); } catch (err) {}
+    this.setData({ posterLayout: layout, ready: false });
+    this.generatePoster();
+  },
+
   onToggleRatings() {
     if (!this.data.ready) return;
     const hide = !this._hideRatings;
@@ -220,9 +236,16 @@ Page({
       this._hideRatings ? [] : (this._rawRatings || []);
   },
 
-  // 依据模式确定画布尺寸：raw 单部跟随海报真实比例（不裁切），其余走 3:4
+  // 多部海报当前生效的版式（单部没有版式概念，恒为 whole）
+  _layout() {
+    return (!this._isSingle && this.data.posterLayout === 'month') ? 'month' : 'whole';
+  },
+
+  // 依据模式确定画布尺寸：raw 单部跟随海报真实比例（不裁切）；按月份版式高随内容；其余走 3:4
   _resolveCanvasSize() {
-    const base = MoviePosterDrawer.computeSize(this.posterData.movies.length);
+    const base = this._layout() === 'month'
+      ? MoviePosterDrawer.computeMonthSize(this.posterData.movies)
+      : MoviePosterDrawer.computeSize(this.posterData.movies.length);
     let W = base.width, H = base.height;
     if (this.data.posterMode === 'raw' && this._isSingle && this._coverNodes) {
       const node = this._coverNodes[this.posterData.movies[0].key];
@@ -270,7 +293,7 @@ Page({
       this._syncPreviewToCanvas();
 
       const drawer = new MoviePosterDrawer(canvas, ctx, this._canvasW, this._canvasH);
-      drawer.draw(this.posterData, this._coverNodes, this.data.themeId);
+      drawer.draw(this.posterData, this._coverNodes, this.data.themeId, this._layout());
 
       await new Promise(resolve => {
         canvas.requestAnimationFrame(() => canvas.requestAnimationFrame(resolve));

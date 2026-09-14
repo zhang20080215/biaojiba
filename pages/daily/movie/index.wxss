@@ -61,6 +61,9 @@ page {
   justify-content: center;
 }
 .nav-btn-left { left: 22rpx; }
+/* 右上角「海报」：right 由 navRightInset 内联给，避开胶囊 */
+.nav-btn-right { width: auto; padding: 0 22rpx; }
+.nav-poster { font-size: 28rpx; font-weight: 700; color: #B8873B; }
 .nav-chev {
   font-size: 56rpx;
   font-weight: 300;

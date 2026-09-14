@@ -80,6 +80,7 @@ Page({
     statusBarHeight: 20,
     navBarHeight: 48,
     navOffset: 68,
+    navRightInset: 96,
 
     today: '',
     year: 2026,
@@ -144,6 +145,7 @@ Page({
       statusBarHeight: nav.statusBarHeight,
       navBarHeight: nav.navBarHeight,
       navOffset: nav.navOffset,
+      navRightInset: nav.navRightInset,
       today,
       year,
       month,
@@ -628,6 +630,11 @@ Page({
   onLongPressMovie(e) {
     const { date, ts, title } = e.currentTarget.dataset;
     this.confirmDelete(date, Number(ts), title);
+  },
+
+  // 右上角「海报」：进多选页挑若干部 → 分享页按 2~3 部纵向 / 4 部以上网格渲染
+  onOpenPosterSelect() {
+    wx.navigateTo({ url: '/pages/daily/movie/select' });
   },
 
   // 条目「分享」：只把这一部放进 selection → 分享页按单部渲染成单张海报
