@@ -40,6 +40,17 @@
           <view class="mode-row">
             <view class="mode-tab {{posterLayout === 'whole' ? 'is-active' : ''}}" bindtap="onPickLayout" data-layout="whole">整体</view>
             <view class="mode-tab {{posterLayout === 'month' ? 'is-active' : ''}}" bindtap="onPickLayout" data-layout="month">按月份</view>
+            <view class="mode-tab {{posterLayout === 'rating' ? 'is-active' : ''}}" bindtap="onPickLayout" data-layout="rating">按评分</view>
+            <!-- 日历：所选电影跨月时置灰，点了给提示 -->
+            <view class="mode-tab {{posterLayout === 'calendar' ? 'is-active' : ''}} {{calendarOk ? '' : 'is-disabled'}}" bindtap="onPickLayout" data-layout="calendar">日历</view>
+          </view>
+        </view>
+        <view class="opt-row">
+          <text class="opt-label">标题</text>
+          <view class="title-row">
+            <input class="title-input" value="{{customTitle}}" maxlength="{{titleMax}}" placeholder="留空用默认标题" placeholder-class="title-ph"
+                   confirm-type="done" bindinput="onTitleInput" bindconfirm="onTitleCommit" bindblur="onTitleCommit" />
+            <text class="title-count">{{customTitle.length}}/{{titleMax}}</text>
           </view>
         </view>
         <view class="opt-row">

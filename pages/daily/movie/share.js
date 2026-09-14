@@ -7,7 +7,9 @@ const { getNavMetrics, getWindowInfoCompat, formatDateCN } = require('./common.j
 const THEME_STORAGE_KEY = 'movieShareTheme';
 const MODE_STORAGE_KEY = 'moviePosterMode';   // 'xhs'(小红书 3:4) | 'raw'(原始海报比例)
 const HIDE_RATINGS_KEY = 'moviePosterHideRatings';   // 单部海报是否隐藏全部平台评分（豆瓣/IMDb/烂番茄）
-const LAYOUT_STORAGE_KEY = 'moviePosterLayout';       // 多部版式：'whole'(整体一张) | 'month'(按月份分区长图)
+const LAYOUT_STORAGE_KEY = 'moviePosterLayout';       // 多部版式：'whole'(整体一张) | 'month'(按月份) | 'rating'(按评分) | 'calendar'(日历，需同月)
+const LAYOUTS = ['whole', 'month', 'rating', 'calendar'];
+const TITLE_MAX = 20;                                  // 自定义标题字数上限
 
 function keyOf(m) { return `${m.date}-${m.ts}`; }
 
@@ -44,7 +46,10 @@ Page({
     // 单部海报比例：xhs=小红书 3:4（可能裁切海报）/ raw=原始海报比例（不裁）
     singleMovie: false,
     posterMode: 'xhs',
-    posterLayout: 'whole',   // 多部版式：整体 / 按月份
+    posterLayout: 'whole',   // 多部版式：整体 / 按月份 / 按评分 / 日历
+    calendarOk: false,       // 所选电影都在同一个月才能选「日历」
+    customTitle: '',         // 自定义标题（≤20 字，空 = 各版式默认标题）
+    titleMax: TITLE_MAX,
     hasRatings: false,   // 单部电影是否有平台评分（决定是否显示开关）
     hideRatings: false   // 单部电影是否隐藏全部平台评分
   },
@@ -75,7 +80,7 @@ Page({
       const savedMode = wx.getStorageSync(MODE_STORAGE_KEY);
       if (savedMode === 'xhs' || savedMode === 'raw') posterMode = savedMode;
       const savedLayout = wx.getStorageSync(LAYOUT_STORAGE_KEY);
-      if (savedLayout === 'whole' || savedLayout === 'month') posterLayout = savedLayout;
+      if (LAYOUTS.indexOf(savedLayout) >= 0) posterLayout = savedLayout;
       hideRatings = !!wx.getStorageSync(HIDE_RATINGS_KEY);
     } catch (e) {}
     this._hideRatings = hideRatings;
@@ -101,6 +106,8 @@ Page({
     }
     this._selection = selection;
     Object.assign(patch, this._buildPosterData(selection), this._previewSizePatch(), { loading: false });
+    // 记住的版式是「日历」但这次选的电影跨月：退回整体
+    if (patch.posterLayout === 'calendar' && !patch.calendarOk) patch.posterLayout = 'whole';
     this.setData(patch);
     rewardedSaveGate.refreshHint(this);   // 异步，setData 落在首屏渲染之后
   },
@@ -155,7 +162,7 @@ Page({
       note: m.note || '',
       platformRatings: m.platformRatings || []
     }));
-    this.posterData = { title: '我的观影记录', subtitle, avgText, movies };
+    this.posterData = { title: '我的观影记录', subtitle, avgText, movies, customTitle: '' };
     this._isSingle = (n === 1);
 
     // 单部电影：记住完整平台评分，按开关整体隐藏
@@ -169,7 +176,7 @@ Page({
     this._canvasW = size.width;
     this._canvasH = size.height;
 
-    return { singleMovie: this._isSingle, hasRatings };
+    return { singleMovie: this._isSingle, hasRatings, calendarOk: !this._isSingle && MoviePosterDrawer.isSingleMonth(movies) };
   },
 
   // 计算预览尺寸。单部电影用固定高度的预览槽（= maxW*1.5，容纳 3:4 与原始海报比例），
@@ -213,6 +220,7 @@ Page({
   onPickLayout(e) {
     const layout = e.currentTarget.dataset.layout;
     if (!layout || layout === this.data.posterLayout) return;
+    if (layout === 'calendar' && !this.data.calendarOk) { toast.show(this, '日历版式需要所选电影在同一个月'); return; }
     if (!this.data.ready) return;
     try { wx.setStorageSync(LAYOUT_STORAGE_KEY, layout); } catch (err) {}
     this.setData({ posterLayout: layout, ready: false });
@@ -238,14 +246,32 @@ Page({
 
   // 多部海报当前生效的版式（单部没有版式概念，恒为 whole）
   _layout() {
-    return (!this._isSingle && this.data.posterLayout === 'month') ? 'month' : 'whole';
+    if (this._isSingle) return 'whole';
+    const l = this.data.posterLayout;
+    if (l === 'calendar' && !this.data.calendarOk) return 'whole';
+    return LAYOUTS.indexOf(l) >= 0 ? l : 'whole';
+  },
+
+  // 自定义标题：输入时只记值，失焦/回车再重绘（避免每敲一个字就出一张图）
+  onTitleInput(e) {
+    const v = String(e.detail.value || '').slice(0, TITLE_MAX);
+    this.setData({ customTitle: v });
+  },
+  onTitleCommit() {
+    const v = String(this.data.customTitle || '').trim().slice(0, TITLE_MAX);
+    if (!this.posterData || v === (this.posterData.customTitle || '')) return;
+    this.posterData.customTitle = v;
+    if (!this.data.ready) { this._titleDirty = true; return; }
+    this.setData({ ready: false });
+    this.generatePoster();
   },
 
   // 依据模式确定画布尺寸：raw 单部跟随海报真实比例（不裁切）；按月份版式高随内容；其余走 3:4
   _resolveCanvasSize() {
-    const base = this._layout() === 'month'
-      ? MoviePosterDrawer.computeMonthSize(this.posterData.movies)
-      : MoviePosterDrawer.computeSize(this.posterData.movies.length);
+    const layout = this._layout();
+    const base = layout === 'whole'
+      ? MoviePosterDrawer.computeSize(this.posterData.movies.length)
+      : MoviePosterDrawer.computeLayoutSize(layout, this.posterData.movies);
     let W = base.width, H = base.height;
     if (this.data.posterMode === 'raw' && this._isSingle && this._coverNodes) {
       const node = this._coverNodes[this.posterData.movies[0].key];
@@ -303,6 +329,7 @@ Page({
       if (this._destroyed) return;
       this._previewTemp = res.tempFilePath;
       this.safeSetData({ ready: true });
+      if (this._titleDirty) { this._titleDirty = false; this.onTitleCommit(); }
     } catch (err) {
       console.error('movie share render fail', err);
       this._rendered = false;
