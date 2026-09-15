@@ -397,11 +397,6 @@
   font-size: 18rpx;
   letter-spacing: 0;
 }
-.list-mode .bottle-mini,
-.list-mode .ruler-icon {
-  transform: scale(0.62);
-  margin-bottom: 0;
-}
 
 /* ========== 区块标题工具行（置顶 + 展示模式切换） ========== */
 .section-head-row {
@@ -612,39 +607,6 @@
   position: absolute;
   top: 0; right: 0; bottom: 0; left: 0;
 }
-.cover-tint.rt-horror { background: linear-gradient(135deg, rgba(181, 81, 76, 0.5) 0%, rgba(142, 42, 42, 0.5) 100%); }
-.cover-tint.rt-war { background: linear-gradient(135deg, rgba(110, 137, 160, 0.5) 0%, rgba(62, 92, 110, 0.5) 100%); }
-.cover-tint.rt-animation { background: linear-gradient(135deg, rgba(242, 176, 115, 0.5) 0%, rgba(232, 134, 46, 0.5) 100%); }
-.cover-tint.palme { background: linear-gradient(135deg, rgba(212, 180, 92, 0.5) 0%, rgba(168, 132, 43, 0.5) 100%); }
-.cover-tint.oscar-screenplay { background: linear-gradient(135deg, rgba(155, 123, 176, 0.5) 0%, rgba(107, 76, 122, 0.5) 100%); }
-/* 静态设计封面（有手绘/合成 image 的主题）：同样叠一层主题色调，跟上面动态封面统一视觉语言 */
-.cover-tint.oscar-cinema { background: linear-gradient(135deg, rgba(90, 110, 138, 0.5) 0%, rgba(48, 60, 82, 0.5) 100%); }
-.cover-tint.oscar-best { background: linear-gradient(135deg, rgba(202, 170, 96, 0.5) 0%, rgba(154, 116, 46, 0.5) 100%); }
-.cover-tint.oscar-anime { background: linear-gradient(135deg, rgba(96, 186, 176, 0.5) 0%, rgba(44, 134, 124, 0.5) 100%); }
-.cover-tint.daily-movie { background: linear-gradient(135deg, rgba(208, 132, 104, 0.5) 0%, rgba(168, 94, 68, 0.5) 100%); }
-.cover-tint.daily-read { background: linear-gradient(135deg, rgba(164, 176, 116, 0.5) 0%, rgba(114, 126, 71, 0.5) 100%); }
-.cover-tint.movie-search { background: linear-gradient(135deg, rgba(114, 134, 190, 0.5) 0%, rgba(70, 86, 144, 0.5) 100%); }
-.cover-tint.weread { background: linear-gradient(135deg, rgba(78, 158, 196, 0.5) 0%, rgba(38, 108, 152, 0.5) 100%); }
-.cover-tint.douban-books { background: linear-gradient(135deg, rgba(132, 158, 98, 0.5) 0%, rgba(88, 116, 60, 0.5) 100%); }
-.cover-tint.douban-movies { background: linear-gradient(135deg, rgba(84, 156, 118, 0.5) 0%, rgba(50, 114, 82, 0.5) 100%); }
-.cover-tint.imdb { background: linear-gradient(135deg, rgba(224, 186, 64, 0.5) 0%, rgba(164, 132, 24, 0.5) 100%); }
-.cover-tint.boxoffice { background: linear-gradient(135deg, rgba(200, 94, 82, 0.5) 0%, rgba(154, 54, 46, 0.5) 100%); }
-.cover-tint.oscar-foreign { background: linear-gradient(135deg, rgba(160, 110, 124, 0.5) 0%, rgba(122, 59, 74, 0.5) 100%); }
-.cover-tint.oscar-director { background: linear-gradient(135deg, rgba(92, 155, 126, 0.5) 0%, rgba(47, 107, 79, 0.5) 100%); }
-.cover-tint.oscar-vfx { background: linear-gradient(135deg, rgba(79, 179, 204, 0.5) 0%, rgba(30, 122, 153, 0.5) 100%); }
-.cover-tint.oscar-actor { background: linear-gradient(135deg, rgba(201, 155, 94, 0.5) 0%, rgba(166, 118, 60, 0.5) 100%); }
-.cover-tint.oscar-actress { background: linear-gradient(135deg, rgba(208, 122, 160, 0.5) 0%, rgba(176, 71, 110, 0.5) 100%); }
-.cover-tint.rt-action { background: linear-gradient(135deg, rgba(100, 110, 128, 0.5) 0%, rgba(59, 66, 82, 0.5) 100%); }
-.cover-tint.letterboxd500 { background: linear-gradient(135deg, rgba(230, 150, 64, 0.5) 0%, rgba(200, 110, 20, 0.5) 100%); }
-.cover-tint.arthouse { background: linear-gradient(135deg, rgba(94, 110, 150, 0.5) 0%, rgba(46, 58, 89, 0.5) 100%); }
-.cover-tint.sightsound { background: linear-gradient(135deg, rgba(160, 80, 102, 0.5) 0%, rgba(110, 38, 57, 0.5) 100%); }
-.cover-tint.douban-tv-cn { background: linear-gradient(135deg, rgba(218, 122, 114, 0.5) 0%, rgba(192, 69, 62, 0.5) 100%); }
-.cover-tint.douban-tv-foreign { background: linear-gradient(135deg, rgba(106, 147, 191, 0.5) 0%, rgba(47, 93, 140, 0.5) 100%); }
-.cover-tint.douban-tv-anime { background: linear-gradient(135deg, rgba(169, 138, 217, 0.5) 0%, rgba(124, 77, 190, 0.5) 100%); }
-.cover-tint.maodun { background: linear-gradient(135deg, rgba(181, 96, 92, 0.5) 0%, rgba(139, 46, 46, 0.5) 100%); }
-.cover-tint.newbery { background: linear-gradient(135deg, rgba(212, 169, 74, 0.5) 0%, rgba(184, 134, 11, 0.5) 100%); }
-.cover-tint.scenic { background: linear-gradient(135deg, rgba(95, 184, 156, 0.5) 0%, rgba(46, 139, 114, 0.5) 100%); }
-.cover-tint.museum { background: linear-gradient(135deg, rgba(185, 142, 86, 0.5) 0%, rgba(140, 98, 57, 0.5) 100%); }
 
 /* 分类标签 — 封面左上角纯文字，不用胶囊底，靠文字阴影保证对比度 */
 .cover-tag-label {
@@ -804,7 +766,8 @@
   filter: drop-shadow(0 2rpx 4rpx rgba(247, 214, 110, 0.5));
 }
 
-/* 无图封面占位 */
+/* 无图封面占位：主题色渐变（inline coverStyle）+ emoji + 短标题。
+   动态封面主题在封面回来前再叠 .skeleton 流光（纯 CSS，无图片资源） */
 .cover-placeholder {
   position: absolute;
   top: 0; right: 0; bottom: 0; left: 0;
@@ -814,195 +777,23 @@
   justify-content: center;
   overflow: hidden;
 }
-
-.cover-placeholder.growth {
-  background: linear-gradient(135deg, var(--warning-soft) 0%, var(--warning) 100%);
-}
-
-.cover-placeholder.water {
-  background: #FAF6EB;
-  color: #1A1A1A;
-}
-
-.cover-placeholder.water .placeholder-text {
-  color: #1A1A1A;
-}
-
-/* 烂番茄三主题占位卡：各自主题色渐变 + 图标 + 白字标签 */
-.cover-placeholder.rt-horror {
-  background: linear-gradient(135deg, #B5514C 0%, #8E2A2A 100%);
-}
-.cover-placeholder.rt-war {
-  background: linear-gradient(135deg, #6E89A0 0%, #3E5C6E 100%);
-}
-.cover-placeholder.rt-animation {
-  background: linear-gradient(135deg, #F2B073 0%, #E8862E 100%);
-}
-.cover-placeholder.palme {
-  background: linear-gradient(135deg, #D4B45C 0%, #A8842B 100%);
-}
-.cover-placeholder.oscar-screenplay {
-  background: linear-gradient(135deg, #9B7BB0 0%, #6B4C7A 100%);
-}
-.cover-placeholder.oscar-foreign {
-  background: linear-gradient(135deg, #A06E7C 0%, #7A3B4A 100%);
-}
-.cover-placeholder.oscar-director {
-  background: linear-gradient(135deg, #5C9B7E 0%, #2F6B4F 100%);
-}
-.cover-placeholder.oscar-vfx {
-  background: linear-gradient(135deg, #4FB3CC 0%, #1E7A99 100%);
-}
-.cover-placeholder.oscar-actor {
-  background: linear-gradient(135deg, #C99B5E 0%, #A6763C 100%);
-}
-.cover-placeholder.oscar-actress {
-  background: linear-gradient(135deg, #D07AA0 0%, #B0476E 100%);
-}
-.cover-placeholder.rt-action {
-  background: linear-gradient(135deg, #5C6B7A 0%, #3B4252 100%);
-}
-.cover-placeholder.letterboxd500 {
-  background: linear-gradient(135deg, #FF9933 0%, #E67300 100%);
-}
-.cover-placeholder.arthouse {
-  background: linear-gradient(135deg, #5E6E96 0%, #2E3A59 100%);
-}
-.cover-placeholder.sightsound {
-  background: linear-gradient(135deg, #A05066 0%, #6E2639 100%);
-}
-.cover-placeholder.douban-tv-cn {
-  background: linear-gradient(135deg, #DA7A72 0%, #C0453E 100%);
-}
-.cover-placeholder.douban-tv-foreign {
-  background: linear-gradient(135deg, #6A93BF 0%, #2F5D8C 100%);
-}
-.cover-placeholder.douban-tv-anime {
-  background: linear-gradient(135deg, #A98AD9 0%, #7C4DBE 100%);
-}
-.cover-placeholder.maodun {
-  background: linear-gradient(135deg, #B5605C 0%, #8B2E2E 100%);
-}
-.cover-placeholder.newbery {
-  background: linear-gradient(135deg, #D4A94A 0%, #B8860B 100%);
-}
-.cover-placeholder.scenic {
-  background: linear-gradient(135deg, #5FB89C 0%, #2E8B72 100%);
-}
-.cover-placeholder.museum {
-  background: linear-gradient(135deg, #B98E56 0%, #8C6239 100%);
-}
-.cover-placeholder.province {
-  background: linear-gradient(135deg, #6C97C4 0%, #3A6EA5 100%);
-}
-.cover-placeholder.city {
-  background: linear-gradient(135deg, #E0A06E 0%, #C9743A 100%);
-}
 .cover-placeholder .placeholder-emoji {
   font-size: 56rpx;
   line-height: 1;
   margin-bottom: var(--space-1);
-}
-/* 云端注册表新主题占位卡：配色走内联 coverStyle，这里只保证文字为白 */
-.cover-placeholder.cloud .placeholder-text {
-  color: rgba(255, 255, 255, 0.95);
-}
-.cover-placeholder.cloud .placeholder-emoji {
   filter: drop-shadow(0 1rpx 2rpx rgba(0, 0, 0, 0.2));
 }
-.cover-placeholder.rt-horror .placeholder-text,
-.cover-placeholder.rt-war .placeholder-text,
-.cover-placeholder.rt-animation .placeholder-text,
-.cover-placeholder.palme .placeholder-text,
-.cover-placeholder.oscar-screenplay .placeholder-text,
-.cover-placeholder.oscar-foreign .placeholder-text,
-.cover-placeholder.oscar-director .placeholder-text,
-.cover-placeholder.oscar-vfx .placeholder-text,
-.cover-placeholder.oscar-actor .placeholder-text,
-.cover-placeholder.oscar-actress .placeholder-text,
-.cover-placeholder.rt-action .placeholder-text,
-.cover-placeholder.letterboxd500 .placeholder-text,
-.cover-placeholder.maodun .placeholder-text,
-.cover-placeholder.newbery .placeholder-text {
-  color: rgba(255, 255, 255, 0.95);
-  font-weight: 600;
-  letter-spacing: 2rpx;
-}
-
-.bottle-mini {
-  width: 84rpx;
-  height: 124rpx;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: var(--space-1);
-}
-.bottle-cap {
-  width: 50rpx;
-  height: 14rpx;
-  border: 3rpx solid #1A1A1A;
-  border-radius: 6rpx;
-  background: #F5C518;
-  box-sizing: border-box;
-}
-.bottle-neck {
-  width: 34rpx;
-  height: 14rpx;
-  border-left: 3rpx solid #1A1A1A;
-  border-right: 3rpx solid #1A1A1A;
-  background: #FFFFFF;
-  box-sizing: border-box;
-}
-.bottle-body {
-  width: 80rpx;
-  flex: 1;
-  border: 3rpx solid #1A1A1A;
-  border-radius: 16rpx 16rpx 22rpx 22rpx;
-  background: #FFFFFF;
-  position: relative;
-  overflow: hidden;
-  box-sizing: border-box;
-}
-.bottle-water {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 60%;
-  background: #2A8BC4;
-}
-.bottle-water::before {
-  content: "";
-  position: absolute;
-  left: -4rpx;
-  right: -4rpx;
-  top: -6rpx;
-  height: 10rpx;
-  background: #B8E0F2;
-  border-radius: 50%;
-}
-
-.ruler-icon {
-  width: 40rpx;
-  height: 80rpx;
-  border: 3rpx solid rgba(255, 255, 255, 0.85);
-  border-radius: 6rpx;
-  position: relative;
-  margin-bottom: var(--space-1);
-}
-
-.ruler-icon::before {
+.cover-placeholder.skeleton::after {
   content: '';
   position: absolute;
-  top: 14rpx;
-  left: 0;
-  width: 16rpx;
-  height: 3rpx;
-  background: rgba(255, 255, 255, 0.8);
-  box-shadow:
-    0 14rpx 0 rgba(255, 255, 255, 0.5),
-    0 28rpx 0 rgba(255, 255, 255, 0.8),
-    0 42rpx 0 rgba(255, 255, 255, 0.5);
+  top: 0; right: 0; bottom: 0; left: 0;
+  background: linear-gradient(100deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.35) 50%, rgba(255, 255, 255, 0) 70%);
+  background-size: 200% 100%;
+  animation: cover-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes cover-shimmer {
+  from { background-position: 120% 0; }
+  to { background-position: -120% 0; }
 }
 
 .placeholder-text {
