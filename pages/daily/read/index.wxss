@@ -1129,8 +1129,19 @@ page {
 
 /* 年度书墙与月度同构：沿用 .wall-box（定高、相对定位）+ .poster-wall（绝对沉底、wrap-reverse），
    这里只按档位定海报尺寸、微调间距，定位/掉落行为继承 base（不再覆盖）。 */
+/* 年度书墙：不再是定高裁切的区块——高度随内容撑开（同每日电影年墙），本数再多也不会显示不下 */
+.wall-box.year {
+  position: static;
+  height: auto;
+  overflow: visible;
+  margin-top: 24rpx;
+}
+.wall-box.year .wall-empty { min-height: 260rpx; }
 .poster-wall.year {
+  position: static;
+  flex-wrap: wrap-reverse; /* 底排先排满、往上堆；不满的一排浮在顶部（配合 buildYearWall 的 ts 升序）*/
   gap: 16rpx 12rpx;
+  padding-top: 8rpx;
 }
 .poster-wall.year.y5 .wall-item { width: 124rpx; height: 174rpx; }
 .poster-wall.year.y6 .wall-item { width: 102rpx; height: 143rpx; }

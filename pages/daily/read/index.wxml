@@ -259,9 +259,9 @@
 
     <!-- ==================== 年视图 ==================== -->
     <block wx:else>
-      <!-- 年度书墙：与月度书墙同构 —— 定高区块，海报沉底掉落；统计卡在书墙下方 -->
+      <!-- 年度书墙：全年封面按数量自动缩小、按时间早→晚依次掉落；高度随内容（不定高、不裁切），统计卡在书墙下方 -->
       <block wx:if="{{viewMode === 'wall'}}">
-      <view class="wall-box" style="height: {{wallAreaH}}rpx;">
+      <view class="wall-box year">
         <view wx:if="{{!loading && yearWall.length === 0}}" class="wall-empty">
           <text class="empty-title">这一年还没有读书记录</text>
           <text class="empty-sub">切到「日历」选个月份添加</text>
