@@ -278,3 +278,30 @@ page {
   font-size: 22rpx;
   color: #9A9184;
 }
+
+/* 页面级忙碌提示（固定在导航栏下方居中） */
+.busy-pill {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 14rpx 28rpx;
+  border-radius: 999rpx;
+  background: rgba(42, 38, 32, 0.86);
+  color: #FFFFFF;
+  font-size: 25rpx;
+  box-shadow: 0 8rpx 24rpx rgba(42, 38, 32, 0.18);
+  pointer-events: none;
+}
+.busy-spin {
+  width: 26rpx;
+  height: 26rpx;
+  border-radius: 50%;
+  border: 3rpx solid rgba(255, 255, 255, 0.35);
+  border-top-color: #FFFFFF;
+  animation: busy-rotate 800ms linear infinite;
+}
+@keyframes busy-rotate { to { transform: rotate(360deg); } }

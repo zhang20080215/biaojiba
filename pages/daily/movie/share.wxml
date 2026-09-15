@@ -85,7 +85,7 @@
         <canvas type="2d" id="movieCard" class="poster-canvas" style="width: {{previewW}}px; height: {{previewH}}px;"></canvas>
       </view>
     </view>
-    <text class="preview-tip">{{loading ? '加载记录中…' : (!ready ? '生成海报中…' : (empty ? '这段时间还没有观影记录，换个范围试试' : '点下方「保存到相册」即可保存这张观影海报'))}}</text>
+    <text class="preview-tip">{{(loading || !ready) ? ' ' : (empty ? '这段时间还没有观影记录，换个范围试试' : '点下方「保存到相册」即可保存这张观影海报')}}</text>
   </view>
 
   <view class="action-bar">
@@ -93,5 +93,12 @@
       {{isGenerating ? '保存中...' : '保存到相册'}}
     </button>
     <text wx:if="{{needRewardedAd && ready}}" class="save-sub">需观看广告后保存</text>
+  </view>
+
+  <!-- 页面级忙碌提示：固定在导航栏下方，切范围/版式时不用滚到底部也看得见。
+       用 hidden 而不是 wx:if：节点常驻，避免与 canvas 同页反复增删节点。 -->
+  <view class="busy-pill" hidden="{{!(loading || !ready)}}" style="top: {{navOffset + 12}}px;">
+    <view class="busy-spin"></view>
+    <text>{{loading ? '加载记录中…' : '生成海报中…'}}</text>
   </view>
 </view>
