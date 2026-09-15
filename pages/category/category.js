@@ -25,7 +25,8 @@ var DAILY_BLOCK_SOON = { emoji: '✨', color: '#EFE9DD', label: '#A89B85' };
 // mode 是 guess_records 里的玩法字段，参与人数按它分组统计（见 _loadGamePlayerCounts）
 // 人数先不展示：口径还在观望——填字要填满一整条才写库，「玩过的人」比「打开过的人」
 // 少一截（2026-09 实测 189 玩过 / 146 打完过一局 / 912 局）。等跑一段时间看准了再放。
-// 打开只需把这里改 true：云函数、渲染、样式都还在，就差这一个开关。
+// 开放时要改三处：这里去掉 hidden、app.json 的 pages 加回路径、project.config.json 的 packOptions.ignore
+// 删掉对应目录（隐藏期间这两个页面目录被排除出包，源码仍在仓库里）。云函数、渲染、样式都还在。
 // 数字随时可以从云函数看：submitGuess { action:'players', detail:true }
 var SHOW_GAME_PLAYER_COUNT = false;
 var GAME_BLOCKS = [
