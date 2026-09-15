@@ -593,7 +593,7 @@ Page({
         userCount: 0,
         tag: '电影',
         category: 'movie',
-        url: '/pages/imdb/list/list'
+        url: '/pages/genericList/list/list?theme=imdb'
       },
       {
         id: 'oscar_movies',
@@ -606,7 +606,7 @@ Page({
         userCount: 0,
         tag: '奥斯卡',
         category: 'oscar',
-        url: '/pages/oscar/list/list'
+        url: '/pages/genericList/list/list?theme=oscar'
       },
       {
         id: 'boxoffice_movies',
@@ -619,7 +619,7 @@ Page({
         userCount: 0,
         tag: '电影',
         category: 'movie',
-        url: '/pages/boxoffice/list/list'
+        url: '/pages/genericList/list/list?theme=boxoffice'
       },
       // {
       //   id: 'chinese_awards',

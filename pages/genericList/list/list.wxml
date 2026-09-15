@@ -80,7 +80,8 @@
               </block>
             </view>
             <view class="movie-meta-row">
-              <text class="movie-rating-star" wx:if="{{item.rating}}">豆瓣 {{item.rating}}<text class="movie-rating-votes" wx:if="{{item.ratingVotesText}}"> · {{item.ratingVotesText}}</text></text>
+              <text class="movie-rating-star" wx:if="{{item.rating}}">{{cfg.ratingLabel}} {{item.rating}}<text class="movie-rating-votes" wx:if="{{item.ratingVotesText}}"> · {{item.ratingVotesText}}</text></text>
+              <text wx:for="{{item.chips}}" wx:for-item="chip" wx:key="type" class="movie-meta-chip {{chip.type}}">{{chip.text}}</text>
               <view class="movie-action" wx:if="{{!isBatchEditing}}">
                 <block wx:if="{{markStatusMap[item._id] === 'watched'}}">
                   <view class="mark-tag watched" data-id="{{item._id}}" catchtap="onOpenMarkSheet">{{markDateMap[item._id]}}已看 ▾</view>

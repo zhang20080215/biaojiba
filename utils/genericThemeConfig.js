@@ -9,6 +9,9 @@
 //   orderDirection— 传给云函数的 rank 排序方向：新到旧编号的主题用 'asc'（rank 1=最新）；
 //                   rank 本身是历史届数（逐年递增）的主题要 'desc' 才能新到旧展示
 //   导演/国家 chip 是否显示由数据本身决定（item.director / item.countryTags 有值才渲染），不用单独开关
+//   ratingLabel   — 评分前缀，默认「豆瓣」；IMDb 榜的 rating 是 IMDb 分，写 'IMDB'
+//   extraChips    — 评分后追加的小胶囊，按顺序取：'year'（年份）/ 'boxOffice'（全球票房，movieFormat.formatBoxOffice）
+//   useCache      — 走 24h 本地缓存、进页面不强制刷新（老主题榜单几乎不变；通用主题 listVersion 恒为 null 才要每次强拉）
 const THEME_CONFIG = {
   // ── 走 generic_theme_movies 通用流水线 ──
   rtHorror: {
@@ -179,8 +182,42 @@ const THEME_CONFIG = {
     showEdition: false,
     orderDirection: 'asc',
   },
-  // ── 老主题迁移（oscarCinematography 已在通用流水线；oscarAnime 仍是独立集合 oscar_anime_movies，
-  //    走 getMoviesData 老路径——loadMoviesData 已按 GENERIC_THEMES 自动路由，页面层无需关心） ──
+  // ── 老主题迁移（oscarCinematography 已在通用流水线；oscarAnime / imdb / oscar / boxoffice 仍是各自独立集合，
+  //    走 getMoviesData 老路径——loadMoviesData 已按 GENERIC_THEMES 自动路由，页面层无需关心。
+  //    imdb / oscar / boxoffice 三个 2026-09 从各自独立页面目录并入，原目录只剩重定向桩） ──
+  imdb: {
+    title: 'IMDB电影TOP250',
+    slogan: '标记你看过的全球佳片，生成专属观影海报',
+    brandPrimary: '#A48418',
+    brandSoft: '#E0BA40',
+    shadowRgb: '164, 132, 24',
+    showEdition: false,
+    orderDirection: 'asc',
+    ratingLabel: 'IMDB',
+    extraChips: ['year'],
+    useCache: true,
+  },
+  oscar: {
+    title: '历届奥斯卡最佳影片',
+    slogan: '标记你看过的经典，生成专属观影海报',
+    brandPrimary: '#9A742E',
+    brandSoft: '#CAAA60',
+    shadowRgb: '154, 116, 46',
+    showEdition: true,
+    editionField: 'rank', // rank 本身即届数
+    orderDirection: 'desc', // getMoviesData 对 oscar 强制服务端 desc，这里传值仅为语义一致
+  },
+  boxoffice: {
+    title: '全球电影票房榜',
+    slogan: '标记你看过的票房传奇，生成专属观影海报',
+    brandPrimary: '#9A362E',
+    brandSoft: '#C85E52',
+    shadowRgb: '154, 54, 46',
+    showEdition: false,
+    orderDirection: 'asc',
+    extraChips: ['boxOffice', 'year'],
+    useCache: true,
+  },
   oscarCinematography: {
     title: '历届奥斯卡最佳摄影奖',
     slogan: '标记你看过的经典，生成专属观影海报',
@@ -226,7 +263,7 @@ function getThemeConfig(theme) {
     if (reg && reg.type !== 'book') cfg = reg;
   }
   cfg = cfg || DEFAULT_CONFIG;
-  return { editionField: 'edition', orderDirection: 'asc', firstDirectorOnly: false, ...cfg };
+  return { editionField: 'edition', orderDirection: 'asc', firstDirectorOnly: false, ratingLabel: '豆瓣', extraChips: [], useCache: false, ...cfg };
 }
 
 module.exports = { THEME_CONFIG, getThemeConfig };
