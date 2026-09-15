@@ -567,7 +567,7 @@ Page({
         userCount: 0,
         tag: '读书',
         category: 'reading',
-        url: '/pages/weread/list/list'
+        url: '/pages/genericBookList/list/list?theme=weread_books'
       },
       {
         id: 'douban_books',
@@ -580,7 +580,7 @@ Page({
         userCount: 0,
         tag: '读书',
         category: 'reading',
-        url: '/pages/doubanBooks/list/list'
+        url: '/pages/genericBookList/list/list?theme=douban_books'
       },
       {
         id: 'imdb_movies',

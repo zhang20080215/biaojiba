@@ -76,7 +76,9 @@ Page({
         });
         wx.setNavigationBarTitle({ title: cfg.title });
         this.checkLoginStatus();
-        this.loadAllBooks(true); // 通用主题 listVersion 恒为 null，缓存不会自动失效，进页面强制拉最新
+        // 通用主题 listVersion 恒为 null，缓存不会自动失效，进页面强制拉最新；
+        // 老主题（豆瓣读书/微信读书，cfg.useCache）数据几乎不变，沿用 24h 本地缓存
+        this.loadAllBooks(!cfg.useCache);
         this.initAds();
         this.setNavBarColor();
     },

@@ -26,6 +26,21 @@ function formatVotes(n) {
   return (num / 100000000).toFixed(1) + '亿';
 }
 
+// 海报用简化书名：去掉所有括号及其内容（含全角/方括号/【】），保留《》〈〉书名号。
+// 例：「百年孤独（精装）」→「百年孤独」、「围城【插图本】」→「围城」。只用于展示，不入库。
+// 豆瓣读书 TOP250 的书名带版本括注的很多，其它书单（茅盾/纽伯瑞/微信读书）名字本就干净，按主题配置开关。
+function simplifyTitle(title) {
+  if (!title) return '';
+  return String(title)
+    .replace(/\([^)]*\)/g, '')
+    .replace(/（[^）]*）/g, '')
+    .replace(/\[[^\]]*\]/g, '')
+    .replace(/【[^】]*】/g, '')
+    .replace(/［[^］]*］/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 // 千位分隔符：699743 → "699,743"
 function addThousandSep(n) {
   if (n === null || n === undefined || n === '') return '';
@@ -66,5 +81,6 @@ module.exports = {
   cnDateStr,
   formatVotes,
   addThousandSep,
+  simplifyTitle,
   decorateBook
 };
