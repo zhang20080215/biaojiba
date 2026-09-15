@@ -1,19 +1,18 @@
-// pages/scenic/share/share.js —— 全国5A旅游景区「旅行足迹」海报预览页
+// pages/scenic/share/share.js —— 旅行线「足迹」海报预览页：5A 景区 / 一级博物馆共用（?theme=，配置见 utils/travelThemeConfig.js）
 // 框架参考电影海报预览页（顶部返回+版式切换+配色选择+底部保存），预览用 canvas 当图（backing
 // 1242×1660 + CSS 缩放），导出临时文件供保存到相册；纯 canvas 线条/文字绘制，零网络图片依赖
 // （规避 iOS webp 白图 + 加载慢）。保存走 rewardedSaveGate；署名无二维码/外链（合规）。
 //
 // 两种版式：
-//   map  「足迹地图」—— 31 省瓦片格子地图，点阵展示各省 5A、去过点亮。
-//   list 「景区清单」—— 按省份列出全部 5A 景区（简称），去过高亮、未去灰显。
+//   map  「足迹地图」—— 31 省瓦片格子地图，点阵展示各省条目、去过点亮。
+//   list 「景区/博物馆清单」—— 按省份列出全部条目（简称），去过高亮、未去灰显。
 // 多套配色：THEMES（青山/黛蓝/霞橙/水墨），切换即重绘，本地记住上次选择。
 const CanvasHelper = require('../../../utils/canvasHelper.js');
 const DataLoader = require('../../../utils/dataLoader.js');
 const rewardedSaveGate = require('../../../utils/rewardedSaveGate.js');
 const userStore = require('../../../utils/userStore.js');
-const scenicShortName = require('../../../utils/scenicShortName.js').scenicShortName;
+const { getTravelTheme } = require('../../../utils/travelThemeConfig.js');
 
-const THEME = 'scenic5a';
 const CANVAS_W = 1242;
 const CANVAS_H = 1660;
 
@@ -55,7 +54,6 @@ const PALETTE = {
     legendText: '#6F6F68',
     sig: 'rgba(45,45,43,0.70)'
 };
-const THEME_STORAGE_KEY = 'scenicShareTheme';
 
 function getTheme(key) {
     return BG_THEMES.find(t => t.key === key) || BG_THEMES[0];
@@ -90,7 +88,10 @@ Page({
 
     onUnload() { this._destroyed = true; },
 
-    onLoad() {
+    onLoad(options) {
+        const { key, cfg } = getTravelTheme(options && options.theme);
+        this._theme = key;
+        this._cfg = cfg;   // 含 shortName 函数，不能整个进 data；wxml 只用下面 setData 的几个文案字段
         const win = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync();
         const menu = wx.getMenuButtonBoundingClientRect();
         const statusBarHeight = win.statusBarHeight || 20;
@@ -102,10 +103,13 @@ Page({
 
         // 恢复上次选择的配色
         let themeKey = 'pinkBlue';
-        try { themeKey = wx.getStorageSync(THEME_STORAGE_KEY) || 'pinkBlue'; } catch (e) {}
+        try { themeKey = wx.getStorageSync(cfg.storageKey) || 'pinkBlue'; } catch (e) {}
         const theme = getTheme(themeKey);
 
-        this.setData({ statusBarHeight, navBarHeight, previewW, previewH, activeThemeKey: theme.key, theme });
+        this.setData({
+            statusBarHeight, navBarHeight, previewW, previewH, activeThemeKey: theme.key, theme,
+            listStyleLabel: cfg.listStyleLabel, brandPrimary: cfg.brandPrimary, shadowRgb: cfg.shadowRgb
+        });
         wx.setNavigationBarTitle({ title: '海报预览' });
         rewardedSaveGate.refreshHint(this);
         this.fetchData();
@@ -118,11 +122,11 @@ Page({
 
     onBack() {
         if (getCurrentPages().length > 1) wx.navigateBack();
-        else wx.redirectTo({ url: '/pages/scenic/list/list' });
+        else wx.redirectTo({ url: this._cfg.listPath });
     },
 
     onShareAppMessage() {
-        return { title: '我的5A旅游景区打卡足迹', path: '/pages/scenic/list/list' };
+        return { title: this._cfg.posterShareTitle, path: this._cfg.listPath };
     },
 
     getOpenid() {
@@ -135,7 +139,7 @@ Page({
     async fetchData() {
         try {
             const openid = this.getOpenid() || null;
-            const { movies, marks } = await DataLoader.loadMoviesData(THEME, openid, false, { orderByField: 'rank', orderDirection: 'asc' });
+            const { movies, marks } = await DataLoader.loadMoviesData(this._theme, openid, false, { orderByField: 'rank', orderDirection: 'asc' });
             if (this._destroyed) return;
 
             const allSpots = movies.map(m => ({ ...m, _id: String(m._id) }));
@@ -161,7 +165,7 @@ Page({
                 if (!p) return;
                 if (!byProv[p]) byProv[p] = [];
                 byProv[p].push({
-                    name: s.shortName || scenicShortName(s.name),
+                    name: s.shortName || this._cfg.shortName(s.name),
                     rank: s.rank || 0,
                     visited: markStatusMap[s._id] === 'watched'
                 });
@@ -176,14 +180,14 @@ Page({
             });
 
             if (!visitedTotal) {
-                wx.showModal({ title: '还没有足迹', content: '先去打卡去过的5A景区吧', showCancel: false, success: () => this.onBack() });
+                wx.showModal({ title: '还没有足迹', content: this._cfg.posterEmptyTip, showCancel: false, success: () => this.onBack() });
                 return;
             }
 
             const litProvinces = Object.keys(provStats).filter(k => provStats[k].visited > 0).length;
             const userInfo = userStore.getUserInfo() || {};
             this.posterData = {
-                nickname: userInfo.nickName || '旅行者',
+                nickname: userInfo.nickName || this._cfg.nicknameFallback,
                 visitedCount: visitedTotal,
                 totalCount: allSpots.length,
                 provinceCount: litProvinces,
@@ -194,7 +198,7 @@ Page({
             this.maybeGenerate();
         } catch (err) {
             if (this._destroyed) return;
-            console.error('scenic share fetch fail', err);
+            console.error('travel share fetch fail', err);
             wx.showToast({ title: '加载失败', icon: 'none' });
         }
     },
@@ -210,7 +214,7 @@ Page({
         const key = e.currentTarget.dataset.key;
         if (key === this.data.activeThemeKey) return;
         const theme = getTheme(key);
-        try { wx.setStorageSync(THEME_STORAGE_KEY, key); } catch (err) {}
+        try { wx.setStorageSync(this._cfg.storageKey, key); } catch (err) {}
         this.setData({ activeThemeKey: key, theme, ready: false }, () => this.regenerate());
     },
 
@@ -259,7 +263,7 @@ Page({
             this._previewTemp = res.tempFilePath;
             this.safeSetData({ ready: true });
         } catch (err) {
-            console.error('scenic share render fail', err);
+            console.error('travel share render fail', err);
             if (!this._destroyed) wx.showToast({ title: '生成失败', icon: 'none' });
         } finally {
             this._rendering = false;
@@ -285,7 +289,7 @@ Page({
         ctx.textBaseline = 'alphabetic';
         ctx.fillStyle = PALETTE.title;
         ctx.font = 'bold 60px sans-serif';
-        ctx.fillText('全国5A景区旅行打卡', W / 2, 106);
+        ctx.fillText(this._cfg.posterTitle, W / 2, 106);
 
         const total = data.totalCount || 0;
         const cover = total ? Math.round(data.visitedCount / total * 100) : 0;
@@ -321,7 +325,7 @@ Page({
         ctx.strokeStyle = hg; ctx.lineWidth = 2;
         ctx.beginPath(); ctx.moveTo(inset, hy); ctx.lineTo(W - inset, hy); ctx.stroke();
 
-        // 一行：● 去过  ● 未去   ·   标记吧 · 全国5A旅游景区
+        // 一行：● 去过|参观过  ● 未去   ·   署名
         const y = 1636, dotR = 10, dotGap = 12, itemGap = 30;
         const legFont = '28px sans-serif';
         const sig = '搜索标记吧小程序 · 制作同款图';
@@ -329,7 +333,8 @@ Page({
         const sepText = '   ·   ';
         ctx.textBaseline = 'middle';
         ctx.font = legFont;
-        const w1 = dotR * 2 + dotGap + ctx.measureText('去过').width;
+        const visitedLabel = this._cfg.visitedLabel;
+        const w1 = dotR * 2 + dotGap + ctx.measureText(visitedLabel).width;
         const w2 = dotR * 2 + dotGap + ctx.measureText('未去').width;
         const wsep = ctx.measureText(sepText).width;
         ctx.font = sigFont;
@@ -343,7 +348,7 @@ Page({
             ctx.fillText(label, x + dotR * 2 + dotGap, y);
             x += dotR * 2 + dotGap + ctx.measureText(label).width;
         };
-        drawLeg(PALETTE.dotVisited, '去过'); x += itemGap;
+        drawLeg(PALETTE.dotVisited, visitedLabel); x += itemGap;
         drawLeg(PALETTE.dotUnvisited, '未去');
         ctx.fillStyle = PALETTE.legendText; ctx.font = legFont; ctx.textAlign = 'left'; ctx.fillText(sepText, x, y); x += wsep;
         ctx.fillStyle = PALETTE.sig; ctx.font = sigFont; ctx.textAlign = 'left'; ctx.fillText(sig, x, y);
@@ -374,7 +379,7 @@ Page({
 
             if (!has5A) {
                 ctx.textAlign = 'center'; ctx.fillStyle = '#C3C0B6'; ctx.font = '24px sans-serif';
-                ctx.fillText('暂无 5A', cx + cw / 2, cy + ch / 2 + 16);
+                ctx.fillText(this._cfg.tileEmptyText, cx + cw / 2, cy + ch / 2 + 16);
                 return;
             }
 
@@ -399,7 +404,7 @@ Page({
         });
     },
 
-    // ── 版式二：景区清单（紧凑分区式）──
+    // ── 版式二：景区/博物馆清单（紧凑分区式）──
     // 每省另起一行，行首一个主题色圆角「省名 去过/总数」胶囊，其后流排该省全部景区简称
     // （去过=主色加粗、未去=灰）；双列、字号自适应；用行中线基线对齐胶囊与文字。
     drawListPoster(ctx, helper, data, theme) {
@@ -496,7 +501,7 @@ Page({
             await wx.saveImageToPhotosAlbum({ filePath: this._previewTemp });
             wx.showToast({ title: '已保存到相册', icon: 'success' });
         } catch (err) {
-            console.error('scenic share save fail', err);
+            console.error('travel share save fail', err);
             if (err.errMsg && err.errMsg.includes('auth deny')) {
                 wx.showModal({ title: '权限提示', content: '需要授权保存图片到相册', confirmText: '去设置', success: r => { if (r.confirm) wx.openSetting(); } });
             } else {

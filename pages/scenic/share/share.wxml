@@ -1,5 +1,5 @@
-<!-- 全国5A旅游景区「旅行足迹」海报预览页（框架/配色对齐豆瓣电影海报页） -->
-<view class="share-page">
+<!-- 旅行线「足迹」海报预览页：5A 景区 / 一级博物馆共用（框架/配色对齐豆瓣电影海报页） -->
+<view class="share-page" style="--brand-primary: {{brandPrimary}}; --brand-rgb: {{shadowRgb}};">
 
   <!-- 顶部：返回 + 标题 + 版式/配色面板 -->
   <view class="immersive-top" style="padding-top: {{statusBarHeight}}px;">
@@ -17,7 +17,7 @@
           <text class="style-chip-label">足迹地图</text>
         </view>
         <view class="style-chip {{shareType === 'list' ? 'active' : ''}}" data-type="list" bindtap="onTypeTap">
-          <text class="style-chip-label">景区清单</text>
+          <text class="style-chip-label">{{listStyleLabel}}</text>
         </view>
       </view>
     </view>

@@ -128,7 +128,7 @@ Page({
         category: 'travel',
         isNew: true,
         wishFrom: '卡**琳',
-        url: '/pages/scenic/list/list'
+        url: '/pages/scenic/list/list?theme=scenic5a'
       },
       {
         id: 'museum_grade1',
@@ -143,7 +143,7 @@ Page({
         tag: '旅行',
         category: 'travel',
         isNew: true,
-        url: '/pages/museum/list/list'
+        url: '/pages/scenic/list/list?theme=museum'
       },
       {
         id: 'travel_provinces',

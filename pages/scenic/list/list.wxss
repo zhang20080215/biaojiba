@@ -1,4 +1,4 @@
-/* 全国5A旅游景区列表页：主题色由 list.wxml 内联 style 传入（--brand-primary/--brand-soft/--brand-rgb） */
+/* 旅行线打卡列表页（5A 景区 / 一级博物馆共用）：主题色由 list.wxml 内联 style 传入（--brand-primary/--brand-soft/--brand-rgb） */
 
 page {
   background-color: var(--brand-primary);
