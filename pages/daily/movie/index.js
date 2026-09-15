@@ -630,6 +630,13 @@ Page({
     this.confirmDelete(date, Number(ts), title);
   },
 
+  // 「海报」：范围海报（默认当前年度，分享页里可切年度/月度、前后翻），不经过选片
+  onOpenPoster() {
+    const app = getApp();
+    if (app && app.globalData) app.globalData.moviePosterSelection = null;   // 清掉单部分享残留
+    wx.navigateTo({ url: `/pages/daily/movie/share?year=${this.data.year}&month=${this.data.month}` });
+  },
+
   // 条目「分享」：只把这一部放进 selection → 分享页按单部渲染成单张海报
   onShareMovie(e) {
     const key = e.currentTarget.dataset.key;

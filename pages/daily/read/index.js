@@ -192,7 +192,7 @@ Page({
   onViewTap(e) {
     const view = e.currentTarget.dataset.view;
     if (!view || view === this.data.viewMode) return;
-    // 书墙高度已由 buildWall(月) / calcWallAreaH(年) 算好并写入，切视图直接展示即可
+    // 月墙高度已由 buildWall 算好并写入，年墙高度随内容；切视图直接展示即可
     this.setData({ viewMode: view, swipedKey: '' });
   },
 
@@ -328,8 +328,8 @@ Page({
       yearWall: wall.items,
       yearWallCls: wall.cls,
       yearTimeline: this.buildYearTimeline(days),
-      yearStats: this.buildMonthStats(days), // 复用统计逻辑（共读本数按书去重，同一本只算一本）
-      wallAreaH: this.calcWallAreaH()  // 年度书墙与月度同构：固定高度区域，海报沉底，统计卡在下方
+      yearStats: this.buildMonthStats(days) // 复用统计逻辑（共读本数按书去重，同一本只算一本）
+      // 年墙不再定高（.wall-box.year 高度随内容），wallAreaH 只服务月墙
     });
   },
 
@@ -480,14 +480,6 @@ Page({
     };
   },
 
-  // 估算电影墙区域高度（= 日历区域高度，rpx）：周历头(~26) + 网格上边距(14) + 网格高
-  calcWallAreaH() {
-    const range = monthRange(this.data.year, this.data.month);
-    const calRows = Math.ceil((dayOfWeekMon(range.fromDate) + range.lastDay) / 7);
-    const CELL_W = (750 - 64 - 48) / 7;      // 内容宽 686rpx，7 列，列间距 8rpx
-    const CELL_H = CELL_W * 1.22;            // 日历格宽高比 1 / 1.22
-    return Math.round(40 + calRows * CELL_H + (calRows - 1) * 12);
-  },
 
   // 每档每行张数对应的封面高度(rpx)。宽度在 CSS .poster-wall.w5..w9 里定义（内容宽 686rpx、列间距 14rpx）
   WALL_POSTER_H: { 5: 152, 6: 140, 7: 120, 8: 102, 9: 88 },

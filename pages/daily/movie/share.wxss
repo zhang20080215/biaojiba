@@ -62,7 +62,7 @@ page {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;   /* 选项面板在顶部，预览随其后（按月份长图会撑高页面） */
 }
 .preview-slot {
   display: flex;
@@ -83,15 +83,40 @@ page {
   color: #9A9184;
 }
 
+/* 顶部选项面板：每行「标签 + 控件」，多部 = 版式/配色，单部 = 比例/评分 */
+.opt-panel {
+  width: 100%;
+  margin-bottom: 28rpx;
+  padding: 8rpx 28rpx;
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 6rpx 20rpx rgba(42, 38, 32, 0.06);
+  box-sizing: border-box;
+}
+.opt-row {
+  display: flex;
+  align-items: center;
+  min-height: 88rpx;
+  padding: 10rpx 0;
+}
+.opt-row + .opt-row { border-top: 1rpx solid rgba(42, 38, 32, 0.06); }
+.opt-label {
+  flex: none;
+  width: 96rpx;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #2A2620;
+}
+
 .mode-row {
   display: flex;
-  justify-content: center;
+  flex-wrap: wrap;
+  justify-content: flex-start;
   align-items: center;
-  gap: 16rpx;
-  margin-top: 28rpx;
+  gap: 12rpx;
 }
 .mode-tab {
-  padding: 12rpx 30rpx;
+  padding: 10rpx 24rpx;
   border-radius: 999rpx;
   font-size: 25rpx;
   color: #8C8474;
@@ -99,6 +124,7 @@ page {
   border: 1rpx solid transparent;
   transition: all 160ms ease;
 }
+.mode-tab.is-disabled { opacity: 0.4; }
 .mode-tab.is-active {
   color: #B8873B;
   background: #FFFFFF;
@@ -107,12 +133,32 @@ page {
   box-shadow: 0 4rpx 12rpx rgba(42, 38, 32, 0.10);
 }
 
+/* 自定义标题：输入框 + 字数 */
+.title-row {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+.title-input {
+  flex: 1;
+  min-width: 0;
+  height: 60rpx;
+  padding: 0 20rpx;
+  border-radius: 999rpx;
+  background: #F0EADD;
+  font-size: 25rpx;
+  color: #2A2620;
+}
+.title-ph { color: #B7AE9B; }
+.title-count { flex: none; font-size: 22rpx; color: #9A9184; }
+
 .douban-row {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   gap: 14rpx;
-  margin-top: 26rpx;
 }
 .douban-switch {
   position: relative;
@@ -137,35 +183,66 @@ page {
 .douban-switch.is-on .douban-knob { transform: translateX(32rpx); }
 .douban-label { font-size: 25rpx; color: #8C8474; }
 
+/* 背景色卡：色点(渐变) + 名称，对齐豆瓣 TOP250 海报页 */
 .theme-row {
   display: flex;
-  justify-content: center;
+  flex-wrap: wrap;
+  justify-content: flex-start;
   align-items: center;
-  gap: 30rpx;
-  margin-top: 32rpx;
+  gap: 12rpx;
+}
+.theme-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 54rpx;
+  padding: 0 18rpx 0 12rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.82);
+  border: 2rpx solid transparent;
+  transition: all 160ms ease;
+}
+.theme-chip.is-active {
+  background: #FFFFFF;
+  border-color: rgba(184, 135, 59, 0.5);
+  box-shadow: 0 6rpx 18rpx rgba(45, 45, 43, 0.08);
 }
 .theme-dot {
-  position: relative;
-  width: 58rpx;
-  height: 58rpx;
+  width: 24rpx;
+  height: 24rpx;
   border-radius: 50%;
-  box-shadow: 0 6rpx 16rpx rgba(42, 38, 32, 0.18);
-  transition: transform 160ms ease;
+  margin-right: 10rpx;
+  border: 1rpx solid rgba(0, 0, 0, 0.08);
 }
-.theme-dot.is-active {
-  transform: scale(1.12);
-  box-shadow: 0 0 0 6rpx #FFFFFF, 0 0 0 9rpx rgba(42, 38, 32, 0.18);
+.theme-name { font-size: 24rpx; color: #6B6356; }
+.theme-chip.is-active .theme-name { color: #2A2620; font-weight: 600; }
+
+/* 范围切换：‹ 2026年 › 靠右 */
+.range-nav {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
 }
-.theme-check {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: #FFFFFF;
-  font-size: 30rpx;
+.range-arrow {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 38rpx;
+  color: #6B6356;
+}
+.range-arrow.is-disabled { opacity: 0.25; }
+.range-label {
+  min-width: 120rpx;
+  text-align: center;
+  font-size: 26rpx;
   font-weight: 700;
-  line-height: 1;
+  color: #2A2620;
+  font-variant-numeric: tabular-nums;
 }
+.tap-soft { background: rgba(42, 38, 32, 0.06); }
 
 .action-bar {
   position: fixed;
@@ -201,3 +278,30 @@ page {
   font-size: 22rpx;
   color: #9A9184;
 }
+
+/* 页面级忙碌提示（固定在导航栏下方居中） */
+.busy-pill {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 14rpx 28rpx;
+  border-radius: 999rpx;
+  background: rgba(42, 38, 32, 0.86);
+  color: #FFFFFF;
+  font-size: 25rpx;
+  box-shadow: 0 8rpx 24rpx rgba(42, 38, 32, 0.18);
+  pointer-events: none;
+}
+.busy-spin {
+  width: 26rpx;
+  height: 26rpx;
+  border-radius: 50%;
+  border: 3rpx solid rgba(255, 255, 255, 0.35);
+  border-top-color: #FFFFFF;
+  animation: busy-rotate 800ms linear infinite;
+}
+@keyframes busy-rotate { to { transform: rotate(360deg); } }

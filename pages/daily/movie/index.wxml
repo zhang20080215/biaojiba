@@ -19,6 +19,11 @@
       <view class="month-arrow" bindtap="onPrevPeriod" hover-class="tap-soft">‹</view>
       <text class="month-label">{{periodMode === 'month' ? monthLabel : yearLabel}}</text>
       <view class="month-arrow {{(periodMode === 'month' ? canGoNextMonth : canGoNextYear) ? '' : 'is-disabled'}}" bindtap="onNextPeriod" hover-class="tap-soft">›</view>
+      <!-- 分享海报：常驻在时间导航右侧，与下一行「时间轴」右缘对齐；带上当前年月作为海报默认范围 -->
+      <view class="poster-btn" bindtap="onOpenPoster" hover-class="tap-soft">
+        <text class="poster-btn-ico">🎬</text>
+        <text>海报</text>
+      </view>
     </view>
     <!-- 时间筛选（月/年）+ 视图筛选（日历/电影墙/时间轴）：同一行 -->
     <view class="top-controls">
@@ -133,6 +138,12 @@
       <view class="add-record-btn" bindtap="onOpenAdd" hover-class="tap-soft">
         <text class="add-plus">＋</text>
         <text>添加观影记录</text>
+      </view>
+      <!-- 生成观影海报：与导航行的「海报」同一入口（范围海报，默认当前年度），带 NEW 角标 -->
+      <view class="poster-record-btn" bindtap="onOpenPoster" hover-class="tap-soft">
+        <text class="poster-record-ico">🎬</text>
+        <text>生成观影海报</text>
+        <text class="new-badge">NEW</text>
       </view>
     </view>
 
