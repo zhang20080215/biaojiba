@@ -49,15 +49,26 @@ const DEFAULT_THEME = 'pinkBlue';
 // swatch 给前端色点用：直接是 CSS 渐变串
 const THEME_LIST = Object.keys(THEMES).map(k => ({ id: THEMES[k].id, name: THEMES[k].name, swatch: `linear-gradient(135deg, ${THEMES[k].bgTop}, ${THEMES[k].bgBot})` }));
 
+// ============ 画布尺寸：整体版式固定 1242×1660（与豆瓣 TOP250 海报墙同尺寸），长图宽 1242、高随内容 ============
+//   之前整体版式按列数把画布撑到 2360 宽（60 部 = 740 万像素、PNG 十几 MB），出图慢、保存慢。
+//   现在画布不动、格子缩：≤ 12 部每格「封面 + 片名 + 日期 + 星级」，> 12 部退成「封面 + 一行片名」
+//   （豆瓣海报墙风格），60 部走 9 列、封面约 92×133。
+const POSTER_W = 1242;
+const POSTER_H = 1660;
+const COMPACT_FROM = 13;   // 从这个数量起网格单元只保留一行片名
+
 // ============ 布局：三种模式（画布始终 3:4）============
 //   n === 1        cover —— 海报满幅做背景 + 蒙版 + 悬浮文字（同「全网评分查询」详情）
 //   n === 2 / 3    rows  —— 纵向排列：海报在左、文案在右
 //   n >= 4         grid  —— 列数 = ⌈√n⌉ + 1（n 向上取完全平方数、开方后 +1）
 //                          例：21 部 → ⌈√21⌉=5 → 列数=5+1=6 → 行数=⌈21/6⌉=4（6 列 4 行）
-const WLADDER = { 1: 1080, 2: 1080, 3: 1160, 4: 1360, 5: 1560, 6: 1760, 7: 1960, 8: 2160, 9: 2360 };
+// 紧凑格（> 12 部）的片名字号：随格宽走，18~26px
+function compactTitleSize(cellW) { return Math.round(clamp(cellW * 0.16, 18, 26)); }
+
 // 网格单元文字区高度：按 _drawTile 实际落笔的行（标题 / 日期 / 星级 / 心情胶囊 / 短评）累加，
 // 而不是拍一个「÷ 单元格宽」的比例——比例在 3 列时少算约 96px，末行文字会压到底部署名上。
-function tileTextHeight(cols, cellW) {
+function tileTextHeight(cols, cellW, compact) {
+  if (compact) return 14 + compactTitleSize(cellW) + 12;   // 封面 → 片名基线 → 底部呼吸
   const s = clamp(cellW / 300, 0.6, 1.25);            // 与 computeLayout 的 scale 同一公式
   let h = cols >= 3 ? 34 : 44;                        // 封面 → 标题基线
   h += Math.round(38 * s * 0.62);                     // 标题
@@ -81,15 +92,15 @@ function modeFor(n) {
 function computeLayout(count) {
   const n = Math.max(1, count | 0);
   const mode = modeFor(n);
-  const cols = mode === 'grid' ? gridColsFor(n) : 1;
-  const W = mode === 'grid' ? (WLADDER[cols] || 1080) : 1080;
-  const H = Math.round(W * 4 / 3);
+  const compact = mode === 'grid' && n >= COMPACT_FROM;
+  const W = POSTER_W;
+  const H = POSTER_H;
   const s = W / 1080;
   const M = 0;                            // 满幅：无外边框
   const PAD = Math.round(W * 0.06);       // 与长图版式同一留白
 
   if (mode === 'cover') {
-    return { mode, W, H, M, PAD, s, cols: 1, rows: 1, n };
+    return { mode, W, H, M, PAD, s, cols: 1, rows: 1, n, compact: false };
   }
 
   // 头部 / 页脚与「按月份」长图完全一致：标题 + 发丝线 + 三格统计；底部署名胶囊居中在 FOOTER 里
@@ -101,39 +112,57 @@ function computeLayout(count) {
   const availH = areaBottom - areaTop;
 
   if (mode === 'rows') {
-    return { mode, W, H, M, PAD, s, HEADER, FOOTER, innerW, areaTop, areaBottom, availH, cols: 1, rows: n, n };
+    return { mode, W, H, M, PAD, s, HEADER, FOOTER, innerW, areaTop, areaBottom, availH, cols: 1, rows: n, n, compact: false };
   }
 
-  // grid：行太多超出时整体缩小。文字区高度里有不随格宽缩放的常量（标题上沿 34、短评行距 10），
-  // 所以缩一次不一定刚好，迭代到真的塞进 availH 为止（最多 4 轮）
-  const rows = Math.ceil(n / cols);
-  const COLGAP = Math.round(W * 0.024);
-  const ROWGAP = Math.round(W * 0.030);
-  const cellW0 = Math.floor((innerW - (cols - 1) * COLGAP) / cols);
-  let k = 1, cellW, posterH, textH, gridH;
-  for (let i = 0; i < 4; i++) {
-    cellW = Math.floor(cellW0 * k);
-    posterH = Math.round(cellW * 1.44);
-    textH = tileTextHeight(cols, cellW);
-    gridH = rows * (posterH + textH) + (rows - 1) * ROWGAP;
-    if (gridH <= availH) break;
-    k *= availH / gridH;
+  // grid：画布固定。从 ⌈√n⌉+1 列起到 12 列逐个试，取「塞得进内容区且格子最大」的那个；
+  // 紧凑格（> 12 部）带片名的一个都塞不下（或格宽 < 90px）时退成纯封面墙（titled=false，同豆瓣 TOP250），
+  // 否则 60 部会被 44px 的片名行挤成 72px 的小格。全都塞不下（不会发生，兜底）再整体缩格。
+  // 文字区高度里有不随格宽缩放的常量（标题上沿 34、短评行距 10），缩一次不一定刚好，迭代到塞进为止
+  const COLGAP = Math.round(W * (compact ? 0.016 : 0.024));
+  const ROWGAP = Math.round(W * (compact ? 0.020 : 0.030));
+  const measure = (cols, k, titled) => {
+    const rows = Math.ceil(n / cols);
+    const cellW = Math.floor((innerW - (cols - 1) * COLGAP) / cols * k);
+    const posterH = Math.round(cellW * 1.44);
+    const textH = titled ? tileTextHeight(cols, cellW, compact) : 0;
+    const gridH = rows * (posterH + textH) + (rows - 1) * ROWGAP;
+    return { cols, rows, cellW, posterH, textH, gridH, titled };
+  };
+  // 优先带片名：带片名里取格子最大的；一个都塞不下（或格宽 < 90）才退到纯封面墙
+  const base = gridColsFor(n);
+  let g = null;
+  for (let cols = base; cols <= 12; cols++) {
+    const t = measure(cols, 1, true);
+    if (t.gridH <= availH && t.cellW >= 90 && (!g || t.cellW > g.cellW)) g = t;
   }
+  if (!g && compact) {
+    for (let cols = base; cols <= 12; cols++) {
+      const u = measure(cols, 1, false);
+      if (u.gridH <= availH && (!g || u.cellW > g.cellW)) g = u;
+    }
+  }
+  if (!g) {
+    let k = 1;
+    g = measure(base, 1, true);
+    for (let i = 0; i < 4 && g.gridH > availH; i++) { k *= availH / g.gridH; g = measure(base, k, true); }
+  }
+  const { cols, rows, cellW, posterH, textH, gridH, titled } = g;
   const scale = clamp(cellW / 300, 0.6, 1.25);
-  return { mode, W, H, M, PAD, s, HEADER, FOOTER, COLGAP, ROWGAP, cols, rows, cellW, posterH, textH, gridH, innerW, areaTop, areaBottom, availH, scale, n };
+  return { mode, W, H, M, PAD, s, HEADER, FOOTER, COLGAP, ROWGAP, cols, rows, cellW, posterH, textH, gridH, innerW, areaTop, areaBottom, availH, scale, n, compact, titled };
 }
 
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 function tidy(v) { const x = Number(v); return Number.isFinite(x) ? String(Math.round(x * 10) / 10) : ''; }
 
 // ============ 分区版式（按月份 / 按评分）：年度观影总结长图 ============
-//   画布宽固定 1280，高随内容伸展（下限 3:4，上限 3.5 倍宽——超出先加列、再整体缩小）。
+//   画布宽固定 1242，高随内容伸展（下限 1660，上限 3 倍宽——超出先加列、再整体缩小）。
 //   每段：左侧标签栏（月份：两位月号/中文月/英文缩写；评分：星级数/星星/力荐…），右侧封面网格（封面 + 单行片名）。
 //   参考小红书「年度阅读总结」长图的排版。
 const MONTH_CN = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
 const MONTH_EN = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 const RATING_LABEL = { 5: '力荐', 4: '推荐', 3: '还行', 2: '较差', 1: '很差', 0: '未评分' };
-const SECTION_W = 1280;
+const SECTION_W = POSTER_W;
 
 function ymOf(m) {
   const p = String(m.date || '').split('-');
@@ -176,8 +205,8 @@ function computeSectionLayout(groups, n) {
   const labelW = Math.round(150 * s);
   const HEADER = Math.round(330 * s);
   const FOOTER = Math.round(150 * s);   // 署名胶囊(50px)居中其间：上下各留 ~50px，与两侧 PAD 视觉相称
-  const minH = Math.round(W * 4 / 3);
-  const maxH = Math.round(W * 3.5);
+  const minH = POSTER_H;
+  const maxH = Math.round(W * 3);
 
   const baseCols = n <= 6 ? 3 : n <= 12 ? 4 : n <= 24 ? 5 : 6;
   const build = (cols, k) => {
@@ -249,7 +278,7 @@ function computeCalendarLayout(movies) {
   const PAD = Math.round(W * 0.06);
   const HEADER = Math.round(330 * s);
   const FOOTER = Math.round(150 * s);   // 署名胶囊(50px)居中其间：上下各留 ~50px，与两侧 PAD 视觉相称
-  const minH = Math.round(W * 4 / 3);
+  const minH = POSTER_H;
   const { year, month } = calendarMonthOf(list);
   const days = year && month ? new Date(year, month, 0).getDate() : 30;
   const firstDow = year && month ? (new Date(year, month - 1, 1).getDay() + 6) % 7 : 0;   // 周一=0
@@ -284,7 +313,7 @@ class MoviePosterDrawer {
 
   // 长图类版式（month / rating / calendar）的画布尺寸：高随内容变，需要拿到 movies（含 date / rating）
   static computeLayoutSize(layout, movies) {
-    if (!movies || !movies.length) return { width: SECTION_W, height: Math.round(SECTION_W * 4 / 3), cols: 1 };
+    if (!movies || !movies.length) return { width: POSTER_W, height: POSTER_H, cols: 1 };
     const l = layout === 'month' ? computeMonthLayout(movies)
       : layout === 'rating' ? computeRatingLayout(movies)
       : layout === 'calendar' ? computeCalendarLayout(movies)
@@ -339,7 +368,7 @@ class MoviePosterDrawer {
         const rowLeft = Math.round((this.w - rowW) / 2);
         const x = rowLeft + col * (L.cellW + L.COLGAP);
         const y = gridTop + row * (L.posterH + L.textH + L.ROWGAP);
-        this._drawTile(x, y, L.cellW, L.posterH, L.textH, m, L.cols, L.scale);
+        this._drawTile(x, y, L.cellW, L.posterH, L.textH, m, L.cols, L.scale, L.compact, L.titled);
       });
     }
 
@@ -992,18 +1021,31 @@ class MoviePosterDrawer {
   }
 
   // ============ 单部电影（网格单元） ============
-  _drawTile(x, y, cellW, posterH, textH, m, cols, scale) {
+  _drawTile(x, y, cellW, posterH, textH, m, cols, scale, compact, titled) {
     const ctx = this.ctx, C = this.C;
+    const r = compact ? Math.max(6, Math.round(cellW * 0.07)) : 16;
     // 封面 + 阴影
     ctx.save();
     ctx.shadowColor = C.isDark ? 'rgba(0,0,0,0.45)' : 'rgba(60,48,30,0.22)';
-    ctx.shadowBlur = 22;
-    ctx.shadowOffsetY = 12;
-    this._roundRectPath(x, y, cellW, posterH, 16);
+    ctx.shadowBlur = compact ? 14 : 22;
+    ctx.shadowOffsetY = compact ? 8 : 12;
+    this._roundRectPath(x, y, cellW, posterH, r);
     ctx.fillStyle = C.ph2;
     ctx.fill();
     ctx.restore();
-    this._drawCover(this.covers[m.key], x, y, cellW, posterH, 16, m.title);
+    this._drawCover(this.covers[m.key], x, y, cellW, posterH, r, m.title);
+
+    // 紧凑格（> 12 部）：只有一行居中片名；格子太窄时连片名都不要（纯封面墙）
+    if (compact) {
+      if (!titled) return;
+      const fs = compactTitleSize(cellW);
+      ctx.font = `500 ${fs}px sans-serif`;
+      ctx.fillStyle = C.ink;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+      ctx.fillText(this._truncate(m.title || '未命名电影', cellW + 6), x + cellW / 2, y + posterH + 14 + fs);
+      ctx.textAlign = 'left';
+      return;
+    }
 
     // 文字区
     const tx = x;

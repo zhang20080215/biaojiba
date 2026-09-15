@@ -72,8 +72,8 @@ Page({
 
   posterData: null,   // 传给绘制器的数据
   _all: null,         // 范围模式：全部观影记录（展平、未去重）
-  _canvasW: 1280,
-  _canvasH: 1707,
+  _canvasW: 1242,
+  _canvasH: 1660,
   _coverNodes: {},    // key → ImageNode|null，跨范围/主题切换复用
   _ready: false,
   _rendered: false,
