@@ -361,6 +361,43 @@ page {
   font-size: 40rpx;
   line-height: 1;
 }
+/* 生成观影海报：与「添加」等高等宽，白底描边做次级；右上角 NEW 角标 */
+.poster-record-btn {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 92rpx;
+  border-radius: 24rpx;
+  background: #FFFFFF;
+  border: 2rpx solid #E8E0CC;
+  color: #1A1A1A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  font-size: 30rpx;
+  font-weight: 700;
+  box-sizing: border-box;
+  box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.06);
+}
+.poster-record-ico {
+  font-size: 32rpx;
+  line-height: 1;
+}
+.new-badge {
+  position: absolute;
+  top: -12rpx;
+  right: -6rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 999rpx;
+  background: #E5484D;
+  color: #FFFFFF;
+  font-size: 18rpx;
+  font-weight: 800;
+  line-height: 26rpx;
+  letter-spacing: 1rpx;
+  box-shadow: 0 4rpx 10rpx rgba(229, 72, 77, 0.35);
+}
 .state-text,
 .empty {
   padding: 96rpx 20rpx;

@@ -139,6 +139,12 @@
         <text class="add-plus">＋</text>
         <text>添加观影记录</text>
       </view>
+      <!-- 生成观影海报：与导航行的「海报」同一入口（范围海报，默认当前年度），带 NEW 角标 -->
+      <view class="poster-record-btn" bindtap="onOpenPoster" hover-class="tap-soft">
+        <text class="poster-record-ico">🎬</text>
+        <text>生成观影海报</text>
+        <text class="new-badge">NEW</text>
+      </view>
     </view>
 
     <!-- 选中日期的观影记录 -->
