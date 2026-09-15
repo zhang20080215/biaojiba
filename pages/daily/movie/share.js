@@ -207,7 +207,6 @@ Page({
     const keepTitle = this.posterData ? (this.posterData.customTitle || '') : '';
     this._buildPosterData(list);
     this.posterData.periodLead = lead;
-    this.posterData.title = `${lead}观影记录`;
     this.posterData.customTitle = keepTitle;
     this.safeSetData({ empty: list.length === 0 });
   },

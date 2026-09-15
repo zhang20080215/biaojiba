@@ -18,9 +18,6 @@
  * movies 为空时画空态（背景 + 0 部统计 + 提示文字）
  *
  * data = {
- *   title:        '我的观影记录',
- *   subtitle:     '2026.03 - 2026.07 · 共 12 部',   // 一行副标题
- *   avgText:      '平均 8.6',                        // 可空
  *   movies: [{
  *     key, date:'2026-07-13', title, year, dateLabel:'7月13日',
  *     rating(0~5), moodEmoji, moodLabel, note,
@@ -87,41 +84,43 @@ function computeLayout(count) {
   const cols = mode === 'grid' ? gridColsFor(n) : 1;
   const W = mode === 'grid' ? (WLADDER[cols] || 1080) : 1080;
   const H = Math.round(W * 4 / 3);
+  const s = W / 1080;
   const M = 0;                            // 满幅：无外边框
-  const PAD = Math.round(W * 0.032);      // 内容留白（更收窄）
+  const PAD = Math.round(W * 0.06);       // 与长图版式同一留白
 
   if (mode === 'cover') {
-    return { mode, W, H, M, PAD, cols: 1, rows: 1, n };
+    return { mode, W, H, M, PAD, s, cols: 1, rows: 1, n };
   }
 
-  const HEADER = Math.round(W * 0.155);   // 顶部标题区高度
-  const FOOTER = Math.round(W * 0.11);    // 内容区底 → 画布底：署名胶囊居中其间，末行文字与胶囊留出 ≥ 40px
-  const innerW = W - 2 * M - 2 * PAD;
-  const areaTop = M + PAD + HEADER;
-  const areaBottom = H - M - PAD - FOOTER;
+  // 头部 / 页脚与「按月份」长图完全一致：标题 + 发丝线 + 三格统计；底部署名胶囊居中在 FOOTER 里
+  const HEADER = Math.round(330 * s);
+  const FOOTER = Math.round(150 * s);   // 署名胶囊(50px)居中其间：上下各留 ~50px，与两侧 PAD 视觉相称
+  const innerW = W - 2 * PAD;
+  const areaTop = HEADER + Math.round(24 * s);
+  const areaBottom = H - FOOTER - Math.round(24 * s);
   const availH = areaBottom - areaTop;
 
   if (mode === 'rows') {
-    return { mode, W, H, M, PAD, HEADER, FOOTER, innerW, areaTop, areaBottom, availH, cols: 1, rows: n, n };
+    return { mode, W, H, M, PAD, s, HEADER, FOOTER, innerW, areaTop, areaBottom, availH, cols: 1, rows: n, n };
   }
 
-  // grid
+  // grid：行太多超出时整体缩小。文字区高度里有不随格宽缩放的常量（标题上沿 34、短评行距 10），
+  // 所以缩一次不一定刚好，迭代到真的塞进 availH 为止（最多 4 轮）
   const rows = Math.ceil(n / cols);
   const COLGAP = Math.round(W * 0.024);
   const ROWGAP = Math.round(W * 0.030);
-  let cellW = Math.floor((innerW - (cols - 1) * COLGAP) / cols);
-  let posterH = Math.round(cellW * 1.44);
-  let textH = tileTextHeight(cols, cellW);
-  let gridH = rows * (posterH + textH) + (rows - 1) * ROWGAP;
-  if (gridH > availH) {                    // 行太多超出：整体等比缩小以塞进 3:4
-    const k = availH / gridH;
-    posterH = Math.round(posterH * k);
-    textH = Math.round(textH * k);
-    cellW = Math.round(cellW * k);
-    gridH = availH;
+  const cellW0 = Math.floor((innerW - (cols - 1) * COLGAP) / cols);
+  let k = 1, cellW, posterH, textH, gridH;
+  for (let i = 0; i < 4; i++) {
+    cellW = Math.floor(cellW0 * k);
+    posterH = Math.round(cellW * 1.44);
+    textH = tileTextHeight(cols, cellW);
+    gridH = rows * (posterH + textH) + (rows - 1) * ROWGAP;
+    if (gridH <= availH) break;
+    k *= availH / gridH;
   }
   const scale = clamp(cellW / 300, 0.6, 1.25);
-  return { mode, W, H, M, PAD, HEADER, FOOTER, COLGAP, ROWGAP, cols, rows, cellW, posterH, textH, gridH, innerW, areaTop, areaBottom, availH, scale, n };
+  return { mode, W, H, M, PAD, s, HEADER, FOOTER, COLGAP, ROWGAP, cols, rows, cellW, posterH, textH, gridH, innerW, areaTop, areaBottom, availH, scale, n };
 }
 
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
@@ -176,7 +175,7 @@ function computeSectionLayout(groups, n) {
   const PAD = Math.round(W * 0.06);
   const labelW = Math.round(150 * s);
   const HEADER = Math.round(330 * s);
-  const FOOTER = Math.round(120 * s);
+  const FOOTER = Math.round(150 * s);   // 署名胶囊(50px)居中其间：上下各留 ~50px，与两侧 PAD 视觉相称
   const minH = Math.round(W * 4 / 3);
   const maxH = Math.round(W * 3.5);
 
@@ -249,7 +248,7 @@ function computeCalendarLayout(movies) {
   const s = W / 1080;
   const PAD = Math.round(W * 0.06);
   const HEADER = Math.round(330 * s);
-  const FOOTER = Math.round(120 * s);
+  const FOOTER = Math.round(150 * s);   // 署名胶囊(50px)居中其间：上下各留 ~50px，与两侧 PAD 视觉相称
   const minH = Math.round(W * 4 / 3);
   const { year, month } = calendarMonthOf(list);
   const days = year && month ? new Date(year, month, 0).getDate() : 30;
@@ -322,12 +321,9 @@ class MoviePosterDrawer {
       return;
     }
 
-    this._drawBackground();
-    // 满幅：内容直接落在渐变背景上，无面板卡片 / 无内外边框
-
-    // 头部（顶部居中）
-    this._drawHeader(L.M + L.PAD, L.M + L.PAD, this.w - 2 * (L.M + L.PAD),
-      this.customTitle ? Object.assign({}, d, { title: this.customTitle }) : d);
+    this._drawBackground({ noSparkle: true });
+    // 头部与「按月份」长图同款：标题 + 发丝线 + 三格统计
+    this._drawSummaryHeader(movies, L, this.periodLead || this._yearLead(movies));
 
     if (L.mode === 'rows') {
       this._drawRows(movies, L);
@@ -347,8 +343,8 @@ class MoviePosterDrawer {
       });
     }
 
-    // 署名（底部居中，纯文字）
-    this._drawWatermark(this.w / 2, this.h - L.M - L.PAD - L.FOOTER / 2);
+    // 署名：居中在页脚带里（与长图一致）
+    this._drawWatermark(this.w / 2, this.h - L.FOOTER / 2);
   }
 
   // ============ 背景 / 面板 ============
@@ -398,39 +394,6 @@ class MoviePosterDrawer {
     ctx.lineWidth = 2;
     ctx.strokeStyle = C.panelEdge;
     ctx.stroke();
-  }
-
-  // ============ 头部 ============
-  _drawHeader(x, top, w, d) {
-    const ctx = this.ctx, C = this.C;
-    const cx = x + w / 2;
-    const s = this.w / 1080;   // 随画布放大
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'alphabetic';
-
-    // 眉标（小号金色）
-    ctx.font = `600 ${Math.round(20 * s)}px sans-serif`;
-    ctx.fillStyle = C.accent;
-    ctx.fillText('· MY MOVIE DIARY ·', cx, top + Math.round(42 * s));
-
-    // 主标题（收小、衬线）
-    ctx.font = `700 ${Math.round(44 * s)}px serif`;
-    ctx.fillStyle = C.ink;
-    ctx.fillText(this._truncate(d.title || '我的观影记录', w), cx, top + Math.round(98 * s));
-
-    // 短下划线
-    const ulW = Math.round(56 * s);
-    this._roundRectPath(cx - ulW / 2, top + Math.round(116 * s), ulW, Math.round(4 * s), 2);
-    ctx.fillStyle = C.accent;
-    ctx.fill();
-
-    // 副标题
-    ctx.font = `500 ${Math.round(23 * s)}px sans-serif`;
-    ctx.fillStyle = C.inkSoft;
-    let sub = d.subtitle || '';
-    if (d.avgText) sub = sub ? `${sub} · ${d.avgText}` : d.avgText;
-    if (sub) ctx.fillText(this._truncate(sub, w), cx, top + Math.round(156 * s));
-    ctx.textAlign = 'left';
   }
 
   // ============ 单部：海报满幅背景 + 蒙版 + 悬浮文字（字号/评分卡对齐「全平台评分查询」海报） ============
