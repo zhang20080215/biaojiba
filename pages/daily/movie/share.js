@@ -15,7 +15,7 @@ const LAYOUT_STORAGE_KEY = 'moviePosterLayout';       // 范围版式：'whole' 
 const RANGE_STORAGE_KEY = 'moviePosterRange';         // 范围粒度：'year' | 'month'
 const LAYOUTS = ['whole', 'month', 'rating', 'calendar'];
 const TITLE_MAX = 20;                                  // 自定义标题字数上限
-const MAX_MOVIES = 60;                                 // 绘制器上限
+const MAX_MOVIES = 300;                                // 绘制器上限：超出按日期取前 300 部，统计仍按全量、海报页脚注明
 
 function keyOf(m) { return `${m.date}-${m.ts}`; }
 
@@ -245,7 +245,9 @@ Page({
 
   // ---- 组装海报数据（标题/副标题/均分/逐部字段）；返回需要 setData 的补丁，由调用方合批 ----
   _buildPosterData(selection) {
-    // 绘制器最多渲染 60 部，尺寸与渲染保持一致
+    // 绘制器最多渲染 300 部：超出的按日期截前 300，但统计（部数/平均分/观影日）按全量算，海报页脚会注明
+    const totalCount = selection.length;
+    const fullStats = MoviePosterDrawer.summarize(selection);
     if (selection.length > MAX_MOVIES) selection = selection.slice(0, MAX_MOVIES);
     const n = selection.length;
     let subtitle = '';
@@ -278,7 +280,7 @@ Page({
       note: m.note || '',
       platformRatings: m.platformRatings || []
     }));
-    this.posterData = { title: '我的观影记录', subtitle, avgText, movies, customTitle: '', periodLead: '' };
+    this.posterData = { title: '我的观影记录', subtitle, avgText, movies, customTitle: '', periodLead: '', totalCount, fullStats };
 
     // 单部电影：记住完整平台评分，按开关整体隐藏
     let hasRatings = false;
