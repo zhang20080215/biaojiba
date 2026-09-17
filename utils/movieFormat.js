@@ -82,8 +82,23 @@ function decorateMovie(m) {
   };
 }
 
+// 全球票房：美元数值 → "$29.2亿" / "$8500万"（票房榜列表 chip 用；库里已有 boxOfficeText 的优先用库里的）
+function formatBoxOffice(value) {
+  if (value === undefined || value === null || value === '') return '';
+  const amount = Number(value);
+  if (Number.isNaN(amount) || amount <= 0) return String(value);
+  if (amount >= 100000000) {
+    return `$${(amount / 100000000).toFixed(amount >= 1000000000 ? 1 : 2)}亿`;
+  }
+  if (amount >= 10000) {
+    return `$${(amount / 10000).toFixed(amount >= 10000000 ? 0 : 1)}万`;
+  }
+  return `$${amount}`;
+}
+
 module.exports = {
   CN_TZ_OFFSET_MS,
+  formatBoxOffice,
   cnDateStr,
   formatVotes,
   formatRtCount,

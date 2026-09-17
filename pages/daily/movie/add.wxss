@@ -346,6 +346,24 @@ page {
 .candidate-list {
   margin-top: 22rpx;
 }
+/* 候选列表末尾的「正在补全其余分季」行：复用评分区的 rl-spin 转圈 */
+.season-loading {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 6rpx 8rpx 4rpx;
+  font-size: 24rpx;
+  color: #6B6356;
+}
+.season-spinner {
+  flex-shrink: 0;
+  width: 26rpx;
+  height: 26rpx;
+  border-radius: 50%;
+  border: 3rpx solid #E3DAC2;
+  border-top-color: #1A1A1A;
+  animation: rl-spin 0.8s linear infinite;
+}
 .candidate-card {
   display: flex;
   align-items: center;

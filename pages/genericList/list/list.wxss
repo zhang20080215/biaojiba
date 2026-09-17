@@ -539,6 +539,22 @@ page {
   opacity: 0.72;
 }
 
+/* 评分后的小胶囊（cfg.extraChips：年份 / 全球票房） */
+.movie-meta-chip {
+  font-size: var(--font-mini);
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: rgba(156, 153, 143, 0.12);
+  padding: 4rpx var(--space-2);
+  border-radius: var(--radius-pill);
+}
+.movie-meta-chip.boxOffice {
+  font-size: var(--font-caption);
+  font-weight: 700;
+  color: #C4862D;
+  background: rgba(254, 239, 191, 0.88);
+}
+
 /* ========== 右侧操作区 ========== */
 .movie-action {
   display: flex;

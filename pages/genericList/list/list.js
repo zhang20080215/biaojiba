@@ -5,7 +5,7 @@ var { trackMark, trackShare } = require('../../../utils/track.js');
 var adManager = require('../../../utils/adManager');
 var userStore = require('../../../utils/userStore.js');
 var { getThemeConfig } = require('../../../utils/genericThemeConfig.js');
-var { formatVotes } = require('../../../utils/movieFormat.js');
+var { formatVotes, formatBoxOffice } = require('../../../utils/movieFormat.js');
 var markSync = require('../../../utils/markSync.js');
 
 // 通用榜单页：走 enrichThemeMovies/generic_theme_movies 流水线的新主题、以及迁移过来的老主题共用这一套页面，
@@ -79,7 +79,9 @@ Page({
         });
         wx.setNavigationBarTitle({ title: cfg.title });
         this.checkLoginStatus();
-        this.loadAllMovies(true); // 通用主题 listVersion 恒为 null，缓存不会自动失效，进页面强制拉最新
+        // 通用主题 listVersion 恒为 null，缓存不会自动失效，进页面强制拉最新；
+        // 老主题（IMDb/票房榜，cfg.useCache）榜单几乎不变，沿用 24h 本地缓存
+        this.loadAllMovies(!cfg.useCache);
         this.initAds();
         this.setNavBarColor();
     },
@@ -311,11 +313,22 @@ Page({
                 // 评分人数：ratingCount 是做 arthouse 时才加进 fetchDoubanDetail 的，
                 // 更早灌库的主题库里没这个字段，所以是「有就显示」而非固定占位。
                 // 想让老主题也有，逐个跑 { theme, backfillRatings: true, autoContinue: true } 即可。
-                const votes = formatVotes(m.ratingCount);
+                // IMDb 榜的评分人数字段叫 voteCount
+                const votes = formatVotes(m.ratingCount || m.voteCount);
+                // 评分后追加的小胶囊（年份 / 全球票房），按 cfg.extraChips 顺序，取不到值的不渲染
+                const chips = (cfg.extraChips || []).map(kind => {
+                    if (kind === 'year') return m.year ? { type: 'year', text: String(m.year) } : null;
+                    if (kind === 'boxOffice') {
+                        const text = m.boxOfficeText || formatBoxOffice(m.boxOffice);
+                        return text ? { type: 'boxOffice', text } : null;
+                    }
+                    return null;
+                }).filter(Boolean);
                 return {
                     ...m,
                     _id: String(m._id),
                     metaParts,
+                    chips,
                     ratingVotesText: votes ? `${votes}人评` : '',
                     // thumbCover：优先取 originalCover（原始 douban URL）转缩略图，cover 保留用于海报生成
                     thumbCover: imageCacheManager.getThumbnailUrl(m.cover || m.coverUrl || m.originalCover, 'list')

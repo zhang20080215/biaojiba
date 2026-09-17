@@ -270,8 +270,9 @@ Page({
       poster: m.poster || '',
       title: m.title,
       year: m.year,
-      director: m.director || '',
-      genres: Array.isArray(m.genres) ? m.genres : [],
+      // 绘制器的通用字段：署名行 + 标签胶囊（单部封面海报用），每日读书传的是「作者」+ 阅读进度
+      byline: m.director ? `导演 ${m.director}` : '',
+      tags: Array.isArray(m.genres) ? m.genres : [],
       dateLabel: formatDateCN(m.date),
       watchDateText: watchDateOf(m.date),
       rating: Number(m.rating) || 0,

@@ -210,6 +210,19 @@ function flattenBooks(days) {
   return list;
 }
 
+// 同一本书只保留一条：取最近一次记录（ts 最大，心情/封面为最新状态）。
+// 书墙/海报/统计按「本」去重用——一本书读了多天多次记录只算/只展示一次。
+// 键优先 doubanId，缺失退回书名（手填的老记录没有 doubanId）；镜像每日电影的 dedupeMovies。
+function dedupeBooks(list) {
+  const byKey = {};
+  (list || []).forEach(m => {
+    const key = m.doubanId || m.title || ('_ts_' + (m.ts || 0));
+    const prev = byKey[key];
+    if (!prev || (m.ts || 0) > (prev.ts || 0)) byKey[key] = m;
+  });
+  return Object.keys(byKey).map(k => byKey[k]);
+}
+
 function getReadThemeView() {
   const theme = getTheme('read');
   const accent = theme.accent || 'yellow';
@@ -237,5 +250,6 @@ module.exports = {
   suggestReadDays,
   normalizeBookEntry,
   flattenBooks,
+  dedupeBooks,
   getReadThemeView
 };

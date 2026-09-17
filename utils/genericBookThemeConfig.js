@@ -11,8 +11,38 @@
 //   orderDirection— 传给云函数的 rank 排序方向：新到旧编号的主题用 'asc'（rank 1=最新）；
 //                   rank 本身是历史届数（逐年递增）的主题要 'desc' 才能新到旧展示
 //   source        — 写入 BookMarks 的 source 值，每个通用读书主题一个专属值，纯审计/统计用途
+//                   （douban_books / weread_books 两个老主题的值必须是 'douban' / 'weread'——
+//                   getMoviesData 读标记时按这两个值过滤，写别的老标记就读不出来）
+//   simplifyTitle — 海报上书名去括注（utils/bookFormat.simplifyTitle），豆瓣读书的书名版本括注多才开
+//   useCache      — 走 24h 本地缓存、进页面不强制刷新（老主题数据几乎不变；通用书单 listVersion 恒为 null
+//                   才需要每次进页面强拉）
 //   作者 chip 是否显示由数据本身决定（item.author 有值才渲染），不用单独开关
 const THEME_CONFIG = {
+  // ── 老主题（专属集合 douban_books / weread_books，走 getMoviesData；2026-09 从各自独立页面目录并入）──
+  douban_books: {
+    title: '豆瓣读书TOP250',
+    slogan: '标记你读过的经典，生成专属书单海报',
+    brandPrimary: '#58743C',
+    brandSoft: '#849E62',
+    shadowRgb: '88, 116, 60',
+    showEdition: false,
+    orderDirection: 'asc',
+    source: 'douban',
+    simplifyTitle: true,
+    useCache: true,
+  },
+  weread_books: {
+    title: '微信读书TOP200总榜',
+    slogan: '微信读书全平台热榜，记录你的阅读旅程',
+    brandPrimary: '#266C98',
+    brandSoft: '#4E9EC4',
+    shadowRgb: '38, 108, 152',
+    showEdition: false,
+    orderDirection: 'asc',
+    source: 'weread',
+    useCache: true,
+  },
+  // ── 走 enrichThemeBooks / generic_theme_books 通用流水线 ──
   maodun: {
     title: '历届茅盾文学奖',
     slogan: '标记你读过的经典，生成专属书单海报',
@@ -61,7 +91,7 @@ function getThemeConfig(theme) {
     if (reg && reg.type === 'book') cfg = reg;
   }
   cfg = cfg || DEFAULT_CONFIG;
-  return { editionField: 'edition', orderDirection: 'asc', source: 'generic', showYear: false, ...cfg };
+  return { editionField: 'edition', orderDirection: 'asc', source: 'generic', showYear: false, simplifyTitle: false, useCache: false, ...cfg };
 }
 
 module.exports = { THEME_CONFIG, getThemeConfig };

@@ -1,7 +1,3 @@
 {
-  "backgroundColor": "#FFFFFF",
-  "backgroundTextStyle": "light",
-  "navigationBarTitleText": "IMDB电影TOP250",
-  "navigationBarBackgroundColor": "#FFFFFF",
-  "navigationBarTextStyle": "black"
+  "usingComponents": {}
 }

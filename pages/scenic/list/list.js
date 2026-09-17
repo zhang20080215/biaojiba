@@ -1,15 +1,14 @@
-// pages/scenic/list/list.js —— 全国5A旅游景区列表页
-// 数据走 getScenicSpots（专属集合 scenic_5a），标记复用 Marks（去过=watched、想去=wish）+ batchUpdateMarks，
+// pages/scenic/list/list.js —— 旅行线「按省份分组打卡」列表页：全国5A旅游景区 / 中国国家一级博物馆共用，
+// 靠 ?theme=scenic5a|museum 区分（配置表 utils/travelThemeConfig.js；缺省 = 5A 景区）。
+// 数据走 getScenicSpots / getMuseums（各自专属集合），标记复用 Marks（去过/参观过=watched、想去=wish）+ batchUpdateMarks，
 // 交互骨架借鉴 pages/genericList/list，去掉电影专属（评分/届数/导演），新增省份筛选 + 旅游化文案。
 import DataLoader from '../../../utils/dataLoader';
 import imageCacheManager from '../../../utils/imageCacheManager';
 var adConfig = require('../../../utils/adConfig');
 var { trackMark, trackShare } = require('../../../utils/track.js');
 var userStore = require('../../../utils/userStore.js');
-var scenicShortName = require('../../../utils/scenicShortName.js').scenicShortName;
+var { getTravelTheme } = require('../../../utils/travelThemeConfig.js');
 
-const THEME = 'scenic5a';
-const TOTAL = 359;
 const PAGE_SIZE = 24;   // 分批渲染每页条数（首屏只渲染一页，上拉自动追加）
 // 省份筛选固定顺序（与数据源 desc 省份短名一致）
 const PROVINCE_ORDER = ['北京', '天津', '河北', '山西', '内蒙古', '辽宁', '吉林', '黑龙江', '上海', '江苏', '浙江', '安徽', '福建', '江西', '山东', '河南', '湖北', '湖南', '广东', '广西', '海南', '重庆', '四川', '贵州', '云南', '西藏', '陕西', '甘肃', '青海', '宁夏', '新疆'];
@@ -22,7 +21,7 @@ Page({
         allSpots: [],
         spots: [],
         provinces: [],           // 数据里出现过的省份（按 PROVINCE_ORDER 排序）
-        provinceCounts: {},      // 省份 → 该省景区总数，显示在省份栏名字后面
+        provinceCounts: {},      // 省份 → 该省条目总数，显示在省份栏名字后面
         currentProvince: '',     // '' = 全部省份
         searchKeyword: '',       // 搜索关键词（匹配名称/简称/省市）
         markStatusMap: {},
@@ -48,26 +47,25 @@ Page({
         customToastVisible: false,
         tempAvatar: '',
         tempNickname: '',
-        // 旅游主题配色（山水青绿）
-        cfg: {
-            title: '全国5A旅游景区',
-            slogan: '打卡你走过的山河，攒成专属旅行足迹',
-            brandPrimary: '#2E8B72',
-            brandSoft: '#5FB89C',
-            shadowRgb: '46, 139, 114'
-        },
+        theme: 'scenic5a',       // ?theme= 决定；onLoad 里按 travelThemeConfig 填 cfg
+        cfg: {},                 // 文案/配色/徽标等，见 utils/travelThemeConfig.js
         infeedSlots: {},
         adUnitIds: {
             movielist_infeed: adConfig.getAdUnitId('movielist_infeed') || '',
         },
     },
 
-    onLoad() {
+    onLoad(options) {
         if (!wx.cloud) {
             wx.showToast({ title: '请升级基础库', icon: 'none' });
             return;
         }
-        wx.setNavigationBarTitle({ title: this.data.cfg.title });
+        const { key, cfg } = getTravelTheme(options && options.theme);
+        // shortName 是函数，不能进 data（setData 不接受函数）；其余文案/配色字段给 wxml 用
+        const { shortName, ...cfgData } = cfg;
+        this._shortName = shortName;
+        this.setData({ theme: key, cfg: cfgData });
+        wx.setNavigationBarTitle({ title: cfg.title });
         this.checkLoginStatus();
         this.loadAllSpots(true);
         this.initAds();
@@ -127,13 +125,16 @@ Page({
         wx.showNavigationBarLoading();
         try {
             const openid = this.getActiveOpenid() || null;
-            const { movies, marks } = await DataLoader.loadMoviesData(THEME, openid, forceRefresh, { orderByField: 'rank', orderDirection: 'asc' });
+            const cfg = this.data.cfg;
+            const { movies, marks } = await DataLoader.loadMoviesData(this.data.theme, openid, forceRefresh, { orderByField: 'rank', orderDirection: 'asc' });
 
             const allSpots = movies.map(m => ({
                 ...m,
                 _id: String(m._id),
                 // 简称：优先用库里的 shortName 字段（灌库已写入时），否则前端即时提取
-                shortName: m.shortName || scenicShortName(m.name),
+                shortName: m.shortName || this._shortName(m.name),
+                // 列表徽标：博物馆取批次字段（第一批…），5A 景区固定「5A景区」
+                badge: (cfg.badgeField && m[cfg.badgeField]) || cfg.badgeText,
                 thumbCover: imageCacheManager.getThumbnailUrl(m.cover || m.originalCover, 'list')
             }));
 
@@ -148,7 +149,7 @@ Page({
             const provinces = PROVINCE_ORDER.filter(p => provinceCounts[p] > 0);
 
             // allSpots 只用于本地筛选/统计，WXML 从不渲染它 —— 直接挂到 data 上，
-            // 不走 setData，省掉一次 359 条的跨线程传输（真正渲染的是分页后的 spots）。
+            // 不走 setData，省掉一次全量的跨线程传输（真正渲染的是分页后的 spots）。
             this.data.allSpots = allSpots;
 
             const { markStatusMap, markDateMap, markRecordIdMap, stats } = DataLoader.processMarks(marks, allSpots);
@@ -163,7 +164,7 @@ Page({
                 wx.hideNavigationBarLoading();
             });
         } catch (err) {
-            console.error('加载景区数据失败:', err);
+            console.error('加载打卡数据失败:', err);
             this.data.allSpots = [];
             this._filtered = [];
             this._renderedCount = 0;
@@ -183,7 +184,7 @@ Page({
         if (!openid) return;
         wx.showNavigationBarLoading();
         try {
-            const { marks } = await DataLoader.loadMoviesData(THEME, openid, false, { orderByField: 'rank', orderDirection: 'asc' });
+            const { marks } = await DataLoader.loadMoviesData(this.data.theme, openid, false, { orderByField: 'rank', orderDirection: 'asc' });
             const { markStatusMap, markDateMap, markRecordIdMap, stats } = DataLoader.processMarks(marks, this.data.allSpots);
             this.setData({
                 markStatusMap, markDateMap, markRecordIdMap,
@@ -338,7 +339,7 @@ Page({
         } catch (e) { return ''; }
     },
 
-    // 快捷按钮（未标记时的 想去/去过）→ 直接标记
+    // 快捷按钮（未标记时的 想去/去过|参观过）→ 直接标记
     onMarkTap(e) {
         const id = String(e.currentTarget.dataset.id);
         const type = e.currentTarget.dataset.type;
@@ -346,7 +347,7 @@ Page({
         this.setMark(id, type);
     },
 
-    // 点击已标记的标签 → 打开纠正弹窗（去过/想去/没去过）
+    // 点击已标记的标签 → 打开纠正弹窗（去过|参观过/想去/没去过）
     onOpenMarkSheet(e) {
         if (!this.getActiveOpenid()) {
             wx.showModal({
@@ -373,7 +374,7 @@ Page({
 
     // 统一标记入口：targetStatus 为 'watched'|'wish'|''（''=没去过=取消标记）。乐观更新 + 写 Marks
     setMark(id, targetStatus) {
-        trackMark('scenic5a', targetStatus || 'unmark', 'single', 1); // 埋点：单标记
+        trackMark(this.data.theme, targetStatus || 'unmark', 'single', 1); // 埋点：单标记
         const openid = this.getActiveOpenid();
         if (!openid) {
             wx.showModal({
@@ -420,7 +421,7 @@ Page({
         // 设为 / 切换到 targetStatus
         const now = new Date().toISOString();
         this.applySingleMarkLocally(id, targetStatus, now, existingRecordId);
-        this.showCustomToast(targetStatus === 'watched' ? '✓ 已标记为去过' : '✓ 已标记为想去');
+        this.showCustomToast(targetStatus === 'watched' ? `✓ 已标记为${this.data.cfg.visitedLabel}` : '✓ 已标记为想去');
 
         const persist = existingRecordId
             ? db.collection('Marks').doc(existingRecordId).update({ data: { status: targetStatus, marked_at: now } })
@@ -493,12 +494,12 @@ Page({
     onBatchUnvisited() { this._batch('unwatched'); },
 
     _batch(status) {
-        if (this.data.selectedIds.length === 0) { wx.showToast({ title: '请选择景区', icon: 'none' }); return; }
+        if (this.data.selectedIds.length === 0) { wx.showToast({ title: `请选择${this.data.cfg.noun}`, icon: 'none' }); return; }
         const ids = this.data.selectedIds;
         const openid = this.getActiveOpenid();
         if (!openid) { wx.showToast({ title: '请先登录', icon: 'none' }); return; }
 
-        trackMark('scenic5a', status, 'batch', ids.length); // 埋点：批量标记
+        trackMark(this.data.theme, status, 'batch', ids.length); // 埋点：批量标记
         wx.showLoading({ title: '批量更新中...' });
         wx.cloud.callFunction({
             name: 'batchUpdateMarks',
@@ -550,10 +551,10 @@ Page({
             return;
         }
         if (this.data.visitedCount === 0) {
-            wx.showToast({ title: '先打卡去过的景区吧', icon: 'none' });
+            wx.showToast({ title: this.data.cfg.emptyVisitedTip, icon: 'none' });
             return;
         }
-        wx.navigateTo({ url: '/pages/scenic/share/share' });
+        wx.navigateTo({ url: this.data.cfg.sharePath });
     },
 
     // ─── 登录 ───
@@ -643,13 +644,13 @@ Page({
     },
 
     onShareAppMessage() {
-        trackShare('scenic5a', 'appmsg', this.route);
-        return { title: '全国5A旅游景区 - 打卡你走过的山河', path: '/pages/scenic/list/list' };
+        trackShare(this.data.theme, 'appmsg', this.route);
+        return { title: this.data.cfg.shareTitle, path: this.data.cfg.listPath };
     },
 
     onShareTimeline() {
-        trackShare('scenic5a', 'timeline', this.route);
-        return { title: '全国5A旅游景区 - 打卡你走过的山河', query: '' };
+        trackShare(this.data.theme, 'timeline', this.route);
+        return { title: this.data.cfg.shareTitle, query: `theme=${this.data.theme}` };
     },
 
     // ========== 广告 ==========

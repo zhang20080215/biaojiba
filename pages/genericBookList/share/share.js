@@ -8,6 +8,7 @@ var adConfig = require('../../../utils/adConfig');
 const rewardedSaveGate = require('../../../utils/rewardedSaveGate.js');
 const userStore = require('../../../utils/userStore.js');
 var { getThemeConfig } = require('../../../utils/genericBookThemeConfig.js');
+var { simplifyTitle } = require('../../../utils/bookFormat.js');
 // 排序方向按主题不同，见 utils/genericBookThemeConfig.js 的 cfg.orderDirection
 function queryOptionsFor(cfg) {
     return { orderByField: 'rank', orderDirection: (cfg && cfg.orderDirection) || 'asc' };
@@ -202,7 +203,11 @@ Page({
         try {
             wx.showLoading({ title: '加载数据中...' });
             const openid = this.data.userInfo && this.data.userInfo._openid ? this.data.userInfo._openid : '';
-            const { movies: allBooks, marks: allMarks } = await DataLoader.loadMoviesData(this.data.theme, openid, false, queryOptionsFor(this.data.cfg));
+            const { movies: rawBooks, marks: allMarks } = await DataLoader.loadMoviesData(this.data.theme, openid, false, queryOptionsFor(this.data.cfg));
+            // 海报用简化书名（去括注），只改本页的展示副本，不入库/不影响缓存
+            const allBooks = this.data.cfg.simplifyTitle
+                ? rawBooks.map(b => ({ ...b, title: simplifyTitle(b.title) || b.title }))
+                : rawBooks;
             const { markStatusMap, stats, readBooks } = DataLoader.processBookMarks(allMarks, allBooks);
             const listGridRows = Math.max(1, Math.ceil(allBooks.length / 5));
             this.setData({ allBooks, markStatusMap, stats, readBooks, listGridRows }, () => {

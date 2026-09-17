@@ -12,6 +12,11 @@
  *   canvas.width = width; canvas.height = height;
  *   new MoviePosterDrawer(canvas, ctx, width, height).draw(data, coverNodes, themeId, layout);
  *
+ * 词表（vocab）：版式/几何与「电影」无关，只有文案（部/观影/观影日/占位 🎬…）和单部封面海报的品牌 tint 是电影专属，
+ *   全部收在 MOVIE_VOCAB 里；`MoviePosterDrawer.withVocab({...})` 返回一个换了词表的子类，每日读书的
+ *   utils/bookPosterDrawer.js 就是这样一行包出来的（部→本、观影→阅读、🎬→📖），不复制版式代码。
+ *   条目的「署名行 + 标签」也走通用字段：byline（电影 = 「导演 xxx」，书 = 「作者 xxx」）、tags（电影 = 类型，书 = 阅读进度）。
+ *
  * layout（仅多部生效）：whole 整体一张（2~3 部纵向 / 4+ 网格）| month 按月份分区 | rating 按星级分区 | calendar 单月日历（需同月，见 isSingleMonth）
  * data.customTitle：自定义标题（≤20 字）；空则各版式用默认标题
  * data.periodLead：数据范围前缀（「2026年度」/「2026年6月」），长图标题 = 前缀 + 观影总结；空则按电影日期推
@@ -19,7 +24,8 @@
  *
  * data = {
  *   movies: [{
- *     key, date:'2026-07-13', title, year, dateLabel:'7月13日',
+ *     key, date:'2026-07-13', title, year, dateLabel:'7月13日', watchDateText:'2026年7月13日观影',
+ *     byline:'导演 xxx', tags:['剧情','科幻'],        // 仅单部封面海报用
  *     rating(0~5), moodEmoji, moodLabel, note,
  *     platformRatings:[{label,value}]
  *   }]
@@ -46,6 +52,20 @@ const THEMES = {
 };
 
 const DEFAULT_THEME = 'pinkBlue';
+
+// ============ 词表：绘制器里所有「电影」专属的文案与品牌色。换一套词表 = 换一个每日主题的海报 ============
+const MOVIE_VOCAB = {
+  unit: '部',                              // 统计单位：N 部 / 共 N 部
+  verb: '观影',                            // 默认标题的强调词：「2026年度」+ 观影 + 总结
+  dayLabel: '观影日',                      // 三格统计第三格
+  untitled: '未命名电影',
+  emoji: '🎬',                             // 无封面占位
+  emptyText: '这段时间还没有观影记录',
+  // 单部封面海报：压在海报上的品牌色斜向 tint（对齐 category 卡片 brand 色）
+  tint: ['rgba(208,132,104,0.30)', 'rgba(168,94,68,0.30)'],
+  // 单部封面海报底部的白字署名：圆点 / 文字（微微偏暖，呼应 tint）
+  heroSign: { dot: 'rgba(240,196,176,0.72)', text: 'rgba(255,246,242,0.62)' }
+};
 // swatch 给前端色点用：直接是 CSS 渐变串
 const THEME_LIST = Object.keys(THEMES).map(k => ({ id: THEMES[k].id, name: THEMES[k].name, swatch: `linear-gradient(135deg, ${THEMES[k].bgTop}, ${THEMES[k].bgBot})` }));
 
@@ -316,11 +336,21 @@ function computeCalendarLayout(movies) {
 }
 
 class MoviePosterDrawer {
-  constructor(canvas, ctx, width, height) {
+  constructor(canvas, ctx, width, height, vocab) {
     this.canvas = canvas;
     this.ctx = ctx;
     this.w = width;
     this.h = height;
+    this.V = Object.assign({}, MOVIE_VOCAB, vocab || this.constructor.VOCAB || {});
+  }
+
+  // 换词表：返回一个把 vocab 烤进去的子类（静态方法 / THEMES 随原型链继承），供其它每日主题复用全部版式
+  static withVocab(vocab) {
+    const V = Object.assign({}, MOVIE_VOCAB, vocab || {});
+    return class extends MoviePosterDrawer {
+      constructor(canvas, ctx, width, height) { super(canvas, ctx, width, height, V); }
+      static get VOCAB() { return V; }
+    };
   }
 
   static computeSize(count) {
@@ -464,14 +494,14 @@ class MoviePosterDrawer {
       ctx.fillStyle = 'rgba(255,255,255,0.12)';
       ctx.font = `${Math.round(h * 0.2)}px sans-serif`;
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('🎬', w / 2, h * 0.36);
+      ctx.fillText(this.V.emoji, w / 2, h * 0.36);
       ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
     }
 
-    // 2a) 品牌暖色斜向 tint（对齐 category 封面 .cover-tint.daily-movie；降透明度，不盖住海报本色）
+    // 2a) 品牌色斜向 tint（对齐 category 卡片 brand 色；降透明度，不盖住海报本色）
     const tint = ctx.createLinearGradient(0, 0, w, h);
-    tint.addColorStop(0, 'rgba(208,132,104,0.30)');
-    tint.addColorStop(1, 'rgba(168,94,68,0.30)');
+    tint.addColorStop(0, this.V.tint[0]);
+    tint.addColorStop(1, this.V.tint[1]);
     ctx.fillStyle = tint; ctx.fillRect(0, 0, w, h);
 
     // 2b) 底部蒙层：顶透 → 底 0.85 黑（对齐详情海报），保证白字对比
@@ -502,10 +532,10 @@ class MoviePosterDrawer {
     // 4) 内容准备
     const watchDate = m.watchDateText || '';
     ctx.font = `800 ${titleSize}px sans-serif`;
-    const titleLines = this._wrapLines(m.title || '未命名电影', tw, 2);
-    const dirText = m.director ? ('导演 ' + m.director) : '';
-    const genres = (m.genres || []).slice(0, 4);
-    const hasDG = !!(dirText || genres.length);        // 导演 + 类型（同一行）
+    const titleLines = this._wrapLines(m.title || this.V.untitled, tw, 2);
+    const dirText = String(m.byline || '');            // 署名行：电影「导演 xxx」/ 书「作者 xxx」
+    const genres = (m.tags || []).slice(0, 4);         // 标签胶囊：电影类型 / 阅读进度
+    const hasDG = !!(dirText || genres.length);        // 署名 + 标签（同一行）
     const dgRowH = Math.max(subLH, genreTagH);
     const hasStars = Number(m.rating) > 0, hasMood = !!(m.moodEmoji || m.moodLabel);
     ctx.font = `400 ${noteSize}px sans-serif`;
@@ -551,7 +581,7 @@ class MoviePosterDrawer {
     titleLines.forEach((ln, i) => ctx.fillText(ln, ix, ty + i * titleLH));
     this._shadowOff();
     ty += titleH;
-    // 导演 + 类型（同一行：导演文字在左，类型胶囊紧随其后）
+    // 署名 + 标签（同一行：署名文字在左，标签胶囊紧随其后）
     if (hasDG) {
       ty += gTitleSub;
       const rowMid = ty + dgRowH / 2;
@@ -698,7 +728,7 @@ class MoviePosterDrawer {
     } else {
       ctx.font = `700 ${Math.round(66 * s)}px serif`;
       let tx = L.PAD;
-      [[titleLead, C.ink], ['观影', C.accent], ['总结', C.ink]].forEach(([t, color]) => {
+      [[titleLead, C.ink], [this.V.verb, C.accent], ['总结', C.ink]].forEach(([t, color]) => {
         if (!t) return;
         ctx.fillStyle = color;
         ctx.fillText(t, tx, titleY);
@@ -710,7 +740,7 @@ class MoviePosterDrawer {
     // 三格统计：N 部 / 平均分 / 观影日；全部未评分时中间格改成活跃月。
     // 有 fullStats（分享页按全量算好）就用它，否则按传入的 movies 现算
     const fs = this.fullStats || MoviePosterDrawer.summarize(movies);
-    const stats = [{ num: String(fs.count), label: '部' }];
+    const stats = [{ num: String(fs.count), label: this.V.unit }];
     if (!fs.count) {
       stats.push({ num: '–', label: '平均分' });
     } else if (fs.avg != null) {
@@ -718,7 +748,7 @@ class MoviePosterDrawer {
     } else {
       stats.push({ num: String(fs.months), label: '活跃月' });
     }
-    stats.push({ num: String(fs.days), label: '观影日' });
+    stats.push({ num: String(fs.days), label: this.V.dayLabel });
 
     const statTop = titleY + Math.round(48 * s);
     const statH = Math.round(112 * s);
@@ -768,7 +798,7 @@ class MoviePosterDrawer {
     ctx.font = `500 ${Math.round(20 * s)}px sans-serif`;
     ctx.fillStyle = C.inkFaint;
     ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-    ctx.fillText(`共 ${this.totalCount} 部，海报按时间展示最早的 ${shown} 部`, this.w / 2, this.h - footer / 2 - 25 - Math.round(16 * s));
+    ctx.fillText(`共 ${this.totalCount} ${this.V.unit}，海报按时间展示最早的 ${shown} ${this.V.unit}`, this.w / 2, this.h - footer / 2 - 25 - Math.round(16 * s));
     ctx.textAlign = 'left';
   }
 
@@ -830,7 +860,7 @@ class MoviePosterDrawer {
           ctx.font = `500 ${fs}px sans-serif`;
           ctx.fillStyle = C.ink;
           ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-          ctx.fillText(this._truncate(m.title || '未命名电影', L.cellW + 8), x + L.cellW / 2, y + L.coverH + 14 + fs);
+          ctx.fillText(this._truncate(m.title || this.V.untitled, L.cellW + 8), x + L.cellW / 2, y + L.coverH + 14 + fs);
           ctx.textAlign = 'left';
         }
       });
@@ -907,7 +937,7 @@ class MoviePosterDrawer {
     ctx.font = `500 ${Math.round(30 * s)}px sans-serif`;
     ctx.fillStyle = C.inkFaint;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('这段时间还没有观影记录', W / 2, this.h * 0.5);
+    ctx.fillText(this.V.emptyText, W / 2, this.h * 0.5);
     ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
     this._drawWatermark(W / 2, this.h - Math.round(60 * s));
   }
@@ -954,7 +984,7 @@ class MoviePosterDrawer {
         ctx.fillStyle = this._rgba(C.decoRgb, 0.55);
         ctx.font = `${Math.round(Math.min(cw, ch) * 0.34)}px sans-serif`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('🎬', cx + cw / 2, cy + ch / 2);
+        ctx.fillText(this.V.emoji, cx + cw / 2, cy + ch / 2);
         ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
       }
     });
@@ -964,8 +994,8 @@ class MoviePosterDrawer {
     g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,0.72)');
     ctx.fillStyle = g;
     ctx.fillRect(x, y + h - gh, w, gh);
-    const first = list[0].title || '未命名电影';
-    const label = list.length > 1 ? `${first} 等${list.length}部` : first;
+    const first = list[0].title || this.V.untitled;
+    const label = list.length > 1 ? `${first} 等${list.length}${this.V.unit}` : first;
     ctx.font = `600 ${Math.round(20 * s)}px sans-serif`;
     ctx.fillStyle = '#FFFFFF';
     ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
@@ -1027,7 +1057,7 @@ class MoviePosterDrawer {
     ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
     ctx.font = `700 ${Math.round(46 * s)}px serif`;
     ctx.fillStyle = C.ink;
-    ty = this._wrapText(m.title || '未命名电影', tx, ty, tw, Math.round(54 * s), 2) + Math.round(30 * s);
+    ty = this._wrapText(m.title || this.V.untitled, tx, ty, tw, Math.round(54 * s), 2) + Math.round(30 * s);
 
     ctx.font = `500 ${Math.round(26 * s)}px sans-serif`;
     ctx.fillStyle = C.inkSoft;
@@ -1086,7 +1116,7 @@ class MoviePosterDrawer {
       ctx.font = `500 ${fs}px sans-serif`;
       ctx.fillStyle = C.ink;
       ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-      ctx.fillText(this._truncate(m.title || '未命名电影', cellW + 6), x + cellW / 2, y + posterH + 14 + fs);
+      ctx.fillText(this._truncate(m.title || this.V.untitled, cellW + 6), x + cellW / 2, y + posterH + 14 + fs);
       ctx.textAlign = 'left';
       return;
     }
@@ -1102,7 +1132,7 @@ class MoviePosterDrawer {
     const titleSize = Math.round(38 * scale);
     ctx.font = `700 ${titleSize}px sans-serif`;
     ctx.fillStyle = C.ink;
-    let titleStr = m.title || '未命名电影';
+    let titleStr = m.title || this.V.untitled;
     if (m.year && rich) titleStr = `${titleStr}`;
     ctx.fillText(this._truncate(titleStr, cellW), tx, ty);
     ty += Math.round(titleSize * 0.62);
@@ -1183,7 +1213,7 @@ class MoviePosterDrawer {
       ctx.font = `${Math.round(h * 0.24)}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('🎬', x + w / 2, y + h / 2 - h * 0.04);
+      ctx.fillText(this.V.emoji, x + w / 2, y + h / 2 - h * 0.04);
       ctx.fillStyle = C.inkSoft;
       ctx.font = '500 22px sans-serif';
       ctx.fillText(this._truncate(title || '', w - 24), x + w / 2, y + h / 2 + h * 0.18);
@@ -1354,7 +1384,7 @@ class MoviePosterDrawer {
   _drawWatermarkWhite(cx, cy, s) {
     const ctx = this.ctx;
     const text = '小程序标记吧，制作同款图';
-    // 署名是次要信息：压低不透明度 + 减一档字重，并微微偏暖（呼应品牌暖色 tint），
+    // 署名是次要信息：压低不透明度 + 减一档字重，并微微偏向品牌色（呼应 tint），
     // 避免纯白粗体压在暗部蒙层上过于生硬、抢走标题的视觉重量。
     this._shadowOn(0.32, 6, 1);
     ctx.font = `500 ${Math.round(26 * s)}px sans-serif`;
@@ -1366,9 +1396,9 @@ class MoviePosterDrawer {
     const x = cx - totalW / 2;
     ctx.beginPath();
     ctx.arc(x + dotR, cy, dotR, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(240,196,176,0.72)';   // 暖色圆点，弱于正文
+    ctx.fillStyle = this.V.heroSign.dot;        // 品牌色圆点，弱于正文
     ctx.fill();
-    ctx.fillStyle = 'rgba(255,246,242,0.62)';   // 暖白、半透，安静地退到背景里
+    ctx.fillStyle = this.V.heroSign.text;       // 近白、半透，安静地退到背景里
     ctx.fillText(text, x + lead, cy + 1);
     this._shadowOff();
     ctx.textAlign = 'left';
@@ -1444,5 +1474,6 @@ class MoviePosterDrawer {
 
 MoviePosterDrawer.THEMES = THEME_LIST;
 MoviePosterDrawer.DEFAULT_THEME = DEFAULT_THEME;
+MoviePosterDrawer.MOVIE_VOCAB = MOVIE_VOCAB;
 
 module.exports = MoviePosterDrawer;

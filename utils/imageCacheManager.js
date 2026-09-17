@@ -55,6 +55,12 @@ function getThumbnailUrl(url, usage) {
             .replace(/_CR[\d,]+_/, '_CR0,0,128,190_');
     }
 
+    // ── TVmaze（每日电影补季候选的季海报）：original_untouched → medium_portrait ──
+    // 原图是 1000×1500 级别、2~3 MB，国内直连 20s 都拉不完；medium 210×295 约 20 KB、1s 内到。
+    if (url.includes('static.tvmaze.com')) {
+        return url.replace('/original_untouched/', '/medium_portrait/');
+    }
+
     // 其他 URL 直接返回
     return url;
 }

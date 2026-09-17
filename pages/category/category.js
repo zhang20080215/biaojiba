@@ -25,7 +25,8 @@ var DAILY_BLOCK_SOON = { emoji: '✨', color: '#EFE9DD', label: '#A89B85' };
 // mode 是 guess_records 里的玩法字段，参与人数按它分组统计（见 _loadGamePlayerCounts）
 // 人数先不展示：口径还在观望——填字要填满一整条才写库，「玩过的人」比「打开过的人」
 // 少一截（2026-09 实测 189 玩过 / 146 打完过一局 / 912 局）。等跑一段时间看准了再放。
-// 打开只需把这里改 true：云函数、渲染、样式都还在，就差这一个开关。
+// 开放时要改三处：这里去掉 hidden、app.json 的 pages 加回路径、project.config.json 的 packOptions.ignore
+// 删掉对应目录（隐藏期间这两个页面目录被排除出包，源码仍在仓库里）。云函数、渲染、样式都还在。
 // 数字随时可以从云函数看：submitGuess { action:'players', detail:true }
 var SHOW_GAME_PLAYER_COUNT = false;
 var GAME_BLOCKS = [
@@ -34,10 +35,25 @@ var GAME_BLOCKS = [
   { key: 'guess_clue',  mode: 'clue',  title: '线索猜片', emoji: '🔍', color: '#EDE4F0', label: '#6B5A8C', url: '/pages/guess/clue/index', hidden: true }
 ];
 
-// 没有静态设计封面的主题：用榜单 rank=1 那部电影的封面做卡片图（整图铺满裁剪+主题色叠色，
-// 见 category.wxss 的 .cover-tint）。主题色变体由各主题对象自带的 tintClass 决定
-// ——加载/匹配失败前，category.wxml 里同 id 的 .cover-placeholder 兜底占位符照常显示。
+// 动态封面主题：用榜单 rank=1 那部作品的封面做卡片图（整图铺满裁剪 + 主题色叠色，叠色/占位配色
+// 由各主题行的 brand 派生成 inline style，见 _decorateThemes）。封面回来前 wxml 显示 skeleton 流光占位，
+// 加载/匹配失败则停在 emoji 渐变占位。字段：
+//   collection — 省略默认 generic_theme_movies；theme — 共享集合里按 theme 过滤
+//   top        — TOP 榜集合（movies/imdb_movies/…）要排除软删记录（isTop250:false 的也可能 rank=1）
+//   latest     — rank 即届数的奖项榜（奥斯卡系），取 rank 最大的一届而不是 rank=1（1929 年的《翼》）
+// 包里不再带任何设计封面图（2026-09 起，原 10 张 cover-*.jpg 合计 250KB 全部删除）；
+// 没有榜单集合的五张卡（每日电影/读书/运动/喝水 + 评分查询）的封面放云存储 category_covers/，image 直接填 fileID
+//（源图在 tools/category-covers/，四张每日卡是 1:1 简约图标，同一奶油底 + 各自 brand 色）。
 var DYNAMIC_COVER_THEMES = [
+  // 老主题（专属集合）
+  { id: 'douban_movies', collection: 'movies', top: true },
+  { id: 'imdb_movies', collection: 'imdb_movies', top: true },
+  { id: 'boxoffice_movies', collection: 'boxoffice_movies', top: true },
+  { id: 'oscar_movies', collection: 'oscar_movies', latest: true },
+  { id: 'oscar_anime_movies', collection: 'oscar_anime_movies', latest: true },
+  { id: 'oscar_cinematography_movies', theme: 'oscarCinematography', latest: true },
+  { id: 'douban_books', collection: 'douban_books', top: true },
+  { id: 'weread_books', collection: 'weread_books', top: true },
   { id: 'rt_horror_movies', theme: 'rtHorror' },
   { id: 'rt_war_movies', theme: 'rtWar' },
   { id: 'rt_animation_movies', theme: 'rtAnimation' },
@@ -77,6 +93,7 @@ Page({
     activeTab: 'all',
     dailyBlocks: [],
     gameBlocks: GAME_BLOCKS.filter(function (g) { return !g.hidden; }),
+    coversLoading: true,       // 动态封面首次拉取中：无缓存的动态封面卡显示 skeleton 流光
     themeClass: '',
     showThemePicker: false,
     // 会员码（= openid）。展示用的截断串；完整串放实例字段 _memberCode，不进 data
@@ -103,32 +120,41 @@ Page({
         title: '全国5A旅游景区',
         description: '打卡你走过的山河，攒成专属旅行足迹',
         image: '',
-        tintClass: 'scenic',
+        brand: ['#5FB89C', '#2E8B72'],
+        placeholderEmoji: '🏞️',
+        placeholderText: '5A景区',
+        tintClass: 'scenic',  // 「旅行打卡」横排推荐卡的配色 class（feature-card）
         userCount: 0,
         tag: '旅行',
         category: 'travel',
         isNew: true,
         wishFrom: '卡**琳',
-        url: '/pages/scenic/list/list'
+        url: '/pages/scenic/list/list?theme=scenic5a'
       },
       {
         id: 'museum_grade1',
         title: '中国国家一级博物馆',
         description: '打卡你走过的博物馆，收藏一整部文明史',
         image: '',
-        tintClass: 'museum',
+        brand: ['#B98E56', '#8C6239'],
+        placeholderEmoji: '🏛️',
+        placeholderText: '一级博物馆',
+        tintClass: 'museum',  // 「旅行打卡」横排推荐卡的配色 class（feature-card）
         userCount: 0,
         tag: '旅行',
         category: 'travel',
         isNew: true,
-        url: '/pages/museum/list/list'
+        url: '/pages/scenic/list/list?theme=museum'
       },
       {
         id: 'travel_provinces',
         title: '省份旅游',
         description: '点亮你走过的省份，拼出专属中国足迹',
         image: '',
-        tintClass: 'province',
+        brand: ['#6C97C4', '#3A6EA5'],
+        placeholderEmoji: '🗺️',
+        placeholderText: '旅游省份',
+        tintClass: 'province',  // 「旅行打卡」横排推荐卡的配色 class（feature-card）
         userCount: 0,
         tag: '旅行',
         category: 'travel',
@@ -140,7 +166,10 @@ Page({
         title: '城市旅游',
         description: '打卡全国旅游城市，收藏你走过的城',
         image: '',
-        tintClass: 'city',
+        brand: ['#E0A06E', '#C9743A'],
+        placeholderEmoji: '🏙️',
+        placeholderText: '旅游城市',
+        tintClass: 'city',  // 「旅行打卡」横排推荐卡的配色 class（feature-card）
         userCount: 0,
         tag: '旅行',
         category: 'travel',
@@ -152,7 +181,9 @@ Page({
         title: '历届奥斯卡最佳外语片',
         description: '奥斯卡最佳国际影片历届获奖，看见世界各地的电影',
         image: '',
-        tintClass: 'oscar-foreign',
+        brand: ['#A06E7C', '#7A3B4A'],
+        placeholderEmoji: '🌍',
+        placeholderText: '最佳外语片',
         userCount: 0,
         tag: '奥斯卡',
         category: 'oscar',
@@ -165,7 +196,9 @@ Page({
         title: '史上最佳动作电影',
         description: '烂番茄评选史上最佳动作片，标记你的肾上腺素时刻',
         image: '',
-        tintClass: 'rt-action',
+        brand: ['#646E80', '#3B4252'],
+        placeholderEmoji: '💥',
+        placeholderText: '动作电影',
         userCount: 0,
         tag: '电影',
         category: 'movie',
@@ -178,7 +211,9 @@ Page({
         title: 'Letterboxd Top 500',
         description: 'Letterboxd 影迷评分最高 500 部电影，硬核影迷片单',
         image: '',
-        tintClass: 'letterboxd500',
+        brand: ['#E69640', '#C86E14'],
+        placeholderEmoji: '🎞️',
+        placeholderText: 'Letterboxd Top 500',
         userCount: 0,
         tag: '电影',
         category: 'movie',
@@ -191,7 +226,9 @@ Page({
         title: '历届金棕榈奖',
         description: '戛纳电影节历届金棕榈获奖影片，含届数·导演·国家',
         image: '',
-        tintClass: 'palme',
+        brand: ['#D4B45C', '#A8842B'],
+        placeholderEmoji: '🌴',
+        placeholderText: '金棕榈奖',
         userCount: 0,
         tag: '电影',
         category: 'movie',
@@ -203,7 +240,9 @@ Page({
         title: '历届奥斯卡最佳原创剧本',
         description: '奥斯卡最佳原创剧本历届获奖，编剧功力的年度标杆',
         image: '',
-        tintClass: 'oscar-screenplay',
+        brand: ['#9B7BB0', '#6B4C7A'],
+        placeholderEmoji: '✍️',
+        placeholderText: '原创剧本',
         userCount: 0,
         tag: '奥斯卡',
         category: 'oscar',
@@ -216,7 +255,9 @@ Page({
         title: '历届奥斯卡最佳导演',
         description: '奥斯卡最佳导演历届获奖，标记你看过的封神之作',
         image: '',
-        tintClass: 'oscar-director',
+        brand: ['#5C9B7E', '#2F6B4F'],
+        placeholderEmoji: '🎬',
+        placeholderText: '最佳导演',
         userCount: 0,
         tag: '奥斯卡',
         category: 'oscar',
@@ -228,7 +269,9 @@ Page({
         title: '历届奥斯卡最佳视觉效果',
         description: '奥斯卡最佳视觉效果历届获奖，大银幕的想象力天花板',
         image: '',
-        tintClass: 'oscar-vfx',
+        brand: ['#4FB3CC', '#1E7A99'],
+        placeholderEmoji: '✨',
+        placeholderText: '最佳视觉效果',
         userCount: 0,
         tag: '奥斯卡',
         category: 'oscar',
@@ -240,7 +283,9 @@ Page({
         title: '历届奥斯卡最佳男主角',
         description: '奥斯卡影帝历届获奖，标记你看过的封神演技',
         image: '',
-        tintClass: 'oscar-actor',
+        brand: ['#C99B5E', '#A6763C'],
+        placeholderEmoji: '🎭',
+        placeholderText: '最佳男主角',
         userCount: 0,
         tag: '奥斯卡',
         category: 'oscar',
@@ -252,7 +297,9 @@ Page({
         title: '历届奥斯卡最佳女主角',
         description: '奥斯卡影后历届获奖，标记你看过的高光时刻',
         image: '',
-        tintClass: 'oscar-actress',
+        brand: ['#D07AA0', '#B0476E'],
+        placeholderEmoji: '👑',
+        placeholderText: '最佳女主角',
         userCount: 0,
         tag: '奥斯卡',
         category: 'oscar',
@@ -264,7 +311,9 @@ Page({
         title: '文艺电影必修课',
         description: '250 部作者电影与艺术电影，153 位导演、35 个国家与地区',
         image: '',
-        tintClass: 'arthouse',
+        brand: ['#5E6E96', '#2E3A59'],
+        placeholderEmoji: '📽️',
+        placeholderText: '文艺电影250',
         userCount: 0,
         tag: '电影',
         category: 'movie',
@@ -275,7 +324,9 @@ Page({
         title: '视与听影史TOP250',
         description: '英国《视与听》十年一度影评人票选，含并列共 257 部影史经典',
         image: '',
-        tintClass: 'sightsound',
+        brand: ['#A05066', '#6E2639'],
+        placeholderEmoji: '🎥',
+        placeholderText: '视与听TOP250',
         userCount: 0,
         tag: '电影',
         category: 'movie',
@@ -286,7 +337,9 @@ Page({
         title: '豆瓣高分华语剧集',
         description: '豆瓣评分 8 分以上的华语剧集 TOP250，标记你追完的国剧',
         image: '',
-        tintClass: 'douban-tv-cn',
+        brand: ['#DA7A72', '#C0453E'],
+        placeholderEmoji: '📺',
+        placeholderText: '华语剧集',
         userCount: 0,
         tag: '剧集',
         category: 'tv',
@@ -298,7 +351,9 @@ Page({
         title: '豆瓣9分国外剧集',
         description: '豆瓣评分 9 分以上的国外剧集 TOP250，标记你追完的美剧英剧日韩剧',
         image: '',
-        tintClass: 'douban-tv-foreign',
+        brand: ['#6A93BF', '#2F5D8C'],
+        placeholderEmoji: '📺',
+        placeholderText: '国外剧集',
         userCount: 0,
         tag: '剧集',
         category: 'tv',
@@ -310,7 +365,9 @@ Page({
         title: '豆瓣9分动画',
         description: '豆瓣评分 9 分以上的动画剧集 TOP250，标记你追完的神番',
         image: '',
-        tintClass: 'douban-tv-anime',
+        brand: ['#A98AD9', '#7C4DBE'],
+        placeholderEmoji: '🎌',
+        placeholderText: '9分动画',
         userCount: 0,
         tag: '剧集',
         category: 'tv',
@@ -322,7 +379,9 @@ Page({
         title: '历届茅盾文学奖',
         description: '中国长篇小说最高荣誉，标记你读过的茅盾文学奖获奖作品',
         image: '',
-        tintClass: 'maodun',
+        brand: ['#B5605C', '#8B2E2E'],
+        placeholderEmoji: '📚',
+        placeholderText: '茅盾文学奖',
         userCount: 0,
         tag: '读书',
         category: 'reading',
@@ -334,7 +393,9 @@ Page({
         title: '纽伯瑞儿童文学金奖',
         description: '美国儿童文学最高荣誉，标记你读过的纽伯瑞金奖作品',
         image: '',
-        tintClass: 'newbery',
+        brand: ['#D4A94A', '#B8860B'],
+        placeholderEmoji: '🏅',
+        placeholderText: '纽伯瑞金奖',
         userCount: 0,
         tag: '读书',
         category: 'reading',
@@ -345,8 +406,10 @@ Page({
         id: 'douban_movies',
         title: '豆瓣电影 TOP250',
         description: '华语影迷的经典片单，记录你的观影旅程',
-        image: '/images/cover-douban.jpg',
-        tintClass: 'douban-movies',
+        image: '',
+        brand: ['#549C76', '#327252'],
+        placeholderEmoji: '🎬',
+        placeholderText: '豆瓣TOP250',
         userCount: 0,
         tag: '电影',
         category: 'movie',
@@ -356,8 +419,10 @@ Page({
         id: 'oscar_cinematography_movies',
         title: '历届奥斯卡最佳摄影奖',
         description: '奥斯卡最佳摄影历年获奖，每年一部影像典范',
-        image: '/images/cover-oscar-cinematography.jpg',
-        tintClass: 'oscar-cinema',
+        image: '',
+        brand: ['#5A6E8A', '#303C52'],
+        placeholderEmoji: '📷',
+        placeholderText: '最佳摄影',
         userCount: 0,
         tag: '奥斯卡',
         category: 'oscar',
@@ -370,7 +435,9 @@ Page({
         title: '史上最佳恐怖电影',
         description: '烂番茄评选史上最佳200部恐怖片，标记你的胆量',
         image: '',
-        tintClass: 'rt-horror',
+        brand: ['#B5514C', '#8E2A2A'],
+        placeholderEmoji: '🔪',
+        placeholderText: '恐怖电影',
         userCount: 0,
         tag: '电影',
         category: 'movie',
@@ -382,7 +449,9 @@ Page({
         title: '史上最佳战争电影',
         description: '烂番茄评选史上最佳150部战争片，铭记历史与人性',
         image: '',
-        tintClass: 'rt-war',
+        brand: ['#6E89A0', '#3E5C6E'],
+        placeholderEmoji: '🎖️',
+        placeholderText: '战争电影',
         userCount: 0,
         tag: '电影',
         category: 'movie',
@@ -394,7 +463,9 @@ Page({
         title: '史上最佳动画电影',
         description: '烂番茄评选史上最佳动画长片，重温童心与想象',
         image: '',
-        tintClass: 'rt-animation',
+        brand: ['#F2B073', '#E8862E'],
+        placeholderEmoji: '🎨',
+        placeholderText: '动画电影',
         userCount: 0,
         tag: '电影',
         category: 'movie',
@@ -405,8 +476,10 @@ Page({
         id: 'daily_movie',
         title: '每日电影',
         description: '记录每天看过的电影，攒成年度片单',
-        image: '/images/cover-daily-movie.jpg',
-        tintClass: 'daily-movie',
+        image: 'cloud://cloud1-3gn3wryx716919c6.636c-cloud1-3gn3wryx716919c6-1360913831/category_covers/cover-daily-movie.jpg',
+        brand: ['#D08468', '#A85E44'],
+        placeholderEmoji: '🎬',
+        placeholderText: '每日电影',
         userCount: 0,
         tag: '每日',
         category: 'daily',
@@ -417,8 +490,10 @@ Page({
         id: 'daily_read',
         title: '每日读书',
         description: '记录每天读过的书，攒成年度书单',
-        image: '/images/cover-douban-books.jpg',
-        tintClass: 'daily-read',
+        image: 'cloud://cloud1-3gn3wryx716919c6.636c-cloud1-3gn3wryx716919c6-1360913831/category_covers/cover-daily-read.jpg',
+        brand: ['#A4B074', '#727E47'],
+        placeholderEmoji: '📖',
+        placeholderText: '每日读书',
         userCount: 0,
         tag: '每日',
         category: 'daily',
@@ -429,7 +504,10 @@ Page({
         id: 'daily_sport',
         title: '每日运动',
         description: '记录每次训练，坚持养成习惯',
-        image: '',
+        image: 'cloud://cloud1-3gn3wryx716919c6.636c-cloud1-3gn3wryx716919c6-1360913831/category_covers/cover-daily-sport.jpg',
+        brand: ['#8FB3F0', '#3F6AD6'],
+        placeholderEmoji: '🏋️',
+        placeholderText: '每日运动',
         userCount: 0,
         tag: '每日',
         category: 'daily',
@@ -440,8 +518,10 @@ Page({
         id: 'oscar_anime_movies',
         title: '历届奥斯卡最佳动画长篇',
         description: '奥斯卡最佳动画长篇历年获奖，每年一部经典动画',
-        image: '/images/cover-oscar-anime.jpg',
-        tintClass: 'oscar-anime',
+        image: '',
+        brand: ['#60BAB0', '#2C867C'],
+        placeholderEmoji: '🎞️',
+        placeholderText: '动画长篇',
         userCount: 0,
         tag: '奥斯卡',
         category: 'oscar',
@@ -453,8 +533,10 @@ Page({
         id: 'movie_search_all_platforms',
         title: '全平台电影评分查询',
         description: '搜索任意电影，对比豆瓣 / IMDB / 烂番茄评分',
-        image: '/images/cover-movie-search.jpg',
-        tintClass: 'movie-search',
+        image: 'cloud://cloud1-3gn3wryx716919c6.636c-cloud1-3gn3wryx716919c6-1360913831/category_covers/cover-movie-search.jpg',
+        brand: ['#7286BE', '#465690'],
+        placeholderEmoji: '🔍',
+        placeholderText: '评分查询',
         userCount: 0,
         tag: '电影',
         category: 'movie',
@@ -465,7 +547,10 @@ Page({
         id: 'daily_water',
         title: '每日喝水',
         description: '记录每日饮水量，养成健康习惯',
-        image: '',
+        image: 'cloud://cloud1-3gn3wryx716919c6.636c-cloud1-3gn3wryx716919c6-1360913831/category_covers/cover-daily-water.jpg',
+        brand: ['#9CCBE0', '#3F7E93'],
+        placeholderEmoji: '💧',
+        placeholderText: '每日喝水',
         userCount: 0,
         tag: '每日',
         category: 'daily',
@@ -476,57 +561,66 @@ Page({
         id: 'weread_books',
         title: '微信读书 TOP200 总榜',
         description: '微信读书全平台热榜，记录你的阅读旅程',
-        image: '/images/cover-weread-santi.png',
-        imageMode: 'center',  // 不拉伸，按原图大小居中显示
-        tintClass: 'weread',
+        image: '',
+        brand: ['#4E9EC4', '#266C98'],
+        placeholderEmoji: '📚',
+        placeholderText: '微信读书',
         userCount: 0,
         tag: '读书',
         category: 'reading',
-        url: '/pages/weread/list/list'
+        url: '/pages/genericBookList/list/list?theme=weread_books'
       },
       {
         id: 'douban_books',
         title: '豆瓣读书 TOP250',
         description: '华语读者的经典书单，记录你的阅读旅程',
-        image: '/images/cover-douban-books.jpg',
-        tintClass: 'douban-books',
+        image: '',
+        brand: ['#849E62', '#58743C'],
+        placeholderEmoji: '📖',
+        placeholderText: '豆瓣读书',
         userCount: 0,
         tag: '读书',
         category: 'reading',
-        url: '/pages/doubanBooks/list/list'
+        url: '/pages/genericBookList/list/list?theme=douban_books'
       },
       {
         id: 'imdb_movies',
         title: 'IMDB电影 TOP250',
         description: '全球影迷票选，影史高分 250 部电影',
-        image: '/images/cover-imdb.jpg',
-        tintClass: 'imdb',
+        image: '',
+        brand: ['#E0BA40', '#A48418'],
+        placeholderEmoji: '⭐',
+        placeholderText: 'IMDB TOP250',
         userCount: 0,
         tag: '电影',
         category: 'movie',
-        url: '/pages/imdb/list/list'
+        url: '/pages/genericList/list/list?theme=imdb'
       },
       {
         id: 'oscar_movies',
         title: '历届奥斯卡最佳影片',
         description: '奥斯卡金像奖历年最佳，每年一部经典',
-        image: '/images/cover-oscar.jpg',
-        tintClass: 'oscar-best',
+        image: '',
+        brand: ['#CAAA60', '#9A742E'],
+        placeholderEmoji: '🏆',
+        placeholderText: '最佳影片',
         userCount: 0,
         tag: '奥斯卡',
         category: 'oscar',
-        url: '/pages/oscar/list/list'
+        url: '/pages/genericList/list/list?theme=oscar'
       },
       {
         id: 'boxoffice_movies',
         title: '全球电影票房榜',
         description: '全球票房最高的电影，见证影史商业传奇',
-        image: '/images/cover-boxoffice.jpg',
-        tintClass: 'boxoffice',
+        image: '',
+        brand: ['#C85E52', '#9A362E'],
+        placeholderEmoji: '💰',
+        placeholderText: '票房榜',
         userCount: 0,
         tag: '电影',
         category: 'movie',
-        url: '/pages/boxoffice/list/list'
+        url: '/pages/genericList/list/list?theme=boxoffice'
       },
       // {
       //   id: 'chinese_awards',
@@ -543,6 +637,9 @@ Page({
         title: '儿童生长发育评估',
         description: '依据国家标准，精准评估 0~7 岁宝宝发育状况',
         image: '',
+        brand: ['#FEEFBF', '#F7D66E'],
+        placeholderEmoji: '📏',
+        placeholderText: '成长评估',
         userCount: 0,
         tag: '育儿',
         category: 'parenting',
@@ -576,6 +673,8 @@ Page({
       pinnedIds: Array.isArray(savedPinned) ? savedPinned : []
     });
 
+    // 硬编码主题行：把 brand 派生成 inline 配色、标出动态封面主题（云端注册表主题在 _buildCloudCard 里同样处理）
+    this._decorateThemes();
     // 云端注册表：先用本地缓存的新主题即时合入卡片（无网络等待），稍后 loadCloudRegistry 再拉最新
     this._mergeCloudThemes(themeRegistry.readAll());
     // 动态封面：先用本地缓存的封面 URL 即时渲染（避免"占位图标→真图"闪烁），loadDynamicCovers 再刷新
@@ -613,6 +712,27 @@ Page({
     }
   },
 
+  // 主题行的 brand: [soft, primary] → 叠色 tintStyle / 占位 coverStyle（跟云端主题卡同一套模板），
+  // dynamic 标记该卡的封面要等 loadDynamicCovers 回来（skeleton 只给这些卡叠）
+  _decorateThemes() {
+    const dynamicIds = new Set(DYNAMIC_COVER_THEMES.map(c => c.id));
+    const themes = (this.data.themes || []).map(t => ({
+      ...t,
+      ...this._brandStyles(t.brand),
+      dynamic: dynamicIds.has(t.id)
+    }));
+    this.setData({ themes });
+  },
+
+  _brandStyles(brand) {
+    const soft = (brand && brand[0]) || '#5C6B7A';
+    const primary = (brand && brand[1]) || '#3B4252';
+    return {
+      tintStyle: `background: linear-gradient(135deg, ${soft}80 0%, ${primary}80 100%);`,
+      coverStyle: `background: linear-gradient(135deg, ${soft} 0%, ${primary} 100%);`
+    };
+  },
+
   // 把注册表文档构建成卡片并「前插」进 this.data.themes（按 id 去重，重复调用幂等）。
   // 返回是否有新卡片合入。云端主题文档同时缓存在 this._cloudThemeDocs 供封面/人数派生。
   _mergeCloudThemes(docs) {
@@ -641,10 +761,8 @@ Page({
       title: d.title || (isBook ? '主题书单' : '主题片单'),
       description: d.description || '',
       image: '',
-      tintClass: '',
-      // 云端主题没有对应 wxss class，配色走内联 style
-      tintStyle: `background: linear-gradient(135deg, ${soft}80 0%, ${primary}80 100%);`,
-      coverStyle: `background: linear-gradient(135deg, ${soft} 0%, ${primary} 100%);`,
+      ...this._brandStyles([soft, primary]),
+      dynamic: true,
       placeholderEmoji: d.placeholderEmoji || (isBook ? '📖' : '🎬'),
       userCount: 0,
       userCountText: this.formatUserCount(0),
@@ -705,15 +823,20 @@ Page({
       id: d.cardId, theme: d.theme, collection: d.type === 'book' ? 'generic_theme_books' : 'generic_theme_movies'
     }));
     const dynList = DYNAMIC_COVER_THEMES.concat(cloudDyn);
+    const _ = db.command;
     const results = await Promise.allSettled(
-      dynList.map(cfg =>
-        db.collection(cfg.collection || 'generic_theme_movies')
-          .where({ theme: cfg.theme, rank: 1 })
-          .field({ cover: true })
-          .limit(1)
-          .get()
-      )
+      dynList.map(cfg => {
+        const where = {};
+        if (cfg.theme) where.theme = cfg.theme;
+        if (cfg.top) where.isTop250 = _.neq(false);
+        if (!cfg.latest) where.rank = 1;
+        let q = db.collection(cfg.collection || 'generic_theme_movies').where(where);
+        if (cfg.latest) q = q.orderBy('rank', 'desc');
+        return q.field({ cover: true }).limit(1).get();
+      })
     );
+    // 无论拉没拉到，首次拉取已结束：skeleton 停掉，没封面的卡停在 emoji 渐变占位
+    this.setData({ coversLoading: false });
 
     const covers = {};
     results.forEach((result, i) => {

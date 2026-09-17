@@ -140,7 +140,7 @@ function formatBoxOffice(amount) {
     // /1e6 标「万」），三个分支一律小 10 倍——阿凡达 29.2 亿被写成「$2.9亿」，
     // 而且 boxOfficeText 是 seed 时算好存进库的，前端 list.js 又优先用库里这个字段
     // （`movie.boxOfficeText || this.formatBoxOffice(...)`），所以前端那份正确实现
-    // 根本没机会兜底，100 条全错。改动这里必须与 pages/boxoffice/list/list.js 的
+    // 根本没机会兜底，100 条全错。改动这里必须与 pages/genericList/list/list.js（boxoffice 主题）的
     // formatBoxOffice 保持一致。
     const num = Number(amount);
     if (!num || Number.isNaN(num) || num <= 0) return '';

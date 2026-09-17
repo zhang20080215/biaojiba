@@ -1,0 +1,3 @@
+/* 每日读书海报页样式：与每日电影海报页（pages/daily/movie/share.wxss）完全同款，直接引入，
+   两页选项面板/预览槽/底栏/忙碌提示同一套类名——改样式只改电影那份。 */
+@import "../movie/share.wxss";

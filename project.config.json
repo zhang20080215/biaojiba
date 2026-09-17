@@ -41,6 +41,8 @@
       { "type": "folder", "value": "pages/annual" },
       { "type": "folder", "value": "pages/growth/share" },
       { "type": "folder", "value": "pages/chinese-awards" },
+      { "type": "folder", "value": "pages/guess/grid" },
+      { "type": "folder", "value": "pages/guess/clue" },
       { "type": "folder", "value": "doc" },
       { "type": "folder", "value": "docs" },
       { "type": "folder", "value": "data-raw" },

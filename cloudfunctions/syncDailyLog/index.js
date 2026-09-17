@@ -16,6 +16,12 @@
 
 const cloud = require('wx-server-sdk');
 const axios = require('axios');
+// sharp（libvips 原生）**有意不装**（package.json 里没有）：它只用来把外部源的超大封面压到 900 宽，
+// 而 2026-09 决定 TVmaze 季海报直接存 medium 小图（210×295）——代价只是「单季分享海报」满幅时发糊，
+// 换来 syncDailyLog 这个打卡热路径不背原生依赖、部署不必选「云端安装依赖」。
+// 想升级清晰度：package.json 加 `"sharp": "^0.33"`、部署选云端安装依赖，下面的代码会自动改走原图 + 压缩。
+let sharp = null;
+try { sharp = require('sharp'); } catch (e) { /* 有意不装，静默 */ }
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
 const db = cloud.database();
@@ -59,6 +65,23 @@ async function mirrorCover(url, openid) {
                 }
             });
             buffer = Buffer.from(resp.data);
+        } else if (/^https?:\/\/[^/]*\btvmaze\.com/i.test(url)) {
+            // TVmaze 季海报（豆瓣登录墙挡掉的分季剧集走 TVmaze 补季）：static.tvmaze.com 无防盗链，直接下载后镜像。
+            // 前端传的是 original_untouched（实测有 4050×6000 / 5.3 MB 的）。TVmaze 只有 medium / original 两档，
+            // 没装 sharp 压不了原图，就直接取 medium_portrait（210×295、~20 KB）——日历格/网格海报够用，
+            // 只有单季分享海报满幅时会糊（有意接受，见文件头 sharp 注）。装了 sharp 才拉原图，交给 shrinkCover 压。
+            const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
+            const small = url.replace('/original_untouched/', '/medium_portrait/');
+            const target = sharp ? url : small;
+            try {
+                const resp = await axios.get(target, { responseType: 'arraybuffer', timeout: sharp ? 25000 : 12000, headers: { 'User-Agent': ua } });
+                buffer = Buffer.from(resp.data);
+            } catch (e) {
+                if (target === small) throw e;
+                console.warn('tvmaze 原图拉取失败，退到 medium：', e && e.message);
+                const resp = await axios.get(small, { responseType: 'arraybuffer', timeout: 12000, headers: { 'User-Agent': ua } });
+                buffer = Buffer.from(resp.data);
+            }
         } else if (/^https?:\/\/[^/]*\bmtime\.cn/i.test(url)) {
             // 时光网封面（豆瓣搜不到的正片走时光网兜底）：带 Referer 下载后同样镜像到云存储，
             // 否则停留在 http 直链 → canvas 分享绘制器只认 cloud://，会画不出海报背景。
@@ -76,6 +99,7 @@ async function mirrorCover(url, openid) {
         }
 
         if (!buffer) return url;
+        buffer = await shrinkCover(buffer, url);
         const cloudPath = `${MIRROR_DIR}/${openid || 'anon'}_${Date.now()}_${Math.floor(Math.random() * 1e4)}.jpg`;
         const up = await cloud.uploadFile({ cloudPath, fileContent: buffer });
         return (up && up.fileID) ? up.fileID : url;
@@ -83,6 +107,41 @@ async function mirrorCover(url, openid) {
         console.warn('mirrorCover 失败，保留原值：', e && e.message);
         return url;
     }
+}
+
+// 超大封面落库前压一档。豆瓣 l_ratio_poster 约 600×900 / 100~300 KB，前端各处（日历格、书墙、海报 canvas）
+// 都是按这个量级设计的；TVmaze 的 original_untouched 实测有 4050×6000 / 5.3 MB 的，而 MIRROR_DIR 带 `_covers/`、
+// 前端列表对它不叠 imageMogr2 缩略（见 utils/imageCacheManager.js），每个日历格都会原样拉整张，
+// 分享海报页也是整张进 canvas——所以在这里统一收口：
+//   · 超过 SHRINK_OVER 的才处理，等比缩到宽 ≤ SHRINK_WIDTH 的 JPEG（sharp 对 4050×6000 约 650 ms；
+//     试过 jimp 纯 JS 要 19s、位图近 100 MB，函数上会 OOM，所以不用它）；
+//   · sharp 不可用（当前默认，有意不装）或失败：TVmaze 链接退到 medium_portrait（210×295、20 KB）重新下载——
+//     宁要一张糊的小图，也不能把 5 MB 落库。正常路径下 mirrorCover 的 tvmaze 分支已经直接取了 medium，
+//     这里是双保险；其它来源没这么大的，原样返回。
+const SHRINK_OVER = 500 * 1024;
+const SHRINK_WIDTH = 900;
+async function shrinkCover(buffer, url) {
+    if (!buffer || buffer.length <= SHRINK_OVER) return buffer;
+    if (sharp) {
+        try {
+            const out = await sharp(buffer).resize({ width: SHRINK_WIDTH, withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer();
+            console.log(`shrinkCover ${(buffer.length / 1024) | 0}KB → ${(out.length / 1024) | 0}KB`);
+            return out.length < buffer.length ? out : buffer;
+        } catch (e) {
+            console.warn('shrinkCover sharp 失败：', e && e.message);
+        }
+    }
+    const small = String(url || '').replace('/original_untouched/', '/medium_portrait/');
+    if (small && small !== url) {
+        try {
+            const resp = await axios.get(small, { responseType: 'arraybuffer', timeout: 12000 });
+            console.warn(`shrinkCover 退到 medium：${(buffer.length / 1024) | 0}KB → ${(resp.data.length / 1024) | 0}KB`);
+            return Buffer.from(resp.data);
+        } catch (e) {
+            console.warn('shrinkCover medium 兜底失败，保留原图：', e && e.message);
+        }
+    }
+    return buffer;
 }
 
 // 镜像 meta 里的封面/海报字段（read 用 cover，movie 用 poster）

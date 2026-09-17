@@ -19,6 +19,11 @@
       <view class="month-arrow" bindtap="onPrevPeriod" hover-class="tap-soft">‹</view>
       <text class="month-label">{{periodMode === 'month' ? monthLabel : yearLabel}}</text>
       <view class="month-arrow {{(periodMode === 'month' ? canGoNextMonth : canGoNextYear) ? '' : 'is-disabled'}}" bindtap="onNextPeriod" hover-class="tap-soft">›</view>
+      <!-- 分享海报：常驻在时间导航右侧，与下一行「时间轴」右缘对齐；带上当前年月作为海报默认范围 -->
+      <view class="poster-btn" bindtap="onOpenPoster" hover-class="tap-soft">
+        <text class="poster-btn-ico">📖</text>
+        <text>海报</text>
+      </view>
     </view>
     <!-- 时间筛选（月/年）+ 视图筛选（日历/书墙/时间轴）：同一行 -->
     <view class="top-controls">
@@ -128,9 +133,17 @@
 
     <!-- ===== 日历视图底部：添加按钮 + 选中日记录 ===== -->
     <block wx:if="{{viewMode === 'calendar'}}">
-    <view class="add-record-btn" bindtap="onOpenAdd" hover-class="tap-soft">
-      <text class="add-plus">＋</text>
-      <text>添加读书记录</text>
+    <view class="record-btn-row">
+      <view class="add-record-btn" bindtap="onOpenAdd" hover-class="tap-soft">
+        <text class="add-plus">＋</text>
+        <text>添加读书记录</text>
+      </view>
+      <!-- 生成阅读海报：与导航行的「海报」同一入口（范围海报，默认当前年度），带 NEW 角标 -->
+      <view class="poster-record-btn" bindtap="onOpenPoster" hover-class="tap-soft">
+        <text class="poster-record-ico">📖</text>
+        <text>生成阅读海报</text>
+        <text class="new-badge">NEW</text>
+      </view>
     </view>
 
     <!-- 选中日期的观影记录 -->
@@ -175,6 +188,14 @@
               <view class="title-row">
                 <text class="movie-title">{{movie.title}}</text>
                 <text wx:if="{{movie.year}}" class="movie-year">{{movie.year}}</text>
+                <!-- 单本分享：直接进单张海报页（selection 只放这一本） -->
+                <view class="card-share-btn"
+                      catchtap="onShareBook"
+                      data-key="{{movie.key}}"
+                      hover-class="tap-soft">
+                  <text class="card-share-ico">📖</text>
+                  <text>分享</text>
+                </view>
               </view>
               <text wx:if="{{movie.author}}" class="movie-meta">作者：{{movie.author}}</text>
 

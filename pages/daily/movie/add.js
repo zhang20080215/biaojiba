@@ -77,18 +77,56 @@ function addThousandSep(n) {
   return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
-// 候选视图模型：豆瓣候选带评分/人数直接展示；时光网候选（source==='mtime'）无评分。
-// 时光网候选对用户不做视觉区分，与豆瓣候选一致展示。
+// 外部源候选（无 doubanId）：时光网（成人内容正片）/ TVmaze（补季），豆瓣登录墙挡掉的条目靠它们补。
+// 不能走 fetchMovieFullInfo，选中后按候选自带字段直接展示；对用户不做视觉区分。
+function isExternalSource(item) {
+  return !!item && (item.source === 'mtime' || item.source === 'tvmaze');
+}
+
+// 「继续观看」归并键：与 decorateCandidate 的 key 同一口径，豆瓣 db{doubanId} / TVmaze tv{id}s{季} / 时光网 mt{id}
+function continueKeyOf(m) {
+  if (!m) return '';
+  if (m.source === 'tvmaze' && m.tvmazeId) return `tv${m.tvmazeId}s${Number(m.tvmazeSeason) || 0}`;
+  if (m.source === 'mtime' && m.mtimeId) return `mt${m.mtimeId}`;
+  return m.doubanId ? `db${m.doubanId}` : '';
+}
+
+// 候选视图模型：豆瓣候选带评分/人数直接展示；外部源候选无评分。
 function decorateCandidate(item) {
-  const isMtime = item.source === 'mtime';
+  const ext = isExternalSource(item);
   return {
     ...item,
-    // 无 key（旧云函数）时用 doubanId 兜底，保证列表 wx:key / 选中定位可用
-    key: item.key || (isMtime ? `mt${item.mtimeId}` : `db${item.doubanId}`),
+    // 无 key（旧云函数）时兜底，保证列表 wx:key / 选中定位可用
+    key: item.key || (item.source === 'mtime' ? `mt${item.mtimeId}`
+      : item.source === 'tvmaze' ? `tv${item.tvmazeId}s${item.tvmazeSeason || 0}` : `db${item.doubanId}`),
     posterThumb: imageCache.getThumbnailUrl(item.posterUrl, 'list'),
-    ratingText: (!isMtime && item.rating) ? Number(item.rating).toFixed(1) : '',
-    votesText: (!isMtime && item.ratingCount) ? `${addThousandSep(item.ratingCount)}人评价` : ''
+    ratingText: (!ext && item.rating) ? Number(item.rating).toFixed(1) : '',
+    votesText: (!ext && item.ratingCount) ? `${addThousandSep(item.ratingCount)}人评价` : ''
   };
+}
+
+// 片名归一化（与云函数 normalizeForMatch 同一口径）：去空白与常见标点、小写，补季去重用
+function normTitle(t) {
+  return String(t || '').replace(/[\s　]+/g, '').replace(/[·・:：\-—_（）()【】\[\]"'!！?？、,，.。/]/g, '').toLowerCase();
+}
+
+// 从豆瓣候选里抠「补季线索」：标题形如「行尸走肉 第八季」且带英文原名 → { cn: '行尸走肉', en: 'The Walking Dead' }。
+// 按 en 去重、最多 2 部；用户直接输英文名（豆瓣一条季都没回）时退成 [{ cn: '', en: keyword }]。
+const SEASON_TITLE_RE = /^(.+?)\s*第[一二三四五六七八九十零百\d]+季$/;
+function seasonHintsFrom(candidates, keyword) {
+  const byEn = {};
+  const hints = [];
+  (candidates || []).forEach(c => {
+    if (c.source && c.source !== 'douban') return;
+    const m = SEASON_TITLE_RE.exec(String(c.title || '').trim());
+    if (!m || !c.originalTitle) return;
+    const en = normTitle(c.originalTitle);
+    if (!en || byEn[en]) return;
+    byEn[en] = true;
+    hints.push({ cn: m[1].trim(), en: c.originalTitle.trim() });
+  });
+  if (!hints.length && /[a-z]/i.test(keyword)) hints.push({ cn: '', en: keyword });
+  return hints.slice(0, 2);
 }
 
 // 4 平台固定展示：豆瓣 / IMDb / 新鲜度(RT 影评人) / 爆米花(RT 观众)，缺数据补 '—'
@@ -115,6 +153,9 @@ Page({
     searched: false,
     error: '',
     candidates: [],
+    // 第二趟补季（TVmaze）进行中：豆瓣列表已展示，列表底部给一行「正在补全分季」，
+    // 否则用户看列表里只有 8~11 季就以为搜完了
+    seasonLoading: false,
     // 继续观看：未看完的电视剧（已知总集数且看到集数 < 总集数），点击带入表单预填
     continueList: [],
     selected: null,
@@ -177,14 +218,16 @@ Page({
     });
   },
 
-  // 按 doubanId 归并全部记录：仅电视剧(subtype==='tv' 或 总集数>1) + 已知总集数，
-  // 取最大已看集数；未看完(1 <= 最大已看 < 总集数)才进列表，最近看的在前，展示用最新一条 meta
+  // 按「同一部剧」归并全部记录：仅电视剧(subtype==='tv' 或 总集数>1) + 已知总集数，
+  // 取最大已看集数；未看完(1 <= 最大已看 < 总集数)才进列表，最近看的在前，展示用最新一条 meta。
+  // 归并键不能只认 doubanId：TVmaze 补进来的季（《行尸走肉》1~7 季）没有 doubanId，
+  // 按 tvmazeId+季 归并；时光网条目按 mtimeId（它们没有分季，进不了这个列表，但键要唯一）
   _deriveContinue(days) {
     const byId = {};
     (days || []).forEach(d => {
       (d.entries || []).forEach(en => {
         const m = en.meta || {};
-        const id = m.doubanId;
+        const id = continueKeyOf(m);
         const total = Number(m.totalEpisodes) || 0;
         const isTv = m.subtype === 'tv' || total > 1;
         if (!id || !isTv || total <= 0) return;
@@ -204,7 +247,13 @@ Page({
         const m = r.meta;
         const poster = m.poster || m.originalPoster || '';
         return {
-          doubanId: m.doubanId,
+          key: continueKeyOf(m),
+          doubanId: m.doubanId || '',
+          source: m.source || 'douban',
+          mtimeId: m.mtimeId || '',
+          tvmazeId: m.tvmazeId || '',
+          tvmazeSeason: Number(m.tvmazeSeason) || 0,
+          subtype: m.subtype || '',
           title: m.title || '未命名电影',
           year: m.year || '',
           director: m.director || '',
@@ -219,17 +268,31 @@ Page({
 
   // 点击「继续观看」：把该剧带入添加表单（跳过搜索），预填上次看到的集数
   onContinueWatch(e) {
-    const doubanId = e.currentTarget.dataset.doubanId;
-    const item = this.data.continueList.find(x => String(x.doubanId) === String(doubanId));
+    const key = e.currentTarget.dataset.key;
+    const item = this.data.continueList.find(x => x.key === key);
     if (!item) return;
     const selected = {
       doubanId: item.doubanId,
+      source: item.source,
+      mtimeId: item.mtimeId,
+      tvmazeId: item.tvmazeId,
+      tvmazeSeason: item.tvmazeSeason,
+      subtype: item.subtype,
+      totalEpisodes: item.totalEpisodes,
       title: item.title,
       year: item.year,
       director: item.director,
       posterUrl: item.originalPoster || item.poster,
       posterThumb: item.posterThumb
     };
+    // TVmaze 季没有 doubanId，不能去 fetchMovieFullInfo 抓评分，按候选字段直接展示 + 预填集数
+    if (isExternalSource(selected)) {
+      this.setData({ candidates: [], searched: false, error: '' });
+      this._selectExternal(selected);
+      this.setData({ hasEpisodes: true, currentEpisode: String(item.lastEpisode || '') });
+      this._syncEpisodeProgress();
+      return;
+    }
     this.setData({
       candidates: [],
       searched: false,
@@ -278,7 +341,7 @@ Page({
   },
 
   onClearKeyword() {
-    this.setData({ keyword: '', candidates: [], searched: false, error: '' });
+    this.setData({ keyword: '', candidates: [], searched: false, error: '', seasonLoading: false });
     this._resetSelection();
   },
 
@@ -305,6 +368,41 @@ Page({
     }
   },
 
+  // 第二趟：补季。豆瓣对《行尸走肉》1~7 季这类条目只对登录用户开放，匿名只回 8~11 季 + 衍生剧；
+  // 从豆瓣候选里抠出 { cn, en } 线索交给云函数去 TVmaze 拉全部季，回来后按片名去重、追加到列表末尾。
+  // 中途用户换了关键词 / 清空 / 已选中则丢弃；失败一律静默——它是补充，不是主结果。
+  async _appendSeasonExtras(keyword, candidates) {
+    const hints = seasonHintsFrom(candidates, keyword);
+    if (!hints.length) return;
+    const seq = (this._seasonSeq = (this._seasonSeq || 0) + 1);
+    this.setData({ seasonLoading: true });
+    try {
+      let res;
+      try {
+        res = await wx.cloud.callFunction({ name: 'searchMovieByTitle', data: { keyword, seasonsFor: hints } });
+      } catch (e) {
+        console.warn('season extras fail', e && (e.errMsg || e.message));
+        return;
+      }
+      const list = (res && res.result && res.result.success && res.result.candidates) || [];
+      if (!list.length) return;
+      if ((this.data.keyword || '').trim() !== keyword || !this.data.searched || this.data.searching || this.data.selected) return;
+      const seen = new Set((this.data.candidates || []).map(c => normTitle(c.title)));
+      const extras = [];
+      list.forEach(c => {
+        const t = normTitle(c.title);
+        if (!t || seen.has(t)) return;
+        seen.add(t);
+        extras.push(decorateCandidate(c));
+      });
+      if (extras.length) this.setData({ candidates: this.data.candidates.concat(extras) });
+    } finally {
+      // 无论追加成功/无结果/失败/被作废都把提示收掉；但如果期间又起了一轮补季（seq 变了），
+      // 提示归新那轮管，这里不动
+      if (this._seasonSeq === seq) this.setData({ seasonLoading: false });
+    }
+  },
+
   async onSearch() {
     const keyword = (this.data.keyword || '').trim();
     if (!keyword) {
@@ -312,7 +410,7 @@ Page({
       return;
     }
     if (this.data.searching) return;
-    this.setData({ searching: true, searched: false, error: '', candidates: [] });
+    this.setData({ searching: true, searched: false, error: '', candidates: [], seasonLoading: false });
     this._resetSelection();
     try {
       const res = await this._searchWithRetry(keyword);
@@ -327,6 +425,7 @@ Page({
       }
       const candidates = (result.candidates || []).map(decorateCandidate);
       this.setData({ searching: false, searched: true, candidates, error: '' });
+      this._appendSeasonExtras(keyword, candidates);   // 不 await：豆瓣列表已展示，缺的季几秒后追加
     } catch (e) {
       console.error('daily movie search fail', e);
       // 超时和真断网要说不同的话：前者重试有用（豆瓣时好时坏），后者重试没用。
@@ -345,9 +444,9 @@ Page({
     const key = e.currentTarget.dataset.key;
     const selected = this.data.candidates.find(item => String(item.key) === String(key));
     if (!selected) return;
-    // 时光网候选：无 doubanId，不能走 fetchMovieFullInfo，直接用时光网自带字段
-    if (selected.source === 'mtime') {
-      this._selectMtime(selected);
+    // 外部源候选（时光网 / TVmaze）：无 doubanId，不能走 fetchMovieFullInfo，直接用候选自带字段
+    if (isExternalSource(selected)) {
+      this._selectExternal(selected);
       return;
     }
     this.setData({
@@ -368,8 +467,9 @@ Page({
     this._fullInfoPromise = this._fetchFullRatings(selected.doubanId);
   },
 
-  // 选中时光网候选：不抓评分，按时光网字段直接展示；电视剧允许记「看到第几集」（无总集数分母）
-  _selectMtime(selected) {
+  // 选中外部源候选（时光网 / TVmaze）：不抓评分，按候选字段直接展示；电视剧允许记「看到第几集」
+  // （时光网无总集数分母；TVmaze 季候选带 totalEpisodes，进度条有分母）
+  _selectExternal(selected) {
     const isTv = selected.subtype === 'tv';
     this._fullInfoPromise = null;
     this.setData({
@@ -382,7 +482,7 @@ Page({
       movieFull: null,
       mtimeMode: true,
       hasEpisodes: isTv,
-      totalEpisodes: 0,
+      totalEpisodes: Number(selected.totalEpisodes) || 0,
       currentEpisode: '',
       episodeProgressText: ''
     });
@@ -535,11 +635,14 @@ Page({
     // poster 优先 cloud://（供 canvas 海报）；拿不到再退豆瓣直链（仅供列表 <image> 展示）。
     // originalPoster 存豆瓣原图，供迁移/重试转存云存储时使用。
     const cloudPoster = isCloud(full.poster) ? full.poster : '';
-    const rawPoster = full.originalPoster || selected.posterUrl || '';
+    // 外部源候选可能带 posterLarge（TVmaze 原图 2~3 MB）：列表用小图，落库交给服务端镜像大图
+    const rawPoster = full.originalPoster || selected.posterLarge || selected.posterUrl || '';
     const meta = {
       doubanId: selected.doubanId || '',
-      // 时光网候选：无 doubanId，用 mtimeId + source 标记来源（platform 各项自然为空）
+      // 外部源候选：无 doubanId，用 mtimeId / tvmazeId(+tvmazeSeason) + source 标记来源（platform 各项自然为空）
       mtimeId: selected.mtimeId || '',
+      tvmazeId: selected.tvmazeId || '',
+      tvmazeSeason: Number(selected.tvmazeSeason) || 0,
       source: selected.source || 'douban',
       title: selected.title || '',
       year: full.year || selected.year || '',
