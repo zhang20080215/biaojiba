@@ -70,6 +70,11 @@
             <text wx:elif="{{item.subtype && !item.director}}" class="candidate-meta">{{item.subtype}}</text>
           </view>
         </view>
+        <!-- 第二趟补季进行中：豆瓣匿名只回后几季，剩下的几秒后追加到末尾，这里先告诉用户还没完 -->
+        <view wx:if="{{seasonLoading}}" class="season-loading">
+          <view class="season-spinner"></view>
+          <text>正在补全其余分季…</text>
+        </view>
       </view>
     </view>
 
@@ -79,8 +84,8 @@
       <scroll-view scroll-x class="continue-scroll" enhanced="{{true}}" show-scrollbar="{{false}}">
         <view class="continue-item"
               wx:for="{{continueList}}"
-              wx:key="doubanId"
-              data-douban-id="{{item.doubanId}}"
+              wx:key="key"
+              data-key="{{item.key}}"
               bindtap="onContinueWatch"
               hover-class="tap-soft">
           <image class="continue-poster" src="{{item.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" lazy-load="true" />

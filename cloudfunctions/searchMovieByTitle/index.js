@@ -4,6 +4,8 @@
 //   - 服务端直出 HTML，一次请求即含 评分 / 评价人数 / 年份 / 封面
 //   - 比 suggest 联想接口字段更全（suggest 只回标题/年份/封面，无评分）
 // HTML 被封/为空时回退 movie.douban.com/j/subject_suggest（前缀匹配，原有逻辑）。
+// 豆瓣登录墙挡掉的条目匿名搜不到：成人内容正片走时光网兜底（includeMtime）；分季剧集缺季
+// （《行尸走肉》1~7 季）走 TVmaze 补季（seasonsFor），见下方两段。
 //
 // 返回字段保持向后兼容（评分查询 pages/movie-search 也消费此函数）：
 //   { doubanId, title, year, posterUrl, subtype, director, url } —— 名称不变
@@ -32,6 +34,8 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const SEARCH_TIMEOUT = 7000;
 const SUGGEST_TIMEOUT = 5000;
 const MTIME_TIMEOUT = 6000;
+const TVMAZE_TIMEOUT = 6000;  // 单次 TVmaze 请求（国内直连实测 1~3s）
+const TVMAZE_BUDGET = 10000;  // 补季整条链（搜剧 → 拉季）到点就交已有的
 const TOTAL_BUDGET = 15000;   // 远低于函数 25s 上限，留足冷启动 + 解析时间
 
 // 到点就拿 fallback 交差，绝不让上游把整个函数拖到被平台杀掉。
@@ -90,9 +94,12 @@ function parseSearchHtml(html) {
     const cm = $el.text().match(/([\d,]+)\s*人评价/);
     const ratingCount = cm ? Number(cm[1].replace(/,/g, '')) : null;
     const castText = ($el.find('.subject-cast').first().text() || '').trim();
+    // 「原名:The Walking Dead / 导演 / 主演 / 2021」→ 英文原名。补季链靠它去 TVmaze 找同一部剧
+    const om = castText.match(/原名[:：]\s*([^/]+)/);
     out.push({
       doubanId: id,
       title,
+      originalTitle: om ? om[1].trim() : '',
       year: pickYear(castText) || pickYear($el.text()),
       posterUrl: cover,
       // 搜索页 cast 行导演位置不稳定，保持空；选中后由 fetchMovieFullInfo 补全
@@ -135,6 +142,82 @@ function pickDirectorFromSubTitle(subTitle) {
   const candidate = parts[3];
   if (/^\d{4}$/.test(candidate)) return '';
   return candidate;
+}
+
+// ── TVmaze 补季 ─────────────────────────────────────────────────────────
+// 场景：豆瓣对一批分季剧集只对已登录用户开放（《行尸走肉》第 1~7 季……），匿名搜索页 / suggest /
+//   rexxar 三条路都只回 8~11 季 + 一堆衍生剧；时光网剧集不分季、主剧也缺。
+// 为什么是 TVmaze 而不是 TMDB：api.themoviedb.org 在国内直连被 DNS 污染（解析到 31.13.82.169、
+//   TCP 握手不通），云函数出口同样直连，走不了。TVmaze 免 key、国内直连 1~3s、每季独立海报 + 集数。
+// TVmaze 只认英文，所以不拿用户的中文关键词去搜——前端从豆瓣已回的候选里抠出
+//   { cn: '行尸走肉', en: 'The Walking Dead' }（标题去掉「第X季」+ 搜索页 原名: 字段）作 seasonsFor 传进来，
+//   这里按 en 去 TVmaze 找剧（剧名归一化后必须相等，否则宁可不补），拉全部季，
+//   再用 cn 拼回豆瓣写法的标题「行尸走肉 第一季」（中文数字），与豆瓣已有的季按片名去重后只剩缺的。
+// 候选不带评分（TVmaze 分制与豆瓣不同、也不在全平台评分四格里）；无 doubanId → 前端走外部源分支
+//   （跳过 fetchMovieFullInfo），封面 static.tvmaze.com 由 syncDailyLog.mirrorCover 转存 cloud://。
+const TVMAZE_API = 'https://api.tvmaze.com';
+const TVMAZE_MAX_SHOWS = 2;   // 一次最多补几部剧（每部两次请求：搜剧 + 拉季）
+const TVMAZE_MAX = 30;        // 最多补几条季
+
+const CN_DIGITS = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
+// 1 → 一，10 → 十，11 → 十一，21 → 二十一（豆瓣分季标题的写法）
+function cnNumber(n) {
+  n = Number(n) || 0;
+  if (n < 10) return CN_DIGITS[n];
+  if (n < 20) return '十' + (n % 10 ? CN_DIGITS[n % 10] : '');
+  if (n < 100) return CN_DIGITS[Math.floor(n / 10)] + '十' + (n % 10 ? CN_DIGITS[n % 10] : '');
+  return String(n);
+}
+
+function tvmazeGet(path) {
+  return axios.get(`${TVMAZE_API}${path}`, {
+    headers: { 'User-Agent': DESKTOP_UA, 'Accept': 'application/json' },
+    timeout: TVMAZE_TIMEOUT,
+    responseType: 'json',
+    validateStatus: () => true
+  }).then(res => {
+    if (res.status >= 400) { console.warn(`[tvmaze] ${path} status=${res.status}`); return null; }
+    return res.data;
+  });
+}
+
+// hints: [{ cn, en }]；en 为空则拿 cn 当搜索词（用户直接输了英文名时前端会这么传）
+async function seasonsViaTvmaze(hints) {
+  const list = (hints || []).filter(h => h && (h.en || h.cn)).slice(0, TVMAZE_MAX_SHOWS);
+  const out = [];
+  await Promise.all(list.map(async h => {
+    const q = String(h.en || h.cn).trim();
+    const found = await tvmazeGet(`/search/shows?q=${encodeURIComponent(q)}`).catch(() => null);
+    const rows = Array.isArray(found) ? found : [];
+    // 剧名必须归一化后相等：TVmaze 搜「The Walking Dead」第二三名是 Fear the Walking Dead / Origins，按分数取会补错剧
+    const want = normalizeForMatch(q);
+    const hit = rows.map(r => r.show).find(s => s && normalizeForMatch(s.name) === want);
+    if (!hit) { console.warn('[tvmaze] 无同名剧:', q); return; }
+    const seasons = await tvmazeGet(`/shows/${hit.id}/seasons`).catch(() => null);
+    const cn = String(h.cn || hit.name).trim();
+    // 候选列表用 medium（210×295，~20 KB，国内直连 1s 内）；original_untouched 是 2~3 MB、手机上 20s 都拉不完，
+    // 只放进 posterLarge 供落库时服务端镜像成 cloud://（分享海报要大图）
+    const pick = (img, k) => (img && img[k]) || '';
+    const showPoster = pick(hit.image, 'medium') || pick(hit.image, 'original');
+    const showPosterLarge = pick(hit.image, 'original') || showPoster;
+    (Array.isArray(seasons) ? seasons : []).forEach(se => {
+      const n = Number(se.number) || 0;
+      if (n <= 0) return;
+      out.push({
+        source: 'tvmaze', tvmazeId: String(hit.id), tvmazeSeason: n, doubanId: '',
+        title: `${cn} 第${cnNumber(n)}季`,
+        titleEn: `${hit.name} Season ${n}`,
+        year: pickYear(se.premiereDate) || pickYear(hit.premiered),
+        posterUrl: pick(se.image, 'medium') || pick(se.image, 'original') || showPoster,
+        posterLarge: pick(se.image, 'original') || pick(se.image, 'medium') || showPosterLarge,
+        subtype: 'tv', director: '',
+        totalEpisodes: Number(se.episodeOrder) || 0,   // 给「看到第几集」进度条一个分母
+        rating: null, ratingCount: null,
+        url: `https://www.tvmaze.com/seasons/${se.id}`
+      });
+    });
+  }));
+  return out.slice(0, TVMAZE_MAX);
 }
 
 // ── 时光网（Mtime）替补搜索 ─────────────────────────────────────────────
@@ -252,6 +335,27 @@ exports.main = async (event, context) => {
   // includeMtime：仅每日电影（pages/daily/movie/add）传，用时光网兜底补正片；
   // pages/movie-search（全平台评分查询）不传 → 行为完全不变、纯豆瓣。
   const includeMtime = !!(event && event.includeMtime);
+  // seasonsFor：补季模式（每日电影第二趟调用）。只跑 TVmaze，不碰豆瓣/时光网，见 seasonsViaTvmaze 注
+  const seasonsFor = (event && Array.isArray(event.seasonsFor)) ? event.seasonsFor : null;
+  if (seasonsFor) {
+    try {
+      const raw = await withDeadline(
+        seasonsViaTvmaze(seasonsFor).catch(e => { console.warn('TVmaze 补季失败:', e && e.message); return []; }),
+        TVMAZE_BUDGET, [], 'TVmaze 补季');
+      const seenTitle = new Set();
+      const candidates = [];
+      raw.forEach(c => {
+        const t = normalizeForMatch(c.title);
+        if (!t || seenTitle.has(t)) return;
+        seenTitle.add(t);
+        candidates.push({ ...c, key: `tv${c.tvmazeId}s${c.tvmazeSeason}` });
+      });
+      return { success: true, candidates, keyword };
+    } catch (err) {
+      console.error('searchMovieByTitle 补季失败:', err && err.message);
+      return { success: false, error: err && err.message, keyword };
+    }
+  }
   if (!keyword) {
     return { success: false, error: 'EMPTY_KEYWORD' };
   }
