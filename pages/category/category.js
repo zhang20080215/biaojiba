@@ -42,7 +42,8 @@ var GAME_BLOCKS = [
 //   top        — TOP 榜集合（movies/imdb_movies/…）要排除软删记录（isTop250:false 的也可能 rank=1）
 //   latest     — rank 即届数的奖项榜（奥斯卡系），取 rank 最大的一届而不是 rank=1（1929 年的《翼》）
 // 包里不再带任何设计封面图（2026-09 起，原 10 张 cover-*.jpg 合计 250KB 全部删除）；
-// 没有榜单集合的三张卡（每日电影/每日读书/评分查询）的封面放云存储 category_covers/，image 直接填 fileID。
+// 没有榜单集合的五张卡（每日电影/读书/运动/喝水 + 评分查询）的封面放云存储 category_covers/，image 直接填 fileID
+//（源图在 tools/category-covers/，四张每日卡是 1:1 简约图标，同一奶油底 + 各自 brand 色）。
 var DYNAMIC_COVER_THEMES = [
   // 老主题（专属集合）
   { id: 'douban_movies', collection: 'movies', top: true },
@@ -503,7 +504,7 @@ Page({
         id: 'daily_sport',
         title: '每日运动',
         description: '记录每次训练，坚持养成习惯',
-        image: '',
+        image: 'cloud://cloud1-3gn3wryx716919c6.636c-cloud1-3gn3wryx716919c6-1360913831/category_covers/cover-daily-sport.jpg',
         brand: ['#8FB3F0', '#3F6AD6'],
         placeholderEmoji: '🏋️',
         placeholderText: '每日运动',
@@ -546,7 +547,7 @@ Page({
         id: 'daily_water',
         title: '每日喝水',
         description: '记录每日饮水量，养成健康习惯',
-        image: '',
+        image: 'cloud://cloud1-3gn3wryx716919c6.636c-cloud1-3gn3wryx716919c6-1360913831/category_covers/cover-daily-water.jpg',
         brand: ['#9CCBE0', '#3F7E93'],
         placeholderEmoji: '💧',
         placeholderText: '每日喝水',
