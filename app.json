@@ -30,6 +30,7 @@
     "pages/daily/read/index",
     "pages/daily/read/add",
     "pages/daily/read/stats",
+    "pages/daily/read/share",
     "pages/daily/sport/index",
     "pages/daily/sport/add",
     "pages/daily/sport/stats",

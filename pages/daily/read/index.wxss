@@ -298,6 +298,22 @@ page {
 .month-arrow.is-disabled {
   opacity: 0.25;
 }
+/* 分享海报入口：贴行右缘（与 .top-controls 里靠右的 .seg 同一条右边线） */
+.poster-btn {
+  margin-left: auto;
+  height: 56rpx;
+  padding: 0 20rpx;
+  border-radius: 18rpx;
+  border: 2rpx solid #E8E0CC;
+  background: #FFFFFF;
+  color: #6B6356;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+.poster-btn-ico { font-size: 26rpx; line-height: 1; }
 .month-label {
   text-align: center;
   font-size: 32rpx;
@@ -321,8 +337,14 @@ page {
   font-weight: 700;
 }
 
-.add-record-btn {
+.record-btn-row {
   margin-top: 28rpx;
+  display: flex;
+  gap: 18rpx;
+}
+.add-record-btn {
+  flex: 1 1 0;
+  min-width: 0;
   height: 92rpx;
   border-radius: 24rpx;
   background: #1A1A1A;
@@ -338,6 +360,43 @@ page {
 .add-record-btn .add-plus {
   font-size: 40rpx;
   line-height: 1;
+}
+/* 生成阅读海报：与「添加」等高等宽，白底描边做次级；右上角 NEW 角标 */
+.poster-record-btn {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 92rpx;
+  border-radius: 24rpx;
+  background: #FFFFFF;
+  border: 2rpx solid #E8E0CC;
+  color: #1A1A1A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  font-size: 30rpx;
+  font-weight: 700;
+  box-sizing: border-box;
+  box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.06);
+}
+.poster-record-ico {
+  font-size: 32rpx;
+  line-height: 1;
+}
+.new-badge {
+  position: absolute;
+  top: -12rpx;
+  right: -6rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 999rpx;
+  background: #E5484D;
+  color: #FFFFFF;
+  font-size: 18rpx;
+  font-weight: 800;
+  line-height: 26rpx;
+  letter-spacing: 1rpx;
+  box-shadow: 0 4rpx 10rpx rgba(229, 72, 77, 0.35);
 }
 
 .state-text,
@@ -436,11 +495,13 @@ page {
 }
 .title-row {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 10rpx;
   min-width: 0;
 }
 .movie-title {
+  flex: 0 1 auto;
+  min-width: 0;
   font-size: 30rpx;
   font-weight: 800;
   overflow: hidden;
@@ -452,6 +513,26 @@ page {
 .movie-time {
   font-size: 22rpx;
   color: #A89E8C;
+}
+.title-row .movie-year { flex-shrink: 0; }
+.card-share-btn {
+  margin-left: auto;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
+  background: #FFFFFF;
+  border: 2rpx solid #E6DFD1;
+  color: #1A1A1A;
+  font-size: 22rpx;
+  font-weight: 700;
+  line-height: 1;
+}
+.card-share-ico {
+  font-size: 24rpx;
+  line-height: 1;
 }
 .movie-meta,
 .movie-rating,

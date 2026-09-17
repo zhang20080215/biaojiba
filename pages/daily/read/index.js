@@ -12,6 +12,7 @@ const {
   progressRingUri,
   normalizeBookEntry,
   flattenBooks,
+  dedupeBooks,
   getReadThemeView
 } = require('./common.js');
 
@@ -342,26 +343,15 @@ Page({
       (d.entries || []).forEach(en => { byMonth[mIdx].push(normalizeBookEntry(en, d.date)); });
     });
     return byMonth.map((list, i) => {
-      const deduped = this.dedupeWallBooks(list).sort((a, b) => (a.ts || 0) - (b.ts || 0));
+      const deduped = dedupeBooks(list).sort((a, b) => (a.ts || 0) - (b.ts || 0));
       const covers = deduped.slice(0, 9).map(m => m.posterThumb || '/images/default-movie.jpg');
       return { month: i + 1, count: deduped.length, covers, hasMovies: list.length > 0 };
     });
   },
 
-  // 书墙去重：同一本书（doubanId 缺失退回书名）只保留一张海报，取 ts 最大的那条（最近一次记录，心情/封面为最新状态）
-  dedupeWallBooks(list) {
-    const map = new Map();
-    (list || []).forEach(m => {
-      const k = m.doubanId || m.title;
-      const prev = map.get(k);
-      if (!prev || (m.ts || 0) > (prev.ts || 0)) map.set(k, m);
-    });
-    return Array.from(map.values());
-  },
-
   // 年度书墙：按 ts 升序 + CSS wrap-reverse → 最早的先落满最底排、往上堆，最近读的浮在最顶（与月墙一致）；数量越多单张越小
   buildYearWall(days) {
-    const base = this.dedupeWallBooks(flattenBooks(days)).sort((a, b) => (a.ts || 0) - (b.ts || 0));
+    const base = dedupeBooks(flattenBooks(days)).sort((a, b) => (a.ts || 0) - (b.ts || 0));
     const n = base.length;
     const perRow = n <= 15 ? 5 : n <= 30 ? 6 : n <= 60 ? 7 : n <= 100 ? 8 : 9;
     const items = base.map((m, i) => ({
@@ -488,7 +478,7 @@ Page({
   // 区域高度按实际堆叠高度自适应（少不留白、多不裁切）：数量越多每行越多、封面越小（w5→w9），铺满不滚动
   // 返回 { items, areaH, wallCls }；fallFrom/delay 用于仿重力错峰飘落动画
   buildWall(days) {
-    const base = this.dedupeWallBooks(flattenBooks(days)).sort((a, b) => (a.ts || 0) - (b.ts || 0));
+    const base = dedupeBooks(flattenBooks(days)).sort((a, b) => (a.ts || 0) - (b.ts || 0));
     const n = base.length;
     const perRow = n <= 15 ? 5 : n <= 30 ? 6 : n <= 60 ? 7 : n <= 100 ? 8 : 9;
     const POSTER_H = this.WALL_POSTER_H[perRow];
@@ -590,6 +580,24 @@ Page({
       if (dx < 0) this.setData({ swipedKey: key });
       else if (this.data.swipedKey === key) this.setData({ swipedKey: '' });
     }
+  },
+
+  // 「海报」：范围海报（默认当前年度，分享页里可切年度/月度、前后翻），不经过选书
+  onOpenPoster() {
+    const app = getApp();
+    if (app && app.globalData) app.globalData.bookPosterSelection = null;   // 清掉单本分享残留
+    wx.navigateTo({ url: `/pages/daily/read/share?year=${this.data.year}&month=${this.data.month}` });
+  },
+
+  // 条目「分享」：只把这一本放进 selection → 分享页按单本渲染成单张海报
+  onShareBook(e) {
+    const key = e.currentTarget.dataset.key;
+    if (this.data.swipedKey) this.setData({ swipedKey: '' });
+    const book = (this.data.selectedMovies || []).find(m => m.key === key);
+    if (!book) { toast.show(this, '记录不存在'); return; }
+    const app = getApp();
+    if (app && app.globalData) app.globalData.bookPosterSelection = [book];
+    wx.navigateTo({ url: '/pages/daily/read/share' });
   },
 
   onTapMovieCard(e) {
