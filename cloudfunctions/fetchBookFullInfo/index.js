@@ -205,13 +205,13 @@ exports.main = async (event, context) => {
 
   try {
     // 1. 缓存检查（searched_books 缺失则视为无缓存，降级实时抓取）
-    let existing = null;
-    if (!bypassCache) {
-      try {
-        const r = await booksCollection.doc(bookDocId).get();
-        existing = r && r.data;
-      } catch (e) { /* 文档/集合不存在 */ }
-    }
+    // 缓存文档无论是否 bypassCache 都读一次：它上面可能挂着人工修正的 pagesOverride，重抓也得认。
+    let cachedDoc = null;
+    try {
+      const r = await booksCollection.doc(bookDocId).get();
+      cachedDoc = r && r.data;
+    } catch (e) { /* 文档/集合不存在 */ }
+    let existing = bypassCache ? null : cachedDoc;
 
     // pages 是后加的字段：老缓存文档没有它（publisher 也可能是历史遗留的数组），
     // 视为未命中重抓一次补齐。抓到后必写 pages（无页数时为 null），不会反复回源。
@@ -233,6 +233,10 @@ exports.main = async (event, context) => {
 
     // 2. 爬豆瓣读书
     const detail = await scrapeDoubanBookDetail(doubanId);
+    // 人工修正过的总页数（syncDailyLog fixBookPages 打的 pagesOverride，豆瓣页数错误的用户反馈）：
+    // 重抓只刷新评分/封面等，页数以修正值为准，否则一次 forceRefresh 就把修正冲回豆瓣的错值。
+    const pagesOverride = cachedDoc && Number(cachedDoc.pagesOverride) > 0 ? Number(cachedDoc.pagesOverride) : 0;
+    if (pagesOverride) detail.pages = pagesOverride;
 
     // 3. 封面上传云存储
     const cloudCover = await downloadAndUploadCover(detail.coverUrl, bookDocId);
@@ -249,6 +253,7 @@ exports.main = async (event, context) => {
       publisher: detail.publisher,
       pubDate: detail.pubDate,
       pages: detail.pages,
+      ...(pagesOverride ? { pagesOverride, pagesOverrideAt: cachedDoc.pagesOverrideAt || null } : {}),
       isbn: detail.isbn,
       intro: detail.intro,
       cover: cloudCover || detail.coverUrl,

@@ -11,7 +11,7 @@
 //
 // 入参约定（所有 action 都必填 theme）：
 //   action: 'getToday' | 'addEntry' | 'removeEntry' | 'updateEntry' | 'reorderEntries' | 'setGoal' | 'setPresets' | 'getRange' | 'getYear' | 'getAll'
-//   另有运维动作 'stats'（各主题参与人数，不需要 openid，从云函数控制台跑）
+//   另有运维动作 'stats'（各主题参与人数）/ 'fixBookPages'（修正某用户某本书的总页数），都不需要 openid，从云函数控制台跑
 //   theme:  'water' | 'milktea' | ...
 
 const cloud = require('wx-server-sdk');
@@ -490,6 +490,113 @@ async function dailyStats(event) {
     return { success: true, since30: since, stats };
 }
 
+// 运维修正：某个用户某本书的「总页数」（用户反馈豆瓣抓错页数，如《加西亚·马尔克斯传》豆瓣 480、实际 557）。
+//   { action:'fixBookPages', openid, doubanId?, title?, totalPages, apply?:true }
+//   { action:'fixBookPages', allUsers:true, doubanId, totalPages, apply?:true }   // 跨用户：查「还有谁在读这本」+ 一次修完
+// 范围锁死在 openid + theme:'read' + 这一本书（doubanId 优先，没有就按 meta.title 全等），只改命中条目的
+// meta.totalPages，同用户其它书、其它字段一律不碰。默认干跑只报会改哪些（顺便把 doubanId 报出来，
+// 第二次就能按 id 跑）；apply:true 才写。allUsers 模式必须给 doubanId（按 title 跨用户扫会串版本），
+// 干跑返回 byOpenid 汇总，先看清楚是谁、几条，再决定要不要 apply。进度百分比不落库、前端按 currentPage/totalPages 现算，
+// 改了分母即等于重算。命中 doubanId 时同时把 searched_books 缓存的 pages 改掉并打上 pagesOverride，
+// 否则用户下次「继续阅读」/重选这本书，add 页从详情拿到的仍是旧页数。
+// 注意：add 页把超过总页数的当前页夹到总页数，所以 currentPage == 旧分母 的条目可能是被夹过的，
+// 脚本无法反推真实页数，报告里标 clampedSuspect 让用户自己在轻编辑里改。
+async function fixBookPages(event) {
+    const openid = String(event.openid || '').trim();
+    const doubanId = String(event.doubanId || '').trim();
+    const title = String(event.title || '').trim();
+    const totalPages = Number(event.totalPages) || 0;
+    const apply = event.apply === true;
+    const allUsers = event.allUsers === true;
+    if (allUsers && !doubanId) return { success: false, error: 'allUsers 模式必须给 doubanId' };
+    if (!allUsers && !openid) return { success: false, error: 'openid 必填（或 allUsers:true）' };
+    if (!doubanId && !title) return { success: false, error: 'doubanId / title 至少给一个' };
+    if (!(totalPages > 0)) return { success: false, error: 'totalPages 必须是正整数' };
+
+    const hit = m => m && typeof m === 'object' && (
+        doubanId ? String(m.doubanId || '') === doubanId : String(m.title || '').trim() === title
+    );
+
+    const coll = db.collection('DailyLogs');
+    const PAGE = 100;
+    const docs = [];
+    // 跨用户模式按数组子文档点路径直接命中含这本书的打卡日，不必扫全部 read 文档
+    const where = allUsers ? { theme: 'read', 'entries.meta.doubanId': doubanId } : { openid, theme: 'read' };
+    for (let skip = 0; ; skip += PAGE) {
+        const r = await coll.where(where).orderBy('date', 'asc').skip(skip).limit(PAGE).get();
+        docs.push(...(r.data || []));
+        if ((r.data || []).length < PAGE) break;
+    }
+
+    const matched = [];        // 报告用
+    const ids = new Set();     // 命中条目里出现过的 doubanId（按 title 跑时用来定位缓存文档）
+    let changedDocs = 0, changedEntries = 0;
+    for (const doc of docs) {
+        const entries = doc.entries || [];
+        const targets = entries.filter(e => hit(e.meta));
+        if (!targets.length) continue;
+        targets.forEach(e => {
+            const m = e.meta;
+            const before = Number(m.totalPages) || 0;
+            if (m.doubanId) ids.add(String(m.doubanId));
+            matched.push({
+                openid: doc.openid, date: doc.date, ts: e.ts, title: m.title || '', doubanId: m.doubanId || '',
+                before, after: totalPages, currentPage: Number(m.currentPage) || 0,
+                clampedSuspect: before > 0 && Number(m.currentPage) === before
+            });
+        });
+        if (!apply) continue;
+        // 写回：重读该文档→只改命中条目的 totalPages→整体写回 entries（保持数组顺序即展示顺序）
+        const fresh = await coll.doc(doc._id).get();
+        const fe = (fresh.data && fresh.data.entries) || [];
+        let touched = 0;
+        fe.forEach(e => {
+            if (!hit(e.meta) || Number(e.meta.totalPages) === totalPages) return;
+            e.meta.totalPages = totalPages;
+            touched++;
+        });
+        if (touched) {
+            await coll.doc(doc._id).update({ data: { entries: fe, updated_at: db.serverDate() } });
+            changedDocs++;
+            changedEntries += touched;
+        }
+    }
+
+    // 缓存同步：只有唯一确定的 doubanId 才动 searched_books（按 title 命中多个 id 时不猜，报出来让人选）
+    const cacheId = doubanId || (ids.size === 1 ? [...ids][0] : '');
+    const cache = { doubanId: cacheId, updated: false };
+    if (cacheId) {
+        const bookDocId = `book_search_${cacheId}`;
+        try {
+            const r = await db.collection('searched_books').doc(bookDocId).get();
+            cache.before = r.data ? r.data.pages : undefined;
+            if (apply && r.data) {
+                await db.collection('searched_books').doc(bookDocId).update({
+                    data: { pages: totalPages, pagesOverride: totalPages, pagesOverrideAt: db.serverDate() }
+                });
+                cache.updated = true;
+            }
+        } catch (e) {
+            cache.error = e && (e.errMsg || e.message);   // 文档不存在 → 没缓存过，不用管
+        }
+    }
+
+    // 按用户汇总：几条记录、最近一条日期与页数，一眼看出「谁在读、读到哪」
+    const byOpenid = {};
+    matched.forEach(x => {
+        const b = byOpenid[x.openid] || (byOpenid[x.openid] = { entries: 0, firstDate: x.date, lastDate: x.date, lastPage: 0 });
+        b.entries++;
+        if (x.date < b.firstDate) b.firstDate = x.date;
+        if (x.date >= b.lastDate) { b.lastDate = x.date; b.lastPage = x.currentPage; }
+    });
+
+    return {
+        success: true, apply, allUsers, openid: allUsers ? null : openid, doubanId: doubanId || null, title: title || null, totalPages,
+        scannedDocs: docs.length, matchedEntries: matched.length, changedDocs, changedEntries,
+        users: Object.keys(byOpenid).length, byOpenid, doubanIdsSeen: [...ids], cache, matched
+    };
+}
+
 exports.main = async (event, context) => {
     const wxContext = cloud.getWXContext();
     const openid = wxContext.OPENID;
@@ -512,6 +619,16 @@ exports.main = async (event, context) => {
             return await dailyStats(event);
         } catch (err) {
             console.error('dailyStats error', err);
+            return { success: false, error: err && (err.errMsg || err.message) };
+        }
+    }
+
+    // 运维修正：某用户某本书的总页数，openid 走入参（从云函数控制台跑），默认干跑
+    if (action === 'fixBookPages') {
+        try {
+            return await fixBookPages(event);
+        } catch (err) {
+            console.error('fixBookPages error', err);
             return { success: false, error: err && (err.errMsg || err.message) };
         }
     }
