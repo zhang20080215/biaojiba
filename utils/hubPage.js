@@ -1004,7 +1004,6 @@ module.exports = function createHubPage(pageKind) {
   onLoadMoreTimeline() { return this.loadTimeline(true); },
   onReachBottom() { if (pageKind === 'records' && this.data.timelineHasMore) this.loadTimeline(true); },
   onGoProfile() { hubStore.switchTo('profile', { personalTab: 'marked' }); },
-  onGoRecords() { hubStore.switchTo('records'); },
   onGoHome() { hubStore.switchTo('home'); },
   // 时间轴记录没有封面时显示所属主题的线条图标（按 present 解析出的 themeId 找主题）
   _presentTimeline(raw, themes) {

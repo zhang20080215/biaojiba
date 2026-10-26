@@ -35,7 +35,7 @@
   <view wx:if="{{pageKind === 'home'}}" class="hero-section hub-hero" style="padding-top:{{headerPadTop}}px">
     <view class="header"><view class="header-left"><view class="header-top hub-brand-row"><text class="hub-brand">{{pageTitle}}</text><button class="theme-toggle" bindtap="onToggleThemePicker" hover-class="theme-toggle-hover" aria-label="切换主题色"><view class="theme-palette" aria-hidden="true"><view class="theme-palette-icon"></view></view></button></view></view></view>
   </view>
-  <view wx:elif="{{pageKind !== 'records'}}" class="hub-header" style="padding-top:{{headerPadTop}}px"><view class="hub-brand-row"><text class="hub-brand">{{pageTitle}}</text></view><text wx:if="{{pageKind !== 'discover'}}" class="hub-eyebrow">{{pageKind === 'discover' ? (discoverSection === 'daily' ? '把日常，慢慢记成生活' : '找到下一份想完成的清单') : pageKind === 'records' ? '每一次标记，都在这里' : '让标记更像你'}}</text></view>
+  <view wx:elif="{{pageKind !== 'records'}}" class="hub-header" style="padding-top:{{headerPadTop}}px"><view class="hub-brand-row"><text class="hub-brand">{{pageTitle}}</text></view></view>
   <!-- 首页搜索行：跨在头图底边上（一半压头图、一半落正文），左右与标题、正文同一条 16px 边线 -->
   <view wx:if="{{pageKind === 'home'}}" class="hub-hero-search-row">
     <view class="hub-search hub-hero-search"><view class="hub-search-icon" aria-hidden="true"></view><input placeholder="片单、书单、旅行" aria-label="搜索主题" placeholder-class="hub-input-placeholder" value="{{searchQuery}}" bindinput="onSearchInput" bindconfirm="onHomeSearch" confirm-type="search" maxlength="80" /></view>
@@ -112,7 +112,7 @@
     <view wx:elif="{{!timelineRows.length}}" class="hub-empty"><view class="hub-empty-symbol" aria-hidden="true">✓</view><text class="hub-row-title">从今天开始，留下标记的足迹</text><text class="hub-muted">每次标记都会出现，连续和批量标记合并展示</text><button class="hub-primary" bindtap="onGoDiscover">去标记</button></view>
     <button wx:if="{{timelineHasMore && !timelineLoading}}" class="hub-link timeline-more" bindtap="onLoadMoreTimeline">加载更早记录</button>
     <button class="hub-link timeline-history" bindtap="onGoProfile">查看我的标记进度 ›</button>
-    <view wx:if="{{recordsLocked}}" class="records-mask" catchtouchmove="onNoop">
+    <view wx:if="{{recordsLocked}}" class="records-mask">
       <view class="records-mask-content">
         <text class="records-mask-slogan">像刷朋友圈一样</text>
         <text class="records-mask-slogan">查看自己的每日标记</text>
@@ -145,7 +145,7 @@
     <button wx:elif="{{personalExpanded && personalTotal > 3}}" class="hub-link timeline-more" bindtap="onExpandPersonal">收起</button>
     <view wx:if="{{summaryState === 'error' || summaryState === 'partial'}}" class="hub-caption">部分进度未能读取 <button class="hub-link" bindtap="loadPersonalSummary">重试</button></view>
     </view>
-    <view class="hub-menu"><button bindtap="onGoRecords">标记时间轴<text>›</text></button><button bindtap="onToggleThemePicker" aria-label="主题配置">主题配置<view class="hub-menu-trail"><view class="theme-swatches" aria-hidden="true"><view class="theme-swatch swatch-pink {{themeClass === '' ? 'active' : ''}}"></view><view class="theme-swatch swatch-gold {{themeClass === 'theme-gold' ? 'active' : ''}}"></view><view class="theme-swatch swatch-green {{themeClass === 'theme-green' ? 'active' : ''}}"></view><view class="theme-swatch swatch-sand {{themeClass === 'theme-sand' ? 'active' : ''}}"></view></view><text>›</text></view></button><button bindtap="onSubscriptions">订阅消息设置<text>›</text></button></view>
+    <view class="hub-menu"><button bindtap="onToggleThemePicker" aria-label="主题配置">主题配置<view class="hub-menu-trail"><view class="theme-swatches" aria-hidden="true"><view class="theme-swatch swatch-pink {{themeClass === '' ? 'active' : ''}}"></view><view class="theme-swatch swatch-gold {{themeClass === 'theme-gold' ? 'active' : ''}}"></view><view class="theme-swatch swatch-green {{themeClass === 'theme-green' ? 'active' : ''}}"></view><view class="theme-swatch swatch-sand {{themeClass === 'theme-sand' ? 'active' : ''}}"></view></view><text>›</text></view></button><button bindtap="onSubscriptions">订阅消息设置<text>›</text></button></view>
     <view class="hub-menu"><button bindtap="onOpenRequestModal">许愿新榜单<text>›</text></button><button open-type="feedback">意见反馈<text>›</text></button><button bindtap="onAbout">关于标记吧<text>›</text></button></view>
     <button wx:if="{{userInfo}}" class="hub-logout" bindtap="onLogout">退出资料登录</button>
     <text class="hub-footer">标记生活的仪式感</text>
