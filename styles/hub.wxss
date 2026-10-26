@@ -194,7 +194,7 @@
 .hub-root .hub-sort button { padding: 0 18rpx; min-height: 36px; line-height: 64rpx; border-radius: 10rpx; }
 .hub-result-count { margin-left: auto; font-size: 23rpx; color: var(--text-secondary); white-space: nowrap; }
 .hub-root button.hub-view-toggle { font-size: 24rpx; padding: 0 12rpx; }
-.hub-daily-card .hub-daily-icon { flex-shrink: 0; margin: 0; }
+.hub-daily-card .hub-daily-icon { flex: 0 0 88rpx; margin: 0; }
 .hub-personal-panel { border: 1rpx solid var(--line-subtle); border-radius: 24rpx; background: var(--bg-card); margin-bottom: 32rpx; overflow: hidden; }
 .hub-root .hub-personal-tabs button { flex: 1; width: 0; padding: 8rpx 0; border-radius: 0; background: transparent; color: var(--text-secondary); white-space: nowrap; position: relative; }
 .hub-root .hub-personal-tabs button.hub-chip-active { color: var(--hub-accent); }
