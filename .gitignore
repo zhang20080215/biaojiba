@@ -40,3 +40,13 @@ tools/douban-tv-seed/.cache/
 
 # 《视与听》榜单页面缓存（1MB HTML，可重抓）
 tools/sightsound-seed/.cache/
+
+# 榜单采集临时缓存
+tools/douban-comedy-seed/.cache/
+tools/douban-scifi-seed/.cache/
+tools/douban-regional-tv-seed/.cache/
+tools/douban-mystery-disaster-seed/.cache/
+tools/bangumi-seed/.cache/
+
+# 云数据库控制台导出（含用户 openid/昵称），不进仓库、不进代码包
+database_export-*.json

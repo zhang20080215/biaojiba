@@ -1,0 +1,154 @@
+<template name="hub-card">
+  <view class="hub-card exposure-card" data-id="{{item.id}}" data-module="{{module}}" bindtap="onOpenTheme" hover-class="hub-pressed" role="button" aria-label="{{item.title}}">
+    <view class="hub-cover" style="{{item.coverStyle}}">
+      <image wx:if="{{item.image || item.dynamicCover.cover}}" class="hub-cover-image" src="{{item.image || item.dynamicCover.cover}}" mode="aspectFill" lazy-load binderror="onCoverError" data-id="{{item.id}}" />
+      <view wx:else class="hub-cover-glyph hub-glyph hub-glyph-white icon-{{item.iconKey}}" aria-hidden="true"></view>
+      <text class="hub-domain">{{item.domainLabel}}</text>
+      <view wx:if="{{item.wishFrom}}" class="hub-wish-from"><text class="hub-wish-label">许愿来自</text><text class="hub-wish-name">{{item.wishFrom}}</text></view>
+    </view>
+    <view wx:if="{{module === 'catalog'}}" class="hub-fav {{item.favorited ? 'hub-fav-on' : ''}}" catchtap="onToggleFavorite" data-id="{{item.id}}" role="button" aria-label="{{item.favorited ? '取消收藏' : '收藏'}}"><view class="hub-fav-icon"></view></view>
+    <view class="hub-card-body">
+      <scroll-view class="hub-title-scroll" scroll-x enhanced show-scrollbar="{{false}}"><text class="hub-card-title">{{item.title}}</text></scroll-view>
+      <view class="hub-card-meta"><text>{{item.isTool ? '打开使用' : item.countKnown ? (item.userCountText || '0') + ' 人标记' : ''}}</text></view>
+    </view>
+  </view>
+</template>
+<template name="popular-row">
+  <view class="hub-popular-row exposure-card" data-id="{{item.id}}" data-module="popular" bindtap="onOpenTheme" hover-class="hub-pressed" role="button" aria-label="{{item.title}}">
+    <text class="hub-rank {{item.popularityRank && item.popularityRank <= 3 ? 'hub-rank-top' : ''}}">{{item.popularityRank || '—'}}</text>
+    <view class="hub-popular-cover" style="{{item.coverStyle}}">
+      <image wx:if="{{item.image || item.dynamicCover.cover}}" class="hub-cover-image" src="{{item.image || item.dynamicCover.cover}}" mode="aspectFill" lazy-load binderror="onCoverError" data-id="{{item.id}}" />
+      <view wx:else class="hub-popular-glyph hub-glyph hub-glyph-white icon-{{item.iconKey}}" aria-hidden="true"></view>
+      <view wx:if="{{item.wishFrom}}" class="hub-wish-from"><text class="hub-wish-label">许愿来自</text><text class="hub-wish-name">{{item.wishFrom}}</text></view>
+    </view>
+    <view class="hub-record-body"><scroll-view class="hub-title-scroll" scroll-x enhanced show-scrollbar="{{false}}"><text class="hub-row-title">{{item.title}}</text></scroll-view><text class="hub-popular-count">{{item.countKnown ? (item.userCountText || '0') + ' 人标记' : '人数暂未更新'}}</text></view>
+  </view>
+</template>
+<template name="record-row">
+  <view class="hub-record" data-id="{{item.id}}" data-module="records" bindtap="onOpenTheme" hover-class="hub-pressed" role="button" aria-label="{{item.title}}">
+    <view class="hub-record-icon" style="{{item.coverStyle}}"><view class="hub-record-glyph hub-glyph hub-glyph-white icon-{{item.iconKey}}" aria-hidden="true"></view></view>
+    <view class="hub-record-body"><scroll-view class="hub-title-scroll" scroll-x enhanced show-scrollbar="{{false}}"><text class="hub-row-title">{{item.title}}</text></scroll-view><text class="hub-muted">{{item.progressText}}</text><view wx:if="{{item.progressPercent > 0}}" class="hub-progress"><view style="width:{{item.progressPercent}}%"></view></view></view>
+  </view>
+</template>
+
+<view class="page-root hub-root hub-page-{{pageKind}} {{themeClass}}">
+  <view wx:if="{{pageKind === 'home'}}" class="hero-section hub-hero" style="padding-top:{{headerPadTop}}px">
+    <view class="header"><view class="header-left"><view class="header-top hub-brand-row"><text class="hub-brand">{{pageTitle}}</text><button class="theme-toggle" bindtap="onToggleThemePicker" hover-class="theme-toggle-hover" aria-label="切换主题色"><view class="theme-palette" aria-hidden="true"><view class="theme-palette-icon"></view></view></button></view></view></view>
+  </view>
+  <view wx:elif="{{pageKind !== 'records'}}" class="hub-header" style="padding-top:{{headerPadTop}}px"><view class="hub-brand-row"><text class="hub-brand">{{pageTitle}}</text></view></view>
+  <!-- 首页搜索行：跨在头图底边上（一半压头图、一半落正文），左右与标题、正文同一条 16px 边线 -->
+  <view wx:if="{{pageKind === 'home'}}" class="hub-hero-search-row">
+    <view class="hub-search hub-hero-search"><view class="hub-search-icon" aria-hidden="true"></view><input placeholder="片单、书单、旅行" aria-label="搜索主题" placeholder-class="hub-input-placeholder" value="{{searchQuery}}" bindinput="onSearchInput" bindconfirm="onHomeSearch" confirm-type="search" maxlength="80" /></view>
+    <button class="hub-feedback-btn" open-type="feedback" bindtap="onFeedbackTap" aria-label="意见反馈"><view class="hub-feedback-icon" aria-hidden="true"></view><text class="hub-feedback-text">反馈</text></button>
+  </view>
+
+  <block wx:if="{{pageKind === 'home'}}">
+    <view class="hub-section-top hub-section"><text class="hub-section-title">每日标记</text></view>
+    <view class="hub-daily"><view wx:for="{{dailyBlocks}}" wx:key="key" class="hub-daily-item" hover-class="hub-pressed" data-id="{{item.id}}" bindtap="onOpenTheme" role="button" aria-label="{{item.title}}"><view class="hub-daily-icon"><view class="hub-glyph icon-{{item.iconKey}}" aria-hidden="true"></view></view><text>{{item.title}}</text></view></view>
+    <view wx:if="{{showTopAd}}" class="ad-zone hub-ad-top"><ad-custom unit-id="{{adUnitIds.home_top_native}}" bindload="onTopAdLoad" binderror="onTopAdError" /></view>
+    <block wx:if="{{newThemes.length}}"><view class="hub-section-top hub-section hub-latest-heading"><view class="hub-section-heading"><text class="hub-section-title">最新上线</text><button class="hub-link hub-wish-link" bindtap="onOpenRequestModal"><view class="hub-wish-icon hub-glyph hub-glyph-accent icon-wand" aria-hidden="true"></view><text>榜单许愿</text></button></view><button class="hub-link" bindtap="onGoDiscover" data-sort="latest">查看全部 ›</button></view><view class="hub-grid"><block wx:for="{{newThemes}}" wx:key="id"><template is="hub-card" data="{{item,module:'new'}}" /></block></view></block>
+    <view class="hub-section-top hub-section"><text class="hub-section-title">{{hotThemes.length ? '最受欢迎' : '精选榜单'}}</text><button class="hub-link" bindtap="onGoDiscover" data-sort="popular">更多榜单 ›</button></view>
+    <view wx:if="{{hotThemes.length}}" class="hub-popular-list"><block wx:for="{{hotThemes}}" wx:key="id"><template is="popular-row" data="{{item}}" /></block></view>
+    <view wx:elif="{{statsState === 'loading'}}" class="hub-empty hub-empty-small"><text class="hub-muted">正在读取榜单人气…</text></view>
+    <view wx:else class="hub-empty hub-empty-small"><text class="hub-muted">榜单人气统计暂不可用</text><view class="hub-sort"><button class="hub-link" bindtap="onRetryUserCounts">重新加载</button><button class="hub-link" bindtap="onGoDiscover">浏览全部榜单 ›</button></view></view>
+    <view wx:if="{{!hotThemes.length}}" class="hub-grid"><block wx:for="{{fallbackThemes}}" wx:key="id"><template is="hub-card" data="{{item,module:'featured'}}" /></block></view>
+    <view wx:if="{{hotThemes.length && pendingClassicThemes.length}}" class="hub-popular-list"><block wx:for="{{pendingClassicThemes}}" wx:key="id"><template is="popular-row" data="{{item}}" /></block></view>
+    <view wx:if="{{showNativeAd}}" class="ad-zone"><ad-custom unit-id="{{adUnitIds.category_native}}" bindload="onNativeAdLoad" binderror="onNativeAdError" /></view>
+    <view class="hub-tools"><view class="hub-tool" data-id="movie_search_all_platforms" bindtap="onOpenTheme" role="button"><text class="hub-row-title">电影评分查询</text><text class="hub-muted">豆瓣 · IMDb · 烂番茄</text></view><view wx:for="{{gameBlocks}}" wx:key="key" class="hub-tool" data-id="{{item.key}}" bindtap="onOpenTheme" role="button"><text class="hub-row-title">{{item.title}}</text><text class="hub-muted">{{item.sub}}</text></view></view>
+  </block>
+
+  <block wx:elif="{{pageKind === 'discover'}}">
+    <view class="hub-major-tabs"><button class="{{discoverSection === 'lists' ? 'active' : ''}}" data-section="lists" bindtap="onDiscoverSection">榜单</button><button class="{{discoverSection === 'daily' ? 'active' : ''}}" data-section="daily" bindtap="onDiscoverSection">每日标记</button></view>
+    <view wx:if="{{discoverSection === 'daily'}}" class="hub-daily-catalog"><view wx:for="{{dailyThemes}}" wx:key="id" class="hub-daily-card" hover-class="hub-pressed" role="button" aria-label="{{item.title}}" data-id="{{item.id}}" bindtap="onOpenTheme"><view class="hub-daily-icon"><view class="hub-glyph icon-{{item.iconKey}}" aria-hidden="true"></view></view><view><text class="hub-row-title">{{item.title}}</text><text class="hub-muted">{{item.description}}</text></view><text class="hub-arrow">›</text></view></view>
+    <block wx:else>
+    <view class="hub-search"><view class="hub-search-icon" aria-hidden="true"></view><input aria-label="搜索榜单" placeholder="榜单、作者、类型或地区" placeholder-class="hub-input-placeholder" value="{{searchQuery}}" bindinput="onSearchInput" bindconfirm="onSearchConfirm" confirm-type="search" maxlength="80" /><button wx:if="{{searchQuery}}" class="hub-search-btn hub-search-clear" bindtap="onClearSearch">清空</button></view>
+    <view class="hub-catalog-layout">
+    <view class="hub-category-sidebar"><view class="hub-filters"><button wx:for="{{categories}}" wx:key="id" class="hub-chip {{activeTab === item.id ? 'hub-chip-active' : ''}}" bindtap="onTabTap" data-tab="{{item.id}}">{{item.label}}</button></view></view>
+    <view class="hub-catalog-content">
+    <view class="hub-keywords"><view class="hub-keyword-row"><button wx:for="{{searchKeywords}}" wx:key="*this" class="hub-keyword {{searchQuery === item ? 'hub-keyword-active' : ''}}" bindtap="onSearchKeywordTap" data-keyword="{{item}}">{{item}}</button></view></view>
+    <view class="hub-section-top hub-catalog-toolbar"><view class="hub-sort"><button class="hub-link {{sortMode === 'popular' ? 'hub-selected' : ''}}" data-sort="popular" bindtap="onSortChange">{{popularityReady ? '热门' : '推荐'}}</button><button class="hub-link {{sortMode === 'latest' ? 'hub-selected' : ''}}" data-sort="latest" bindtap="onSortChange">最新</button></view><text class="hub-result-count">{{filteredThemes.length}} 个{{activeTab === 'tools' ? '入口' : '榜单'}}</text><button class="hub-link hub-view-toggle" data-mode="{{viewMode === 'cover' ? 'list' : 'cover'}}" bindtap="onSwitchViewMode">{{viewMode === 'cover' ? '列表' : '封面'}}</button></view>
+    <text wx:if="{{sortMode === 'latest'}}" class="hub-caption">新上线的主题排在前面</text>
+    <view class="hub-grid {{viewMode === 'list' ? 'hub-list' : ''}}"><block wx:for="{{filteredThemes}}" wx:key="id"><template is="hub-card" data="{{item,module:'catalog'}}" /></block></view>
+    <view wx:if="{{!filteredThemes.length}}" class="hub-empty"><view class="hub-empty-symbol" aria-hidden="true">⌕</view><text class="hub-row-title">没有找到匹配的主题</text><text class="hub-muted">换个关键词试试，或告诉我们你想要的清单</text><button class="hub-primary" bindtap="onClearSearch">查看全部主题</button></view>
+    <button class="hub-wish" bindtap="onOpenRequestModal">没找到想要的清单？许个愿 ›</button>
+    </view>
+    </view>
+    </block>
+  </block>
+
+  <block wx:elif="{{pageKind === 'records'}}">
+    <view class="moments-cover">
+      <view class="moments-navigation" style="padding-top:{{headerPadTop}}px"><text class="hub-brand">{{pageTitle}}</text></view>
+      <view class="moments-profile" bindtap="onGoProfile" role="button" aria-label="查看我的资料"><text class="moments-profile-name">{{userInfo.nickName || '我的标记生活'}}</text><image class="moments-profile-avatar" src="{{userInfo.avatarUrl || '/images/default-avatar.svg'}}" mode="aspectFill" /></view>
+    </view>
+    <text wx:if="{{timelineOffline}}" class="hub-caption moments-notice">暂时无法同步，已保留本机待同步记录</text>
+    <view class="moments-feed">
+      <view wx:for="{{timelineRows}}" wx:key="id" class="moments-entry">
+        <image class="moments-avatar" src="{{userInfo.avatarUrl || '/images/default-avatar.svg'}}" mode="aspectFill" />
+        <view class="moments-body">
+          <text class="moments-name">{{userInfo.nickName || '我'}}</text>
+          <text class="moments-summary">{{item.summary}}</text>
+          <view wx:if="{{item.detail}}" class="moments-detail">
+            <view wx:if="{{item.detail.starsText || item.detail.mood}}" class="moments-detail-row"><text wx:if="{{item.detail.starsText}}" class="moments-stars">{{item.detail.starsText}}</text><text wx:if="{{item.detail.mood}}" class="moments-mood">{{item.detail.mood}}</text></view>
+            <text wx:if="{{item.detail.note}}" class="moments-note">{{item.detail.note}}</text>
+            <text wx:if="{{item.detail.progress}}" class="moments-meta">{{item.detail.progress}}</text>
+            <text wx:if="{{item.detail.extra}}" class="moments-meta">{{item.detail.extra}}</text>
+          </view>
+          <view class="moments-media {{item.items.length === 1 ? 'moments-media-single' : item.items.length === 4 ? 'moments-media-four' : ''}}">
+            <view wx:for="{{item.items}}" wx:for-item="mark" wx:key="key" class="moments-tile {{mark.cover ? 'moments-tile-photo' : ''}}" data-id="{{item.id}}" data-key="{{mark.key}}" bindtap="onPreviewTimelineImage" role="{{mark.cover ? 'button' : ''}}" aria-label="{{mark.title}} {{mark.statusText}}">
+              <image wx:if="{{mark.cover}}" src="{{mark.cover}}" mode="aspectFill" lazy-load />
+              <view wx:else class="moments-tile-glyph hub-glyph hub-glyph-muted icon-{{item.themeIconKey}}" aria-hidden="true"></view>
+              <view class="moments-tile-caption"><text class="moments-tile-title">{{mark.title}}</text><text class="moments-tile-status">{{mark.statusText}}</text></view>
+            </view>
+          </view>
+          <button wx:if="{{item.count > 9}}" class="moments-expand" data-id="{{item.id}}" bindtap="onExpandTimeline">{{item.expanded ? '收起' : '展开全部 ' + item.count + ' 项'}}</button>
+          <button wx:if="{{item.themeId}}" class="moments-source" data-id="{{item.themeId}}" bindtap="onOpenTheme">{{item.themeTitle}}</button><text wx:else class="moments-source-label">{{item.themeTitle}}</text>
+          <view class="moments-footer"><text class="moments-time">{{item.timeLabel}}</text></view>
+        </view>
+      </view>
+    </view>
+    <view wx:if="{{timelineLoading}}" class="hub-empty hub-empty-small"><text class="hub-muted">正在读取标记…</text></view>
+    <view wx:elif="{{timelineOffline}}" class="hub-empty hub-empty-small"><button class="hub-link" bindtap="onRetryTimeline">重新加载</button></view>
+    <view wx:elif="{{!timelineRows.length}}" class="hub-empty"><view class="hub-empty-symbol" aria-hidden="true">✓</view><text class="hub-row-title">从今天开始，留下标记的足迹</text><text class="hub-muted">每次标记都会出现，连续和批量标记合并展示</text><button class="hub-primary" bindtap="onGoDiscover">去标记</button></view>
+    <button wx:if="{{timelineHasMore && !timelineLoading}}" class="hub-link timeline-more" bindtap="onLoadMoreTimeline">加载更早记录</button>
+    <button class="hub-link timeline-history" bindtap="onGoProfile">查看我的标记进度 ›</button>
+    <view wx:if="{{recordsLocked}}" class="records-mask">
+      <view class="records-mask-content">
+        <text class="records-mask-slogan">像刷朋友圈一样</text>
+        <text class="records-mask-slogan">查看自己的每日标记</text>
+        <text class="records-mask-sub">记录功能正在打磨，敬请期待</text>
+        <view class="records-like" bindtap="onWishLike" hover-class="records-like-pressed" role="button" aria-label="期待上线，点赞">
+          <view class="records-like-heart-wrap">
+            <view class="records-like-heart {{wishLikes ? 'is-liked' : ''}} {{likePop}}"></view>
+            <view wx:for="{{likeBursts}}" wx:key="id" class="records-like-burst" aria-hidden="true">
+              <view class="records-like-ring"></view>
+              <view class="records-like-spark spark-1"></view><view class="records-like-spark spark-2"></view><view class="records-like-spark spark-3"></view>
+              <view class="records-like-spark spark-4"></view><view class="records-like-spark spark-5"></view><view class="records-like-spark spark-6"></view>
+              <text class="records-like-plus">+1</text>
+            </view>
+          </view>
+          <text class="records-like-label">期待上线</text>
+          <text class="records-like-count">{{wishTotalText}}</text>
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <block wx:elif="{{pageKind === 'profile'}}">
+    <view class="hub-profile" hover-class="hub-pressed" bindtap="onEditProfile" role="button" aria-label="编辑个人资料"><image class="hub-avatar" src="{{userInfo.avatarUrl || '/images/default-avatar.svg'}}" mode="aspectFill" /><view class="hub-record-body"><text class="hub-profile-name">{{userInfo.nickName || '点击登录'}}</text><text class="hub-muted">{{userInfo ? '编辑头像与昵称' : '设置头像昵称，留下你的模样'}}</text></view><text class="hub-arrow">›</text></view>
+    <view class="hub-section-top hub-section"><text class="hub-section-title">我的主题</text><button class="hub-link" bindtap="onOpenPinManager">管理收藏 ›</button></view>
+    <view class="hub-personal-panel">
+    <view class="hub-personal-tabs"><button wx:for="{{personalTabs}}" wx:key="id" class="hub-chip {{personalTab === item.id ? 'hub-chip-active' : ''}}" data-tab="{{item.id}}" bindtap="onPersonalTab">{{item.label}}</button></view>
+    <view wx:if="{{personalThemes.length}}" class="hub-record-list"><block wx:for="{{personalThemes}}" wx:key="id"><template is="record-row" data="{{item}}" /></block></view>
+    <view wx:else class="hub-empty hub-empty-small"><text class="hub-muted">{{personalTab === 'common' ? '在分类页点主题右上角的星标收藏，下次更快找到' : personalTab === 'recent' ? '浏览过的主题会出现在这里' : summaryState === 'loading' ? '正在读取进度…' : summaryState === 'error' ? '进度暂时无法读取' : '还没有标记的主题'}}</text><button wx:if="{{personalTab === 'common'}}" class="hub-link" bindtap="onOpenPinManager">添加收藏 ›</button></view>
+    <button wx:if="{{personalTotal > personalThemes.length}}" class="hub-link timeline-more" bindtap="onExpandPersonal">展开全部 {{personalTotal}} 个主题</button>
+    <button wx:elif="{{personalExpanded && personalTotal > 3}}" class="hub-link timeline-more" bindtap="onExpandPersonal">收起</button>
+    <view wx:if="{{summaryState === 'error' || summaryState === 'partial'}}" class="hub-caption">部分进度未能读取 <button class="hub-link" bindtap="loadPersonalSummary">重试</button></view>
+    </view>
+    <view class="hub-menu"><button bindtap="onToggleThemePicker" aria-label="主题配置">主题配置<view class="hub-menu-trail"><view class="theme-swatches" aria-hidden="true"><view class="theme-swatch swatch-pink {{themeClass === '' ? 'active' : ''}}"></view><view class="theme-swatch swatch-gold {{themeClass === 'theme-gold' ? 'active' : ''}}"></view><view class="theme-swatch swatch-green {{themeClass === 'theme-green' ? 'active' : ''}}"></view><view class="theme-swatch swatch-sand {{themeClass === 'theme-sand' ? 'active' : ''}}"></view></view><text>›</text></view></button><button bindtap="onSubscriptions">订阅消息设置<text>›</text></button></view>
+    <view class="hub-menu"><button bindtap="onOpenRequestModal">许愿新榜单<text>›</text></button><button open-type="feedback">意见反馈<text>›</text></button><button bindtap="onAbout">关于标记吧<text>›</text></button></view>
+    <button wx:if="{{userInfo}}" class="hub-logout" bindtap="onLogout">退出资料登录</button>
+    <text class="hub-footer">标记生活的仪式感</text>
+  </block>
+  <include src="hub-overlays.wxml" />
+</view>

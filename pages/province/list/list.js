@@ -1,3 +1,4 @@
+const markTimeline = require('../../../utils/markTimeline');
 // pages/province/list/list.js —— 全国旅游省份列表页
 // 数据走 getProvinces（专属集合 travel_provinces），标记复用 Marks（去过=watched、想去=wish）
 // + batchUpdateMarks，交互骨架借鉴 pages/scenic/list，去掉封面图（纯色文字卡），
@@ -77,6 +78,7 @@ Page({
     },
 
     onShow() {
+        this._timelineGroup = null;
         this.checkLoginStatus();
         this.setNavBarColor();
     },
@@ -383,7 +385,7 @@ Page({
             // 加载又被读回来 —— 表现就是「取消不掉、标记复活，状态还可能变回旧的」。删全部顺手把
             // 这些历史重复清干净，且不需要单独跑清理脚本。
             const persist = db.collection('Marks').where({ movieId: id, openid }).remove();
-            persist.catch(err => {
+            persist.then(() => { markTimeline.record(this, 'province', 'unmark', [id]); }).catch(err => {
                 console.error('取消标记失败:', err);
                 this.restoreSingleMarkLocally(id, snapshot);
                 wx.showToast({ title: '取消失败，请重试', icon: 'none' });
@@ -400,6 +402,7 @@ Page({
             : db.collection('Marks').add({ data: { movieId: id, openid, status: targetStatus, marked_at: now } });
 
         persist.then(res => {
+            markTimeline.record(this, 'province', targetStatus, [id]);
             if (!existingRecordId && res && res._id) {
                 this.setData({ markRecordIdMap: { ...this.data.markRecordIdMap, [id]: res._id } });
             }
@@ -477,6 +480,8 @@ Page({
             data: { movieIds: ids, status, openid },
             success: res => {
                 wx.hideLoading();
+                const savedIds = res.result && (res.result.succeededIds || (res.result.success ? ids : [])) || [];
+                if (savedIds.length) markTimeline.record(this, 'province', status, savedIds, 'batch');
                 if (res.result && res.result.success) {
                     this.applyBatchLocally(ids, status);
                     wx.showToast({ title: '批量标记成功', icon: 'success' });

@@ -1,0 +1,198 @@
+[
+  {
+    "id": "douban_movies",
+    "collection": "movies",
+    "topFiltered": true
+  },
+  {
+    "id": "imdb_movies",
+    "collection": "imdb_movies",
+    "topFiltered": true
+  },
+  {
+    "id": "oscar_movies",
+    "collection": "oscar_movies",
+    "topFiltered": false
+  },
+  {
+    "id": "oscar_anime_movies",
+    "collection": "oscar_anime_movies",
+    "topFiltered": false
+  },
+  {
+    "id": "boxoffice_movies",
+    "collection": "boxoffice_movies",
+    "topFiltered": true
+  },
+  {
+    "id": "oscar_cinematography_movies",
+    "collection": "generic_theme_movies",
+    "theme": "oscarCinematography",
+    "topFiltered": false
+  },
+  {
+    "id": "rt_horror_movies",
+    "collection": "generic_theme_movies",
+    "theme": "rtHorror",
+    "topFiltered": false
+  },
+  {
+    "id": "rt_war_movies",
+    "collection": "generic_theme_movies",
+    "theme": "rtWar",
+    "topFiltered": false
+  },
+  {
+    "id": "rt_animation_movies",
+    "collection": "generic_theme_movies",
+    "theme": "rtAnimation",
+    "topFiltered": false
+  },
+  {
+    "id": "palme_dor_movies",
+    "collection": "generic_theme_movies",
+    "theme": "palmeDor",
+    "topFiltered": false
+  },
+  {
+    "id": "oscar_screenplay_movies",
+    "collection": "generic_theme_movies",
+    "theme": "oscarScreenplay",
+    "topFiltered": false
+  },
+  {
+    "id": "oscar_foreign_movies",
+    "collection": "generic_theme_movies",
+    "theme": "oscarForeign",
+    "topFiltered": false
+  },
+  {
+    "id": "oscar_director_movies",
+    "collection": "generic_theme_movies",
+    "theme": "oscarDirector",
+    "topFiltered": false
+  },
+  {
+    "id": "oscar_vfx_movies",
+    "collection": "generic_theme_movies",
+    "theme": "oscarVFX",
+    "topFiltered": false
+  },
+  {
+    "id": "oscar_actor_movies",
+    "collection": "generic_theme_movies",
+    "theme": "oscarActor",
+    "topFiltered": false
+  },
+  {
+    "id": "oscar_actress_movies",
+    "collection": "generic_theme_movies",
+    "theme": "oscarActress",
+    "topFiltered": false
+  },
+  {
+    "id": "rt_action_movies",
+    "collection": "generic_theme_movies",
+    "theme": "rtAction",
+    "topFiltered": false
+  },
+  {
+    "id": "letterboxd500_movies",
+    "collection": "generic_theme_movies",
+    "theme": "letterboxd500",
+    "topFiltered": false
+  },
+  {
+    "id": "douban_tv_cn",
+    "collection": "generic_theme_movies",
+    "theme": "doubanTvCn",
+    "topFiltered": false
+  },
+  {
+    "id": "douban_tv_foreign",
+    "collection": "generic_theme_movies",
+    "theme": "doubanTvForeign",
+    "topFiltered": false
+  },
+  {
+    "id": "douban_tv_anime",
+    "collection": "generic_theme_movies",
+    "theme": "doubanTvAnime",
+    "topFiltered": false
+  },
+  {
+    "id": "bangumi_anime",
+    "collection": "generic_theme_movies",
+    "theme": "bangumi250",
+    "topFiltered": false
+  },
+  {
+    "id": "arthouse_movies",
+    "collection": "generic_theme_movies",
+    "theme": "arthouse",
+    "topFiltered": false
+  },
+  {
+    "id": "sightsound_movies",
+    "collection": "generic_theme_movies",
+    "theme": "sightsound",
+    "topFiltered": false
+  },
+  {
+    "id": "douban_books",
+    "collection": "douban_books",
+    "topFiltered": true,
+    "marksCollection": "BookMarks",
+    "idField": "bookId",
+    "source": "douban"
+  },
+  {
+    "id": "weread_books",
+    "collection": "weread_books",
+    "topFiltered": true,
+    "marksCollection": "BookMarks",
+    "idField": "bookId",
+    "source": "weread"
+  },
+  {
+    "id": "maodun_books",
+    "collection": "generic_theme_books",
+    "theme": "maodun",
+    "topFiltered": false,
+    "marksCollection": "BookMarks",
+    "idField": "bookId",
+    "source": "maodun"
+  },
+  {
+    "id": "newbery_books",
+    "collection": "generic_theme_books",
+    "theme": "newbery",
+    "topFiltered": false,
+    "marksCollection": "BookMarks",
+    "idField": "bookId",
+    "source": "newbery"
+  },
+  {
+    "id": "scenic_5a",
+    "collection": "scenic_5a",
+    "topFiltered": false
+  },
+  {
+    "id": "museum_grade1",
+    "collection": "museum_grade1",
+    "theme": "museum",
+    "topFiltered": false
+  },
+  {
+    "id": "travel_provinces",
+    "collection": "travel_provinces",
+    "theme": "province",
+    "topFiltered": false
+  },
+  {
+    "id": "travel_cities",
+    "collection": "travel_cities",
+    "theme": "city",
+    "topFiltered": false
+  }
+]

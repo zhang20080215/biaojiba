@@ -1,3 +1,4 @@
+const markTimeline = require('../../../utils/markTimeline');
 import DataLoader from '../../../utils/dataLoader';
 import imageCacheManager from '../../../utils/imageCacheManager';
 var adConfig = require('../../../utils/adConfig');
@@ -89,6 +90,7 @@ Page({
     },
 
     onShow() {
+        this._timelineGroup = null;
         this.checkLoginStatus();
         this.setNavBarColor();
     },
@@ -103,7 +105,7 @@ Page({
     },
 
     onBackHome() {
-        wx.reLaunch({ url: '/pages/category/category' });
+        wx.switchTab({ url: '/pages/category/category' });
     },
 
     getStoredUserInfo() {
@@ -580,7 +582,7 @@ Page({
             // 加载又被读回来 —— 表现就是「取消不掉、标记复活，状态还可能变回旧的」。删全部顺手把
             // 这些历史重复清干净，且不需要单独跑清理脚本。
             const persist = db.collection('BookMarks').where({ bookId, openid }).remove();
-            persist.catch(err => {
+            persist.then(() => { markTimeline.record(this, this.data.theme, 'unmark', [bookId]); }).catch(err => {
                 console.error('取消标记失败:', err);
                 this.restoreSingleMarkLocally(bookId, snapshot);
                 wx.showToast({ title: '取消失败，请重试', icon: 'none' });
@@ -597,6 +599,7 @@ Page({
             : db.collection('BookMarks').add({ data: { bookId, openid, status: targetStatus, marked_at: now, source } });
 
         persist.then(res => {
+            markTimeline.record(this, this.data.theme, targetStatus, [bookId]);
             if (!existingRecordId && res && res._id) {
                 this.setData({ markRecordIdMap: { ...this.data.markRecordIdMap, [bookId]: res._id } });
             }
@@ -711,6 +714,8 @@ Page({
             data: { bookIds, status, openid, source },
             success: res => {
                 wx.hideLoading();
+                const savedIds = res.result && (res.result.succeededIds || (res.result.success ? bookIds : [])) || [];
+                if (savedIds.length) markTimeline.record(this, this.data.theme, status, savedIds, 'batch');
                 if (res.result && res.result.success) {
                     this.applyBatchMarksLocally(bookIds, status);
                     wx.showToast({ title: '批量标记成功', icon: 'success' });

@@ -1,3 +1,4 @@
+const markTimeline = require('../../../utils/markTimeline');
 const toast = require('../../../utils/dailyToast.js');
 const imageCache = require('../../../utils/imageCacheManager.js');
 const { addThousandSep } = require('../../../utils/bookFormat.js');
@@ -491,7 +492,8 @@ Page({
           toast.show(this, '记录失败');
           return;
         }
-        trackDaily('read', this.route); // 埋点：打卡成功
+        trackDaily('read', this.route);
+        markTimeline.record(this, 'daily:read', 'checkin', [meta]); // 埋点：打卡成功
         toast.show(this, '已记录', { icon: 'success' });
         setTimeout(() => {
           wx.navigateBack();

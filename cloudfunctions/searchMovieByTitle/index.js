@@ -230,6 +230,29 @@ async function seasonsViaTvmaze(hints) {
 const MTIME_SEARCH_API = 'https://front-gateway.mtime.com/mtime-search/search/unionSearch2';
 const MTIME_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
 
+// 已人工核验的占位图替代（2026-09-30）：Paprika (1991)，Tinto Brass，IMDb tt0098063。
+// 时光网 img 非空也可能是“暂无图片”。只替换已确认的占位图/空值，日后真实新封面仍优先。
+const MTIME_POSTER_FALLBACKS = {
+  '23693': {
+    titleEn: 'Paprika', year: 1991,
+    placeholderPath: '/mt/2014/02/23/012437.96096376_o.jpg',
+    posterUrl: 'https://m.media-amazon.com/images/M/MV5BY2ZjMDQ1ZDktYzIwOS00YmJhLWJkZmYtYjE3NzFiM2U0YmI2XkEyXkFqcGc@._V1_.jpg'
+  }
+};
+
+function mtimePoster(m) {
+  const poster = m.img || '';
+  const fallback = MTIME_POSTER_FALLBACKS[String(m.movieId)];
+  if (!fallback || Number(m.year || m.rYear) !== fallback.year ||
+      normalizeForMatch(m.nameEn) !== normalizeForMatch(fallback.titleEn)) return poster;
+  let placeholder = !poster;
+  try {
+    const url = new URL(poster);
+    placeholder = /(^|\.)mtime\.cn$/i.test(url.hostname) && url.pathname === fallback.placeholderPath;
+  } catch (e) { /* 空值走兜底；其它未知地址不猜 */ }
+  return placeholder ? fallback.posterUrl : poster;
+}
+
 async function searchViaMtime(keyword) {
   const url = `${MTIME_SEARCH_API}?keyword=${encodeURIComponent(keyword)}&type=1&pageIndex=1&pageSize=20`;
   const res = await axios.get(url, {
@@ -250,7 +273,7 @@ async function searchViaMtime(keyword) {
     .map(m => {
       const director = Array.isArray(m.directors) && m.directors.length ? m.directors[0] : '';
       // 时光网封面均为 jpg（iOS 可正常渲染），直接用原图直链
-      const poster = m.img || '';
+      const poster = mtimePoster(m);
       const year = m.year || m.rYear || '';
       return {
         source: 'mtime',
@@ -298,9 +321,16 @@ function normalizeForMatch(text) {
     .toLowerCase();
 }
 
-// 归一化「片名+年份」用于跨源去重：去空白/标点、小写；年份直接比字符串
-function dedupeKeyOf(title, year) {
-  return `${normalizeForMatch(title)}@${String(year || '')}`;
+// 同名不等于同片：《红辣椒》1991 与 2006 必须同时保留。
+// 跨源年份差一年的情况，只有原名也一致时才合并；年份缺失不能据片名猜测身份。
+function sameMovieAcrossSources(a, b) {
+  if (normalizeForMatch(a.title) !== normalizeForMatch(b.title)) return false;
+  const ay = Number(a.year), by = Number(b.year);
+  if (!(ay > 0 && by > 0)) return false;
+  if (ay === by) return true;
+  const ao = normalizeForMatch(a.originalTitle || a.titleEn);
+  const bo = normalizeForMatch(b.originalTitle || b.titleEn);
+  return Math.abs(ay - by) === 1 && !!ao && ao === bo;
 }
 
 // 回退：电影 suggest（前缀匹配，仅标题/年份/封面，无评分）
@@ -388,27 +418,23 @@ exports.main = async (event, context) => {
 
     // 豆瓣候选：按 doubanId 去重、保序，打上 source/key
     const seenId = new Set();
-    const seenKey = new Set();
     const candidates = [];
     doubanRaw.forEach(c => {
       if (!c.doubanId || seenId.has(c.doubanId)) return;
       seenId.add(c.doubanId);
-      seenKey.add(dedupeKeyOf(c.title, c.year));
       candidates.push({ ...c, source: 'douban', key: `db${c.doubanId}` });
     });
 
     // 时光网候选：先过相关性闸门，再跳过豆瓣已有的，最多补 MTIME_MAX 条（都无评分）。
-    // 这里的去重比豆瓣侧松一档 —— **只比片名不比年份**：同名不同年多半是两边元数据差一年
-    // （豆瓣《重访蓝丝绒》2016 / 时光网 2015 就是同一部），按 片名+年份 比会放它重复进来。
-    const seenTitle = new Set();
-    candidates.forEach(c => seenTitle.add(normalizeForMatch(c.title)));
+    // 优先按来源 ID 去重，再比较片名/年份/原名，避免误删不同年份的同名电影。
+    const seenMtimeId = new Set();
     let mtimeAdded = 0;
     mtimeRaw.forEach(m => {
       if (mtimeAdded >= MTIME_MAX) return;
       if (!mtimeRelevant(keyword, m.title)) return;
-      const t = normalizeForMatch(m.title);
-      if (seenTitle.has(t)) return;
-      seenTitle.add(t);
+      if (seenMtimeId.has(m.mtimeId)) return;
+      seenMtimeId.add(m.mtimeId);
+      if (candidates.some(c => sameMovieAcrossSources(c, m))) return;
       candidates.push({ ...m, key: `mt${m.mtimeId}` });
       mtimeAdded++;
     });

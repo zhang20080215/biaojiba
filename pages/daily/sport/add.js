@@ -1,3 +1,4 @@
+const markTimeline = require('../../../utils/markTimeline');
 const toast = require('../../../utils/dailyToast.js');
 const fitnessTypes = require('../../../utils/fitnessTypes.js');
 const sportIcons = require('../../../utils/sportIcons.js');
@@ -318,6 +319,8 @@ Page({
     }
 
     this.setData({ submitting: true });
+    const saved = [];
+    const savedIds = new Set();
     try {
       const remaining = [];
       for (const item of items) {
@@ -325,6 +328,7 @@ Page({
         // eslint-disable-next-line no-await-in-loop
         const done = await this.saveOne(item.meta);
         if (!done) remaining.push(item);
+        else { saved.push({ title: item.meta.type, extra: item.summary || '' }); savedIds.add(item.id); }
       }
 
       const ok = items.length - remaining.length;
@@ -332,13 +336,15 @@ Page({
         toast.show(this, `已记录${ok}组`, { icon: 'success' });
         setTimeout(() => { wx.navigateBack(); }, 450);
       } else {
-        this.setData({ pendingList: remaining });
+        // 已保存的组由 finally 统一从清单移除（异常中断时同样生效），这里只提示
         toast.show(this, ok > 0 ? `已记录${ok}组，剩余${remaining.length}组请重试` : '记录失败');
       }
     } catch (err) {
       console.error('daily sport add fail', err);
       toast.show(this, '网络异常');
     } finally {
+      if (savedIds.size) this.setData({ pendingList: this.data.pendingList.filter(item => !savedIds.has(item.id)) });
+      if (saved.length) markTimeline.record(this, 'daily:sport', 'checkin', saved, saved.length > 1 ? 'batch' : 'single');
       this.setData({ submitting: false });
     }
   }

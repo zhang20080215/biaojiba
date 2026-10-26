@@ -103,6 +103,8 @@ exports.main = async (event, context) => {
     }
 
     const now = new Date().toISOString();
+    const succeededIds = [];
+    const requestedIds = new Set(movieIds);
 
     try {
         const _ = db.command;
@@ -145,7 +147,7 @@ exports.main = async (event, context) => {
                 updateTasks.push(() =>
                     db.collection('Marks').doc(existing._id).update({
                         data: { status, marked_at: now }
-                    }).then(() => 1).catch(err => {
+                    }).then(() => { if (requestedIds.has(movieId)) succeededIds.push(movieId); return 1; }).catch(err => {
                         console.error(`更新 ${movieId} 失败`, (err && err.errMsg) || err);
                         return 0;
                     })
@@ -154,7 +156,7 @@ exports.main = async (event, context) => {
                 addTasks.push(() =>
                     db.collection('Marks').add({
                         data: { movieId, openid, status, marked_at: now }
-                    }).then(() => 1).catch(err => {
+                    }).then(() => { if (requestedIds.has(movieId)) succeededIds.push(movieId); return 1; }).catch(err => {
                         console.error(`新增 ${movieId} 失败`, (err && err.errMsg) || err);
                         return 0;
                     })
@@ -174,6 +176,7 @@ exports.main = async (event, context) => {
         return {
             // 有任何一条没写成，就不许报成功——前端会提示并重新拉标记
             success: clean,
+            succeededIds,
             partial: !clean,
             updated: upRes.ok,
             added: addRes.ok,
@@ -190,6 +193,6 @@ exports.main = async (event, context) => {
         };
     } catch (err) {
         console.error('batchUpdateMarks 失败:', err);
-        return { success: false, partial: true, error: err.message };
+        return { success: false, partial: true, succeededIds, error: err.message };
     }
 };

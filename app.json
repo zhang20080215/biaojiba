@@ -1,6 +1,9 @@
 {
   "pages": [
     "pages/category/category",
+    "pages/discover/index",
+    "pages/records/index",
+    "pages/profile/index",
     "pages/douban/list/list",
     "pages/douban/share/share",
     "pages/imdb/list/list",
@@ -45,11 +48,43 @@
     "navigationBarTitleText": "标记吧",
     "navigationBarBackgroundColor": "#ffffff",
     "navigationBarTextStyle": "black",
-    "backgroundColor": "#f8f8f8",
+    "backgroundColor": "#FAFAFA",
     "backgroundTextStyle": "light"
   },
   "lazyCodeLoading": "requiredComponents",
   "cloud": true,
   "style": "v2",
-  "sitemapLocation": "sitemap.json"
+  "sitemapLocation": "sitemap.json",
+  "tabBar": {
+    "color": "#77776D",
+    "selectedColor": "#526631",
+    "backgroundColor": "#FAFAFA",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/category/category",
+        "text": "首页",
+        "iconPath": "images/tabs/home.png",
+        "selectedIconPath": "images/tabs/home-active.png"
+      },
+      {
+        "pagePath": "pages/discover/index",
+        "text": "分类",
+        "iconPath": "images/tabs/discover.png",
+        "selectedIconPath": "images/tabs/discover-active.png"
+      },
+      {
+        "pagePath": "pages/records/index",
+        "text": "记录",
+        "iconPath": "images/tabs/records.png",
+        "selectedIconPath": "images/tabs/records-active.png"
+      },
+      {
+        "pagePath": "pages/profile/index",
+        "text": "我的",
+        "iconPath": "images/tabs/profile.png",
+        "selectedIconPath": "images/tabs/profile-active.png"
+      }
+    ]
+  }
 }

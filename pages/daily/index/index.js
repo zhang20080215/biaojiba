@@ -1,3 +1,4 @@
+const markTimeline = require('../../../utils/markTimeline');
 // pages/daily/index/index.js
 // 每日打卡 · 主页（按 URL 参数 theme 加载对应配置）
 // 视觉来自 Claude Design 「Water Tracker」交付稿：米白 + 粗黑描边 + 黄盖小水瓶
@@ -239,7 +240,7 @@ Page({
     if (getCurrentPages().length > 1) {
       wx.navigateBack();
     } else {
-      wx.reLaunch({ url: '/pages/category/category' });
+      wx.switchTab({ url: '/pages/category/category' });
     }
   },
   onOpenStats() {
@@ -317,7 +318,8 @@ Page({
           toast.show(this, '记录失败');
           return;
         }
-        trackDaily(this.data.themeId, this.route); // 埋点：打卡成功
+        trackDaily(this.data.themeId, this.route);
+        markTimeline.record(this, 'daily:' + this.data.themeId, 'checkin', [{ title: value + ' ' + (this.data.unit || 'ml') }]); // 埋点：打卡成功
         const day = res.result.day;
         const oldTotal = this.data.totalValue;
         this.applyState({

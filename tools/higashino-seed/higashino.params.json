@@ -1,0 +1,645 @@
+{
+  "theme": "higashino",
+  "idStrategy": "rank",
+  "autoContinue": true,
+  "bookList": [
+    {
+      "rank": 1,
+      "year": 1985,
+      "title": "放学后",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 2,
+      "year": 1986,
+      "title": "毕业",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 3,
+      "year": 1986,
+      "title": "白马山庄谜案",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 4,
+      "year": 1987,
+      "title": "学生街的日子",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 5,
+      "year": 1987,
+      "title": "11字谜案",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 6,
+      "year": 1988,
+      "title": "魔球",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 7,
+      "year": 1988,
+      "title": "以眨眼干杯",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 8,
+      "year": 1988,
+      "title": "浪花少年侦探团",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 9,
+      "year": 1989,
+      "title": "悲剧人偶",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 10,
+      "year": 1989,
+      "title": "沉睡的森林",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 11,
+      "year": 1989,
+      "title": "鸟人计划",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 12,
+      "year": 1989,
+      "title": "空中杀人现场",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 13,
+      "year": 1989,
+      "title": "布鲁特斯的心脏",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 14,
+      "year": 1990,
+      "title": "宿命",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 15,
+      "year": 1990,
+      "title": "侦探俱乐部",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 16,
+      "year": 1990,
+      "title": "没有凶手的暗夜",
+      "author": "东野圭吾",
+      "aliases": [
+        "无凶之夜"
+      ],
+      "providedTitle": "没有凶手的暗夜 / 无凶之夜"
+    },
+    {
+      "rank": 17,
+      "year": 1990,
+      "title": "假面山庄",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 18,
+      "year": 1991,
+      "title": "变身",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 19,
+      "year": 1991,
+      "title": "长长的回廊",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 20,
+      "year": 1991,
+      "title": "天使之耳",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 21,
+      "year": 1992,
+      "title": "大雪中的山庄",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 22,
+      "year": 1992,
+      "title": "美丽的凶器",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 23,
+      "year": 1993,
+      "title": "同级生",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 24,
+      "year": 1993,
+      "title": "分身",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 25,
+      "year": 1993,
+      "title": "再见了，忍老师",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 26,
+      "year": 1994,
+      "title": "怪人们",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 27,
+      "year": 1994,
+      "title": "从前我死去的家",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 28,
+      "year": 1994,
+      "title": "造彩虹的人",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 29,
+      "year": 1995,
+      "title": "平行世界·爱情故事",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 30,
+      "year": 1995,
+      "title": "我的晃荡的青春",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 31,
+      "year": 1995,
+      "title": "怪笑小说",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 32,
+      "year": 1995,
+      "title": "天空之蜂",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 33,
+      "year": 1996,
+      "title": "名侦探的守则",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 34,
+      "year": 1996,
+      "title": "谁杀了她",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 35,
+      "year": 1996,
+      "title": "毒笑小说",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 36,
+      "year": 1996,
+      "title": "恶意",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 37,
+      "year": 1996,
+      "title": "名侦探的咒缚",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 38,
+      "year": 1998,
+      "title": "侦探伽利略",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 39,
+      "year": 1998,
+      "title": "秘密",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 40,
+      "year": 1999,
+      "title": "我杀了他",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 41,
+      "year": 1999,
+      "title": "白夜行",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 42,
+      "year": 2000,
+      "title": "只差一个谎言",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 43,
+      "year": 2000,
+      "title": "预知梦",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 44,
+      "year": 2001,
+      "title": "单恋",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 45,
+      "year": 2001,
+      "title": "超杀人事件",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 46,
+      "year": 2002,
+      "title": "湖畔",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 47,
+      "year": 2002,
+      "title": "时生",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 48,
+      "year": 2002,
+      "title": "绑架游戏",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 49,
+      "year": 2003,
+      "title": "信",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 50,
+      "year": 2003,
+      "title": "我的老师是侦探",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 51,
+      "year": 2003,
+      "title": "杀人之门",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 52,
+      "year": 2004,
+      "title": "幻夜",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 53,
+      "year": 2004,
+      "title": "挑战",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 54,
+      "year": 2004,
+      "title": "彷徨之刃",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 55,
+      "year": 2005,
+      "title": "黑笑小说",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 56,
+      "year": 2005,
+      "title": "嫌疑人X的献身",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 57,
+      "year": 2005,
+      "title": "科学？",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 58,
+      "year": 2006,
+      "title": "梦回都灵",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 59,
+      "year": 2006,
+      "title": "红手指",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 60,
+      "year": 2006,
+      "title": "使命与魂的尽头",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 61,
+      "year": 2007,
+      "title": "东野圭吾的最后致意",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 62,
+      "year": 2007,
+      "title": "黎明之街",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 63,
+      "year": 2007,
+      "title": "濒死之眼",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 64,
+      "year": 2008,
+      "title": "流星之绊",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 65,
+      "year": 2008,
+      "title": "圣女的救济",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 66,
+      "year": 2008,
+      "title": "伽利略的苦恼",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 67,
+      "year": 2009,
+      "title": "悖论13",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 68,
+      "year": 2009,
+      "title": "新参者",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 69,
+      "year": 2010,
+      "title": "布谷鸟的蛋是谁的",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 70,
+      "year": 2010,
+      "title": "白金数据",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 71,
+      "year": 2010,
+      "title": "雪国之劫",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 72,
+      "year": 2011,
+      "title": "那时的某人",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 73,
+      "year": 2011,
+      "title": "盛夏方程式",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 74,
+      "year": 2011,
+      "title": "麒麟之翼",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 75,
+      "year": 2011,
+      "title": "假面饭店",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 76,
+      "year": 2012,
+      "title": "歪笑小说",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 77,
+      "year": 2012,
+      "title": "解忧杂货店",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 78,
+      "year": 2012,
+      "title": "虚像的丑角",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 79,
+      "year": 2012,
+      "title": "禁断的魔术",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 80,
+      "year": 2013,
+      "title": "梦幻花",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 81,
+      "year": 2013,
+      "title": "祈祷落幕时",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 82,
+      "year": 2013,
+      "title": "疾风回旋曲",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 83,
+      "year": 2014,
+      "title": "虚无的十字架",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 84,
+      "year": 2014,
+      "title": "假面前夜",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 85,
+      "year": 2015,
+      "title": "拉普拉斯的魔女",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 86,
+      "year": 2015,
+      "title": "沉睡的人鱼之家",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 87,
+      "year": 2016,
+      "title": "危险的维纳斯",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 88,
+      "year": 2016,
+      "title": "恋爱的贡多拉",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 89,
+      "year": 2016,
+      "title": "风雪追击",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 90,
+      "year": 2017,
+      "title": "第十年的情人节",
+      "author": "东野圭吾",
+      "aliases": [
+        "情人节终章"
+      ],
+      "providedTitle": "第十年的情人节/情人节终章"
+    },
+    {
+      "rank": 91,
+      "year": 2017,
+      "title": "假面之夜",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 92,
+      "year": 2018,
+      "title": "魔力的胎动",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 93,
+      "year": 2018,
+      "title": "沉默的巡游",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 94,
+      "year": 2019,
+      "title": "希望之线",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 95,
+      "year": 2020,
+      "title": "祈念守护人",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 96,
+      "year": 2020,
+      "title": "无名之町",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 97,
+      "year": 2021,
+      "title": "白鸟与蝙蝠",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 98,
+      "year": 2021,
+      "title": "透明的螺旋",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 99,
+      "year": 2022,
+      "title": "假面游戏",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 100,
+      "year": 2023,
+      "title": "和魔女共度的七天",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 101,
+      "year": 2023,
+      "title": "你杀了谁",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 102,
+      "year": 2024,
+      "title": "觉醒者们",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 103,
+      "year": 2024,
+      "title": "祈愿女神",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 104,
+      "year": 2024,
+      "title": "谁杀了我",
+      "author": "东野圭吾"
+    },
+    {
+      "rank": 105,
+      "year": 2024,
+      "title": "架空犯",
+      "author": "东野圭吾"
+    }
+  ]
+}

@@ -45,9 +45,12 @@ function track(event, data) {
 
 // ── 类型化 helper：页面只调一行，事件名/字段名统一在此，避免写飘 ──
 function trackThemeOpen(theme) {
+  try { require('./hubStore').remember(theme); } catch (e) { /* History never blocks loading. */ }
   track('theme_open', { theme: theme || '' })
 }
 function trackMark(theme, status, mode, count) {
+  // Existing callers include optimistic writes; invalidate, but don't count these as success.
+  try { require('./hubStore').invalidateSummary(); } catch (e) {}
   track('mark', { theme: theme || '', status: status || '', mode: mode || 'single', count: count || 1 })
 }
 function trackShare(theme, channel, route) {
@@ -57,6 +60,11 @@ function trackGrowth(step, ageMonths) {
   track('growth', { step: step || '', age_months: ageMonths || 0 })
 }
 function trackDaily(theme, route) {
+  try {
+    const hub = require('./hubStore');
+    hub.remember('daily:' + theme);
+    hub.invalidateSummary();
+  } catch (e) {}
   track('daily_checkin', { theme: theme || '', route: route || '' })
 }
 

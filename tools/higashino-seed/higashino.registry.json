@@ -1,0 +1,23 @@
+{
+  "_id": "higashino",
+  "theme": "higashino",
+  "type": "book",
+  "enabled": true,
+  "order": 110,
+  "cardId": "higashino_books",
+  "title": "东野圭吾作品集",
+  "description": "从《放学后》到《架空犯》，按年份回顾105部作品",
+  "tag": "读书",
+  "category": "reading",
+  "newBadge": true,
+  "wishFrom": "",
+  "placeholderEmoji": "📚",
+  "slogan": "走进东野圭吾的故事，标记你的阅读足迹",
+  "brandPrimary": "#354B65",
+  "brandSoft": "#70869D",
+  "shadowRgb": "53, 75, 101",
+  "showEdition": false,
+  "showYear": true,
+  "orderDirection": "asc",
+  "source": "higashino"
+}

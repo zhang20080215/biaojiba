@@ -1,0 +1,1409 @@
+{
+  "region": "灾难",
+  "count": 21,
+  "items": [
+    {
+      "card_subtitle": "1997 / 美国 / 剧情 爱情 灾难 / 詹姆斯·卡梅隆 / 莱昂纳多·迪卡普里奥 凯特·温斯莱特",
+      "comment": {
+        "comment": "那对对死无所畏惧的老夫妇，那个不为外界干扰的乐队，那个为生而做一次假父亲的男人，那个为爱人吹响口哨的女人。都是为了一种心灵上的执着。",
+        "id": "7195771",
+        "user": {
+          "avatar": "https://img9.doubanio.com/icon/up1316908-4.jpg",
+          "id": "1316908",
+          "is_club": false,
+          "kind": "user",
+          "name": "个篱",
+          "type": "user",
+          "uid": "jqingyu",
+          "uri": "douban://douban.com/user/1316908",
+          "url": "https://www.douban.com/people/1316908/"
+        }
+      },
+      "episodes_info": "",
+      "following_rating": null,
+      "has_linewatch": true,
+      "honor_infos": [
+        {
+          "kind": "movie",
+          "rank": 3,
+          "title": "豆瓣电影Top250",
+          "uri": "douban://douban.com/subject_collection/movie_top250"
+        }
+      ],
+      "id": "1292722",
+      "interest": null,
+      "photos": [
+        "https://img2.doubanio.com/view/photo/m/public/p457875621.jpg",
+        "https://img9.doubanio.com/view/photo/m/public/p590080575.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p1460638588.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p1460630662.jpg"
+      ],
+      "pic": {
+        "large": "https://img9.doubanio.com/view/photo/m_ratio_poster/public/p457760035.jpg",
+        "normal": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p457760035.jpg"
+      },
+      "playable_date": null,
+      "playable_date_info": "",
+      "rating": {
+        "count": 2536627,
+        "max": 10,
+        "star_count": 5,
+        "value": 9.5
+      },
+      "tags": [
+        {
+          "name": "豆瓣电影Top250",
+          "uri": "douban://douban.com/subject_collection/movie_top250"
+        },
+        {
+          "name": "美国 灾难 爱情",
+          "uri": "douban://douban.com/movie/recommend_tag?type=tags&tag=%E7%BE%8E%E5%9B%BD%2C%E7%81%BE%E9%9A%BE%2C%E7%88%B1%E6%83%85"
+        },
+        {
+          "name": "英国电影学院奖 最佳特殊视觉效果 获奖作品",
+          "uri": "douban://douban.com/subject_collection/ECYZBCW6Q?type=rank&category=movie&rank_type=award_movie"
+        }
+      ],
+      "title": "泰坦尼克号",
+      "type": "movie",
+      "uri": "douban://douban.com/movie/1292722",
+      "vendor_count": 3,
+      "vendor_icons": [
+        "https://img9.doubanio.com/f/frodo/fbc90f355fc45d5d2056e0d88c697f9414b56b44/pics/vendors/tencent.png",
+        "https://img9.doubanio.com/f/frodo/88a62f5e0cf9981c910e60f4421c3e66aac2c9bc/pics/vendors/bilibili.png",
+        "https://img9.doubanio.com/f/frodo/6c7b857e6b2255201e73bf83732d95d572f3f9f7/pics/vendors/iqiyi.png"
+      ],
+      "year": "1997",
+      "card": "subject",
+      "item_type": "movie",
+      "alg_json": "{\"model\":\"baseline\",\"uid\":\"\",\"stype\":\"movie\",\"tags_mk\":\"灾难\",\"sort\":\"T\",\"score_range_mk\":\"8,10\",\"is_playable\":false,\"is_free_play\":false,\"playable_dr_mk\":null,\"vendors_mk\":null,\"uncollect\":false,\"count\":1000}"
+    },
+    {
+      "card_subtitle": "2016 / 韩国 / 动作 惊悚 灾难 / 延尚昊 / 孔刘 郑裕美",
+      "comment": {
+        "comment": "这部片子里的孕妇和甄嬛传里的孕妇战斗力不是一个次元的",
+        "id": "1075746114",
+        "user": {
+          "avatar": "https://img9.doubanio.com/icon/up45588933-44.jpg",
+          "id": "45588933",
+          "is_club": false,
+          "kind": "user",
+          "name": "鯨",
+          "type": "user",
+          "uid": "lilychan",
+          "uri": "douban://douban.com/user/45588933",
+          "url": "https://www.douban.com/people/45588933/"
+        }
+      },
+      "episodes_info": "",
+      "following_rating": null,
+      "has_linewatch": true,
+      "honor_infos": [
+        {
+          "kind": "movie",
+          "rank": 147,
+          "title": "豆瓣电影Top250",
+          "uri": "douban://douban.com/subject_collection/movie_top250"
+        }
+      ],
+      "id": "25986180",
+      "interest": null,
+      "photos": [
+        "https://img3.doubanio.com/view/photo/m/public/p2380013077.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p2379151188.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p2380013217.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p2370766379.jpg"
+      ],
+      "pic": {
+        "large": "https://img3.doubanio.com/view/photo/m_ratio_poster/public/p2360940399.jpg",
+        "normal": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2360940399.jpg"
+      },
+      "playable_date": null,
+      "playable_date_info": "",
+      "rating": {
+        "count": 1375243,
+        "max": 10,
+        "star_count": 4.5,
+        "value": 8.6
+      },
+      "tags": [
+        {
+          "name": "豆瓣电影Top250",
+          "uri": "douban://douban.com/subject_collection/movie_top250"
+        },
+        {
+          "name": "韩国 丧尸 灾难",
+          "uri": "douban://douban.com/movie/recommend_tag?type=tags&tag=%E9%9F%A9%E5%9B%BD%2C%E4%B8%A7%E5%B0%B8%2C%E7%81%BE%E9%9A%BE"
+        },
+        {
+          "name": "韩国电影青龙奖 最佳新人导演 获奖作品",
+          "uri": "douban://douban.com/subject_collection/ECZUJGJDA?type=rank&category=movie&rank_type=award_movie"
+        }
+      ],
+      "title": "釜山行",
+      "type": "movie",
+      "uri": "douban://douban.com/movie/25986180",
+      "vendor_count": 0,
+      "vendor_icons": [],
+      "year": "2016",
+      "card": "subject",
+      "item_type": "movie",
+      "alg_json": "{\"model\":\"baseline\",\"uid\":\"\",\"stype\":\"movie\",\"tags_mk\":\"灾难\",\"sort\":\"T\",\"score_range_mk\":\"8,10\",\"is_playable\":false,\"is_free_play\":false,\"playable_dr_mk\":null,\"vendors_mk\":null,\"uncollect\":false,\"count\":1000}"
+    },
+    {
+      "card_subtitle": "2023 / 中国大陆 / 科幻 冒险 灾难 / 郭帆 / 吴京 刘德华",
+      "comment": {
+        "comment": "不必对比什么 作为里程碑他已经无敌",
+        "id": "3656324504",
+        "user": {
+          "avatar": "https://img3.doubanio.com/icon/up59725699-23.jpg",
+          "id": "59725699",
+          "is_club": false,
+          "kind": "user",
+          "name": "电子梦",
+          "type": "user",
+          "uid": "59725699",
+          "uri": "douban://douban.com/user/59725699",
+          "url": "https://www.douban.com/people/59725699/"
+        }
+      },
+      "episodes_info": "",
+      "following_rating": null,
+      "has_linewatch": true,
+      "honor_infos": [
+        {
+          "kind": "movie",
+          "rank": 1,
+          "title": "华语冒险片榜",
+          "uri": "douban://douban.com/subject_collection/ECAUOWGNQ?type=rank&category=movie&rank_type=film_genre"
+        }
+      ],
+      "id": "35267208",
+      "interest": null,
+      "photos": [
+        "https://img9.doubanio.com/view/photo/m/public/p2886547585.jpg",
+        "https://img9.doubanio.com/view/photo/m/public/p2886492514.jpg",
+        "https://img9.doubanio.com/view/photo/m/public/p2886547584.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p2886547582.jpg"
+      ],
+      "pic": {
+        "large": "https://img9.doubanio.com/view/photo/m_ratio_poster/public/p2916835424.jpg",
+        "normal": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2916835424.jpg"
+      },
+      "playable_date": "2023-04-14 00:00:00",
+      "playable_date_info": "",
+      "rating": {
+        "count": 1430119,
+        "max": 10,
+        "star_count": 4,
+        "value": 8.3
+      },
+      "tags": [
+        {
+          "name": "华语冒险片榜",
+          "uri": "douban://douban.com/subject_collection/ECAUOWGNQ?type=rank&category=movie&rank_type=film_genre"
+        },
+        {
+          "name": "中国大陆 科幻 灾难",
+          "uri": "douban://douban.com/movie/recommend_tag?type=tags&tag=%E4%B8%AD%E5%9B%BD%E5%A4%A7%E9%99%86%2C%E7%A7%91%E5%B9%BB%2C%E7%81%BE%E9%9A%BE"
+        }
+      ],
+      "title": "流浪地球2",
+      "type": "movie",
+      "uri": "douban://douban.com/movie/35267208",
+      "vendor_count": 4,
+      "vendor_icons": [
+        "https://img9.doubanio.com/f/frodo/fbc90f355fc45d5d2056e0d88c697f9414b56b44/pics/vendors/tencent.png",
+        "https://img9.doubanio.com/f/frodo/88a62f5e0cf9981c910e60f4421c3e66aac2c9bc/pics/vendors/bilibili.png",
+        "https://img3.doubanio.com/f/frodo/6fa5caade3ca480ccd95f455ee4d195ee342eb90/pics/vendors/youku.png"
+      ],
+      "year": "2023",
+      "card": "subject",
+      "item_type": "movie",
+      "alg_json": "{\"model\":\"baseline\",\"uid\":\"\",\"stype\":\"movie\",\"tags_mk\":\"灾难\",\"sort\":\"T\",\"score_range_mk\":\"8,10\",\"is_playable\":false,\"is_free_play\":false,\"playable_dr_mk\":null,\"vendors_mk\":null,\"uncollect\":false,\"count\":1000}"
+    },
+    {
+      "card_subtitle": "2009 / 美国 加拿大 / 科幻 灾难 / 罗兰·艾默里奇 / 约翰·库萨克 阿曼达·皮特",
+      "comment": {
+        "comment": "其实片子里我最欣赏的，是美国黄石公园里面的那个家伙，以及我们西藏的那个智慧的喇嘛，在大难临头前的那种疯狂和镇定，殊途同归，其实都是人类极高的智慧所在。",
+        "id": "177689390",
+        "user": {
+          "avatar": "https://img3.doubanio.com/icon/up1200572-7.jpg",
+          "id": "1200572",
+          "is_club": false,
+          "kind": "user",
+          "name": "X",
+          "type": "user",
+          "uid": "kiaora",
+          "uri": "douban://douban.com/user/1200572",
+          "url": "https://www.douban.com/people/1200572/"
+        }
+      },
+      "episodes_info": "",
+      "following_rating": null,
+      "has_linewatch": true,
+      "honor_infos": [
+        {
+          "kind": "movie",
+          "rank": 5,
+          "title": "评分最高灾难片",
+          "uri": "douban://douban.com/subject_collection/natural_disasters?type=rank&category=movie&rank_type=film_genre"
+        }
+      ],
+      "id": "3005875",
+      "interest": null,
+      "photos": [
+        "https://img9.doubanio.com/view/photo/m/public/p443190435.jpg",
+        "https://img9.doubanio.com/view/photo/m/public/p1766255656.jpg",
+        "https://img2.doubanio.com/view/photo/m/public/p1766256721.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p443190987.jpg"
+      ],
+      "pic": {
+        "large": "https://img3.doubanio.com/view/photo/m_ratio_poster/public/p505238859.jpg",
+        "normal": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p505238859.jpg"
+      },
+      "playable_date": null,
+      "playable_date_info": "",
+      "rating": {
+        "count": 637764,
+        "max": 10,
+        "star_count": 4,
+        "value": 8
+      },
+      "tags": [
+        {
+          "name": "评分最高灾难片",
+          "uri": "douban://douban.com/subject_collection/natural_disasters?type=rank&category=movie&rank_type=film_genre"
+        },
+        {
+          "name": "美国 灾难 亲情",
+          "uri": "douban://douban.com/movie/recommend_tag?type=tags&tag=%E7%BE%8E%E5%9B%BD%2C%E7%81%BE%E9%9A%BE%2C%E4%BA%B2%E6%83%85"
+        }
+      ],
+      "title": "2012",
+      "type": "movie",
+      "uri": "douban://douban.com/movie/3005875",
+      "vendor_count": 3,
+      "vendor_icons": [
+        "https://img9.doubanio.com/f/frodo/fbc90f355fc45d5d2056e0d88c697f9414b56b44/pics/vendors/tencent.png",
+        "https://img9.doubanio.com/f/frodo/6c7b857e6b2255201e73bf83732d95d572f3f9f7/pics/vendors/iqiyi.png",
+        "https://img9.doubanio.com/f/frodo/88a62f5e0cf9981c910e60f4421c3e66aac2c9bc/pics/vendors/bilibili.png"
+      ],
+      "year": "2009",
+      "card": "subject",
+      "item_type": "movie",
+      "alg_json": "{\"model\":\"baseline\",\"uid\":\"\",\"stype\":\"movie\",\"tags_mk\":\"灾难\",\"sort\":\"T\",\"score_range_mk\":\"8,10\",\"is_playable\":false,\"is_free_play\":false,\"playable_dr_mk\":null,\"vendors_mk\":null,\"uncollect\":false,\"count\":1000}"
+    },
+    {
+      "card_subtitle": "2004 / 美国 / 科幻 灾难 / 罗兰·艾默里奇 / 丹尼斯·奎德 杰克·吉伦哈尔",
+      "comment": {
+        "comment": "尽管被批评为情节简单，但视觉冲击力真的很大，有许多经典镜头：国旗结冰、纽约速冻，相当让人震撼~~",
+        "id": "16124658",
+        "user": {
+          "avatar": "https://img3.doubanio.com/icon/up1577739-80.jpg",
+          "id": "1577739",
+          "is_club": false,
+          "kind": "user",
+          "name": "战国客",
+          "type": "user",
+          "uid": "ocean_kwai",
+          "uri": "douban://douban.com/user/1577739",
+          "url": "https://www.douban.com/people/1577739/"
+        }
+      },
+      "episodes_info": "",
+      "following_rating": null,
+      "has_linewatch": true,
+      "honor_infos": [
+        {
+          "kind": "movie",
+          "rank": 3,
+          "title": "评分最高灾难片",
+          "uri": "douban://douban.com/subject_collection/natural_disasters?type=rank&category=movie&rank_type=film_genre"
+        }
+      ],
+      "id": "1308779",
+      "interest": null,
+      "photos": [
+        "https://img9.doubanio.com/view/photo/m/public/p514325984.jpg",
+        "https://img9.doubanio.com/view/photo/m/public/p542979964.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p542980380.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p514326172.jpg"
+      ],
+      "pic": {
+        "large": "https://img3.doubanio.com/view/photo/m_ratio_poster/public/p2209602029.jpg",
+        "normal": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2209602029.jpg"
+      },
+      "playable_date": null,
+      "playable_date_info": "",
+      "rating": {
+        "count": 586728,
+        "max": 10,
+        "star_count": 4,
+        "value": 8.3
+      },
+      "tags": [
+        {
+          "name": "评分最高灾难片",
+          "uri": "douban://douban.com/subject_collection/natural_disasters?type=rank&category=movie&rank_type=film_genre"
+        },
+        {
+          "name": "美国 灾难 科幻",
+          "uri": "douban://douban.com/movie/recommend_tag?type=tags&tag=%E7%BE%8E%E5%9B%BD%2C%E7%81%BE%E9%9A%BE%2C%E7%A7%91%E5%B9%BB"
+        },
+        {
+          "name": "英国电影学院奖 最佳特殊视觉效果 获奖作品",
+          "uri": "douban://douban.com/subject_collection/ECUYI3KFQ?type=rank&category=movie&rank_type=award_movie"
+        }
+      ],
+      "title": "后天",
+      "type": "movie",
+      "uri": "douban://douban.com/movie/1308779",
+      "vendor_count": 4,
+      "vendor_icons": [
+        "https://img9.doubanio.com/f/frodo/fbc90f355fc45d5d2056e0d88c697f9414b56b44/pics/vendors/tencent.png",
+        "https://img9.doubanio.com/f/frodo/6c7b857e6b2255201e73bf83732d95d572f3f9f7/pics/vendors/iqiyi.png",
+        "https://img3.doubanio.com/f/frodo/6fa5caade3ca480ccd95f455ee4d195ee342eb90/pics/vendors/youku.png"
+      ],
+      "year": "2004",
+      "card": "subject",
+      "item_type": "movie",
+      "alg_json": "{\"model\":\"baseline\",\"uid\":\"\",\"stype\":\"movie\",\"tags_mk\":\"灾难\",\"sort\":\"T\",\"score_range_mk\":\"8,10\",\"is_playable\":false,\"is_free_play\":false,\"playable_dr_mk\":null,\"vendors_mk\":null,\"uncollect\":false,\"count\":1000}"
+    },
+    {
+      "card_subtitle": "2012 / 中国大陆 / 剧情 历史 战争 灾难 / 冯小刚 / 张国立 张默",
+      "comment": {
+        "comment": "可以不用对这部电影有敬意，但要对历史有敬畏之心。年轻的时候应该多读书，老了才知道该怎么发力。",
+        "id": "610107392",
+        "user": {
+          "avatar": "https://img3.doubanio.com/icon/up2279829-8.jpg",
+          "id": "2279829",
+          "is_club": false,
+          "kind": "user",
+          "name": "张小北",
+          "type": "user",
+          "uid": "xzfd",
+          "uri": "douban://douban.com/user/2279829",
+          "url": "https://www.douban.com/people/2279829/"
+        }
+      },
+      "episodes_info": "",
+      "following_rating": null,
+      "has_linewatch": true,
+      "honor_infos": [
+        {
+          "kind": "movie",
+          "rank": 9,
+          "title": "评分最高灾难片",
+          "uri": "douban://douban.com/subject_collection/natural_disasters?type=rank&category=movie&rank_type=film_genre"
+        }
+      ],
+      "id": "6011805",
+      "interest": null,
+      "photos": [
+        "https://img9.doubanio.com/view/photo/m/public/p1762691694.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p1750505182.jpg",
+        "https://img2.doubanio.com/view/photo/m/public/p1703364651.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p1703364670.jpg"
+      ],
+      "pic": {
+        "large": "https://img3.doubanio.com/view/photo/m_ratio_poster/public/p1767278057.jpg",
+        "normal": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p1767278057.jpg"
+      },
+      "playable_date": null,
+      "playable_date_info": "",
+      "rating": {
+        "count": 382755,
+        "max": 10,
+        "star_count": 4,
+        "value": 8.3
+      },
+      "tags": [
+        {
+          "name": "评分最高灾难片",
+          "uri": "douban://douban.com/subject_collection/natural_disasters?type=rank&category=movie&rank_type=film_genre"
+        },
+        {
+          "name": "中国大陆 灾难 历史",
+          "uri": "douban://douban.com/movie/recommend_tag?type=tags&tag=%E4%B8%AD%E5%9B%BD%E5%A4%A7%E9%99%86%2C%E7%81%BE%E9%9A%BE%2C%E5%8E%86%E5%8F%B2"
+        },
+        {
+          "name": "台北金马影展 最佳视觉效果 获奖作品",
+          "uri": "douban://douban.com/subject_collection/ECUAI224Q?type=rank&category=movie&rank_type=award_movie"
+        }
+      ],
+      "title": "一九四二",
+      "type": "movie",
+      "uri": "douban://douban.com/movie/6011805",
+      "vendor_count": 3,
+      "vendor_icons": [
+        "https://img9.doubanio.com/f/frodo/fbc90f355fc45d5d2056e0d88c697f9414b56b44/pics/vendors/tencent.png",
+        "https://img9.doubanio.com/f/frodo/6c7b857e6b2255201e73bf83732d95d572f3f9f7/pics/vendors/iqiyi.png",
+        "https://img3.doubanio.com/f/frodo/6fa5caade3ca480ccd95f455ee4d195ee342eb90/pics/vendors/youku.png"
+      ],
+      "year": "2012",
+      "card": "subject",
+      "item_type": "movie",
+      "alg_json": "{\"model\":\"baseline\",\"uid\":\"\",\"stype\":\"movie\",\"tags_mk\":\"灾难\",\"sort\":\"T\",\"score_range_mk\":\"8,10\",\"is_playable\":false,\"is_free_play\":false,\"playable_dr_mk\":null,\"vendors_mk\":null,\"uncollect\":false,\"count\":1000}"
+    },
+    {
+      "card_subtitle": "1996 / 美国 / 动作 科幻 冒险 灾难 / 罗兰·艾默里奇 / 威尔·史密斯 杰夫·高布伦",
+      "comment": {
+        "comment": "那段演讲真棒，我都热血沸腾了！",
+        "id": "61633053",
+        "user": {
+          "avatar": "https://img3.doubanio.com/icon/up1577739-80.jpg",
+          "id": "1577739",
+          "is_club": false,
+          "kind": "user",
+          "name": "战国客",
+          "type": "user",
+          "uid": "ocean_kwai",
+          "uri": "douban://douban.com/user/1577739",
+          "url": "https://www.douban.com/people/1577739/"
+        }
+      },
+      "episodes_info": "",
+      "following_rating": null,
+      "has_linewatch": true,
+      "honor_infos": [
+        {
+          "kind": "movie",
+          "rank": 7,
+          "title": "评分最高灾难片",
+          "uri": "douban://douban.com/subject_collection/natural_disasters?type=rank&category=movie&rank_type=film_genre"
+        }
+      ],
+      "id": "1293013",
+      "interest": null,
+      "photos": [
+        "https://img3.doubanio.com/view/photo/m/public/p2156885479.jpg",
+        "https://img2.doubanio.com/view/photo/m/public/p2068917661.jpg",
+        "https://img9.doubanio.com/view/photo/m/public/p2068916815.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p2068917177.jpg"
+      ],
+      "pic": {
+        "large": "https://img9.doubanio.com/view/photo/m_ratio_poster/public/p453518655.jpg",
+        "normal": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p453518655.jpg"
+      },
+      "playable_date": null,
+      "playable_date_info": "",
+      "rating": {
+        "count": 321344,
+        "max": 10,
+        "star_count": 4,
+        "value": 8.1
+      },
+      "tags": [
+        {
+          "name": "评分最高灾难片",
+          "uri": "douban://douban.com/subject_collection/natural_disasters?type=rank&category=movie&rank_type=film_genre"
+        },
+        {
+          "name": "美国 灾难 科幻",
+          "uri": "douban://douban.com/movie/recommend_tag?type=tags&tag=%E7%BE%8E%E5%9B%BD%2C%E7%81%BE%E9%9A%BE%2C%E7%A7%91%E5%B9%BB"
+        },
+        {
+          "name": "英国电影学院奖 最佳音效 获奖作品",
+          "uri": "douban://douban.com/subject_collection/ECBNAUTZI?type=rank&category=movie&rank_type=award_movie"
+        }
+      ],
+      "title": "独立日",
+      "type": "movie",
+      "uri": "douban://douban.com/movie/1293013",
+      "vendor_count": 1,
+      "vendor_icons": [
+        "https://img9.doubanio.com/f/frodo/6c7b857e6b2255201e73bf83732d95d572f3f9f7/pics/vendors/iqiyi.png"
+      ],
+      "year": "1996",
+      "card": "subject",
+      "item_type": "movie",
+      "alg_json": "{\"model\":\"baseline\",\"uid\":\"\",\"stype\":\"movie\",\"tags_mk\":\"灾难\",\"sort\":\"T\",\"score_range_mk\":\"8,10\",\"is_playable\":false,\"is_free_play\":false,\"playable_dr_mk\":null,\"vendors_mk\":null,\"uncollect\":false,\"count\":1000}"
+    },
+    {
+      "card_subtitle": "2017 / 美国 / 剧情 传记 灾难 / 约瑟夫·科辛斯基 / 乔什·布洛林 迈尔斯·特勒",
+      "comment": {
+        "comment": "「当大火烧过的时候，你会觉得像有一百辆火车从你身上压过。」",
+        "id": "1274467212",
+        "user": {
+          "avatar": "https://img9.doubanio.com/icon/up1998052-305.jpg",
+          "id": "1998052",
+          "is_club": false,
+          "kind": "user",
+          "name": "Mona Lishark",
+          "type": "user",
+          "uid": "run11run",
+          "uri": "douban://douban.com/user/1998052",
+          "url": "https://www.douban.com/people/1998052/"
+        }
+      },
+      "episodes_info": "",
+      "following_rating": null,
+      "has_linewatch": true,
+      "honor_infos": [
+        {
+          "kind": "movie",
+          "rank": 11,
+          "title": "评分最高灾难片",
+          "uri": "douban://douban.com/subject_collection/natural_disasters?type=rank&category=movie&rank_type=film_genre"
+        }
+      ],
+      "id": "26718828",
+      "interest": null,
+      "photos": [
+        "https://img9.doubanio.com/view/photo/m/public/p2509297315.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p2506263293.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p2509297358.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p2505620218.jpg"
+      ],
+      "pic": {
+        "large": "https://img3.doubanio.com/view/photo/m_ratio_poster/public/p2506348908.jpg",
+        "normal": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2506348908.jpg"
+      },
+      "playable_date": null,
+      "playable_date_info": "",
+      "rating": {
+        "count": 110734,
+        "max": 10,
+        "star_count": 4,
+        "value": 8.3
+      },
+      "tags": [
+        {
+          "name": "评分最高灾难片",
+          "uri": "douban://douban.com/subject_collection/natural_disasters?type=rank&category=movie&rank_type=film_genre"
+        },
+        {
+          "name": "美国 真实事件改编 灾难",
+          "uri": "douban://douban.com/movie/recommend_tag?type=tags&tag=%E7%BE%8E%E5%9B%BD%2C%E7%9C%9F%E5%AE%9E%E4%BA%8B%E4%BB%B6%E6%94%B9%E7%BC%96%2C%E7%81%BE%E9%9A%BE"
+        }
+      ],
+      "title": "勇往直前",
+      "type": "movie",
+      "uri": "douban://douban.com/movie/26718828",
+      "vendor_count": 1,
+      "vendor_icons": [
+        "https://img3.doubanio.com/f/frodo/6fa5caade3ca480ccd95f455ee4d195ee342eb90/pics/vendors/youku.png"
+      ],
+      "year": "2017",
+      "card": "subject",
+      "item_type": "movie",
+      "alg_json": "{\"model\":\"baseline\",\"uid\":\"\",\"stype\":\"movie\",\"tags_mk\":\"灾难\",\"sort\":\"T\",\"score_range_mk\":\"8,10\",\"is_playable\":false,\"is_free_play\":false,\"playable_dr_mk\":null,\"vendors_mk\":null,\"uncollect\":false,\"count\":1000}"
+    },
+    {
+      "card_subtitle": "1963 / 美国 / 悬疑 惊悚 灾难 / 阿尔弗雷德·希区柯克 / 罗德·泰勒 杰西卡·坦迪",
+      "comment": {
+        "comment": "很同意某短评说的，五十年前希区柯克已经把鸟拍成了恐怖片，五十年后还有人把恐怖片拍成个鸟。",
+        "id": "987501619",
+        "user": {
+          "avatar": "https://img9.doubanio.com/icon/up129911592-26.jpg",
+          "id": "129911592",
+          "is_club": false,
+          "kind": "user",
+          "name": "之晨",
+          "type": "user",
+          "uid": "129911592",
+          "uri": "douban://douban.com/user/129911592",
+          "url": "https://www.douban.com/people/129911592/"
+        }
+      },
+      "episodes_info": "",
+      "following_rating": null,
+      "has_linewatch": true,
+      "honor_infos": [
+        {
+          "kind": "movie",
+          "rank": 6,
+          "title": "美国灾难片榜",
+          "uri": "douban://douban.com/subject_collection/EC4IOWGKA?type=rank&category=movie&rank_type=film_genre"
+        }
+      ],
+      "id": "1310175",
+      "interest": null,
+      "photos": [
+        "https://img9.doubanio.com/view/photo/m/public/p459553384.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p2166945529.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p2166944209.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p2364905147.jpg"
+      ],
+      "pic": {
+        "large": "https://img3.doubanio.com/view/photo/m_ratio_poster/public/p1493936502.jpg",
+        "normal": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p1493936502.jpg"
+      },
+      "playable_date": null,
+      "playable_date_info": "",
+      "rating": {
+        "count": 90773,
+        "max": 10,
+        "star_count": 4,
+        "value": 8
+      },
+      "tags": [
+        {
+          "name": "美国灾难片榜",
+          "uri": "douban://douban.com/subject_collection/EC4IOWGKA?type=rank&category=movie&rank_type=film_genre"
+        },
+        {
+          "name": "美国 惊悚 悬疑",
+          "uri": "douban://douban.com/movie/recommend_tag?type=tags&tag=%E7%BE%8E%E5%9B%BD%2C%E6%83%8A%E6%82%9A%2C%E6%82%AC%E7%96%91"
+        },
+        {
+          "name": "金球奖 年度女新星 获奖作品",
+          "uri": "douban://douban.com/subject_collection/EC3UISVII?type=rank&category=movie&rank_type=award_movie"
+        }
+      ],
+      "title": "群鸟",
+      "type": "movie",
+      "uri": "douban://douban.com/movie/1310175",
+      "vendor_count": 2,
+      "vendor_icons": [
+        "https://img9.doubanio.com/f/frodo/fbc90f355fc45d5d2056e0d88c697f9414b56b44/pics/vendors/tencent.png",
+        "https://img9.doubanio.com/f/frodo/88a62f5e0cf9981c910e60f4421c3e66aac2c9bc/pics/vendors/bilibili.png"
+      ],
+      "year": "1963",
+      "card": "subject",
+      "item_type": "movie",
+      "alg_json": "{\"model\":\"baseline\",\"uid\":\"\",\"stype\":\"movie\",\"tags_mk\":\"灾难\",\"sort\":\"T\",\"score_range_mk\":\"8,10\",\"is_playable\":false,\"is_free_play\":false,\"playable_dr_mk\":null,\"vendors_mk\":null,\"uncollect\":false,\"count\":1000}"
+    },
+    {
+      "card_subtitle": "1976 / 英国 意大利 西德 / 剧情 动作 惊悚 灾难 / 乔治·P·科斯马图斯 / 索菲娅·罗兰 理查德·哈里斯",
+      "comment": {
+        "comment": "小时候都被里面的病毒吓着了。。多年后回味此片，原来恐怖的不是病毒，而是政治阴谋！！",
+        "id": "462831650",
+        "user": {
+          "avatar": "https://img9.doubanio.com/icon/up46180980-6.jpg",
+          "id": "46180980",
+          "is_club": false,
+          "kind": "user",
+          "name": "EVA_征服天堂",
+          "type": "user",
+          "uid": "46180980",
+          "uri": "douban://douban.com/user/46180980",
+          "url": "https://www.douban.com/people/46180980/"
+        }
+      },
+      "episodes_info": "",
+      "following_rating": null,
+      "has_linewatch": true,
+      "honor_infos": [
+        {
+          "kind": "movie",
+          "rank": 2,
+          "title": "冷门佳作灾难片榜",
+          "uri": "douban://douban.com/subject_collection/ECHMOGZLQ?type=rank&category=movie&rank_type=film_genre"
+        }
+      ],
+      "id": "1298917",
+      "interest": null,
+      "photos": [
+        "https://img3.doubanio.com/view/photo/m/public/p2549024362.jpg",
+        "https://img9.doubanio.com/view/photo/m/public/p2549024355.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p2549024350.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p2520071977.jpg"
+      ],
+      "pic": {
+        "large": "https://img3.doubanio.com/view/photo/m_ratio_poster/public/p1971441788.jpg",
+        "normal": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p1971441788.jpg"
+      },
+      "playable_date": null,
+      "playable_date_info": "",
+      "rating": {
+        "count": 34473,
+        "max": 10,
+        "star_count": 4,
+        "value": 8.3
+      },
+      "tags": [
+        {
+          "name": "冷门佳作灾难片榜",
+          "uri": "douban://douban.com/subject_collection/ECHMOGZLQ?type=rank&category=movie&rank_type=film_genre"
+        },
+        {
+          "name": "英国 灾难 惊悚",
+          "uri": "douban://douban.com/movie/recommend_tag?type=tags&tag=%E8%8B%B1%E5%9B%BD%2C%E7%81%BE%E9%9A%BE%2C%E6%83%8A%E6%82%9A"
+        }
+      ],
+      "title": "卡桑德拉大桥",
+      "type": "movie",
+      "uri": "douban://douban.com/movie/1298917",
+      "vendor_count": 0,
+      "vendor_icons": [],
+      "year": "1976",
+      "card": "subject",
+      "item_type": "movie",
+      "alg_json": "{\"model\":\"baseline\",\"uid\":\"\",\"stype\":\"movie\",\"tags_mk\":\"灾难\",\"sort\":\"T\",\"score_range_mk\":\"8,10\",\"is_playable\":false,\"is_free_play\":false,\"playable_dr_mk\":null,\"vendors_mk\":null,\"uncollect\":false,\"count\":1000}"
+    },
+    {
+      "card_subtitle": "1992 / 伊朗 / 剧情 灾难 / 阿巴斯·基亚罗斯塔米 / 法德哈·基德曼 布巴·巴尤尔·",
+      "comment": {
+        "comment": "哪个导演在汶川后能拍出这样的情感，中国电影就有望了",
+        "id": "165435211",
+        "user": {
+          "avatar": "https://img3.doubanio.com/icon/up1224197-38.jpg",
+          "id": "1224197",
+          "is_club": false,
+          "kind": "user",
+          "name": "37°2",
+          "type": "user",
+          "uid": "little_cupid",
+          "uri": "douban://douban.com/user/1224197",
+          "url": "https://www.douban.com/people/1224197/"
+        }
+      },
+      "episodes_info": "",
+      "following_rating": null,
+      "has_linewatch": true,
+      "honor_infos": [],
+      "id": "1303471",
+      "interest": null,
+      "photos": [
+        "https://img9.doubanio.com/view/photo/m/public/p2907352185.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p2414039933.jpg",
+        "https://img9.doubanio.com/view/photo/m/public/p2678312364.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p2678312389.jpg"
+      ],
+      "pic": {
+        "large": "https://img2.doubanio.com/view/photo/m_ratio_poster/public/p1944277781.jpg",
+        "normal": "https://img2.doubanio.com/view/photo/s_ratio_poster/public/p1944277781.jpg"
+      },
+      "playable_date": "2023-09-26 00:00:00",
+      "playable_date_info": "",
+      "rating": {
+        "count": 29180,
+        "max": 10,
+        "star_count": 4.5,
+        "value": 8.7
+      },
+      "tags": [
+        {
+          "name": "伊朗 灾难 公路",
+          "uri": "douban://douban.com/movie/recommend_tag?type=tags&tag=%E4%BC%8A%E6%9C%97%2C%E7%81%BE%E9%9A%BE%2C%E5%85%AC%E8%B7%AF"
+        }
+      ],
+      "title": "生生长流",
+      "type": "movie",
+      "uri": "douban://douban.com/movie/1303471",
+      "vendor_count": 1,
+      "vendor_icons": [
+        "https://img9.doubanio.com/f/frodo/88a62f5e0cf9981c910e60f4421c3e66aac2c9bc/pics/vendors/bilibili.png"
+      ],
+      "year": "1992",
+      "card": "subject",
+      "item_type": "movie",
+      "alg_json": "{\"model\":\"baseline\",\"uid\":\"\",\"stype\":\"movie\",\"tags_mk\":\"灾难\",\"sort\":\"T\",\"score_range_mk\":\"8,10\",\"is_playable\":false,\"is_free_play\":false,\"playable_dr_mk\":null,\"vendors_mk\":null,\"uncollect\":false,\"count\":1000}"
+    },
+    {
+      "card_subtitle": "1993 / 美国 / 剧情 动作 冒险 灾难 运动 / 弗兰克·马歇尔 / 伊桑·霍克 文森特·斯帕诺",
+      "comment": {
+        "comment": "霍克先生好帅 话说总觉得一开始说话那个好像马尔科维奇君…… 2小时完全不觉得久啊～话说那翻山越岭二人组简直是英雄嘛，不知现实里的二人最终得到怎样的爱戴",
+        "id": "374704550",
+        "user": {
+          "avatar": "https://img2.doubanio.com/icon/up1246009-81.jpg",
+          "id": "1246009",
+          "is_club": false,
+          "kind": "user",
+          "name": "瓦达西瓦又又又桑只爱这巧克力",
+          "type": "user",
+          "uid": "yoyoyoyoyoyoyo",
+          "uri": "douban://douban.com/user/1246009",
+          "url": "https://www.douban.com/people/1246009/"
+        }
+      },
+      "episodes_info": "",
+      "following_rating": null,
+      "has_linewatch": true,
+      "honor_infos": [
+        {
+          "kind": "movie",
+          "rank": 4,
+          "title": "冷门佳作灾难片榜",
+          "uri": "douban://douban.com/subject_collection/ECHMOGZLQ?type=rank&category=movie&rank_type=film_genre"
+        }
+      ],
+      "id": "1299904",
+      "interest": null,
+      "photos": [
+        "https://img3.doubanio.com/view/photo/m/public/p1466805727.jpg",
+        "https://img9.doubanio.com/view/photo/m/public/p1902040665.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p1902041590.jpg",
+        "https://img9.doubanio.com/view/photo/m/public/p1902041515.jpg"
+      ],
+      "pic": {
+        "large": "https://img9.doubanio.com/view/photo/m_ratio_poster/public/p2555664416.jpg",
+        "normal": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2555664416.jpg"
+      },
+      "playable_date": null,
+      "playable_date_info": "",
+      "rating": {
+        "count": 18448,
+        "max": 10,
+        "star_count": 4,
+        "value": 8.1
+      },
+      "tags": [
+        {
+          "name": "冷门佳作灾难片榜",
+          "uri": "douban://douban.com/subject_collection/ECHMOGZLQ?type=rank&category=movie&rank_type=film_genre"
+        },
+        {
+          "name": "美国 灾难 冒险",
+          "uri": "douban://douban.com/movie/recommend_tag?type=tags&tag=%E7%BE%8E%E5%9B%BD%2C%E7%81%BE%E9%9A%BE%2C%E5%86%92%E9%99%A9"
+        }
+      ],
+      "title": "天劫余生",
+      "type": "movie",
+      "uri": "douban://douban.com/movie/1299904",
+      "vendor_count": 3,
+      "vendor_icons": [
+        "https://img9.doubanio.com/f/frodo/fbc90f355fc45d5d2056e0d88c697f9414b56b44/pics/vendors/tencent.png",
+        "https://img9.doubanio.com/f/frodo/6c7b857e6b2255201e73bf83732d95d572f3f9f7/pics/vendors/iqiyi.png",
+        "https://img3.doubanio.com/f/frodo/6fa5caade3ca480ccd95f455ee4d195ee342eb90/pics/vendors/youku.png"
+      ],
+      "year": "1993",
+      "card": "subject",
+      "item_type": "movie",
+      "alg_json": "{\"model\":\"baseline\",\"uid\":\"\",\"stype\":\"movie\",\"tags_mk\":\"灾难\",\"sort\":\"T\",\"score_range_mk\":\"8,10\",\"is_playable\":false,\"is_free_play\":false,\"playable_dr_mk\":null,\"vendors_mk\":null,\"uncollect\":false,\"count\":1000}"
+    },
+    {
+      "card_subtitle": "1995 / 日本 / 动画 灾难 / 大友克洋 / 林勇 山田俊司",
+      "comment": {
+        "comment": "已经标记了回忆三部曲……再标记单独的，显得看过的更多",
+        "id": "1948802734",
+        "user": {
+          "avatar": "https://img3.doubanio.com/icon/up57757597-43.jpg",
+          "id": "57757597",
+          "is_club": false,
+          "kind": "user",
+          "name": "宋荣子犹然笑之",
+          "type": "user",
+          "uid": "57757597",
+          "uri": "douban://douban.com/user/57757597",
+          "url": "https://www.douban.com/people/57757597/"
+        }
+      },
+      "episodes_info": "",
+      "following_rating": null,
+      "has_linewatch": false,
+      "honor_infos": [],
+      "id": "26951746",
+      "interest": null,
+      "photos": [
+        "https://img9.doubanio.com/view/photo/m/public/p2507659055.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p2901128183.jpg",
+        "https://img9.doubanio.com/view/photo/m/public/p2901128156.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p2901128138.jpg"
+      ],
+      "pic": {
+        "large": "https://img9.doubanio.com/view/photo/m_ratio_poster/public/p2411645494.jpg",
+        "normal": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2411645494.jpg"
+      },
+      "playable_date": null,
+      "playable_date_info": "",
+      "rating": {
+        "count": 16737,
+        "max": 10,
+        "star_count": 4,
+        "value": 8.3
+      },
+      "tags": [
+        {
+          "name": "日本 动画 科幻",
+          "uri": "douban://douban.com/movie/recommend_tag?type=tags&tag=%E6%97%A5%E6%9C%AC%2C%E5%8A%A8%E7%94%BB%2C%E7%A7%91%E5%B9%BB"
+        }
+      ],
+      "title": "大炮之街",
+      "type": "movie",
+      "uri": "douban://douban.com/movie/26951746",
+      "vendor_count": 0,
+      "vendor_icons": [],
+      "year": "1995",
+      "card": "subject",
+      "item_type": "movie",
+      "alg_json": "{\"model\":\"baseline\",\"uid\":\"\",\"stype\":\"movie\",\"tags_mk\":\"灾难\",\"sort\":\"T\",\"score_range_mk\":\"8,10\",\"is_playable\":false,\"is_free_play\":false,\"playable_dr_mk\":null,\"vendors_mk\":null,\"uncollect\":false,\"count\":1000}"
+    },
+    {
+      "card_subtitle": "2014 / 美国 / 动画 奇幻 冒险 灾难 / 史蒂夫·伦特 / 金妮弗·古德温 梅·惠特曼",
+      "comment": {
+        "comment": "主角竟然不是tink！不过这是这个系列最催泪的一部（对于少女向来说）b站高清",
+        "id": "899153899",
+        "user": {
+          "avatar": "https://img3.doubanio.com/icon/up1751357-42.jpg",
+          "id": "1751357",
+          "is_club": false,
+          "kind": "user",
+          "name": "纸猫乙",
+          "type": "user",
+          "uid": "foolqx",
+          "uri": "douban://douban.com/user/1751357",
+          "url": "https://www.douban.com/people/1751357/"
+        }
+      },
+      "episodes_info": "",
+      "following_rating": null,
+      "has_linewatch": false,
+      "honor_infos": [],
+      "id": "26258872",
+      "interest": null,
+      "photos": [
+        "https://img9.doubanio.com/view/photo/m/public/p2501684425.jpg",
+        "https://img9.doubanio.com/view/photo/m/public/p2501681044.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p2501681152.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p2501681148.jpg"
+      ],
+      "pic": {
+        "large": "https://img3.doubanio.com/view/photo/m_ratio_poster/public/p2214920830.jpg",
+        "normal": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2214920830.jpg"
+      },
+      "playable_date": null,
+      "playable_date_info": "",
+      "rating": {
+        "count": 12615,
+        "max": 10,
+        "star_count": 4,
+        "value": 8.2
+      },
+      "tags": [
+        {
+          "name": "美国 迪斯尼 动画",
+          "uri": "douban://douban.com/movie/recommend_tag?type=tags&tag=%E7%BE%8E%E5%9B%BD%2C%E8%BF%AA%E6%96%AF%E5%B0%BC%2C%E5%8A%A8%E7%94%BB"
+        }
+      ],
+      "title": "小叮当：永无兽传奇",
+      "type": "movie",
+      "uri": "douban://douban.com/movie/26258872",
+      "vendor_count": 0,
+      "vendor_icons": [],
+      "year": "2014",
+      "card": "subject",
+      "item_type": "movie",
+      "alg_json": "{\"model\":\"baseline\",\"uid\":\"\",\"stype\":\"movie\",\"tags_mk\":\"灾难\",\"sort\":\"T\",\"score_range_mk\":\"8,10\",\"is_playable\":false,\"is_free_play\":false,\"playable_dr_mk\":null,\"vendors_mk\":null,\"uncollect\":false,\"count\":1000}"
+    },
+    {
+      "card_subtitle": "1996 / 加拿大 美国 / 剧情 动作 爱情 历史 灾难 / 罗伯特·里伯曼 / 彼得·盖勒 凯瑟琳·泽塔-琼斯",
+      "comment": {
+        "comment": "我小时候就看过了，你们怎么现在才看，这么好的片子这么多年才被人发现，太可惜了。哎！对了，男主角就是演盗梦空间的那个大叔。",
+        "id": "519090065",
+        "user": {
+          "avatar": "https://img2.doubanio.com/icon/up3135974-111.jpg",
+          "id": "3135974",
+          "is_club": false,
+          "kind": "user",
+          "name": "bye bye baby",
+          "type": "user",
+          "uid": "buti",
+          "uri": "douban://douban.com/user/3135974",
+          "url": "https://www.douban.com/people/3135974/"
+        }
+      },
+      "episodes_info": "",
+      "following_rating": null,
+      "has_linewatch": false,
+      "honor_infos": [
+        {
+          "kind": "movie",
+          "rank": 1,
+          "title": "冷门佳作灾难片榜",
+          "uri": "douban://douban.com/subject_collection/ECHMOGZLQ?type=rank&category=movie&rank_type=film_genre"
+        }
+      ],
+      "id": "1296542",
+      "interest": null,
+      "photos": [
+        "https://img3.doubanio.com/view/photo/m/public/p2187158202.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p1502754343.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p2681428563.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p2681666747.jpg"
+      ],
+      "pic": {
+        "large": "https://img3.doubanio.com/view/photo/m_ratio_poster/public/p1502753588.jpg",
+        "normal": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p1502753588.jpg"
+      },
+      "playable_date": null,
+      "playable_date_info": "",
+      "rating": {
+        "count": 7053,
+        "max": 10,
+        "star_count": 4.5,
+        "value": 8.5
+      },
+      "tags": [
+        {
+          "name": "冷门佳作灾难片榜",
+          "uri": "douban://douban.com/subject_collection/ECHMOGZLQ?type=rank&category=movie&rank_type=film_genre"
+        },
+        {
+          "name": "加拿大 灾难 爱情",
+          "uri": "douban://douban.com/movie/recommend_tag?type=tags&tag=%E5%8A%A0%E6%8B%BF%E5%A4%A7%2C%E7%81%BE%E9%9A%BE%2C%E7%88%B1%E6%83%85"
+        },
+        {
+          "name": "黄金时段艾美奖 剧情节目迷你剧或特别节目最佳混音 获奖作品",
+          "uri": "douban://douban.com/subject_collection/ECRBCOSSA?type=rank&category=movie&rank_type=award_movie"
+        }
+      ],
+      "title": "铁达尼号沉没记",
+      "type": "movie",
+      "uri": "douban://douban.com/movie/1296542",
+      "vendor_count": 0,
+      "vendor_icons": [],
+      "year": "1996",
+      "card": "subject",
+      "item_type": "movie",
+      "alg_json": "{\"model\":\"baseline\",\"uid\":\"\",\"stype\":\"movie\",\"tags_mk\":\"灾难\",\"sort\":\"T\",\"score_range_mk\":\"8,10\",\"is_playable\":false,\"is_free_play\":false,\"playable_dr_mk\":null,\"vendors_mk\":null,\"uncollect\":false,\"count\":1000}"
+    },
+    {
+      "card_subtitle": "2009 / 英国 / 剧情 科幻 悬疑 惊悚 奇幻 冒险 灾难 / James Strong / David Tennant Michelle Ryan",
+      "comment": {
+        "comment": "尼玛只有特别篇才给个美女。。。摔！！",
+        "id": "467372423",
+        "user": {
+          "avatar": "https://img3.doubanio.com/icon/up2336350-60.jpg",
+          "id": "2336350",
+          "is_club": false,
+          "kind": "user",
+          "name": "猫様",
+          "type": "user",
+          "uid": "hazychou",
+          "uri": "douban://douban.com/user/2336350",
+          "url": "https://www.douban.com/people/2336350/"
+        }
+      },
+      "episodes_info": "",
+      "following_rating": null,
+      "has_linewatch": true,
+      "honor_infos": [],
+      "id": "4249642",
+      "interest": null,
+      "photos": [
+        "https://img3.doubanio.com/view/photo/m/public/p494705320.jpg",
+        "https://img9.doubanio.com/view/photo/m/public/p494701406.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p2185870953.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p494692698.jpg"
+      ],
+      "pic": {
+        "large": "https://img3.doubanio.com/view/photo/m_ratio_poster/public/p2508912980.jpg",
+        "normal": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2508912980.jpg"
+      },
+      "playable_date": null,
+      "playable_date_info": "",
+      "rating": {
+        "count": 9291,
+        "max": 10,
+        "star_count": 4.5,
+        "value": 8.7
+      },
+      "tags": [
+        {
+          "name": "英国 科幻 冒险",
+          "uri": "douban://douban.com/movie/recommend_tag?type=tags&tag=%E8%8B%B1%E5%9B%BD%2C%E7%A7%91%E5%B9%BB%2C%E5%86%92%E9%99%A9"
+        }
+      ],
+      "title": "神秘博士：死亡星球",
+      "type": "movie",
+      "uri": "douban://douban.com/movie/4249642",
+      "vendor_count": 1,
+      "vendor_icons": [
+        "https://img9.doubanio.com/f/frodo/fbc90f355fc45d5d2056e0d88c697f9414b56b44/pics/vendors/tencent.png"
+      ],
+      "year": "2009",
+      "card": "subject",
+      "item_type": "movie",
+      "alg_json": "{\"model\":\"baseline\",\"uid\":\"\",\"stype\":\"movie\",\"tags_mk\":\"灾难\",\"sort\":\"T\",\"score_range_mk\":\"8,10\",\"is_playable\":false,\"is_free_play\":false,\"playable_dr_mk\":null,\"vendors_mk\":null,\"uncollect\":false,\"count\":1000}"
+    },
+    {
+      "card_subtitle": "1958 / 英国 / 剧情 历史 灾难 / 罗伊·沃德·贝克 / 肯尼思·莫尔 罗纳德·艾伦",
+      "comment": {
+        "comment": "基本新版里感人的细节都是抄老版的",
+        "id": "88358554",
+        "user": {
+          "avatar": "https://img3.doubanio.com/icon/up2106650-33.jpg",
+          "id": "2106650",
+          "is_club": false,
+          "kind": "user",
+          "name": "墙报委员",
+          "type": "user",
+          "uid": "maoxiaov",
+          "uri": "douban://douban.com/user/2106650",
+          "url": "https://www.douban.com/people/2106650/"
+        }
+      },
+      "episodes_info": "",
+      "following_rating": null,
+      "has_linewatch": true,
+      "honor_infos": [
+        {
+          "kind": "movie",
+          "rank": 8,
+          "title": "欧洲灾难片榜",
+          "uri": "douban://douban.com/subject_collection/EC5IOQ75I?type=rank&category=movie&rank_type=film_genre"
+        }
+      ],
+      "id": "1292890",
+      "interest": null,
+      "photos": [
+        "https://img3.doubanio.com/view/photo/m/public/p2363649658.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p2363649667.jpg",
+        "https://img2.doubanio.com/view/photo/m/public/p2363649651.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p2904239023.jpg"
+      ],
+      "pic": {
+        "large": "https://img3.doubanio.com/view/photo/m_ratio_poster/public/p1505177928.jpg",
+        "normal": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p1505177928.jpg"
+      },
+      "playable_date": null,
+      "playable_date_info": "",
+      "rating": {
+        "count": 5379,
+        "max": 10,
+        "star_count": 4,
+        "value": 8.3
+      },
+      "tags": [
+        {
+          "name": "欧洲灾难片榜",
+          "uri": "douban://douban.com/subject_collection/EC5IOQ75I?type=rank&category=movie&rank_type=film_genre"
+        },
+        {
+          "name": "英国 灾难 黑白",
+          "uri": "douban://douban.com/movie/recommend_tag?type=tags&tag=%E8%8B%B1%E5%9B%BD%2C%E7%81%BE%E9%9A%BE%2C%E9%BB%91%E7%99%BD"
+        },
+        {
+          "name": "英国电影学院奖 最佳英国剧本 获奖作品",
+          "uri": "douban://douban.com/subject_collection/ECLBAVUMI?type=rank&category=movie&rank_type=award_movie"
+        }
+      ],
+      "title": "冰海沉船",
+      "type": "movie",
+      "uri": "douban://douban.com/movie/1292890",
+      "vendor_count": 3,
+      "vendor_icons": [
+        "https://img9.doubanio.com/f/frodo/fbc90f355fc45d5d2056e0d88c697f9414b56b44/pics/vendors/tencent.png",
+        "https://img9.doubanio.com/f/frodo/6c7b857e6b2255201e73bf83732d95d572f3f9f7/pics/vendors/iqiyi.png",
+        "https://img3.doubanio.com/f/frodo/6fa5caade3ca480ccd95f455ee4d195ee342eb90/pics/vendors/youku.png"
+      ],
+      "year": "1958",
+      "card": "subject",
+      "item_type": "movie",
+      "alg_json": "{\"model\":\"baseline\",\"uid\":\"\",\"stype\":\"movie\",\"tags_mk\":\"灾难\",\"sort\":\"T\",\"score_range_mk\":\"8,10\",\"is_playable\":false,\"is_free_play\":false,\"playable_dr_mk\":null,\"vendors_mk\":null,\"uncollect\":false,\"count\":1000}"
+    },
+    {
+      "card_subtitle": "2005 / 美国 / 纪录片 战争 灾难 / Rhawn Joseph",
+      "comment": {
+        "comment": "这是一部公映后让无数美国人触目惊心，而无数中国人却至今仍没有看到过的影片～",
+        "id": "28586453",
+        "user": {
+          "avatar": "https://img3.doubanio.com/icon/up1349364-3.jpg",
+          "id": "1349364",
+          "is_club": false,
+          "kind": "user",
+          "name": "yinancb",
+          "type": "user",
+          "uid": "zhinanzhen",
+          "uri": "douban://douban.com/user/1349364",
+          "url": "https://www.douban.com/people/1349364/"
+        }
+      },
+      "episodes_info": "",
+      "following_rating": null,
+      "has_linewatch": false,
+      "honor_infos": [],
+      "id": "1959281",
+      "interest": null,
+      "photos": [
+        "https://img3.doubanio.com/view/photo/m/public/p2318366359.jpg",
+        "https://img2.doubanio.com/view/photo/m/public/p2318375031.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p2318386503.jpg",
+        "https://img9.doubanio.com/view/photo/m/public/p2318385284.jpg"
+      ],
+      "pic": {
+        "large": "https://img3.doubanio.com/view/photo/m_ratio_poster/public/p2630318092.jpg",
+        "normal": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2630318092.jpg"
+      },
+      "playable_date": null,
+      "playable_date_info": "",
+      "rating": {
+        "count": 1806,
+        "max": 10,
+        "star_count": 4.5,
+        "value": 8.5
+      },
+      "tags": [
+        {
+          "name": "美国 纪录片 战争",
+          "uri": "douban://douban.com/movie/recommend_tag?type=tags&tag=%E7%BE%8E%E5%9B%BD%2C%E7%BA%AA%E5%BD%95%E7%89%87%2C%E6%88%98%E4%BA%89"
+        }
+      ],
+      "title": "南京梦魇",
+      "type": "movie",
+      "uri": "douban://douban.com/movie/1959281",
+      "vendor_count": 0,
+      "vendor_icons": [],
+      "year": "2005",
+      "card": "subject",
+      "item_type": "movie",
+      "alg_json": "{\"model\":\"baseline\",\"uid\":\"\",\"stype\":\"movie\",\"tags_mk\":\"灾难\",\"sort\":\"T\",\"score_range_mk\":\"8,10\",\"is_playable\":false,\"is_free_play\":false,\"playable_dr_mk\":null,\"vendors_mk\":null,\"uncollect\":false,\"count\":1000}"
+    },
+    {
+      "card_subtitle": "2013 / 中国大陆 / 纪录片 灾难 / 赵琦 / 彭孝全 洪世豪",
+      "comment": {
+        "comment": "亮点很多。很喜欢表达出的平静的感觉，纪录片不可能保证绝对的真实和中立，大部分情感和态度点到为止，不做作也不渲染就足够了。",
+        "id": "741501088",
+        "user": {
+          "avatar": "https://img9.doubanio.com/icon/up47329757-4.jpg",
+          "id": "47329757",
+          "is_club": false,
+          "kind": "user",
+          "name": "明明",
+          "type": "user",
+          "uid": "47329757",
+          "uri": "douban://douban.com/user/47329757",
+          "url": "https://www.douban.com/people/47329757/"
+        }
+      },
+      "episodes_info": "",
+      "following_rating": null,
+      "has_linewatch": false,
+      "honor_infos": [],
+      "id": "21355781",
+      "interest": null,
+      "photos": [
+        "https://img3.doubanio.com/view/photo/m/public/p1942168009.jpg",
+        "https://img3.doubanio.com/view/photo/m/public/p1942166952.jpg",
+        "https://img9.doubanio.com/view/photo/m/public/p1942166845.jpg",
+        "https://img9.doubanio.com/view/photo/m/public/p2325646945.jpg"
+      ],
+      "pic": {
+        "large": "https://img3.doubanio.com/view/photo/m_ratio_poster/public/p1942169579.jpg",
+        "normal": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p1942169579.jpg"
+      },
+      "playable_date": null,
+      "playable_date_info": "",
+      "rating": {
+        "count": 531,
+        "max": 10,
+        "star_count": 4,
+        "value": 8.2
+      },
+      "tags": [
+        {
+          "name": "中国大陆 纪录片 灾难",
+          "uri": "douban://douban.com/movie/recommend_tag?type=tags&tag=%E4%B8%AD%E5%9B%BD%E5%A4%A7%E9%99%86%2C%E7%BA%AA%E5%BD%95%E7%89%87%2C%E7%81%BE%E9%9A%BE"
+        }
+      ],
+      "title": "殇城",
+      "type": "movie",
+      "uri": "douban://douban.com/movie/21355781",
+      "vendor_count": 0,
+      "vendor_icons": [],
+      "year": "2013",
+      "card": "subject",
+      "item_type": "movie",
+      "alg_json": "{\"model\":\"baseline\",\"uid\":\"\",\"stype\":\"movie\",\"tags_mk\":\"灾难\",\"sort\":\"T\",\"score_range_mk\":\"8,10\",\"is_playable\":false,\"is_free_play\":false,\"playable_dr_mk\":null,\"vendors_mk\":null,\"uncollect\":false,\"count\":1000}"
+    },
+    {
+      "card_subtitle": "2010 / 美国 / 纪录片 灾难",
+      "comment": {
+        "comment": "当年的热点新闻曾关注过，智利矿难营救的背后故事，竟然动用了如此多的资源成功营救，对生命的尊重远超过其他许多价值，这才是正能量和文化自信。",
+        "id": "3274685830",
+        "user": {
+          "avatar": "https://img3.doubanio.com/icon/up32120400-28.jpg",
+          "id": "32120400",
+          "is_club": false,
+          "kind": "user",
+          "name": "Covfefe",
+          "type": "user",
+          "uid": "xiaoxinzei",
+          "uri": "douban://douban.com/user/32120400",
+          "url": "https://www.douban.com/people/32120400/"
+        }
+      },
+      "episodes_info": "",
+      "following_rating": null,
+      "has_linewatch": false,
+      "honor_infos": [],
+      "id": "10491659",
+      "interest": null,
+      "photos": [],
+      "pic": {
+        "large": "https://img3.doubanio.com/view/photo/m_ratio_poster/public/p2611020907.jpg",
+        "normal": "https://img3.doubanio.com/view/photo/s_ratio_poster/public/p2611020907.jpg"
+      },
+      "playable_date": null,
+      "playable_date_info": "",
+      "rating": {
+        "count": 221,
+        "max": 10,
+        "star_count": 4,
+        "value": 8.3
+      },
+      "tags": [
+        {
+          "name": "美国 灾难 纪录片",
+          "uri": "douban://douban.com/movie/recommend_tag?type=tags&tag=%E7%BE%8E%E5%9B%BD%2C%E7%81%BE%E9%9A%BE%2C%E7%BA%AA%E5%BD%95%E7%89%87"
+        }
+      ],
+      "title": "拯救智利矿工",
+      "type": "movie",
+      "uri": "douban://douban.com/movie/10491659",
+      "vendor_count": 0,
+      "vendor_icons": [],
+      "year": "2010",
+      "card": "subject",
+      "item_type": "movie",
+      "alg_json": "{\"model\":\"baseline\",\"uid\":\"\",\"stype\":\"movie\",\"tags_mk\":\"灾难\",\"sort\":\"T\",\"score_range_mk\":\"8,10\",\"is_playable\":false,\"is_free_play\":false,\"playable_dr_mk\":null,\"vendors_mk\":null,\"uncollect\":false,\"count\":1000}"
+    },
+    {
+      "card_subtitle": "2011 / 美国 / 纪录片 灾难 / 阿兰·柯德勒",
+      "comment": {
+        "comment": "日本关东大地震时的手机相机实录集",
+        "id": "960690639",
+        "user": {
+          "avatar": "https://img3.doubanio.com/icon/up33120695-13.jpg",
+          "id": "33120695",
+          "is_club": false,
+          "kind": "user",
+          "name": "X杰",
+          "type": "user",
+          "uid": "cactus87",
+          "uri": "douban://douban.com/user/33120695",
+          "url": "https://www.douban.com/people/33120695/"
+        }
+      },
+      "episodes_info": "",
+      "following_rating": null,
+      "has_linewatch": true,
+      "honor_infos": [],
+      "id": "26615296",
+      "interest": null,
+      "photos": [],
+      "pic": {
+        "large": "https://img9.doubanio.com/view/photo/m_ratio_poster/public/p2268302386.jpg",
+        "normal": "https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2268302386.jpg"
+      },
+      "playable_date": "2023-09-06 00:00:00",
+      "playable_date_info": "",
+      "rating": {
+        "count": 110,
+        "max": 10,
+        "star_count": 4,
+        "value": 8.3
+      },
+      "tags": [
+        {
+          "name": "美国 纪录片 灾难",
+          "uri": "douban://douban.com/movie/recommend_tag?type=tags&tag=%E7%BE%8E%E5%9B%BD%2C%E7%BA%AA%E5%BD%95%E7%89%87%2C%E7%81%BE%E9%9A%BE"
+        }
+      ],
+      "title": "直击：日本大地震",
+      "type": "movie",
+      "uri": "douban://douban.com/movie/26615296",
+      "vendor_count": 1,
+      "vendor_icons": [
+        "https://img9.doubanio.com/f/frodo/fbc90f355fc45d5d2056e0d88c697f9414b56b44/pics/vendors/tencent.png"
+      ],
+      "year": "2011",
+      "card": "subject",
+      "item_type": "movie",
+      "alg_json": "{\"model\":\"baseline\",\"uid\":\"\",\"stype\":\"movie\",\"tags_mk\":\"灾难\",\"sort\":\"T\",\"score_range_mk\":\"8,10\",\"is_playable\":false,\"is_free_play\":false,\"playable_dr_mk\":null,\"vendors_mk\":null,\"uncollect\":false,\"count\":1000}"
+    }
+  ]
+}

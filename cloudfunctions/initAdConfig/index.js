@@ -11,6 +11,7 @@ const CONFIG_DATA = {
   placements: {
     category_native:            { enabled: true },
     category_banner:            { enabled: false }, // 已被智能接入 Banner (pages/category/category-1) 完全替代
+    home_top_native:            { enabled: true },  // 首页「最新上线」上方原生模板位
     movielist_infeed:           { enabled: true },
     share_interstitial:         { enabled: false },  // 与云端当前状态保持一致
     share_banner:               { enabled: true },

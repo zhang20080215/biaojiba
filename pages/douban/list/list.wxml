@@ -1,8 +1,18 @@
 <!-- 豆瓣电影 TOP 250 列表页 -->
 <view class="page-root {{themeClass}}">
 
+  <!-- 沉浸式导航：页顶透明、头图色铺到状态栏；滚动后变头图同色实底并显示标题，吸顶 tab 停在它下面 -->
+  <view class="immersive-nav {{navSolid ? 'solid' : ''}}" style="height: {{navHeight}}px; padding-top: {{statusBarHeight}}px;">
+    <view class="immersive-nav-bar" style="height: {{navHeight - statusBarHeight}}px;">
+      <view class="nav-back" bindtap="onNavBack" hover-class="nav-back-hover" style="width: {{menuBtnHeight}}px; height: {{menuBtnHeight}}px;" aria-label="返回">
+        <view class="nav-back-arrow"></view>
+      </view>
+      <text class="nav-title">豆瓣电影TOP250</text>
+    </view>
+  </view>
+
   <!-- Hero 区（与 category 保持一致） -->
-  <view class="hero-section">
+  <view class="hero-section" style="padding-top: {{navHeight}}px;">
     <view class="header">
       <view class="header-left">
         <text class="app-name">豆瓣电影TOP250</text>
@@ -29,7 +39,7 @@
   </view>
 
   <!-- 统计 Tab 栏 -->
-  <view class="sticky-top-group">
+  <view class="sticky-top-group" style="top: {{stickyTop}}px;">
     <view class="tabs-bar">
       <view class="tab {{activeTab === 0 ? 'active' : ''}}" data-idx="0" bindtap="onTabChange">全部({{allCount}})</view>
       <view class="tab {{activeTab === 1 ? 'active' : ''}}" data-idx="1" bindtap="onTabChange">已看({{watchedCount}})</view>

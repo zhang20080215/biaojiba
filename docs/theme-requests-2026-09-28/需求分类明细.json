@@ -1,0 +1,6927 @@
+{
+  "summary": {
+    "source": "database_export-ZAHm4WDk18qr.json",
+    "records": 378,
+    "uniqueIds": 378,
+    "users": 301,
+    "from": "2026-07-05",
+    "to": "2026-09-28",
+    "originalStatuses": {
+      "pending": 378
+    },
+    "rowDisposition": {
+      "有效反馈": 333,
+      "待澄清": 38,
+      "无有效需求": 7
+    },
+    "requirementGroups": 132,
+    "validRequirementGroups": 117,
+    "luckinMentions": 0
+  },
+  "requirements": [
+    {
+      "key": "R001",
+      "name": "豆瓣电影 TOP250 与观影海报",
+      "state": "本地已有",
+      "priority": "维护",
+      "ids": [
+        1,
+        10,
+        11,
+        17,
+        22,
+        32,
+        33,
+        36,
+        38,
+        43,
+        44,
+        46,
+        48,
+        50,
+        52,
+        53,
+        59,
+        60,
+        69,
+        71,
+        72,
+        73,
+        74,
+        75,
+        82,
+        85,
+        86,
+        94,
+        95,
+        99,
+        100,
+        107,
+        108,
+        114,
+        115,
+        116,
+        128,
+        129,
+        134,
+        135,
+        138,
+        139,
+        166,
+        170,
+        198,
+        211,
+        222,
+        228,
+        238,
+        253,
+        259,
+        267,
+        322,
+        329,
+        331,
+        332,
+        334,
+        350,
+        359,
+        363,
+        373
+      ],
+      "note": "裸写 TOP250/250 的 movie 记录暂归此组，属于上下文推断；不能推断为使用故障。已有入口仍被请求，建议检查入口认知与许愿提示。",
+      "submissions": 61,
+      "users": 60,
+      "first": "2026-07-05",
+      "last": "2026-09-26",
+      "recentSubmissions": 9,
+      "recentUsers": 9
+    },
+    {
+      "key": "R002",
+      "name": "仅写豆瓣或豆瓣榜单",
+      "state": "待澄清",
+      "priority": "澄清",
+      "ids": [
+        4,
+        58,
+        62,
+        90,
+        102,
+        111,
+        123,
+        126,
+        140,
+        186,
+        217,
+        226,
+        260,
+        293,
+        320
+      ],
+      "note": "缺少作品类型、榜单口径或具体操作，不自动计入新增榜单。",
+      "submissions": 15,
+      "users": 15,
+      "first": "2026-07-05",
+      "last": "2026-09-08",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R003",
+      "name": "港片片单",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        2,
+        337
+      ],
+      "note": "需确定榜单来源、范围和数量。",
+      "submissions": 2,
+      "users": 2,
+      "first": "2026-07-05",
+      "last": "2026-09-14",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R004",
+      "name": "香港金像奖最佳影片",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        3
+      ],
+      "note": "原文仅金像奖，最佳影片为建议首期范围，需确认。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-07-05",
+      "last": "2026-07-05",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R005",
+      "name": "视与听榜单",
+      "state": "本地已有",
+      "priority": "维护",
+      "ids": [
+        5,
+        96,
+        277,
+        301
+      ],
+      "note": "301 的“诗与听”按明显笔误归并；本地 sightsound 已配置。",
+      "submissions": 4,
+      "users": 4,
+      "first": "2026-07-05",
+      "last": "2026-09-03",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R006",
+      "name": "无意义或无法识别需求",
+      "state": "无有效需求",
+      "priority": "过滤",
+      "ids": [
+        6,
+        12,
+        92,
+        146,
+        200,
+        290,
+        302
+      ],
+      "note": "标记吧、睡觉的笨蛋、看过、都可以、欢迎、电影、震撼：无可执行诉求；只在报告中过滤，不删除原记录。",
+      "submissions": 7,
+      "users": 7,
+      "first": "2026-07-06",
+      "last": "2026-09-03",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R007",
+      "name": "皮克斯动画长片",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        7
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-07-06",
+      "last": "2026-07-06",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R008",
+      "name": "漫威电影宇宙/系列及剧集",
+      "state": "待核对云端注册表",
+      "priority": "P1",
+      "ids": [
+        8,
+        51,
+        103,
+        104,
+        150,
+        257,
+        330,
+        365
+      ],
+      "note": "电影片单为主体；257 同时明确要求剧集，应分别标注内容类型和观看顺序。",
+      "submissions": 8,
+      "users": 8,
+      "first": "2026-07-06",
+      "last": "2026-09-23",
+      "recentSubmissions": 2,
+      "recentUsers": 2
+    },
+    {
+      "key": "R009",
+      "name": "奥斯卡最佳剧本",
+      "state": "部分支持/需细化",
+      "priority": "核对",
+      "ids": [
+        9
+      ],
+      "note": "本地 oscarScreenplay 为最佳原创剧本；用户未区分原创与改编，不应直接认定完全满足。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-07-07",
+      "last": "2026-07-07",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R010",
+      "name": "官场小说书单",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        13
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-07-08",
+      "last": "2026-07-08",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R011",
+      "name": "民俗文化书单",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        14
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-07-08",
+      "last": "2026-07-08",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R012",
+      "name": "动作电影榜单",
+      "state": "本地已有",
+      "priority": "维护",
+      "ids": [
+        15,
+        19,
+        20,
+        21,
+        29
+      ],
+      "note": "本地 rtAction 已配置。",
+      "submissions": 5,
+      "users": 1,
+      "first": "2026-07-08",
+      "last": "2026-07-10",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R013",
+      "name": "奥斯卡最佳影片",
+      "state": "本地已有",
+      "priority": "维护",
+      "ids": [
+        16,
+        80
+      ],
+      "note": "",
+      "submissions": 2,
+      "users": 2,
+      "first": "2026-07-09",
+      "last": "2026-07-25",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R014",
+      "name": "戛纳获奖影片",
+      "state": "部分支持/需细化",
+      "priority": "核对",
+      "ids": [
+        18
+      ],
+      "note": "本地有金棕榈奖；未说明是否要求全部奖项。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-07-09",
+      "last": "2026-07-09",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R015",
+      "name": "茅盾文学奖获奖书单",
+      "state": "本地已有",
+      "priority": "维护",
+      "ids": [
+        23,
+        24,
+        41,
+        42,
+        354
+      ],
+      "note": "“矛盾文学”按笔误合并；不包含提名名单。",
+      "submissions": 5,
+      "users": 2,
+      "first": "2026-07-09",
+      "last": "2026-09-19",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R016",
+      "name": "诺贝尔文学奖得主代表作/书单",
+      "state": "待核对云端注册表",
+      "priority": "P1",
+      "ids": [
+        25,
+        27,
+        39,
+        55,
+        78,
+        88,
+        151,
+        158,
+        204,
+        205,
+        207,
+        235,
+        241,
+        282,
+        371,
+        378
+      ],
+      "note": "先确定每位得主选几部代表作、中文译本与版本去重口径；151“诺比尔”按笔误归并。",
+      "submissions": 16,
+      "users": 16,
+      "first": "2026-07-09",
+      "last": "2026-09-28",
+      "recentSubmissions": 2,
+      "recentUsers": 2
+    },
+    {
+      "key": "R017",
+      "name": "纽伯瑞儿童文学奖",
+      "state": "部分支持/需细化",
+      "priority": "核对",
+      "ids": [
+        26
+      ],
+      "note": "本地为金奖；若要求银奖或全部获奖作品仍有差异。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-07-09",
+      "last": "2026-07-09",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R018",
+      "name": "Letterboxd TOP500",
+      "state": "本地已有",
+      "priority": "维护",
+      "ids": [
+        28,
+        37
+      ],
+      "note": "",
+      "submissions": 2,
+      "users": 2,
+      "first": "2026-07-10",
+      "last": "2026-07-12",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R019",
+      "name": "微信读书 TOP200 阅读海报",
+      "state": "本地已有",
+      "priority": "维护",
+      "ids": [
+        30
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-07-10",
+      "last": "2026-07-10",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R020",
+      "name": "豆瓣不同规模电影榜单",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        31,
+        125,
+        147,
+        244,
+        256
+      ],
+      "note": "分别为前150、100、25、500、200；不能当作 TOP250 完全重复，部分可能为笔误。",
+      "submissions": 5,
+      "users": 5,
+      "first": "2026-07-10",
+      "last": "2026-08-26",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R021",
+      "name": "奥斯卡最佳国际影片",
+      "state": "本地已有",
+      "priority": "维护",
+      "ids": [
+        34
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-07-11",
+      "last": "2026-07-11",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R022",
+      "name": "悬疑电影榜单",
+      "state": "待核对云端注册表",
+      "priority": "P1",
+      "ids": [
+        35,
+        81,
+        137,
+        191,
+        225,
+        274,
+        326
+      ],
+      "note": "274 同时请求科幻，拆为两项诉求。",
+      "submissions": 7,
+      "users": 7,
+      "first": "2026-07-11",
+      "last": "2026-09-10",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R023",
+      "name": "喜剧电影榜单",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        40,
+        77,
+        117,
+        145,
+        156,
+        197,
+        203,
+        233,
+        269,
+        313,
+        342,
+        361,
+        369
+      ],
+      "note": "按独立用户数看热度，不能直接以反复提交次数排期。",
+      "submissions": 13,
+      "users": 3,
+      "first": "2026-07-12",
+      "last": "2026-09-25",
+      "recentSubmissions": 4,
+      "recentUsers": 1
+    },
+    {
+      "key": "R024",
+      "name": "水晶奖动画长片",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        45
+      ],
+      "note": "需确认奖项是否指安纳西动画节水晶奖。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-07-13",
+      "last": "2026-07-13",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R025",
+      "name": "综合电视剧榜单",
+      "state": "部分支持/需细化",
+      "priority": "核对",
+      "ids": [
+        47,
+        120,
+        130,
+        152,
+        187,
+        194,
+        210,
+        214,
+        216,
+        263
+      ],
+      "note": "本地有华语/国外/动画剧集榜，但 TOP200 等数量口径不完全相同。",
+      "submissions": 10,
+      "users": 10,
+      "first": "2026-07-15",
+      "last": "2026-08-27",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R026",
+      "name": "IMDb 电影 TOP250",
+      "state": "本地已有",
+      "priority": "维护",
+      "ids": [
+        49,
+        67
+      ],
+      "note": "imbd 按 IMDb 笔误归并。",
+      "submissions": 2,
+      "users": 2,
+      "first": "2026-07-15",
+      "last": "2026-07-21",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R027",
+      "name": "爱情电影榜单",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        54,
+        172,
+        357
+      ],
+      "note": "史上最佳与20世纪百大分别保留候选口径。",
+      "submissions": 3,
+      "users": 3,
+      "first": "2026-07-17",
+      "last": "2026-09-20",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R028",
+      "name": "雨果奖获奖作品",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        56,
+        241
+      ],
+      "note": "",
+      "submissions": 2,
+      "users": 2,
+      "first": "2026-07-18",
+      "last": "2026-08-23",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R029",
+      "name": "首页置顶片单",
+      "state": "本地已有",
+      "priority": "维护",
+      "ids": [
+        57
+      ],
+      "note": "category 已有批量置顶管理。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-07-18",
+      "last": "2026-07-18",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R030",
+      "name": "韩剧专项榜单",
+      "state": "待核对云端注册表",
+      "priority": "P1",
+      "ids": [
+        61,
+        66,
+        195,
+        246,
+        349
+      ],
+      "note": "国外剧集混合榜不等价于独立韩剧榜。",
+      "submissions": 5,
+      "users": 5,
+      "first": "2026-07-20",
+      "last": "2026-09-18",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R031",
+      "name": "高考英语备考资料清单",
+      "state": "待核对云端注册表",
+      "priority": "P3",
+      "ids": [
+        63,
+        64
+      ],
+      "note": "超出现有影书旅主线，保留但后置。",
+      "submissions": 2,
+      "users": 1,
+      "first": "2026-07-20",
+      "last": "2026-07-20",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R032",
+      "name": "美剧/英美剧与 IMDb 剧集榜",
+      "state": "部分支持/需细化",
+      "priority": "P2",
+      "ids": [
+        65,
+        141,
+        189,
+        199,
+        219
+      ],
+      "note": "本地国外剧集为混合榜；IMDb 美剧榜是独立来源需求。",
+      "submissions": 5,
+      "users": 5,
+      "first": "2026-07-21",
+      "last": "2026-08-19",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R033",
+      "name": "自建命名片单/书单、最爱及分享",
+      "state": "部分支持/需细化",
+      "priority": "P1",
+      "ids": [
+        68,
+        175,
+        289
+      ],
+      "note": "每日电影/读书可记录作品，不等于多张可命名自建清单；289 明确需要最爱海报分享。",
+      "submissions": 3,
+      "users": 3,
+      "first": "2026-07-22",
+      "last": "2026-08-30",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R034",
+      "name": "单部作品或作品串：待确认操作",
+      "state": "待澄清",
+      "priority": "澄清",
+      "ids": [
+        70,
+        110,
+        215,
+        227,
+        236,
+        279,
+        310,
+        333
+      ],
+      "note": "保留原名，需确认是搜索不到、想做系列榜还是误把许愿框当搜索。310 为多个剧名。",
+      "submissions": 8,
+      "users": 8,
+      "first": "2026-07-22",
+      "last": "2026-09-12",
+      "recentSubmissions": 2,
+      "recentUsers": 2
+    },
+    {
+      "key": "R035",
+      "name": "Metacritic 电影榜",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        76
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-07-24",
+      "last": "2026-07-24",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R036",
+      "name": "个人电影记录/电影墙意图不完整",
+      "state": "待澄清",
+      "priority": "澄清",
+      "ids": [
+        79,
+        105,
+        328
+      ],
+      "note": "“我的电影”“电影墙”“我看过的电影”不足以区分已有记录、分享与自建清单。",
+      "submissions": 3,
+      "users": 3,
+      "first": "2026-07-25",
+      "last": "2026-09-11",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R037",
+      "name": "恐怖电影榜单",
+      "state": "本地已有",
+      "priority": "维护",
+      "ids": [
+        83,
+        264
+      ],
+      "note": "",
+      "submissions": 2,
+      "users": 2,
+      "first": "2026-07-26",
+      "last": "2026-08-27",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R038",
+      "name": "马华文学书单",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        84
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-07-26",
+      "last": "2026-07-26",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R039",
+      "name": "微信读书推荐神作榜",
+      "state": "待澄清",
+      "priority": "澄清",
+      "ids": [
+        87
+      ],
+      "note": "原文“推进神作”，需确认具体官方分类或榜单，不能当总榜重复。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-07-27",
+      "last": "2026-07-27",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R040",
+      "name": "2026 暑期观影片单",
+      "state": "待核对云端注册表",
+      "priority": "P3",
+      "ids": [
+        89
+      ],
+      "note": "历史时段需求，需确认是否转为持续更新的档期片单。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-07-27",
+      "last": "2026-07-27",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R041",
+      "name": "东野圭吾作品集",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        91,
+        98,
+        240,
+        286
+      ],
+      "note": "",
+      "submissions": 4,
+      "users": 4,
+      "first": "2026-07-28",
+      "last": "2026-08-29",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R042",
+      "name": "小说泛类书单",
+      "state": "待澄清",
+      "priority": "澄清",
+      "ids": [
+        93
+      ],
+      "note": "只有小说二字，缺少排名/题材标准。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-07-28",
+      "last": "2026-07-28",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R043",
+      "name": "华语/国产电影榜",
+      "state": "部分支持/需细化",
+      "priority": "P2",
+      "ids": [
+        97,
+        288,
+        316,
+        343
+      ],
+      "note": "本地有 chinese 源码但被打包排除；不视为已开放，需明确 TOP100/200 等口径。",
+      "submissions": 4,
+      "users": 4,
+      "first": "2026-07-29",
+      "last": "2026-09-15",
+      "recentSubmissions": 2,
+      "recentUsers": 2
+    },
+    {
+      "key": "R044",
+      "name": "旅行景点榜单",
+      "state": "部分支持/需细化",
+      "priority": "核对",
+      "ids": [
+        101
+      ],
+      "note": "本地有5A景区，是否满足其泛化诉求待确认。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-07-30",
+      "last": "2026-07-30",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R045",
+      "name": "动漫番剧榜单",
+      "state": "部分支持/需细化",
+      "priority": "核对",
+      "ids": [
+        106,
+        201,
+        208,
+        209,
+        223,
+        249,
+        336
+      ],
+      "note": "本地有豆瓣动画剧集榜。",
+      "submissions": 7,
+      "users": 7,
+      "first": "2026-08-01",
+      "last": "2026-09-13",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R046",
+      "name": "TSPDT 电影榜",
+      "state": "待核对云端注册表",
+      "priority": "P1",
+      "ids": [
+        109,
+        122,
+        278,
+        284,
+        314,
+        319,
+        374
+      ],
+      "note": "122 明确要求 all time 与 2000s，两套榜单分开处理；核实权威来源与版本。",
+      "submissions": 7,
+      "users": 6,
+      "first": "2026-08-02",
+      "last": "2026-09-26",
+      "recentSubmissions": 3,
+      "recentUsers": 3
+    },
+    {
+      "key": "R047",
+      "name": "心灵题材或作品意图不明",
+      "state": "待澄清",
+      "priority": "澄清",
+      "ids": [
+        112
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-03",
+      "last": "2026-08-03",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R048",
+      "name": "已看电影自选海报墙",
+      "state": "本地已有",
+      "priority": "维护",
+      "ids": [
+        113
+      ],
+      "note": "本地每日电影已有记录与分享海报；需线上确认入口与版本。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-03",
+      "last": "2026-08-03",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R049",
+      "name": "科幻电影榜单",
+      "state": "待核对云端注册表",
+      "priority": "P1",
+      "ids": [
+        118,
+        144,
+        148,
+        155,
+        164,
+        168,
+        196,
+        202,
+        206,
+        224,
+        232,
+        268,
+        274,
+        291,
+        308,
+        312,
+        341,
+        346,
+        360,
+        368
+      ],
+      "note": "记录多不等于人数多；274 与悬疑拆分。",
+      "submissions": 20,
+      "users": 6,
+      "first": "2026-08-04",
+      "last": "2026-09-25",
+      "recentSubmissions": 6,
+      "recentUsers": 2
+    },
+    {
+      "key": "R050",
+      "name": "周星驰作品集",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        119,
+        169,
+        179,
+        243
+      ],
+      "note": "",
+      "submissions": 4,
+      "users": 2,
+      "first": "2026-08-04",
+      "last": "2026-08-24",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R051",
+      "name": "动漫细分榜：乙女番/动作番",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        121
+      ],
+      "note": "综合动画剧集榜未覆盖细分主题。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-05",
+      "last": "2026-08-05",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R052",
+      "name": "自定义添加/自制自用但对象不明",
+      "state": "待澄清",
+      "priority": "澄清",
+      "ids": [
+        124,
+        325
+      ],
+      "note": "不能未经确认就计入可命名自建片单人数。",
+      "submissions": 2,
+      "users": 2,
+      "first": "2026-08-05",
+      "last": "2026-09-10",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R053",
+      "name": "歌舞电影榜单",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        127,
+        265
+      ],
+      "note": "",
+      "submissions": 2,
+      "users": 2,
+      "first": "2026-08-05",
+      "last": "2026-08-27",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R054",
+      "name": "日本电影榜单",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        131
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-05",
+      "last": "2026-08-05",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R055",
+      "name": "伪纪录片影单",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        132
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-05",
+      "last": "2026-08-05",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R056",
+      "name": "特摄片单",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        133
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-06",
+      "last": "2026-08-06",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R057",
+      "name": "威尼斯金狮奖与柏林金熊奖",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        136,
+        280,
+        362
+      ],
+      "note": "136 同时要求两个电影节；362 仅说柏林电影节，奖项范围待确认。",
+      "submissions": 3,
+      "users": 3,
+      "first": "2026-08-06",
+      "last": "2026-09-22",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R058",
+      "name": "TED 演讲清单",
+      "state": "待核对云端注册表",
+      "priority": "P3",
+      "ids": [
+        142
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-07",
+      "last": "2026-08-07",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R059",
+      "name": "Cult 电影片单",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        143,
+        327
+      ],
+      "note": "",
+      "submissions": 2,
+      "users": 2,
+      "first": "2026-08-07",
+      "last": "2026-09-10",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R060",
+      "name": "阿加莎·克里斯蒂作品集",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        149,
+        318
+      ],
+      "note": "",
+      "submissions": 2,
+      "users": 2,
+      "first": "2026-08-08",
+      "last": "2026-09-07",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R061",
+      "name": "当代学术丛书",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        153
+      ],
+      "note": "需确定出版社与版本范围。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-08",
+      "last": "2026-08-08",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R062",
+      "name": "悬疑推理小说榜单",
+      "state": "待核对云端注册表",
+      "priority": "P1",
+      "ids": [
+        154,
+        184,
+        251,
+        273,
+        294,
+        298,
+        311,
+        317,
+        335,
+        344
+      ],
+      "note": "保留全球TOP100、豆瓣TOP100等来源差异；251 同时请求世界名著。",
+      "submissions": 10,
+      "users": 10,
+      "first": "2026-08-08",
+      "last": "2026-09-15",
+      "recentSubmissions": 5,
+      "recentUsers": 5
+    },
+    {
+      "key": "R063",
+      "name": "金鹰/百花/金马/飞天奖",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        157,
+        309
+      ],
+      "note": "309 为4类奖项，金鹰与157合并；后续按电影/剧集及奖项拆分数据集。",
+      "submissions": 2,
+      "users": 2,
+      "first": "2026-08-08",
+      "last": "2026-09-04",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R064",
+      "name": "动画电影榜单",
+      "state": "本地已有",
+      "priority": "维护",
+      "ids": [
+        159,
+        193
+      ],
+      "note": "159仅写动画且类型movie，归类置信度较低；本地 rtAnimation 与奥斯卡动画长篇已配置。",
+      "submissions": 2,
+      "users": 2,
+      "first": "2026-08-10",
+      "last": "2026-08-16",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R065",
+      "name": "游戏榜单及记录统计",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        160,
+        234,
+        252
+      ],
+      "note": "TGA年度最佳、各类提名和游戏统计是三个交付点；252不是明确TGA榜单。",
+      "submissions": 3,
+      "users": 3,
+      "first": "2026-08-10",
+      "last": "2026-08-25",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R066",
+      "name": "中国经典徒步路线",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        162
+      ],
+      "note": "用户提供的来源归属与路线内容未核实，不能直接作为官方名单。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-10",
+      "last": "2026-08-10",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R067",
+      "name": "中国国家地理最美中国系列",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        163
+      ],
+      "note": "拆成山、湖、峡谷、草原4个候选榜；用户列举内容与出处均需独立核验。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-10",
+      "last": "2026-08-10",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R068",
+      "name": "普利策小说奖",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        161
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-10",
+      "last": "2026-08-10",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R069",
+      "name": "日剧专项榜单",
+      "state": "待核对云端注册表",
+      "priority": "P1",
+      "ids": [
+        165,
+        188,
+        231,
+        315
+      ],
+      "note": "近期日剧与TOP200不同口径，首期选一种。",
+      "submissions": 4,
+      "users": 4,
+      "first": "2026-08-11",
+      "last": "2026-09-06",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R070",
+      "name": "哈利波特系列",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        167
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-11",
+      "last": "2026-08-11",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R071",
+      "name": "世界自然遗产/中国世界遗产",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        171,
+        177
+      ],
+      "note": "自然遗产与全部世界遗产不能混为同一筛选口径。",
+      "submissions": 2,
+      "users": 2,
+      "first": "2026-08-12",
+      "last": "2026-08-13",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R072",
+      "name": "20世纪百大小说",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        173
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-12",
+      "last": "2026-08-12",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R073",
+      "name": "纪录片评分榜",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        174
+      ],
+      "note": "需注意当前电影抓取路径对纪录片的过滤。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-12",
+      "last": "2026-08-12",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R074",
+      "name": "LGBT/同影主题片单",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        176,
+        300
+      ],
+      "note": "同影按语境归并。",
+      "submissions": 2,
+      "users": 2,
+      "first": "2026-08-13",
+      "last": "2026-09-03",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R075",
+      "name": "全球旅游城市清单",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        178
+      ],
+      "note": "本地国内城市不能满足全球范围。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-13",
+      "last": "2026-08-13",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R076",
+      "name": "世界博物馆/美术馆",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        180
+      ],
+      "note": "国内国家一级博物馆不等于全球馆藏清单。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-14",
+      "last": "2026-08-14",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R077",
+      "name": "诺兰作品集",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        181
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-14",
+      "last": "2026-08-14",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R078",
+      "name": "省级行政区旅行打卡",
+      "state": "本地已有",
+      "priority": "维护",
+      "ids": [
+        182
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-14",
+      "last": "2026-08-14",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R079",
+      "name": "中华书局三全本书单",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        183
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-14",
+      "last": "2026-08-14",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R080",
+      "name": "国家地理一生必去50地",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        185
+      ],
+      "note": "需核实榜单具体版本。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-15",
+      "last": "2026-08-15",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R081",
+      "name": "泛化高分电影",
+      "state": "待澄清",
+      "priority": "澄清",
+      "ids": [
+        190
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-16",
+      "last": "2026-08-16",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R082",
+      "name": "红果漫剧榜单",
+      "state": "待核对云端注册表",
+      "priority": "P3",
+      "ids": [
+        192
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-16",
+      "last": "2026-08-16",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R083",
+      "name": "文艺电影榜单",
+      "state": "本地已有",
+      "priority": "维护",
+      "ids": [
+        212,
+        218
+      ],
+      "note": "",
+      "submissions": 2,
+      "users": 2,
+      "first": "2026-08-18",
+      "last": "2026-08-19",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R084",
+      "name": "电影生涯个人喜好表",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        213
+      ],
+      "note": "不同于普通已看海报墙，需要喜好维度/模板。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-18",
+      "last": "2026-08-18",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R085",
+      "name": "全国城市旅行打卡",
+      "state": "本地已有",
+      "priority": "维护",
+      "ids": [
+        220,
+        239
+      ],
+      "note": "220 同时要求世界国家，已拆分。",
+      "submissions": 2,
+      "users": 2,
+      "first": "2026-08-19",
+      "last": "2026-08-23",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R086",
+      "name": "世界国家打卡与世界地图",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        220,
+        242,
+        262,
+        270,
+        292
+      ],
+      "note": "地图表现与国家清单需同时设计。",
+      "submissions": 5,
+      "users": 5,
+      "first": "2026-08-19",
+      "last": "2026-08-31",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R087",
+      "name": "国产动画专题",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        221
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-20",
+      "last": "2026-08-20",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R088",
+      "name": "茅盾文学奖提名书单",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        229
+      ],
+      "note": "获奖榜不能代替提名榜。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-21",
+      "last": "2026-08-21",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R089",
+      "name": "奥斯卡提名影片",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        230,
+        338
+      ],
+      "note": "需确认仅最佳影片还是全部奖项。",
+      "submissions": 2,
+      "users": 2,
+      "first": "2026-08-21",
+      "last": "2026-09-14",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R090",
+      "name": "旅行范围不明",
+      "state": "待澄清",
+      "priority": "澄清",
+      "ids": [
+        237
+      ],
+      "note": "全国各地不足以确定省、市、景点或景区。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-23",
+      "last": "2026-08-23",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R091",
+      "name": "历年华语剧TOP10/近期热门剧",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        245,
+        247
+      ],
+      "note": "年度榜、热度榜与现有高分榜口径不同。",
+      "submissions": 2,
+      "users": 2,
+      "first": "2026-08-24",
+      "last": "2026-08-24",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R092",
+      "name": "迪士尼电影作品集",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        248,
+        323
+      ],
+      "note": "",
+      "submissions": 2,
+      "users": 2,
+      "first": "2026-08-25",
+      "last": "2026-09-09",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R093",
+      "name": "战争电影榜单",
+      "state": "本地已有",
+      "priority": "维护",
+      "ids": [
+        250
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-25",
+      "last": "2026-08-25",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R094",
+      "name": "世界名著书单",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        251
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-25",
+      "last": "2026-08-25",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R095",
+      "name": "豆瓣文学TOP100",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        254
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-26",
+      "last": "2026-08-26",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R096",
+      "name": "豆瓣社科TOP100",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        255
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-26",
+      "last": "2026-08-26",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R097",
+      "name": "豆瓣9分以上书籍",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        258
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-26",
+      "last": "2026-08-26",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R098",
+      "name": "TVB高分经典剧集",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        261
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-26",
+      "last": "2026-08-26",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R099",
+      "name": "综艺片单",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        266,
+        356
+      ],
+      "note": "",
+      "submissions": 2,
+      "users": 2,
+      "first": "2026-08-27",
+      "last": "2026-09-20",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R100",
+      "name": "宫崎骏作品集",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        271
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-28",
+      "last": "2026-08-28",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R101",
+      "name": "电影系列合集入口",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        272
+      ],
+      "note": "具体系列范围待确认；不额外计入漫威等具体IP人数。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-28",
+      "last": "2026-08-28",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R102",
+      "name": "历史类书单（豆瓣/微信读书）",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        275,
+        358,
+        364
+      ],
+      "note": "来源分开保留；364同时希望按类型分类的通用书单能力。",
+      "submissions": 3,
+      "users": 3,
+      "first": "2026-08-28",
+      "last": "2026-09-23",
+      "recentSubmissions": 2,
+      "recentUsers": 2
+    },
+    {
+      "key": "R103",
+      "name": "影视改编原著小说书单",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        276
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-28",
+      "last": "2026-08-28",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R104",
+      "name": "FIRST短片片单",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        281
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-28",
+      "last": "2026-08-28",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R105",
+      "name": "吸血鬼主题片单",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        283
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-29",
+      "last": "2026-08-29",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R106",
+      "name": "猫武士系列书单",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        285
+      ],
+      "note": "可能为系列请求，需确认是否全系列。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-29",
+      "last": "2026-08-29",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R107",
+      "name": "经济类书单",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        287
+      ],
+      "note": "主题有效，来源和范围待补充。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-08-30",
+      "last": "2026-08-30",
+      "recentSubmissions": 0,
+      "recentUsers": 0
+    },
+    {
+      "key": "R108",
+      "name": "书籍TOP125口径不明",
+      "state": "待澄清",
+      "priority": "澄清",
+      "ids": [
+        295
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-09-01",
+      "last": "2026-09-01",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R109",
+      "name": "获奖文学综合入口",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        296
+      ],
+      "note": "泛化但有奖项聚合方向，不自动分配到诺奖人数。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-09-01",
+      "last": "2026-09-01",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R110",
+      "name": "三大电影节获奖名单",
+      "state": "部分支持/需细化",
+      "priority": "P2",
+      "ids": [
+        297,
+        367
+      ],
+      "note": "已有金棕榈部分覆盖；金熊/金狮待核对。297“金钱奖”不擅自更正为其他奖项。",
+      "submissions": 2,
+      "users": 2,
+      "first": "2026-09-02",
+      "last": "2026-09-25",
+      "recentSubmissions": 2,
+      "recentUsers": 2
+    },
+    {
+      "key": "R111",
+      "name": "乐队/歌手观演标记",
+      "state": "待核对云端注册表",
+      "priority": "P3",
+      "ids": [
+        299
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-09-03",
+      "last": "2026-09-03",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R112",
+      "name": "奇幻电影榜单",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        303
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-09-03",
+      "last": "2026-09-03",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R113",
+      "name": "小众高分/非名著书单",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        304,
+        305
+      ],
+      "note": "需定义小众标准，不能只按主观印象选书。",
+      "submissions": 2,
+      "users": 1,
+      "first": "2026-09-03",
+      "last": "2026-09-03",
+      "recentSubmissions": 2,
+      "recentUsers": 1
+    },
+    {
+      "key": "R114",
+      "name": "2026豆瓣高分书TOP200",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        306
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-09-03",
+      "last": "2026-09-03",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R115",
+      "name": "古典书籍意图不明",
+      "state": "待澄清",
+      "priority": "澄清",
+      "ids": [
+        307
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-09-03",
+      "last": "2026-09-03",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R116",
+      "name": "穿越题材影视片单",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        321
+      ],
+      "note": "需确认电影或剧集范围。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-09-08",
+      "last": "2026-09-08",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R117",
+      "name": "晋江/长佩耽美书单",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        324
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-09-10",
+      "last": "2026-09-10",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R118",
+      "name": "乐器学习记录/清单",
+      "state": "待澄清",
+      "priority": "澄清",
+      "ids": [
+        339
+      ],
+      "note": "主题有意义，但缺少要学、打卡或作品清单等操作目标。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-09-14",
+      "last": "2026-09-14",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R119",
+      "name": "每日步数记录",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        340
+      ],
+      "note": "现有每日运动不等于每日步数；确认手动记录还是微信运动同步。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-09-15",
+      "last": "2026-09-15",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R120",
+      "name": "安妮奖最佳动画",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        345
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-09-15",
+      "last": "2026-09-15",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R121",
+      "name": "讲座记录/清单",
+      "state": "待澄清",
+      "priority": "澄清",
+      "ids": [
+        347
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-09-15",
+      "last": "2026-09-15",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R122",
+      "name": "城市旅游列表数量/行政区数据疑似错误",
+      "state": "待复现问题",
+      "priority": "P1",
+      "ids": [
+        348
+      ],
+      "note": "原文“城市旅游的地级市不准确，合肥只显示10个市”。先确认实际选中安徽还是合肥，再查getCities与cities数据，不能直接把10改成某个数量。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-09-17",
+      "last": "2026-09-17",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R123",
+      "name": "畅销书榜",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        351
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-09-19",
+      "last": "2026-09-19",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R124",
+      "name": "历年华语经典歌曲",
+      "state": "待核对云端注册表",
+      "priority": "P3",
+      "ids": [
+        352
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-09-19",
+      "last": "2026-09-19",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R125",
+      "name": "日本学院奖片单",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        353
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-09-19",
+      "last": "2026-09-19",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R126",
+      "name": "女性主义电影TOP250",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        355
+      ],
+      "note": "需确认权威来源与筛选标准，不冒称官方TOP250。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-09-20",
+      "last": "2026-09-20",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R127",
+      "name": "台湾相关电影范围不明",
+      "state": "待澄清",
+      "priority": "澄清",
+      "ids": [
+        366
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-09-23",
+      "last": "2026-09-23",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R128",
+      "name": "公园打卡与评分",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        370
+      ],
+      "note": "北京公园/全国公园两种范围，评分是新增交互诉求，不能只上清单。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-09-26",
+      "last": "2026-09-26",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R129",
+      "name": "Goodreads Best Books Ever",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        372
+      ],
+      "note": "以用户明确榜单名为准，不当作“美国豆瓣250”的直接等价物。",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-09-26",
+      "last": "2026-09-26",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R130",
+      "name": "香港金像奖最佳男主角",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        375
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-09-26",
+      "last": "2026-09-26",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R131",
+      "name": "香港金像奖最佳导演",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        376
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-09-26",
+      "last": "2026-09-26",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    },
+    {
+      "key": "R132",
+      "name": "中国金鸡奖最佳男主角",
+      "state": "待核对云端注册表",
+      "priority": "P2",
+      "ids": [
+        377
+      ],
+      "note": "",
+      "submissions": 1,
+      "users": 1,
+      "first": "2026-09-26",
+      "last": "2026-09-26",
+      "recentSubmissions": 1,
+      "recentUsers": 1
+    }
+  ],
+  "records": [
+    {
+      "row": 1,
+      "id": "edf901b86a49fc37003181876abe10c4",
+      "userKey": "U001",
+      "type": "movie",
+      "content": "豆瓣二百五",
+      "date": "2026-07-05",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 2,
+      "id": "edf901b86a4a1a6e0033351b447ac549",
+      "userKey": "U002",
+      "type": "movie",
+      "content": "港片",
+      "date": "2026-07-05",
+      "originalStatus": "pending",
+      "requirements": [
+        "R003"
+      ]
+    },
+    {
+      "row": 3,
+      "id": "516f04746a4a1a7600708f192c1ffef6",
+      "userKey": "U002",
+      "type": "movie",
+      "content": "金像奖",
+      "date": "2026-07-05",
+      "originalStatus": "pending",
+      "requirements": [
+        "R004"
+      ]
+    },
+    {
+      "row": 4,
+      "id": "516f04746a4a5e7c0077669e685a4a1b",
+      "userKey": "U003",
+      "type": "movie",
+      "content": "豆瓣",
+      "date": "2026-07-05",
+      "originalStatus": "pending",
+      "requirements": [
+        "R002"
+      ]
+    },
+    {
+      "row": 5,
+      "id": "edf901b86a4a608a0037545d16dbcd29",
+      "userKey": "U003",
+      "type": "movie",
+      "content": "视与听",
+      "date": "2026-07-05",
+      "originalStatus": "pending",
+      "requirements": [
+        "R005"
+      ]
+    },
+    {
+      "row": 6,
+      "id": "34e7f3816a4a80e8002ee5bc39f12c5f",
+      "userKey": "U004",
+      "type": "movie",
+      "content": "标记吧",
+      "date": "2026-07-06",
+      "originalStatus": "pending",
+      "requirements": [
+        "R006"
+      ]
+    },
+    {
+      "row": 7,
+      "id": "3acc8db46a4b18d60058f9097e1c8c94",
+      "userKey": "U005",
+      "type": "movie",
+      "content": "皮克斯动画长片",
+      "date": "2026-07-06",
+      "originalStatus": "pending",
+      "requirements": [
+        "R007"
+      ]
+    },
+    {
+      "row": 8,
+      "id": "516f04746a4b18ff00887d4c0807cafe",
+      "userKey": "U005",
+      "type": "movie",
+      "content": "漫威电影宇宙",
+      "date": "2026-07-06",
+      "originalStatus": "pending",
+      "requirements": [
+        "R008"
+      ]
+    },
+    {
+      "row": 9,
+      "id": "489876306a4cafbd005e8abe32962813",
+      "userKey": "U006",
+      "type": "movie",
+      "content": "许愿加入奥斯卡最佳剧本奖，谢谢谢谢",
+      "date": "2026-07-07",
+      "originalStatus": "pending",
+      "requirements": [
+        "R009"
+      ]
+    },
+    {
+      "row": 10,
+      "id": "0d8b756e6a4dd10d0015561f0d8767cc",
+      "userKey": "U007",
+      "type": "movie",
+      "content": "top250",
+      "date": "2026-07-08",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 11,
+      "id": "63e39e816a4e037a00176ddd5e281be8",
+      "userKey": "U008",
+      "type": "movie",
+      "content": "豆瓣评分前250",
+      "date": "2026-07-08",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 12,
+      "id": "bcf7d49f6a4e087f0035d6fa11224e3a",
+      "userKey": "U009",
+      "type": "movie",
+      "content": "睡觉的笨蛋",
+      "date": "2026-07-08",
+      "originalStatus": "pending",
+      "requirements": [
+        "R006"
+      ]
+    },
+    {
+      "row": 13,
+      "id": "63e39e816a4e347d001b6c176a123fe3",
+      "userKey": "U010",
+      "type": "book",
+      "content": "豆瓣热门官场小说",
+      "date": "2026-07-08",
+      "originalStatus": "pending",
+      "requirements": [
+        "R010"
+      ]
+    },
+    {
+      "row": 14,
+      "id": "63e39e816a4e354a001b7f7a56448282",
+      "userKey": "U010",
+      "type": "book",
+      "content": "豆瓣热门民俗文化图书",
+      "date": "2026-07-08",
+      "originalStatus": "pending",
+      "requirements": [
+        "R011"
+      ]
+    },
+    {
+      "row": 15,
+      "id": "bcb246f86a4e4e5100195c254ab22335",
+      "userKey": "U011",
+      "type": "movie",
+      "content": "动作电影",
+      "date": "2026-07-08",
+      "originalStatus": "pending",
+      "requirements": [
+        "R012"
+      ]
+    },
+    {
+      "row": 16,
+      "id": "0d8b756e6a4ee316002659737b3ebc27",
+      "userKey": "U012",
+      "type": "movie",
+      "content": "奥斯卡最佳影片",
+      "date": "2026-07-09",
+      "originalStatus": "pending",
+      "requirements": [
+        "R013"
+      ]
+    },
+    {
+      "row": 17,
+      "id": "bcb246f86a4f072d004a216272554549",
+      "userKey": "U013",
+      "type": "movie",
+      "content": "Top250",
+      "date": "2026-07-09",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 18,
+      "id": "86dca1e96a4f5aa9000421223a685a78",
+      "userKey": "U011",
+      "type": "movie",
+      "content": "戛纳",
+      "date": "2026-07-09",
+      "originalStatus": "pending",
+      "requirements": [
+        "R014"
+      ]
+    },
+    {
+      "row": 19,
+      "id": "86dca1e96a4f5b7200042a0d693d6d6b",
+      "userKey": "U011",
+      "type": "movie",
+      "content": "动作",
+      "date": "2026-07-09",
+      "originalStatus": "pending",
+      "requirements": [
+        "R012"
+      ]
+    },
+    {
+      "row": 20,
+      "id": "6e56a4026a4f5bb600156af05540da34",
+      "userKey": "U011",
+      "type": "movie",
+      "content": "动作",
+      "date": "2026-07-09",
+      "originalStatus": "pending",
+      "requirements": [
+        "R012"
+      ]
+    },
+    {
+      "row": 21,
+      "id": "ea09778f6a4f750b0006d02d6d80291e",
+      "userKey": "U011",
+      "type": "movie",
+      "content": "动作电影",
+      "date": "2026-07-09",
+      "originalStatus": "pending",
+      "requirements": [
+        "R012"
+      ]
+    },
+    {
+      "row": 22,
+      "id": "9cef38726a4f755c00138e794e767a30",
+      "userKey": "U014",
+      "type": "movie",
+      "content": "豆瓣top250",
+      "date": "2026-07-09",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 23,
+      "id": "6e56a4026a4fbde8001d49977a3fe1a2",
+      "userKey": "U015",
+      "type": "movie",
+      "content": "茅盾文学奖书单",
+      "date": "2026-07-09",
+      "originalStatus": "pending",
+      "requirements": [
+        "R015"
+      ]
+    },
+    {
+      "row": 24,
+      "id": "86dca1e96a4fbe01000bf9fe79902a91",
+      "userKey": "U015",
+      "type": "book",
+      "content": "茅盾文学奖",
+      "date": "2026-07-09",
+      "originalStatus": "pending",
+      "requirements": [
+        "R015"
+      ]
+    },
+    {
+      "row": 25,
+      "id": "6e56a4026a4fbe12001d4c0136104bdc",
+      "userKey": "U015",
+      "type": "book",
+      "content": "诺贝尔文学奖",
+      "date": "2026-07-09",
+      "originalStatus": "pending",
+      "requirements": [
+        "R016"
+      ]
+    },
+    {
+      "row": 26,
+      "id": "86dca1e96a4fbe1e000bfb4a62741f85",
+      "userKey": "U015",
+      "type": "book",
+      "content": "纽伯瑞儿童文学奖",
+      "date": "2026-07-09",
+      "originalStatus": "pending",
+      "requirements": [
+        "R017"
+      ]
+    },
+    {
+      "row": 27,
+      "id": "ea09778f6a50375500134a9a20f771c7",
+      "userKey": "U012",
+      "type": "movie",
+      "content": "诺贝尔文学奖",
+      "date": "2026-07-10",
+      "originalStatus": "pending",
+      "requirements": [
+        "R016"
+      ]
+    },
+    {
+      "row": 28,
+      "id": "86dca1e96a50937c00170dac13d44830",
+      "userKey": "U016",
+      "type": "movie",
+      "content": "letterboxd top500",
+      "date": "2026-07-10",
+      "originalStatus": "pending",
+      "requirements": [
+        "R018"
+      ]
+    },
+    {
+      "row": 29,
+      "id": "9cef38726a509c040047ad7c751773a3",
+      "userKey": "U011",
+      "type": "movie",
+      "content": "动作",
+      "date": "2026-07-10",
+      "originalStatus": "pending",
+      "requirements": [
+        "R012"
+      ]
+    },
+    {
+      "row": 30,
+      "id": "ea09778f6a50a1eb001bc6294c63b2a9",
+      "userKey": "U017",
+      "type": "book",
+      "content": "微信读书总榜Top200阅读海报",
+      "date": "2026-07-10",
+      "originalStatus": "pending",
+      "requirements": [
+        "R019"
+      ]
+    },
+    {
+      "row": 31,
+      "id": "86dca1e96a50d36f001be3c823a5fd88",
+      "userKey": "U018",
+      "type": "movie",
+      "content": "豆瓣评分前150电影",
+      "date": "2026-07-10",
+      "originalStatus": "pending",
+      "requirements": [
+        "R020"
+      ]
+    },
+    {
+      "row": 32,
+      "id": "6e56a4026a50e72200326b0a12abeb9a",
+      "userKey": "U019",
+      "type": "movie",
+      "content": "豆瓣电影TOP250观影海报",
+      "date": "2026-07-10",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 33,
+      "id": "9cef38726a518a45007024ea74726caf",
+      "userKey": "U020",
+      "type": "movie",
+      "content": "豆瓣电影250",
+      "date": "2026-07-11",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 34,
+      "id": "ea09778f6a519ac7002bbfa47d9cb31e",
+      "userKey": "U021",
+      "type": "movie",
+      "content": "奥斯卡最佳国际影片",
+      "date": "2026-07-11",
+      "originalStatus": "pending",
+      "requirements": [
+        "R021"
+      ]
+    },
+    {
+      "row": 35,
+      "id": "9cef38726a51d7e0007e6f206d145ff5",
+      "userKey": "U022",
+      "type": "movie",
+      "content": "悬疑",
+      "date": "2026-07-11",
+      "originalStatus": "pending",
+      "requirements": [
+        "R022"
+      ]
+    },
+    {
+      "row": 36,
+      "id": "ea09778f6a5260bb003b4d9c5d4356d4",
+      "userKey": "U023",
+      "type": "movie",
+      "content": "豆瓣top250",
+      "date": "2026-07-11",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 37,
+      "id": "9cef38726a5279c7009bcdb32dcdf374",
+      "userKey": "U024",
+      "type": "movie",
+      "content": "letterboxed Top500",
+      "date": "2026-07-12",
+      "originalStatus": "pending",
+      "requirements": [
+        "R018"
+      ]
+    },
+    {
+      "row": 38,
+      "id": "ea09778f6a5300250043816a0de62c1a",
+      "userKey": "U025",
+      "type": "movie",
+      "content": "豆瓣top250",
+      "date": "2026-07-12",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 39,
+      "id": "86dca1e96a531ef200406ed774776408",
+      "userKey": "U026",
+      "type": "book",
+      "content": "诺贝尔文学奖书单",
+      "date": "2026-07-12",
+      "originalStatus": "pending",
+      "requirements": [
+        "R016"
+      ]
+    },
+    {
+      "row": 40,
+      "id": "86dca1e96a5326ad0040ddef7f57416b",
+      "userKey": "U024",
+      "type": "movie",
+      "content": "史上最佳喜剧电影",
+      "date": "2026-07-12",
+      "originalStatus": "pending",
+      "requirements": [
+        "R023"
+      ]
+    },
+    {
+      "row": 41,
+      "id": "6e56a4026a532f140055e6643fe274f7",
+      "userKey": "U015",
+      "type": "movie",
+      "content": "茅盾文学奖书单",
+      "date": "2026-07-12",
+      "originalStatus": "pending",
+      "requirements": [
+        "R015"
+      ]
+    },
+    {
+      "row": 42,
+      "id": "6e56a4026a532f200055e73868ff84f1",
+      "userKey": "U015",
+      "type": "book",
+      "content": "茅盾文学奖书单",
+      "date": "2026-07-12",
+      "originalStatus": "pending",
+      "requirements": [
+        "R015"
+      ]
+    },
+    {
+      "row": 43,
+      "id": "6e56a4026a545f88006918064f1484db",
+      "userKey": "U027",
+      "type": "movie",
+      "content": "电影TOP250",
+      "date": "2026-07-13",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 44,
+      "id": "9cef38726a545fc700ee3109701a2dcc",
+      "userKey": "U027",
+      "type": "movie",
+      "content": "豆瓣Top250电影",
+      "date": "2026-07-13",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 45,
+      "id": "86dca1e96a54a7d9005bf3857896bf67",
+      "userKey": "U028",
+      "type": "movie",
+      "content": "水晶奖动画长片",
+      "date": "2026-07-13",
+      "originalStatus": "pending",
+      "requirements": [
+        "R024"
+      ]
+    },
+    {
+      "row": 46,
+      "id": "6e56a4026a54c096007221491834451e",
+      "userKey": "U029",
+      "type": "movie",
+      "content": "top250",
+      "date": "2026-07-13",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 47,
+      "id": "86dca1e96a5724ba008264807c7b25a0",
+      "userKey": "U030",
+      "type": "movie",
+      "content": "电视剧",
+      "date": "2026-07-15",
+      "originalStatus": "pending",
+      "requirements": [
+        "R025"
+      ]
+    },
+    {
+      "row": 48,
+      "id": "ea09778f6a573ed30091e54e68986a6b",
+      "userKey": "U031",
+      "type": "movie",
+      "content": "豆瓣250",
+      "date": "2026-07-15",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 49,
+      "id": "86dca1e96a57782b0087b180366c5027",
+      "userKey": "U032",
+      "type": "movie",
+      "content": "imbd",
+      "date": "2026-07-15",
+      "originalStatus": "pending",
+      "requirements": [
+        "R026"
+      ]
+    },
+    {
+      "row": 50,
+      "id": "86dca1e96a57e817008dcd7d47b82c57",
+      "userKey": "U033",
+      "type": "movie",
+      "content": "豆瓣250",
+      "date": "2026-07-16",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 51,
+      "id": "6e56a4026a58482c00aecd7e032d9745",
+      "userKey": "U034",
+      "type": "movie",
+      "content": "漫威电影",
+      "date": "2026-07-16",
+      "originalStatus": "pending",
+      "requirements": [
+        "R008"
+      ]
+    },
+    {
+      "row": 52,
+      "id": "9cef38726a58c43c01b76a82325f7e39",
+      "userKey": "U035",
+      "type": "movie",
+      "content": "豆瓣250",
+      "date": "2026-07-16",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 53,
+      "id": "9cef38726a58d29901b9fc81435af84e",
+      "userKey": "U036",
+      "type": "movie",
+      "content": "豆瓣top250",
+      "date": "2026-07-16",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 54,
+      "id": "ea09778f6a59b72a00bc725523d1d9c1",
+      "userKey": "U037",
+      "type": "movie",
+      "content": "史上最佳爱情电影",
+      "date": "2026-07-17",
+      "originalStatus": "pending",
+      "requirements": [
+        "R027"
+      ]
+    },
+    {
+      "row": 55,
+      "id": "86dca1e96a5a865400b3665121b7faee",
+      "userKey": "U038",
+      "type": "book",
+      "content": "历届诺贝尔文学奖获得者代表作",
+      "date": "2026-07-18",
+      "originalStatus": "pending",
+      "requirements": [
+        "R016"
+      ]
+    },
+    {
+      "row": 56,
+      "id": "9cef38726a5a86700200a41806f68ebe",
+      "userKey": "U038",
+      "type": "book",
+      "content": "历届雨果奖获奖作品",
+      "date": "2026-07-18",
+      "originalStatus": "pending",
+      "requirements": [
+        "R028"
+      ]
+    },
+    {
+      "row": 57,
+      "id": "6e56a4026a5af7bc00dedfc7093cff18",
+      "userKey": "U039",
+      "type": "other",
+      "content": "可以出个置顶片单吗。我只想把我想要的list放在首页 谢谢",
+      "date": "2026-07-18",
+      "originalStatus": "pending",
+      "requirements": [
+        "R029"
+      ]
+    },
+    {
+      "row": 58,
+      "id": "ea09778f6a5ca81500eb973c7fed41ae",
+      "userKey": "U040",
+      "type": "movie",
+      "content": "豆瓣",
+      "date": "2026-07-19",
+      "originalStatus": "pending",
+      "requirements": [
+        "R002"
+      ]
+    },
+    {
+      "row": 59,
+      "id": "9cef38726a5cda50023a3f9f2a95761d",
+      "userKey": "U041",
+      "type": "movie",
+      "content": "豆瓣电影250",
+      "date": "2026-07-19",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 60,
+      "id": "6e56a4026a5d06050104092407b457f4",
+      "userKey": "U042",
+      "type": "movie",
+      "content": "豆瓣top250",
+      "date": "2026-07-20",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 61,
+      "id": "ea09778f6a5d720700f7488547f1c3d1",
+      "userKey": "U043",
+      "type": "movie",
+      "content": "韩剧",
+      "date": "2026-07-20",
+      "originalStatus": "pending",
+      "requirements": [
+        "R030"
+      ]
+    },
+    {
+      "row": 62,
+      "id": "6e56a4026a5d9232010bdd8d0d568044",
+      "userKey": "U044",
+      "type": "movie",
+      "content": "豆瓣",
+      "date": "2026-07-20",
+      "originalStatus": "pending",
+      "requirements": [
+        "R002"
+      ]
+    },
+    {
+      "row": 63,
+      "id": "ea09778f6a5db05400fbfbc254a7540c",
+      "userKey": "U045",
+      "type": "movie",
+      "content": "英语高考备考资料",
+      "date": "2026-07-20",
+      "originalStatus": "pending",
+      "requirements": [
+        "R031"
+      ]
+    },
+    {
+      "row": 64,
+      "id": "6e56a4026a5db074010ee4184960ea5f",
+      "userKey": "U045",
+      "type": "book",
+      "content": "高考英语备考资料",
+      "date": "2026-07-20",
+      "originalStatus": "pending",
+      "requirements": [
+        "R031"
+      ]
+    },
+    {
+      "row": 65,
+      "id": "9cef38726a5e735a024cf5f3542b6e5f",
+      "userKey": "U046",
+      "type": "movie",
+      "content": "美剧",
+      "date": "2026-07-21",
+      "originalStatus": "pending",
+      "requirements": [
+        "R032"
+      ]
+    },
+    {
+      "row": 66,
+      "id": "ea09778f6a5f33a8011652c33d8f78ac",
+      "userKey": "U047",
+      "type": "movie",
+      "content": "韩剧",
+      "date": "2026-07-21",
+      "originalStatus": "pending",
+      "requirements": [
+        "R030"
+      ]
+    },
+    {
+      "row": 67,
+      "id": "86dca1e96a5f65e90110d9c71a22b2b0",
+      "userKey": "U048",
+      "type": "movie",
+      "content": "有没有imdbtop250影视",
+      "date": "2026-07-21",
+      "originalStatus": "pending",
+      "requirements": [
+        "R026"
+      ]
+    },
+    {
+      "row": 68,
+      "id": "ea09778f6a6039e101258d461be367c8",
+      "userKey": "U049",
+      "type": "movie",
+      "content": "建议新增一个我的最爱片单/书单，让大家自主搜索作品填写",
+      "date": "2026-07-22",
+      "originalStatus": "pending",
+      "requirements": [
+        "R033"
+      ]
+    },
+    {
+      "row": 69,
+      "id": "6e56a4026a606731013eb0cc532f0318",
+      "userKey": "U050",
+      "type": "movie",
+      "content": "豆瓣top250",
+      "date": "2026-07-22",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 70,
+      "id": "9cef38726a6083ad02655d3f7644c0c4",
+      "userKey": "U051",
+      "type": "movie",
+      "content": "重启之极海听雷",
+      "date": "2026-07-22",
+      "originalStatus": "pending",
+      "requirements": [
+        "R034"
+      ]
+    },
+    {
+      "row": 71,
+      "id": "6e56a4026a60a45b0144ad641e6e6601",
+      "userKey": "U052",
+      "type": "movie",
+      "content": "豆瓣电影TOP250观影海报",
+      "date": "2026-07-22",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 72,
+      "id": "6e56a4026a60d9130149263220e3bccf",
+      "userKey": "U053",
+      "type": "movie",
+      "content": "豆瓣top 250",
+      "date": "2026-07-22",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 73,
+      "id": "9cef38726a619580027145cd5929c2a2",
+      "userKey": "U054",
+      "type": "movie",
+      "content": "豆瓣Top250",
+      "date": "2026-07-23",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 74,
+      "id": "9cef38726a61b6de02733f981c638142",
+      "userKey": "U055",
+      "type": "movie",
+      "content": "豆瓣top250观影海报",
+      "date": "2026-07-23",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 75,
+      "id": "7b76ee416a620ced000bf989055ad137",
+      "userKey": "U056",
+      "type": "movie",
+      "content": "top250",
+      "date": "2026-07-23",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 76,
+      "id": "179185b66a624c6e00050edf3302d57a",
+      "userKey": "U057",
+      "type": "movie",
+      "content": "metacritic电影",
+      "date": "2026-07-24",
+      "originalStatus": "pending",
+      "requirements": [
+        "R035"
+      ]
+    },
+    {
+      "row": 77,
+      "id": "179185b66a63650800179fca3157b937",
+      "userKey": "U011",
+      "type": "movie",
+      "content": "喜剧",
+      "date": "2026-07-24",
+      "originalStatus": "pending",
+      "requirements": [
+        "R023"
+      ]
+    },
+    {
+      "row": 78,
+      "id": "7b76ee416a63aabe00851fa976748763",
+      "userKey": "U058",
+      "type": "book",
+      "content": "诺贝尔文学奖",
+      "date": "2026-07-25",
+      "originalStatus": "pending",
+      "requirements": [
+        "R016"
+      ]
+    },
+    {
+      "row": 79,
+      "id": "5edc49486a646657001a982e371e818d",
+      "userKey": "U059",
+      "type": "movie",
+      "content": "我的电影",
+      "date": "2026-07-25",
+      "originalStatus": "pending",
+      "requirements": [
+        "R036"
+      ]
+    },
+    {
+      "row": 80,
+      "id": "5edc49486a64939b001d2e16332ad23e",
+      "userKey": "U060",
+      "type": "movie",
+      "content": "奥斯奥斯卡最佳影片单",
+      "date": "2026-07-25",
+      "originalStatus": "pending",
+      "requirements": [
+        "R013"
+      ]
+    },
+    {
+      "row": 81,
+      "id": "7b76ee416a649c6300ab9433633a0cac",
+      "userKey": "U061",
+      "type": "movie",
+      "content": "悬疑片",
+      "date": "2026-07-25",
+      "originalStatus": "pending",
+      "requirements": [
+        "R022"
+      ]
+    },
+    {
+      "row": 82,
+      "id": "7b76ee416a64b3e300ae33e651c8458f",
+      "userKey": "U062",
+      "type": "movie",
+      "content": "250",
+      "date": "2026-07-25",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 83,
+      "id": "7b76ee416a650dbf00ba01661d03233f",
+      "userKey": "U063",
+      "type": "movie",
+      "content": "恐怖",
+      "date": "2026-07-26",
+      "originalStatus": "pending",
+      "requirements": [
+        "R037"
+      ]
+    },
+    {
+      "row": 84,
+      "id": "5edc49486a65808a00267dc1511c06df",
+      "userKey": "U064",
+      "type": "book",
+      "content": "马华文学",
+      "date": "2026-07-26",
+      "originalStatus": "pending",
+      "requirements": [
+        "R038"
+      ]
+    },
+    {
+      "row": 85,
+      "id": "9d781d8a6a6584860067906308cf91f0",
+      "userKey": "U065",
+      "type": "movie",
+      "content": "豆瓣top250",
+      "date": "2026-07-26",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 86,
+      "id": "7b76ee416a65acb200c55e6b6a40a163",
+      "userKey": "U066",
+      "type": "movie",
+      "content": "豆瓣top250",
+      "date": "2026-07-26",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 87,
+      "id": "179185b66a66b99400509ee707090dc3",
+      "userKey": "U067",
+      "type": "book",
+      "content": "微信读书推进神作",
+      "date": "2026-07-27",
+      "originalStatus": "pending",
+      "requirements": [
+        "R039"
+      ]
+    },
+    {
+      "row": 88,
+      "id": "7b76ee416a6709c900f6cb0c5dfc6448",
+      "userKey": "U068",
+      "type": "book",
+      "content": "诺贝尔文学奖书单",
+      "date": "2026-07-27",
+      "originalStatus": "pending",
+      "requirements": [
+        "R016"
+      ]
+    },
+    {
+      "row": 89,
+      "id": "5edc49486a674107004569497df00289",
+      "userKey": "U069",
+      "type": "movie",
+      "content": "2026暑期观影",
+      "date": "2026-07-27",
+      "originalStatus": "pending",
+      "requirements": [
+        "R040"
+      ]
+    },
+    {
+      "row": 90,
+      "id": "5edc49486a67e787004a560f206163d6",
+      "userKey": "U070",
+      "type": "movie",
+      "content": "豆瓣",
+      "date": "2026-07-28",
+      "originalStatus": "pending",
+      "requirements": [
+        "R002"
+      ]
+    },
+    {
+      "row": 91,
+      "id": "5edc49486a681a6f004d6609709d71d6",
+      "userKey": "U071",
+      "type": "book",
+      "content": "东野圭吾",
+      "date": "2026-07-28",
+      "originalStatus": "pending",
+      "requirements": [
+        "R041"
+      ]
+    },
+    {
+      "row": 92,
+      "id": "7b76ee416a686d0d011dc6eb1bc40a52",
+      "userKey": "U072",
+      "type": "movie",
+      "content": "看过",
+      "date": "2026-07-28",
+      "originalStatus": "pending",
+      "requirements": [
+        "R006"
+      ]
+    },
+    {
+      "row": 93,
+      "id": "7b76ee416a686dd4011dd6973648caa1",
+      "userKey": "U073",
+      "type": "book",
+      "content": "小说",
+      "date": "2026-07-28",
+      "originalStatus": "pending",
+      "requirements": [
+        "R042"
+      ]
+    },
+    {
+      "row": 94,
+      "id": "7b76ee416a68c4b90129126975955f2d",
+      "userKey": "U074",
+      "type": "movie",
+      "content": "豆瓣top250",
+      "date": "2026-07-28",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 95,
+      "id": "7b76ee416a69eb9701684ae3671e917e",
+      "userKey": "U075",
+      "type": "movie",
+      "content": "豆瓣250",
+      "date": "2026-07-29",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 96,
+      "id": "179185b66a69f1cb008dd27137c5a3ba",
+      "userKey": "U076",
+      "type": "movie",
+      "content": "视与听评选",
+      "date": "2026-07-29",
+      "originalStatus": "pending",
+      "requirements": [
+        "R005"
+      ]
+    },
+    {
+      "row": 97,
+      "id": "5edc49486a69f315006e6a23505d0000",
+      "userKey": "U077",
+      "type": "movie",
+      "content": "国产电影TOP100? TOP200?",
+      "date": "2026-07-29",
+      "originalStatus": "pending",
+      "requirements": [
+        "R043"
+      ]
+    },
+    {
+      "row": 98,
+      "id": "179185b66a6a271f00915ddf145edc23",
+      "userKey": "U078",
+      "type": "movie",
+      "content": "东野圭吾作品",
+      "date": "2026-07-30",
+      "originalStatus": "pending",
+      "requirements": [
+        "R041"
+      ]
+    },
+    {
+      "row": 99,
+      "id": "7b76ee416a6a581501afa3a65ae25de8",
+      "userKey": "U079",
+      "type": "movie",
+      "content": "豆瓣250",
+      "date": "2026-07-30",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 100,
+      "id": "9d781d8a6a6aa11500d80f2c5f28a80b",
+      "userKey": "U080",
+      "type": "movie",
+      "content": "豆瓣top250",
+      "date": "2026-07-30",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 101,
+      "id": "7b76ee416a6b06d301cdfbef26c0ba4c",
+      "userKey": "U081",
+      "type": "other",
+      "content": "旅行地点之类的榜单",
+      "date": "2026-07-30",
+      "originalStatus": "pending",
+      "requirements": [
+        "R044"
+      ]
+    },
+    {
+      "row": 102,
+      "id": "9d781d8a6a6b1f1200e2027b5bb5ac71",
+      "userKey": "U082",
+      "type": "movie",
+      "content": "豆瓣",
+      "date": "2026-07-30",
+      "originalStatus": "pending",
+      "requirements": [
+        "R002"
+      ]
+    },
+    {
+      "row": 103,
+      "id": "9d781d8a6a6c326900f368c072cccf26",
+      "userKey": "U083",
+      "type": "movie",
+      "content": "漫威",
+      "date": "2026-07-31",
+      "originalStatus": "pending",
+      "requirements": [
+        "R008"
+      ]
+    },
+    {
+      "row": 104,
+      "id": "179185b66a6cc31f00c284014fd67455",
+      "userKey": "U084",
+      "type": "movie",
+      "content": "漫威系列",
+      "date": "2026-07-31",
+      "originalStatus": "pending",
+      "requirements": [
+        "R008"
+      ]
+    },
+    {
+      "row": 105,
+      "id": "9d781d8a6a6ce67d01012f14730a9ef9",
+      "userKey": "U085",
+      "type": "movie",
+      "content": "电影墙",
+      "date": "2026-08-01",
+      "originalStatus": "pending",
+      "requirements": [
+        "R036"
+      ]
+    },
+    {
+      "row": 106,
+      "id": "5edc49486a6dfa3b00b83dbc215376ac",
+      "userKey": "U086",
+      "type": "movie",
+      "content": "动漫",
+      "date": "2026-08-01",
+      "originalStatus": "pending",
+      "requirements": [
+        "R045"
+      ]
+    },
+    {
+      "row": 107,
+      "id": "9d781d8a6a6ec793011a2265608aa575",
+      "userKey": "U087",
+      "type": "movie",
+      "content": "豆瓣250",
+      "date": "2026-08-02",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 108,
+      "id": "9d781d8a6a6eeb60011c48df2e9375ee",
+      "userKey": "U088",
+      "type": "movie",
+      "content": "豆瓣top250",
+      "date": "2026-08-02",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 109,
+      "id": "9d781d8a6a6ef3a3011cf5ee250e4569",
+      "userKey": "U089",
+      "type": "movie",
+      "content": "Tspdt榜单",
+      "date": "2026-08-02",
+      "originalStatus": "pending",
+      "requirements": [
+        "R046"
+      ]
+    },
+    {
+      "row": 110,
+      "id": "5edc49486a6efc0600c259712e4ca1a0",
+      "userKey": "U090",
+      "type": "movie",
+      "content": "八仙",
+      "date": "2026-08-02",
+      "originalStatus": "pending",
+      "requirements": [
+        "R034"
+      ]
+    },
+    {
+      "row": 111,
+      "id": "179185b66a6f67fc00ed6694518de705",
+      "userKey": "U091",
+      "type": "movie",
+      "content": "豆瓣",
+      "date": "2026-08-02",
+      "originalStatus": "pending",
+      "requirements": [
+        "R002"
+      ]
+    },
+    {
+      "row": 112,
+      "id": "179185b66a7051e000fd57c02e888c35",
+      "userKey": "U092",
+      "type": "movie",
+      "content": "心灵",
+      "date": "2026-08-03",
+      "originalStatus": "pending",
+      "requirements": [
+        "R047"
+      ]
+    },
+    {
+      "row": 113,
+      "id": "9d781d8a6a7074d9013758213cb75fbf",
+      "userKey": "U093",
+      "type": "movie",
+      "content": "你好，可以弄一个自己观看过的电影生成海报墙吗",
+      "date": "2026-08-03",
+      "originalStatus": "pending",
+      "requirements": [
+        "R048"
+      ]
+    },
+    {
+      "row": 114,
+      "id": "7b76ee416a70c6d4026380323fc4fea7",
+      "userKey": "U094",
+      "type": "movie",
+      "content": "豆瓣前250",
+      "date": "2026-08-04",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 115,
+      "id": "5edc49486a718ef8038d3ec9433922c9",
+      "userKey": "U095",
+      "type": "movie",
+      "content": "TOP250",
+      "date": "2026-08-04",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 116,
+      "id": "9d781d8a6a71d1d50153b3ca78866607",
+      "userKey": "U096",
+      "type": "movie",
+      "content": "豆瓣电影top250",
+      "date": "2026-08-04",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 117,
+      "id": "9d781d8a6a71fdc20157c31b601c6c50",
+      "userKey": "U097",
+      "type": "movie",
+      "content": "喜剧",
+      "date": "2026-08-04",
+      "originalStatus": "pending",
+      "requirements": [
+        "R023"
+      ]
+    },
+    {
+      "row": 118,
+      "id": "7b76ee416a71fdcd028a6cee442e0425",
+      "userKey": "U097",
+      "type": "movie",
+      "content": "科幻",
+      "date": "2026-08-04",
+      "originalStatus": "pending",
+      "requirements": [
+        "R049"
+      ]
+    },
+    {
+      "row": 119,
+      "id": "179185b66a720073011d2d3e3a2b1af6",
+      "userKey": "U098",
+      "type": "movie",
+      "content": "周星驰作品",
+      "date": "2026-08-04",
+      "originalStatus": "pending",
+      "requirements": [
+        "R050"
+      ]
+    },
+    {
+      "row": 120,
+      "id": "7b76ee416a723a3002aa3d0132a67798",
+      "userKey": "U099",
+      "type": "movie",
+      "content": "希望有电视剧相关的榜单，感谢",
+      "date": "2026-08-05",
+      "originalStatus": "pending",
+      "requirements": [
+        "R025"
+      ]
+    },
+    {
+      "row": 121,
+      "id": "7b76ee416a72445c02ab83473e25bf80",
+      "userKey": "U100",
+      "type": "other",
+      "content": "动漫番剧单，乙女番、动作番",
+      "date": "2026-08-05",
+      "originalStatus": "pending",
+      "requirements": [
+        "R051"
+      ]
+    },
+    {
+      "row": 122,
+      "id": "179185b66a72449a01205a4a62e62502",
+      "userKey": "U101",
+      "type": "movie",
+      "content": "tspdt top1000，all time 和 2000s",
+      "date": "2026-08-05",
+      "originalStatus": "pending",
+      "requirements": [
+        "R046"
+      ]
+    },
+    {
+      "row": 123,
+      "id": "9d781d8a6a729827015f2ca92a071b2f",
+      "userKey": "U102",
+      "type": "movie",
+      "content": "豆瓣",
+      "date": "2026-08-05",
+      "originalStatus": "pending",
+      "requirements": [
+        "R002"
+      ]
+    },
+    {
+      "row": 124,
+      "id": "5edc49486a72a6bc0478a49c539f8dbf",
+      "userKey": "U103",
+      "type": "other",
+      "content": "希望可以自定义添加",
+      "date": "2026-08-05",
+      "originalStatus": "pending",
+      "requirements": [
+        "R052"
+      ]
+    },
+    {
+      "row": 125,
+      "id": "7b76ee416a72ed9b02be299b25c41a57",
+      "userKey": "U104",
+      "type": "movie",
+      "content": "豆瓣100",
+      "date": "2026-08-05",
+      "originalStatus": "pending",
+      "requirements": [
+        "R020"
+      ]
+    },
+    {
+      "row": 126,
+      "id": "5edc49486a731fdf0533a6ce5cc3083b",
+      "userKey": "U105",
+      "type": "movie",
+      "content": "豆瓣",
+      "date": "2026-08-05",
+      "originalStatus": "pending",
+      "requirements": [
+        "R002"
+      ]
+    },
+    {
+      "row": 127,
+      "id": "5edc49486a73283c053f338a651e52f2",
+      "userKey": "U106",
+      "type": "movie",
+      "content": "歌舞片",
+      "date": "2026-08-05",
+      "originalStatus": "pending",
+      "requirements": [
+        "R053"
+      ]
+    },
+    {
+      "row": 128,
+      "id": "7b76ee416a733d5002cced734e450d36",
+      "userKey": "U107",
+      "type": "movie",
+      "content": "250",
+      "date": "2026-08-05",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 129,
+      "id": "7b76ee416a733f9402cd66332ecba38a",
+      "userKey": "U108",
+      "type": "movie",
+      "content": "电影250",
+      "date": "2026-08-05",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 130,
+      "id": "7b76ee416a7342a102cef22252935b54",
+      "userKey": "U108",
+      "type": "movie",
+      "content": "电视剧表单",
+      "date": "2026-08-05",
+      "originalStatus": "pending",
+      "requirements": [
+        "R025"
+      ]
+    },
+    {
+      "row": 131,
+      "id": "9d781d8a6a734e7901704a440cb6e88c",
+      "userKey": "U109",
+      "type": "movie",
+      "content": "日本电影top片单",
+      "date": "2026-08-05",
+      "originalStatus": "pending",
+      "requirements": [
+        "R054"
+      ]
+    },
+    {
+      "row": 132,
+      "id": "7b76ee416a735c1b02e3794462909122",
+      "userKey": "U110",
+      "type": "movie",
+      "content": "最佳伪纪录片影单",
+      "date": "2026-08-05",
+      "originalStatus": "pending",
+      "requirements": [
+        "R055"
+      ]
+    },
+    {
+      "row": 133,
+      "id": "179185b66a738902013a1ea80538d89a",
+      "userKey": "U111",
+      "type": "other",
+      "content": "特摄片单",
+      "date": "2026-08-06",
+      "originalStatus": "pending",
+      "requirements": [
+        "R056"
+      ]
+    },
+    {
+      "row": 134,
+      "id": "179185b66a747357014b4dc42722a662",
+      "userKey": "U112",
+      "type": "movie",
+      "content": "豆瓣电影TOP250",
+      "date": "2026-08-06",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 135,
+      "id": "179185b66a748a8e014cb98e00f080a0",
+      "userKey": "U113",
+      "type": "movie",
+      "content": "豆瓣电影TOP250观影海报",
+      "date": "2026-08-06",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 136,
+      "id": "9d781d8a6a748bef01883e5923abc49b",
+      "userKey": "U025",
+      "type": "movie",
+      "content": "威尼斯金狮和柏林金熊",
+      "date": "2026-08-06",
+      "originalStatus": "pending",
+      "requirements": [
+        "R057"
+      ]
+    },
+    {
+      "row": 137,
+      "id": "179185b66a749eb7014e2ae24b98fb63",
+      "userKey": "U114",
+      "type": "movie",
+      "content": "悬疑电影",
+      "date": "2026-08-06",
+      "originalStatus": "pending",
+      "requirements": [
+        "R022"
+      ]
+    },
+    {
+      "row": 138,
+      "id": "179185b66a74d27f01513cd23fb1c0c9",
+      "userKey": "U115",
+      "type": "movie",
+      "content": "豆瓣电影top250",
+      "date": "2026-08-07",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 139,
+      "id": "179185b66a74dcfb015195ce51b07e61",
+      "userKey": "U116",
+      "type": "movie",
+      "content": "250top",
+      "date": "2026-08-07",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 140,
+      "id": "7b76ee416a74e878035590ec19e1c34d",
+      "userKey": "U117",
+      "type": "movie",
+      "content": "豆瓣top",
+      "date": "2026-08-07",
+      "originalStatus": "pending",
+      "requirements": [
+        "R002"
+      ]
+    },
+    {
+      "row": 141,
+      "id": "179185b66a74f1f40152796076c59aa6",
+      "userKey": "U118",
+      "type": "movie",
+      "content": "美剧",
+      "date": "2026-08-07",
+      "originalStatus": "pending",
+      "requirements": [
+        "R032"
+      ]
+    },
+    {
+      "row": 142,
+      "id": "179185b66a7527850155424157ba60a5",
+      "userKey": "U119",
+      "type": "movie",
+      "content": "必看ted演讲",
+      "date": "2026-08-07",
+      "originalStatus": "pending",
+      "requirements": [
+        "R058"
+      ]
+    },
+    {
+      "row": 143,
+      "id": "9d781d8a6a754df20191f6eb280d301c",
+      "userKey": "U120",
+      "type": "movie",
+      "content": "cult片合集",
+      "date": "2026-08-07",
+      "originalStatus": "pending",
+      "requirements": [
+        "R059"
+      ]
+    },
+    {
+      "row": 144,
+      "id": "179185b66a7555450158fd420ec10c2b",
+      "userKey": "U097",
+      "type": "movie",
+      "content": "科幻",
+      "date": "2026-08-07",
+      "originalStatus": "pending",
+      "requirements": [
+        "R049"
+      ]
+    },
+    {
+      "row": 145,
+      "id": "5edc49486a75555006dd65cd3ba7f1c9",
+      "userKey": "U097",
+      "type": "movie",
+      "content": "喜剧",
+      "date": "2026-08-07",
+      "originalStatus": "pending",
+      "requirements": [
+        "R023"
+      ]
+    },
+    {
+      "row": 146,
+      "id": "179185b66a759ad3015f75bf57ca980c",
+      "userKey": "U121",
+      "type": "movie",
+      "content": "都可以",
+      "date": "2026-08-07",
+      "originalStatus": "pending",
+      "requirements": [
+        "R006"
+      ]
+    },
+    {
+      "row": 147,
+      "id": "179185b66a75f85d0166b6de7f5ec06a",
+      "userKey": "U122",
+      "type": "movie",
+      "content": "豆瓣电影top25",
+      "date": "2026-08-07",
+      "originalStatus": "pending",
+      "requirements": [
+        "R020"
+      ]
+    },
+    {
+      "row": 148,
+      "id": "179185b66a7666ae016c46cb422b6b02",
+      "userKey": "U123",
+      "type": "movie",
+      "content": "科幻片",
+      "date": "2026-08-08",
+      "originalStatus": "pending",
+      "requirements": [
+        "R049"
+      ]
+    },
+    {
+      "row": 149,
+      "id": "9d781d8a6a769b7001a5f6bf3725cac0",
+      "userKey": "U124",
+      "type": "book",
+      "content": "阿加莎·克里斯蒂作品全系列",
+      "date": "2026-08-08",
+      "originalStatus": "pending",
+      "requirements": [
+        "R060"
+      ]
+    },
+    {
+      "row": 150,
+      "id": "9d781d8a6a769c0701a6043d267b2439",
+      "userKey": "U125",
+      "type": "movie",
+      "content": "漫威宇宙电影",
+      "date": "2026-08-08",
+      "originalStatus": "pending",
+      "requirements": [
+        "R008"
+      ]
+    },
+    {
+      "row": 151,
+      "id": "5edc49486a76b68406ed30bd19dd6e87",
+      "userKey": "U126",
+      "type": "book",
+      "content": "诺比尔文学奖书单",
+      "date": "2026-08-08",
+      "originalStatus": "pending",
+      "requirements": [
+        "R016"
+      ]
+    },
+    {
+      "row": 152,
+      "id": "7b76ee416a76e68903b5cf436fc3bd22",
+      "userKey": "U127",
+      "type": "movie",
+      "content": "电视剧片单",
+      "date": "2026-08-08",
+      "originalStatus": "pending",
+      "requirements": [
+        "R025"
+      ]
+    },
+    {
+      "row": 153,
+      "id": "5edc49486a76f24f06f0f17b33c19c78",
+      "userKey": "U128",
+      "type": "book",
+      "content": "当代学术丛书",
+      "date": "2026-08-08",
+      "originalStatus": "pending",
+      "requirements": [
+        "R061"
+      ]
+    },
+    {
+      "row": 154,
+      "id": "7b76ee416a76f53603b728ee0f3c788e",
+      "userKey": "U129",
+      "type": "movie",
+      "content": "悬疑小说榜单",
+      "date": "2026-08-08",
+      "originalStatus": "pending",
+      "requirements": [
+        "R062"
+      ]
+    },
+    {
+      "row": 155,
+      "id": "179185b66a76fa5f017914de36bea867",
+      "userKey": "U097",
+      "type": "movie",
+      "content": "科幻",
+      "date": "2026-08-08",
+      "originalStatus": "pending",
+      "requirements": [
+        "R049"
+      ]
+    },
+    {
+      "row": 156,
+      "id": "7b76ee416a76fa6603b7b2421d2f699d",
+      "userKey": "U097",
+      "type": "movie",
+      "content": "喜剧",
+      "date": "2026-08-08",
+      "originalStatus": "pending",
+      "requirements": [
+        "R023"
+      ]
+    },
+    {
+      "row": 157,
+      "id": "9d781d8a6a76fa8901ad1982338e3979",
+      "userKey": "U097",
+      "type": "movie",
+      "content": "金鹰奖",
+      "date": "2026-08-08",
+      "originalStatus": "pending",
+      "requirements": [
+        "R063"
+      ]
+    },
+    {
+      "row": 158,
+      "id": "5edc49486a77041606f1ed96534661d7",
+      "userKey": "U130",
+      "type": "book",
+      "content": "历届诺奖得主代表作",
+      "date": "2026-08-08",
+      "originalStatus": "pending",
+      "requirements": [
+        "R016"
+      ]
+    },
+    {
+      "row": 159,
+      "id": "5edc49486a78b4cd070b3a441102c038",
+      "userKey": "U131",
+      "type": "movie",
+      "content": "动画",
+      "date": "2026-08-10",
+      "originalStatus": "pending",
+      "requirements": [
+        "R064"
+      ]
+    },
+    {
+      "row": 160,
+      "id": "eabbca7e6a79a8f6001409617944a325",
+      "userKey": "U010",
+      "type": "other",
+      "content": "TGA (The Game Awards)历届“年度最佳游戏”",
+      "date": "2026-08-10",
+      "originalStatus": "pending",
+      "requirements": [
+        "R065"
+      ]
+    },
+    {
+      "row": 161,
+      "id": "4f25ac8c6a79a9610010f9bd4a6fe1c2",
+      "userKey": "U010",
+      "type": "book",
+      "content": "普利策小说奖(Pulitzer Prize for Fiction)历届名单",
+      "date": "2026-08-10",
+      "originalStatus": "pending",
+      "requirements": [
+        "R068"
+      ]
+    },
+    {
+      "row": 162,
+      "id": "eabbca7e6a79aa37001465ef5bc6ae9a",
+      "userKey": "U010",
+      "type": "other",
+      "content": "中国“十大经典徒步路线”\n数据来源：中国登山协会(CMA)与户外圈公认的经典徒步线路",
+      "date": "2026-08-10",
+      "originalStatus": "pending",
+      "requirements": [
+        "R066"
+      ]
+    },
+    {
+      "row": 163,
+      "id": "eabbca7e6a79ab4800149cb3247d7e13",
+      "userKey": "U010",
+      "type": "other",
+      "content": "《中国国家地理》“最美中国”系列\n最美六大名山（天山天池、南迦巴瓦、贡嘎、珠穆朗玛、梅里、黄山）\n中国最美五大湖（青海湖、纳木错、喀纳斯湖、长白山天池、西湖）\n最美五大峡谷（雅鲁藏布大峡谷、金沙江虎跳峡、长江三峡、怒江大峡谷、太行山大峡谷）\n最美六大草原（呼伦贝尔、伊犁草原、锡林郭勒、川西高寒草原、那曲高寒草原、祁连山草原）\n数据来源：2005年《中国国家地理》创刊55周年",
+      "date": "2026-08-10",
+      "originalStatus": "pending",
+      "requirements": [
+        "R067"
+      ]
+    },
+    {
+      "row": 164,
+      "id": "eabbca7e6a7ad25b02313c044652059d",
+      "userKey": "U097",
+      "type": "movie",
+      "content": "科幻",
+      "date": "2026-08-11",
+      "originalStatus": "pending",
+      "requirements": [
+        "R049"
+      ]
+    },
+    {
+      "row": 165,
+      "id": "f6e7da3b6a7adb02000e1b3432dfeece",
+      "userKey": "U132",
+      "type": "other",
+      "content": "有没有日剧bingo清单？近几年的",
+      "date": "2026-08-11",
+      "originalStatus": "pending",
+      "requirements": [
+        "R069"
+      ]
+    },
+    {
+      "row": 166,
+      "id": "2eaf35456a7ae5b20000a2d650db275b",
+      "userKey": "U133",
+      "type": "movie",
+      "content": "豆瓣 t250",
+      "date": "2026-08-11",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 167,
+      "id": "6c4132b16a7b36d70041f9cb4936f21c",
+      "userKey": "U134",
+      "type": "movie",
+      "content": "哈利波特",
+      "date": "2026-08-11",
+      "originalStatus": "pending",
+      "requirements": [
+        "R070"
+      ]
+    },
+    {
+      "row": 168,
+      "id": "3186bc486a7b377c000543274a1f58aa",
+      "userKey": "U135",
+      "type": "movie",
+      "content": "史上最佳科幻电影",
+      "date": "2026-08-11",
+      "originalStatus": "pending",
+      "requirements": [
+        "R049"
+      ]
+    },
+    {
+      "row": 169,
+      "id": "045a2ea36a7b41d1000a3ef406d67142",
+      "userKey": "U098",
+      "type": "movie",
+      "content": "周星驰",
+      "date": "2026-08-11",
+      "originalStatus": "pending",
+      "requirements": [
+        "R050"
+      ]
+    },
+    {
+      "row": 170,
+      "id": "3186bc486a7c0d3700105f613cced015",
+      "userKey": "U136",
+      "type": "movie",
+      "content": "豆瓣T250电影",
+      "date": "2026-08-12",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 171,
+      "id": "045a2ea36a7c50be001e19f4231ef2cc",
+      "userKey": "U137",
+      "type": "other",
+      "content": "旅行 世界自然遗产名录",
+      "date": "2026-08-12",
+      "originalStatus": "pending",
+      "requirements": [
+        "R071"
+      ]
+    },
+    {
+      "row": 172,
+      "id": "2eaf35456a7c6da000161f4c16330ab5",
+      "userKey": "U138",
+      "type": "movie",
+      "content": "史上最佳爱情电影/20世纪百大爱情电影……",
+      "date": "2026-08-12",
+      "originalStatus": "pending",
+      "requirements": [
+        "R027"
+      ]
+    },
+    {
+      "row": 173,
+      "id": "2eaf35456a7c6db50016205b4d1ff659",
+      "userKey": "U138",
+      "type": "movie",
+      "content": "20世纪百大小说",
+      "date": "2026-08-12",
+      "originalStatus": "pending",
+      "requirements": [
+        "R072"
+      ]
+    },
+    {
+      "row": 174,
+      "id": "045a2ea36a7c76890020fc012c5e2b76",
+      "userKey": "U139",
+      "type": "movie",
+      "content": "有没有纪录片呀，建议可以纪录片评分什么的",
+      "date": "2026-08-12",
+      "originalStatus": "pending",
+      "requirements": [
+        "R073"
+      ]
+    },
+    {
+      "row": 175,
+      "id": "6c4132b16a7cba1a00ae25bf60e904d8",
+      "userKey": "U140",
+      "type": "movie",
+      "content": "可以出个自己能创建或者自定义名称的电影片单 这样可以把自己看过的电影记录一下",
+      "date": "2026-08-13",
+      "originalStatus": "pending",
+      "requirements": [
+        "R033"
+      ]
+    },
+    {
+      "row": 176,
+      "id": "3186bc486a7d621900237deb5b72517b",
+      "userKey": "U141",
+      "type": "movie",
+      "content": "lgbt电影片单",
+      "date": "2026-08-13",
+      "originalStatus": "pending",
+      "requirements": [
+        "R074"
+      ]
+    },
+    {
+      "row": 177,
+      "id": "2eaf35456a7d692b0024048d5f6a719f",
+      "userKey": "U142",
+      "type": "other",
+      "content": "中国境内的世界遗产名录",
+      "date": "2026-08-13",
+      "originalStatus": "pending",
+      "requirements": [
+        "R071"
+      ]
+    },
+    {
+      "row": 178,
+      "id": "2eaf35456a7d918d0026489a6a5a0251",
+      "userKey": "U143",
+      "type": "other",
+      "content": "旅游城市清单（全球",
+      "date": "2026-08-13",
+      "originalStatus": "pending",
+      "requirements": [
+        "R075"
+      ]
+    },
+    {
+      "row": 179,
+      "id": "045a2ea36a7dd1f400446ba9468009f5",
+      "userKey": "U098",
+      "type": "movie",
+      "content": "周星驰",
+      "date": "2026-08-13",
+      "originalStatus": "pending",
+      "requirements": [
+        "R050"
+      ]
+    },
+    {
+      "row": 180,
+      "id": "045a2ea36a7e80de004ffb90264e4b24",
+      "userKey": "U144",
+      "type": "other",
+      "content": "世界博物馆美术馆",
+      "date": "2026-08-14",
+      "originalStatus": "pending",
+      "requirements": [
+        "R076"
+      ]
+    },
+    {
+      "row": 181,
+      "id": "3186bc486a7e900d0033a23d6bbcf6d4",
+      "userKey": "U145",
+      "type": "movie",
+      "content": "诺兰",
+      "date": "2026-08-14",
+      "originalStatus": "pending",
+      "requirements": [
+        "R077"
+      ]
+    },
+    {
+      "row": 182,
+      "id": "2eaf35456a7eb9390036a4485dbdcda2",
+      "userKey": "U146",
+      "type": "other",
+      "content": "全国34个省级行政区旅居",
+      "date": "2026-08-14",
+      "originalStatus": "pending",
+      "requirements": [
+        "R078"
+      ]
+    },
+    {
+      "row": 183,
+      "id": "045a2ea36a7ebd9200566a972a45cd5a",
+      "userKey": "U147",
+      "type": "book",
+      "content": "中华书局三全本全集",
+      "date": "2026-08-14",
+      "originalStatus": "pending",
+      "requirements": [
+        "R079"
+      ]
+    },
+    {
+      "row": 184,
+      "id": "6c4132b16a7f2b000161a32303345e61",
+      "userKey": "U148",
+      "type": "book",
+      "content": "全球推理小说top100",
+      "date": "2026-08-14",
+      "originalStatus": "pending",
+      "requirements": [
+        "R062"
+      ]
+    },
+    {
+      "row": 185,
+      "id": "3186bc486a7fe9cb0045e2313f1485e2",
+      "userKey": "U149",
+      "type": "other",
+      "content": "国家地理一生必去的50个地方",
+      "date": "2026-08-15",
+      "originalStatus": "pending",
+      "requirements": [
+        "R080"
+      ]
+    },
+    {
+      "row": 186,
+      "id": "3186bc486a8067bc004d95ec0c70046a",
+      "userKey": "U150",
+      "type": "movie",
+      "content": "豆瓣top",
+      "date": "2026-08-15",
+      "originalStatus": "pending",
+      "requirements": [
+        "R002"
+      ]
+    },
+    {
+      "row": 187,
+      "id": "045a2ea36a807b3d0074662741bbf1ba",
+      "userKey": "U151",
+      "type": "movie",
+      "content": "电视剧",
+      "date": "2026-08-15",
+      "originalStatus": "pending",
+      "requirements": [
+        "R025"
+      ]
+    },
+    {
+      "row": 188,
+      "id": "6c4132b16a807d0301c131144eb4ecf0",
+      "userKey": "U152",
+      "type": "movie",
+      "content": "日剧",
+      "date": "2026-08-15",
+      "originalStatus": "pending",
+      "requirements": [
+        "R069"
+      ]
+    },
+    {
+      "row": 189,
+      "id": "045a2ea36a80ac3500773bc84c1a6fff",
+      "userKey": "U153",
+      "type": "movie",
+      "content": "美剧英剧榜单",
+      "date": "2026-08-16",
+      "originalStatus": "pending",
+      "requirements": [
+        "R032"
+      ]
+    },
+    {
+      "row": 190,
+      "id": "6c4132b16a80ae9e01cee4501e308399",
+      "userKey": "U154",
+      "type": "movie",
+      "content": "高分好评电影",
+      "date": "2026-08-16",
+      "originalStatus": "pending",
+      "requirements": [
+        "R081"
+      ]
+    },
+    {
+      "row": 191,
+      "id": "6c4132b16a813e0001f656f15d3c4ec2",
+      "userKey": "U155",
+      "type": "movie",
+      "content": "悬疑",
+      "date": "2026-08-16",
+      "originalStatus": "pending",
+      "requirements": [
+        "R022"
+      ]
+    },
+    {
+      "row": 192,
+      "id": "3186bc486a815d3000589f9f45b3e8a8",
+      "userKey": "U156",
+      "type": "movie",
+      "content": "红果漫剧",
+      "date": "2026-08-16",
+      "originalStatus": "pending",
+      "requirements": [
+        "R082"
+      ]
+    },
+    {
+      "row": 193,
+      "id": "2eaf35456a81a9d0005c79004523bfaf",
+      "userKey": "U155",
+      "type": "movie",
+      "content": "动画电影",
+      "date": "2026-08-16",
+      "originalStatus": "pending",
+      "requirements": [
+        "R064"
+      ]
+    },
+    {
+      "row": 194,
+      "id": "2eaf35456a81af4e005ccbd8761dcd27",
+      "userKey": "U157",
+      "type": "movie",
+      "content": "豆瓣电视剧前200",
+      "date": "2026-08-16",
+      "originalStatus": "pending",
+      "requirements": [
+        "R025"
+      ]
+    },
+    {
+      "row": 195,
+      "id": "2eaf35456a81af68005ccd243b4ee92d",
+      "userKey": "U157",
+      "type": "movie",
+      "content": "豆瓣韩剧前200",
+      "date": "2026-08-16",
+      "originalStatus": "pending",
+      "requirements": [
+        "R030"
+      ]
+    },
+    {
+      "row": 196,
+      "id": "3186bc486a81bf75005e01807321968b",
+      "userKey": "U097",
+      "type": "movie",
+      "content": "科幻类",
+      "date": "2026-08-16",
+      "originalStatus": "pending",
+      "requirements": [
+        "R049"
+      ]
+    },
+    {
+      "row": 197,
+      "id": "2eaf35456a81bf99005dbb02548ab9d8",
+      "userKey": "U097",
+      "type": "movie",
+      "content": "喜剧",
+      "date": "2026-08-16",
+      "originalStatus": "pending",
+      "requirements": [
+        "R023"
+      ]
+    },
+    {
+      "row": 198,
+      "id": "3186bc486a81e46900604f227fedb745",
+      "userKey": "U158",
+      "type": "movie",
+      "content": "豆瓣250",
+      "date": "2026-08-17",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 199,
+      "id": "045a2ea36a81e59a008a66087912d430",
+      "userKey": "U159",
+      "type": "movie",
+      "content": "欧美电视剧",
+      "date": "2026-08-17",
+      "originalStatus": "pending",
+      "requirements": [
+        "R032"
+      ]
+    },
+    {
+      "row": 200,
+      "id": "2eaf35456a81e9e5005faa0a04e91344",
+      "userKey": "U160",
+      "type": "movie",
+      "content": "欢迎",
+      "date": "2026-08-17",
+      "originalStatus": "pending",
+      "requirements": [
+        "R006"
+      ]
+    },
+    {
+      "row": 201,
+      "id": "045a2ea36a81fc5d008b81d126903b3d",
+      "userKey": "U161",
+      "type": "other",
+      "content": "想看动漫",
+      "date": "2026-08-17",
+      "originalStatus": "pending",
+      "requirements": [
+        "R045"
+      ]
+    },
+    {
+      "row": 202,
+      "id": "3186bc486a8293b10066de3f6e41cfed",
+      "userKey": "U097",
+      "type": "movie",
+      "content": "科幻",
+      "date": "2026-08-17",
+      "originalStatus": "pending",
+      "requirements": [
+        "R049"
+      ]
+    },
+    {
+      "row": 203,
+      "id": "3186bc486a8293b60066deb17fbc19d5",
+      "userKey": "U097",
+      "type": "movie",
+      "content": "喜剧",
+      "date": "2026-08-17",
+      "originalStatus": "pending",
+      "requirements": [
+        "R023"
+      ]
+    },
+    {
+      "row": 204,
+      "id": "6c4132b16a829400025551192825afa4",
+      "userKey": "U162",
+      "type": "book",
+      "content": "诺贝尔文学奖书单",
+      "date": "2026-08-17",
+      "originalStatus": "pending",
+      "requirements": [
+        "R016"
+      ]
+    },
+    {
+      "row": 205,
+      "id": "6c4132b16a838158029abdbd32783b88",
+      "userKey": "U163",
+      "type": "book",
+      "content": "诺贝尔文学奖得主代表作",
+      "date": "2026-08-18",
+      "originalStatus": "pending",
+      "requirements": [
+        "R016"
+      ]
+    },
+    {
+      "row": 206,
+      "id": "2eaf35456a83c5760079aee707bcdadc",
+      "userKey": "U097",
+      "type": "movie",
+      "content": "科幻",
+      "date": "2026-08-18",
+      "originalStatus": "pending",
+      "requirements": [
+        "R049"
+      ]
+    },
+    {
+      "row": 207,
+      "id": "2eaf35456a83c7800079e59c764deb32",
+      "userKey": "U067",
+      "type": "book",
+      "content": "诺贝尔文学奖作品",
+      "date": "2026-08-18",
+      "originalStatus": "pending",
+      "requirements": [
+        "R016"
+      ]
+    },
+    {
+      "row": 208,
+      "id": "2eaf35456a83cdcc007a48b216bc1975",
+      "userKey": "U164",
+      "type": "movie",
+      "content": "动漫",
+      "date": "2026-08-18",
+      "originalStatus": "pending",
+      "requirements": [
+        "R045"
+      ]
+    },
+    {
+      "row": 209,
+      "id": "045a2ea36a83ce7a00a8eae34f9b86e3",
+      "userKey": "U165",
+      "type": "movie",
+      "content": "动漫",
+      "date": "2026-08-18",
+      "originalStatus": "pending",
+      "requirements": [
+        "R045"
+      ]
+    },
+    {
+      "row": 210,
+      "id": "6c4132b16a83d50702b2923b725e40f8",
+      "userKey": "U166",
+      "type": "other",
+      "content": "电视剧",
+      "date": "2026-08-18",
+      "originalStatus": "pending",
+      "requirements": [
+        "R025"
+      ]
+    },
+    {
+      "row": 211,
+      "id": "3186bc486a840e85007d43ba683b8516",
+      "userKey": "U167",
+      "type": "movie",
+      "content": "豆瓣电影top250",
+      "date": "2026-08-18",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 212,
+      "id": "2eaf35456a84308f008042ff540f4aea",
+      "userKey": "U168",
+      "type": "movie",
+      "content": "高分文艺片单",
+      "date": "2026-08-18",
+      "originalStatus": "pending",
+      "requirements": [
+        "R083"
+      ]
+    },
+    {
+      "row": 213,
+      "id": "2eaf35456a84532500821a7a605e1b86",
+      "userKey": "U169",
+      "type": "movie",
+      "content": "电影生涯个人喜好表",
+      "date": "2026-08-18",
+      "originalStatus": "pending",
+      "requirements": [
+        "R084"
+      ]
+    },
+    {
+      "row": 214,
+      "id": "6c4132b16a84872002e86d1b6fc9274b",
+      "userKey": "U170",
+      "type": "movie",
+      "content": "电视剧",
+      "date": "2026-08-19",
+      "originalStatus": "pending",
+      "requirements": [
+        "R025"
+      ]
+    },
+    {
+      "row": 215,
+      "id": "2eaf35456a8497240084f9c319291a5e",
+      "userKey": "U171",
+      "type": "movie",
+      "content": "暮光",
+      "date": "2026-08-19",
+      "originalStatus": "pending",
+      "requirements": [
+        "R034"
+      ]
+    },
+    {
+      "row": 216,
+      "id": "2eaf35456a85107b008bfc9213bfdc24",
+      "userKey": "U172",
+      "type": "movie",
+      "content": "电视剧",
+      "date": "2026-08-19",
+      "originalStatus": "pending",
+      "requirements": [
+        "R025"
+      ]
+    },
+    {
+      "row": 217,
+      "id": "2eaf35456a851477008c2f65690c98dd",
+      "userKey": "U173",
+      "type": "movie",
+      "content": "豆瓣电影",
+      "date": "2026-08-19",
+      "originalStatus": "pending",
+      "requirements": [
+        "R002"
+      ]
+    },
+    {
+      "row": 218,
+      "id": "3186bc486a854923008d857b60c19aaa",
+      "userKey": "U174",
+      "type": "movie",
+      "content": "文艺电影榜单",
+      "date": "2026-08-19",
+      "originalStatus": "pending",
+      "requirements": [
+        "R083"
+      ]
+    },
+    {
+      "row": 219,
+      "id": "6c4132b16a856f370328207760b5f20e",
+      "userKey": "U175",
+      "type": "movie",
+      "content": "希望上架imdb美剧排行榜",
+      "date": "2026-08-19",
+      "originalStatus": "pending",
+      "requirements": [
+        "R032"
+      ]
+    },
+    {
+      "row": 220,
+      "id": "6c4132b16a85c22b03401f5910edb223",
+      "userKey": "U176",
+      "type": "other",
+      "content": "全国城市/世界国家",
+      "date": "2026-08-19",
+      "originalStatus": "pending",
+      "requirements": [
+        "R085",
+        "R086"
+      ]
+    },
+    {
+      "row": 221,
+      "id": "2eaf35456a867476009f2051214ca649",
+      "userKey": "U177",
+      "type": "movie",
+      "content": "国产动画",
+      "date": "2026-08-20",
+      "originalStatus": "pending",
+      "requirements": [
+        "R087"
+      ]
+    },
+    {
+      "row": 222,
+      "id": "045a2ea36a8691db00d7981f3240384a",
+      "userKey": "U178",
+      "type": "movie",
+      "content": "豆瓣TOP250观影海报墙",
+      "date": "2026-08-20",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 223,
+      "id": "3186bc486a86a6df00a24b77611d96b6",
+      "userKey": "U179",
+      "type": "other",
+      "content": "希望能增加动漫片单",
+      "date": "2026-08-20",
+      "originalStatus": "pending",
+      "requirements": [
+        "R045"
+      ]
+    },
+    {
+      "row": 224,
+      "id": "10b550da6a870e1b000281b00519e6f3",
+      "userKey": "U180",
+      "type": "movie",
+      "content": "科幻电影",
+      "date": "2026-08-20",
+      "originalStatus": "pending",
+      "requirements": [
+        "R049"
+      ]
+    },
+    {
+      "row": 225,
+      "id": "b9a701d46a874d5e001795c359ea97fe",
+      "userKey": "U181",
+      "type": "movie",
+      "content": "悬疑电影片单",
+      "date": "2026-08-21",
+      "originalStatus": "pending",
+      "requirements": [
+        "R022"
+      ]
+    },
+    {
+      "row": 226,
+      "id": "b9a701d46a87e8f400424ba155a6bcf0",
+      "userKey": "U182",
+      "type": "movie",
+      "content": "豆瓣",
+      "date": "2026-08-21",
+      "originalStatus": "pending",
+      "requirements": [
+        "R002"
+      ]
+    },
+    {
+      "row": 227,
+      "id": "10b550da6a8838a20014cb711b08cb28",
+      "userKey": "U183",
+      "type": "movie",
+      "content": "傲慢与偏见",
+      "date": "2026-08-21",
+      "originalStatus": "pending",
+      "requirements": [
+        "R034"
+      ]
+    },
+    {
+      "row": 228,
+      "id": "bf886e776a8838e80017a439684f0b1f",
+      "userKey": "U183",
+      "type": "movie",
+      "content": "豆瓣top250观影海报墙",
+      "date": "2026-08-21",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 229,
+      "id": "10b550da6a8851f00016b40409f11bf2",
+      "userKey": "U184",
+      "type": "book",
+      "content": "历届矛盾文学提名作品",
+      "date": "2026-08-21",
+      "originalStatus": "pending",
+      "requirements": [
+        "R088"
+      ]
+    },
+    {
+      "row": 230,
+      "id": "10b550da6a8852290016b75029d4c646",
+      "userKey": "U184",
+      "type": "movie",
+      "content": "历届奥斯卡最佳提名",
+      "date": "2026-08-21",
+      "originalStatus": "pending",
+      "requirements": [
+        "R089"
+      ]
+    },
+    {
+      "row": 231,
+      "id": "b9a701d46a88670f00691c720a80eff1",
+      "userKey": "U185",
+      "type": "movie",
+      "content": "日剧",
+      "date": "2026-08-21",
+      "originalStatus": "pending",
+      "requirements": [
+        "R069"
+      ]
+    },
+    {
+      "row": 232,
+      "id": "10b550da6a886f670019181e5f9b3a4f",
+      "userKey": "U097",
+      "type": "movie",
+      "content": "科幻",
+      "date": "2026-08-21",
+      "originalStatus": "pending",
+      "requirements": [
+        "R049"
+      ]
+    },
+    {
+      "row": 233,
+      "id": "bf886e776a886f70001ccd2b698aa353",
+      "userKey": "U097",
+      "type": "movie",
+      "content": "喜剧",
+      "date": "2026-08-21",
+      "originalStatus": "pending",
+      "requirements": [
+        "R023"
+      ]
+    },
+    {
+      "row": 234,
+      "id": "d32b92d06a8964f8002239bc1f59a43b",
+      "userKey": "U186",
+      "type": "other",
+      "content": "游戏榜单，比如tga年度及各种提名游戏榜单",
+      "date": "2026-08-22",
+      "originalStatus": "pending",
+      "requirements": [
+        "R065"
+      ]
+    },
+    {
+      "row": 235,
+      "id": "b9a701d46a899ec500c0d07a074a65cf",
+      "userKey": "U187",
+      "type": "book",
+      "content": "诺贝尔文学奖书单",
+      "date": "2026-08-22",
+      "originalStatus": "pending",
+      "requirements": [
+        "R016"
+      ]
+    },
+    {
+      "row": 236,
+      "id": "d32b92d06a89b76c002674c17dfb1cfe",
+      "userKey": "U188",
+      "type": "movie",
+      "content": "春夏秋冬又一春",
+      "date": "2026-08-22",
+      "originalStatus": "pending",
+      "requirements": [
+        "R034"
+      ]
+    },
+    {
+      "row": 237,
+      "id": "10b550da6a89ea10002f83a82789caa9",
+      "userKey": "U189",
+      "type": "other",
+      "content": "全国各地",
+      "date": "2026-08-23",
+      "originalStatus": "pending",
+      "requirements": [
+        "R090"
+      ]
+    },
+    {
+      "row": 238,
+      "id": "bf886e776a8a5c3f0038fdcc3d103ff5",
+      "userKey": "U190",
+      "type": "movie",
+      "content": "top250",
+      "date": "2026-08-23",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 239,
+      "id": "bf886e776a8ad5c40040ac602bfa8a00",
+      "userKey": "U191",
+      "type": "other",
+      "content": "旅行城市",
+      "date": "2026-08-23",
+      "originalStatus": "pending",
+      "requirements": [
+        "R085"
+      ]
+    },
+    {
+      "row": 240,
+      "id": "10b550da6a8b0fd30043e778124f2375",
+      "userKey": "U192",
+      "type": "movie",
+      "content": "东野圭吾",
+      "date": "2026-08-23",
+      "originalStatus": "pending",
+      "requirements": [
+        "R041"
+      ]
+    },
+    {
+      "row": 241,
+      "id": "d32b92d06a8b1706003b7e1667b255f1",
+      "userKey": "U193",
+      "type": "book",
+      "content": "雨果奖、诺贝尔文学奖",
+      "date": "2026-08-23",
+      "originalStatus": "pending",
+      "requirements": [
+        "R016",
+        "R028"
+      ]
+    },
+    {
+      "row": 242,
+      "id": "d32b92d06a8c44ab004b1b343c6ea385",
+      "userKey": "U194",
+      "type": "other",
+      "content": "全球国家",
+      "date": "2026-08-24",
+      "originalStatus": "pending",
+      "requirements": [
+        "R086"
+      ]
+    },
+    {
+      "row": 243,
+      "id": "10b550da6a8c4ccb0071243f5c0ac253",
+      "userKey": "U195",
+      "type": "movie",
+      "content": "周星驰电影作品",
+      "date": "2026-08-24",
+      "originalStatus": "pending",
+      "requirements": [
+        "R050"
+      ]
+    },
+    {
+      "row": 244,
+      "id": "bf886e776a8c5267005665ba58909dee",
+      "userKey": "U196",
+      "type": "movie",
+      "content": "豆瓣 top500",
+      "date": "2026-08-24",
+      "originalStatus": "pending",
+      "requirements": [
+        "R020"
+      ]
+    },
+    {
+      "row": 245,
+      "id": "bf886e776a8c577f0056d0b26ba5f3e2",
+      "userKey": "U195",
+      "type": "movie",
+      "content": "历年豆瓣评分最高华语剧top10",
+      "date": "2026-08-24",
+      "originalStatus": "pending",
+      "requirements": [
+        "R091"
+      ]
+    },
+    {
+      "row": 246,
+      "id": "10b550da6a8c57b4007233d7454d6e71",
+      "userKey": "U195",
+      "type": "movie",
+      "content": "豆瓣评分最高韩剧榜",
+      "date": "2026-08-24",
+      "originalStatus": "pending",
+      "requirements": [
+        "R030"
+      ]
+    },
+    {
+      "row": 247,
+      "id": "d32b92d06a8c6018004c5db1016931ff",
+      "userKey": "U197",
+      "type": "movie",
+      "content": "近几年热度高的电视剧",
+      "date": "2026-08-24",
+      "originalStatus": "pending",
+      "requirements": [
+        "R091"
+      ]
+    },
+    {
+      "row": 248,
+      "id": "bf886e776a8c7650005884d95e4b5d0d",
+      "userKey": "U198",
+      "type": "movie",
+      "content": "迪士尼大电影",
+      "date": "2026-08-25",
+      "originalStatus": "pending",
+      "requirements": [
+        "R092"
+      ]
+    },
+    {
+      "row": 249,
+      "id": "bf886e776a8c7c0d0058b8a211929ab7",
+      "userKey": "U199",
+      "type": "movie",
+      "content": "动漫番剧",
+      "date": "2026-08-25",
+      "originalStatus": "pending",
+      "requirements": [
+        "R045"
+      ]
+    },
+    {
+      "row": 250,
+      "id": "d32b92d06a8c7fa7004df96d67fe62e5",
+      "userKey": "U200",
+      "type": "movie",
+      "content": "战争电影",
+      "date": "2026-08-25",
+      "originalStatus": "pending",
+      "requirements": [
+        "R093"
+      ]
+    },
+    {
+      "row": 251,
+      "id": "bf886e776a8d6efb0067599d4183bbd9",
+      "userKey": "U201",
+      "type": "book",
+      "content": "世界名著，推理小说之类的",
+      "date": "2026-08-25",
+      "originalStatus": "pending",
+      "requirements": [
+        "R062",
+        "R094"
+      ]
+    },
+    {
+      "row": 252,
+      "id": "d32b92d06a8d6f13005f78342655e58a",
+      "userKey": "U201",
+      "type": "other",
+      "content": "可以出一个有关游戏的统计吗",
+      "date": "2026-08-25",
+      "originalStatus": "pending",
+      "requirements": [
+        "R065"
+      ]
+    },
+    {
+      "row": 253,
+      "id": "bf886e776a8dc600006c6c9822d276d7",
+      "userKey": "U202",
+      "type": "movie",
+      "content": "豆瓣电影TOp250",
+      "date": "2026-08-26",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 254,
+      "id": "b9a701d46a8e0d5402045add420eef79",
+      "userKey": "U203",
+      "type": "movie",
+      "content": "豆瓣文学书籍top100",
+      "date": "2026-08-26",
+      "originalStatus": "pending",
+      "requirements": [
+        "R095"
+      ]
+    },
+    {
+      "row": 255,
+      "id": "b9a701d46a8e0da402046e0b55d8e8f1",
+      "userKey": "U203",
+      "type": "book",
+      "content": "豆瓣社科类书籍too100",
+      "date": "2026-08-26",
+      "originalStatus": "pending",
+      "requirements": [
+        "R096"
+      ]
+    },
+    {
+      "row": 256,
+      "id": "10b550da6a8e2b1f008cc08051b60bdb",
+      "userKey": "U204",
+      "type": "movie",
+      "content": "豆瓣电影前200",
+      "date": "2026-08-26",
+      "originalStatus": "pending",
+      "requirements": [
+        "R020"
+      ]
+    },
+    {
+      "row": 257,
+      "id": "10b550da6a8e9731009574e224dce6db",
+      "userKey": "U205",
+      "type": "movie",
+      "content": "漫威系列电影/电视剧片单",
+      "date": "2026-08-26",
+      "originalStatus": "pending",
+      "requirements": [
+        "R008"
+      ]
+    },
+    {
+      "row": 258,
+      "id": "bf886e776a8ea4a80077a89d57e76bb2",
+      "userKey": "U203",
+      "type": "book",
+      "content": "豆瓣九分以上书籍",
+      "date": "2026-08-26",
+      "originalStatus": "pending",
+      "requirements": [
+        "R097"
+      ]
+    },
+    {
+      "row": 259,
+      "id": "d32b92d06a8eb24800717ea445f8ebc1",
+      "userKey": "U206",
+      "type": "movie",
+      "content": "豆瓣电影TOP250观影海报",
+      "date": "2026-08-26",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 260,
+      "id": "bf886e776a8ec36f0079ac8906cb3a69",
+      "userKey": "U207",
+      "type": "movie",
+      "content": "豆瓣",
+      "date": "2026-08-26",
+      "originalStatus": "pending",
+      "requirements": [
+        "R002"
+      ]
+    },
+    {
+      "row": 261,
+      "id": "10b550da6a8ee08b009bee83079f2b10",
+      "userKey": "U208",
+      "type": "movie",
+      "content": "TVB高分经典剧集",
+      "date": "2026-08-26",
+      "originalStatus": "pending",
+      "requirements": [
+        "R098"
+      ]
+    },
+    {
+      "row": 262,
+      "id": "d32b92d06a8eec0c00748a6d3a378f7f",
+      "userKey": "U209",
+      "type": "other",
+      "content": "全球国家旅游",
+      "date": "2026-08-26",
+      "originalStatus": "pending",
+      "requirements": [
+        "R086"
+      ]
+    },
+    {
+      "row": 263,
+      "id": "10b550da6a8f343b00a189611ea920a2",
+      "userKey": "U210",
+      "type": "movie",
+      "content": "电视剧",
+      "date": "2026-08-27",
+      "originalStatus": "pending",
+      "requirements": [
+        "R025"
+      ]
+    },
+    {
+      "row": 264,
+      "id": "b9a701d46a8fde480289463b2cc4a04c",
+      "userKey": "U211",
+      "type": "movie",
+      "content": "恐怖片",
+      "date": "2026-08-27",
+      "originalStatus": "pending",
+      "requirements": [
+        "R037"
+      ]
+    },
+    {
+      "row": 265,
+      "id": "10b550da6a9002ec00af47630d107003",
+      "userKey": "U212",
+      "type": "movie",
+      "content": "史上最佳歌舞电影",
+      "date": "2026-08-27",
+      "originalStatus": "pending",
+      "requirements": [
+        "R053"
+      ]
+    },
+    {
+      "row": 266,
+      "id": "b9a701d46a900e9e0297e4c07ebd4e11",
+      "userKey": "U213",
+      "type": "movie",
+      "content": "综艺片单",
+      "date": "2026-08-27",
+      "originalStatus": "pending",
+      "requirements": [
+        "R099"
+      ]
+    },
+    {
+      "row": 267,
+      "id": "b9a701d46a90fa3b02d950075e20e5ae",
+      "userKey": "U214",
+      "type": "movie",
+      "content": "豆瓣250电影",
+      "date": "2026-08-28",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 268,
+      "id": "bf886e776a910bd90097ec115e3dca2a",
+      "userKey": "U097",
+      "type": "movie",
+      "content": "科幻",
+      "date": "2026-08-28",
+      "originalStatus": "pending",
+      "requirements": [
+        "R049"
+      ]
+    },
+    {
+      "row": 269,
+      "id": "10b550da6a910bdf00c078346687ec73",
+      "userKey": "U097",
+      "type": "movie",
+      "content": "喜剧",
+      "date": "2026-08-28",
+      "originalStatus": "pending",
+      "requirements": [
+        "R023"
+      ]
+    },
+    {
+      "row": 270,
+      "id": "b9a701d46a910fe302df812d776f4fe5",
+      "userKey": "U215",
+      "type": "other",
+      "content": "国家旅游",
+      "date": "2026-08-28",
+      "originalStatus": "pending",
+      "requirements": [
+        "R086"
+      ]
+    },
+    {
+      "row": 271,
+      "id": "b9a701d46a91103302df971026786a3d",
+      "userKey": "U216",
+      "type": "movie",
+      "content": "宫崎骏动画",
+      "date": "2026-08-28",
+      "originalStatus": "pending",
+      "requirements": [
+        "R100"
+      ]
+    },
+    {
+      "row": 272,
+      "id": "d32b92d06a9112e00093ecf955681c92",
+      "userKey": "U217",
+      "type": "movie",
+      "content": "各个系列的电影",
+      "date": "2026-08-28",
+      "originalStatus": "pending",
+      "requirements": [
+        "R101"
+      ]
+    },
+    {
+      "row": 273,
+      "id": "10b550da6a91293b00c29f8c6f084b29",
+      "userKey": "U218",
+      "type": "book",
+      "content": "推理小说书单",
+      "date": "2026-08-28",
+      "originalStatus": "pending",
+      "requirements": [
+        "R062"
+      ]
+    },
+    {
+      "row": 274,
+      "id": "10b550da6a9137d300c3f9915f077927",
+      "userKey": "U219",
+      "type": "movie",
+      "content": "史上最佳悬疑电影和科幻电影",
+      "date": "2026-08-28",
+      "originalStatus": "pending",
+      "requirements": [
+        "R022",
+        "R049"
+      ]
+    },
+    {
+      "row": 275,
+      "id": "bf886e776a913d96009af6614951e15e",
+      "userKey": "U220",
+      "type": "book",
+      "content": "豆瓣历史类图书TOP榜单",
+      "date": "2026-08-28",
+      "originalStatus": "pending",
+      "requirements": [
+        "R102"
+      ]
+    },
+    {
+      "row": 276,
+      "id": "d32b92d06a91468900971bb66b61140a",
+      "userKey": "U221",
+      "type": "book",
+      "content": "影视改编自小说书单",
+      "date": "2026-08-28",
+      "originalStatus": "pending",
+      "requirements": [
+        "R103"
+      ]
+    },
+    {
+      "row": 277,
+      "id": "10b550da6a9161cb00c7fe35208829f5",
+      "userKey": "U222",
+      "type": "movie",
+      "content": "视与听",
+      "date": "2026-08-28",
+      "originalStatus": "pending",
+      "requirements": [
+        "R005"
+      ]
+    },
+    {
+      "row": 278,
+      "id": "10b550da6a91645d00c8446f3b1fac2d",
+      "userKey": "U222",
+      "type": "movie",
+      "content": "TSPDT",
+      "date": "2026-08-28",
+      "originalStatus": "pending",
+      "requirements": [
+        "R046"
+      ]
+    },
+    {
+      "row": 279,
+      "id": "d32b92d06a916ac0009999b97ca24f00",
+      "userKey": "U223",
+      "type": "movie",
+      "content": "耀眼",
+      "date": "2026-08-28",
+      "originalStatus": "pending",
+      "requirements": [
+        "R034"
+      ]
+    },
+    {
+      "row": 280,
+      "id": "10b550da6a916dbe00c90c665958480b",
+      "userKey": "U222",
+      "type": "movie",
+      "content": "威尼斯金狮奖",
+      "date": "2026-08-28",
+      "originalStatus": "pending",
+      "requirements": [
+        "R057"
+      ]
+    },
+    {
+      "row": 281,
+      "id": "b9a701d46a9184a903031a0021dd6ce6",
+      "userKey": "U224",
+      "type": "movie",
+      "content": "First短片",
+      "date": "2026-08-28",
+      "originalStatus": "pending",
+      "requirements": [
+        "R104"
+      ]
+    },
+    {
+      "row": 282,
+      "id": "d32b92d06a91a09c009c0eb6268d9c88",
+      "userKey": "U225",
+      "type": "book",
+      "content": "诺贝尔文学奖书单",
+      "date": "2026-08-28",
+      "originalStatus": "pending",
+      "requirements": [
+        "R016"
+      ]
+    },
+    {
+      "row": 283,
+      "id": "d32b92d06a91bcf3009d06b61d8ab589",
+      "userKey": "U226",
+      "type": "movie",
+      "content": "吸血鬼",
+      "date": "2026-08-29",
+      "originalStatus": "pending",
+      "requirements": [
+        "R105"
+      ]
+    },
+    {
+      "row": 284,
+      "id": "bf886e776a9246ae00a907354fc40b3a",
+      "userKey": "U222",
+      "type": "movie",
+      "content": "TSPDT1000",
+      "date": "2026-08-29",
+      "originalStatus": "pending",
+      "requirements": [
+        "R046"
+      ]
+    },
+    {
+      "row": 285,
+      "id": "d32b92d06a9248d900a489f74e0ef234",
+      "userKey": "U227",
+      "type": "book",
+      "content": "猫武士",
+      "date": "2026-08-29",
+      "originalStatus": "pending",
+      "requirements": [
+        "R106"
+      ]
+    },
+    {
+      "row": 286,
+      "id": "b9a701d46a9248f30335692c0d9edc4c",
+      "userKey": "U228",
+      "type": "book",
+      "content": "东野圭吾",
+      "date": "2026-08-29",
+      "originalStatus": "pending",
+      "requirements": [
+        "R041"
+      ]
+    },
+    {
+      "row": 287,
+      "id": "b9a701d46a9303ce036a3e70090716a4",
+      "userKey": "U229",
+      "type": "book",
+      "content": "经济",
+      "date": "2026-08-30",
+      "originalStatus": "pending",
+      "requirements": [
+        "R107"
+      ]
+    },
+    {
+      "row": 288,
+      "id": "bf886e776a932fcd00b83685366c7235",
+      "userKey": "U230",
+      "type": "movie",
+      "content": "华语",
+      "date": "2026-08-30",
+      "originalStatus": "pending",
+      "requirements": [
+        "R043"
+      ]
+    },
+    {
+      "row": 289,
+      "id": "b9a701d46a93bcfd039aa47854f77094",
+      "userKey": "U231",
+      "type": "movie",
+      "content": "自己标记最爱的电影清单，生成海报可以分享给他人",
+      "date": "2026-08-30",
+      "originalStatus": "pending",
+      "requirements": [
+        "R033"
+      ]
+    },
+    {
+      "row": 290,
+      "id": "b9a701d46a94196403b6601c478bc1af",
+      "userKey": "U232",
+      "type": "movie",
+      "content": "电影",
+      "date": "2026-08-30",
+      "originalStatus": "pending",
+      "requirements": [
+        "R006"
+      ]
+    },
+    {
+      "row": 291,
+      "id": "10b550da6a942d4b00f2ea0c17ff1911",
+      "userKey": "U097",
+      "type": "movie",
+      "content": "科幻",
+      "date": "2026-08-30",
+      "originalStatus": "pending",
+      "requirements": [
+        "R049"
+      ]
+    },
+    {
+      "row": 292,
+      "id": "bf886e776a94bfce00d0dd6d6aa0588a",
+      "userKey": "U233",
+      "type": "other",
+      "content": "全世界地图打卡",
+      "date": "2026-08-31",
+      "originalStatus": "pending",
+      "requirements": [
+        "R086"
+      ]
+    },
+    {
+      "row": 293,
+      "id": "d32b92d06a9526ad00d1ac93234169cc",
+      "userKey": "U234",
+      "type": "movie",
+      "content": "豆瓣",
+      "date": "2026-08-31",
+      "originalStatus": "pending",
+      "requirements": [
+        "R002"
+      ]
+    },
+    {
+      "row": 294,
+      "id": "10b550da6a958e1d010e117e552083d5",
+      "userKey": "U235",
+      "type": "book",
+      "content": "推理",
+      "date": "2026-08-31",
+      "originalStatus": "pending",
+      "requirements": [
+        "R062"
+      ]
+    },
+    {
+      "row": 295,
+      "id": "d32b92d06a960b8200def0a11344aecb",
+      "userKey": "U236",
+      "type": "book",
+      "content": "Top125",
+      "date": "2026-09-01",
+      "originalStatus": "pending",
+      "requirements": [
+        "R108"
+      ]
+    },
+    {
+      "row": 296,
+      "id": "d32b92d06a96c7be00eb64c35eae1da6",
+      "userKey": "U237",
+      "type": "book",
+      "content": "各种获奖文学",
+      "date": "2026-09-01",
+      "originalStatus": "pending",
+      "requirements": [
+        "R109"
+      ]
+    },
+    {
+      "row": 297,
+      "id": "b9a701d46a97efe204c81c3471873fba",
+      "userKey": "U238",
+      "type": "movie",
+      "content": "金钱奖、三大电影节获奖影片",
+      "date": "2026-09-02",
+      "originalStatus": "pending",
+      "requirements": [
+        "R110"
+      ]
+    },
+    {
+      "row": 298,
+      "id": "bf886e776a98182f0120f70a2d116df5",
+      "userKey": "U239",
+      "type": "book",
+      "content": "想看推理小说书单🫰🫰🫰🫰",
+      "date": "2026-09-02",
+      "originalStatus": "pending",
+      "requirements": [
+        "R062"
+      ]
+    },
+    {
+      "row": 299,
+      "id": "d32b92d06a98608f00ffb42502c8201e",
+      "userKey": "U240",
+      "type": "other",
+      "content": "想要乐队/歌手观演标记，谢谢",
+      "date": "2026-09-03",
+      "originalStatus": "pending",
+      "requirements": [
+        "R111"
+      ]
+    },
+    {
+      "row": 300,
+      "id": "d32b92d06a98c0b9010534cb606b0e1f",
+      "userKey": "U241",
+      "type": "movie",
+      "content": "有没有同影片单",
+      "date": "2026-09-03",
+      "originalStatus": "pending",
+      "requirements": [
+        "R074"
+      ]
+    },
+    {
+      "row": 301,
+      "id": "b9a701d46a98de71050898a63c29e4d6",
+      "userKey": "U242",
+      "type": "movie",
+      "content": "诗与听top250",
+      "date": "2026-09-03",
+      "originalStatus": "pending",
+      "requirements": [
+        "R005"
+      ]
+    },
+    {
+      "row": 302,
+      "id": "10b550da6a993e26015695e864e8450e",
+      "userKey": "U243",
+      "type": "movie",
+      "content": "震撼",
+      "date": "2026-09-03",
+      "originalStatus": "pending",
+      "requirements": [
+        "R006"
+      ]
+    },
+    {
+      "row": 303,
+      "id": "b9a701d46a994b73052a48af326d0b92",
+      "userKey": "U244",
+      "type": "movie",
+      "content": "奇幻",
+      "date": "2026-09-03",
+      "originalStatus": "pending",
+      "requirements": [
+        "R112"
+      ]
+    },
+    {
+      "row": 304,
+      "id": "b9a701d46a9953be052dea9b3e400ff3",
+      "userKey": "U245",
+      "type": "book",
+      "content": "冷门但高分书籍排名单",
+      "date": "2026-09-03",
+      "originalStatus": "pending",
+      "requirements": [
+        "R113"
+      ]
+    },
+    {
+      "row": 305,
+      "id": "bf886e776a9953f7013339c32405060c",
+      "userKey": "U245",
+      "type": "book",
+      "content": "非名著类小众书籍top100",
+      "date": "2026-09-03",
+      "originalStatus": "pending",
+      "requirements": [
+        "R113"
+      ]
+    },
+    {
+      "row": 306,
+      "id": "d32b92d06a995432010f030949139065",
+      "userKey": "U245",
+      "type": "book",
+      "content": "2026豆瓣高分书单top200",
+      "date": "2026-09-03",
+      "originalStatus": "pending",
+      "requirements": [
+        "R114"
+      ]
+    },
+    {
+      "row": 307,
+      "id": "d32b92d06a997d880111b49662159d08",
+      "userKey": "U246",
+      "type": "book",
+      "content": "古典",
+      "date": "2026-09-03",
+      "originalStatus": "pending",
+      "requirements": [
+        "R115"
+      ]
+    },
+    {
+      "row": 308,
+      "id": "10b550da6a9999fb015db91a4223254e",
+      "userKey": "U247",
+      "type": "book",
+      "content": "科幻",
+      "date": "2026-09-04",
+      "originalStatus": "pending",
+      "requirements": [
+        "R049"
+      ]
+    },
+    {
+      "row": 309,
+      "id": "bf886e776a9acc150149aa8b3209cd27",
+      "userKey": "U248",
+      "type": "movie",
+      "content": "金鹰 百花 金马 飞天等",
+      "date": "2026-09-04",
+      "originalStatus": "pending",
+      "requirements": [
+        "R063"
+      ]
+    },
+    {
+      "row": 310,
+      "id": "10b550da6a9bf8eb0186dce068ae7b48",
+      "userKey": "U249",
+      "type": "movie",
+      "content": "焕羽  十二封信  锦衣之下   入青云   江湖夜雨十年灯    翘楚",
+      "date": "2026-09-05",
+      "originalStatus": "pending",
+      "requirements": [
+        "R034"
+      ]
+    },
+    {
+      "row": 311,
+      "id": "d32b92d06a9c50ff013a342d0071a57c",
+      "userKey": "U250",
+      "type": "book",
+      "content": "悬疑推理小说书单",
+      "date": "2026-09-06",
+      "originalStatus": "pending",
+      "requirements": [
+        "R062"
+      ]
+    },
+    {
+      "row": 312,
+      "id": "10b550da6a9cb6070191ba36585d7989",
+      "userKey": "U097",
+      "type": "movie",
+      "content": "科幻",
+      "date": "2026-09-06",
+      "originalStatus": "pending",
+      "requirements": [
+        "R049"
+      ]
+    },
+    {
+      "row": 313,
+      "id": "d32b92d06a9cb60e013f68b043e8aecf",
+      "userKey": "U097",
+      "type": "movie",
+      "content": "喜剧",
+      "date": "2026-09-06",
+      "originalStatus": "pending",
+      "requirements": [
+        "R023"
+      ]
+    },
+    {
+      "row": 314,
+      "id": "b9a701d46a9d34f806475dc77d05e894",
+      "userKey": "U251",
+      "type": "movie",
+      "content": "tspdt前一千名",
+      "date": "2026-09-06",
+      "originalStatus": "pending",
+      "requirements": [
+        "R046"
+      ]
+    },
+    {
+      "row": 315,
+      "id": "b9a701d46a9d79ba065b78c258f3d40a",
+      "userKey": "U252",
+      "type": "movie",
+      "content": "或许是日剧top前200这样的，比较爱看日剧",
+      "date": "2026-09-06",
+      "originalStatus": "pending",
+      "requirements": [
+        "R069"
+      ]
+    },
+    {
+      "row": 316,
+      "id": "d32b92d06a9d83c6014958f66359e272",
+      "userKey": "U253",
+      "type": "movie",
+      "content": "华语最佳影片",
+      "date": "2026-09-06",
+      "originalStatus": "pending",
+      "requirements": [
+        "R043"
+      ]
+    },
+    {
+      "row": 317,
+      "id": "d32b92d06a9eab51015894b94f661436",
+      "userKey": "U254",
+      "type": "book",
+      "content": "豆瓣100悬疑推理",
+      "date": "2026-09-07",
+      "originalStatus": "pending",
+      "requirements": [
+        "R062"
+      ]
+    },
+    {
+      "row": 318,
+      "id": "10b550da6a9ed77001c1c5273518ae72",
+      "userKey": "U255",
+      "type": "book",
+      "content": "阿加莎克里斯蒂侦探小说全集",
+      "date": "2026-09-07",
+      "originalStatus": "pending",
+      "requirements": [
+        "R060"
+      ]
+    },
+    {
+      "row": 319,
+      "id": "b9a701d46a9f636306df9ff94c9c4e03",
+      "userKey": "U256",
+      "type": "movie",
+      "content": "TSPDT THE 1000 GREATEST FILMS",
+      "date": "2026-09-08",
+      "originalStatus": "pending",
+      "requirements": [
+        "R046"
+      ]
+    },
+    {
+      "row": 320,
+      "id": "bf886e776a9fadd3018ea0606399427d",
+      "userKey": "U257",
+      "type": "movie",
+      "content": "豆瓣",
+      "date": "2026-09-08",
+      "originalStatus": "pending",
+      "requirements": [
+        "R002"
+      ]
+    },
+    {
+      "row": 321,
+      "id": "bf886e776a9fd30d01924c3e10d4f236",
+      "userKey": "U258",
+      "type": "movie",
+      "content": "穿越",
+      "date": "2026-09-08",
+      "originalStatus": "pending",
+      "requirements": [
+        "R116"
+      ]
+    },
+    {
+      "row": 322,
+      "id": "10b550da6a9fe34301d370936282d17a",
+      "userKey": "U259",
+      "type": "movie",
+      "content": "豆瓣TOP250",
+      "date": "2026-09-08",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 323,
+      "id": "bf886e776aa175d601adfb70080bde11",
+      "userKey": "U260",
+      "type": "movie",
+      "content": "迪士尼",
+      "date": "2026-09-09",
+      "originalStatus": "pending",
+      "requirements": [
+        "R092"
+      ]
+    },
+    {
+      "row": 324,
+      "id": "b9a701d46aa2399307a9acd77e1b84c2",
+      "userKey": "U261",
+      "type": "book",
+      "content": "晋江文学城，长佩文学城的耽美书单",
+      "date": "2026-09-10",
+      "originalStatus": "pending",
+      "requirements": [
+        "R117"
+      ]
+    },
+    {
+      "row": 325,
+      "id": "bf886e776aa265de01bcdd8b5d1c307a",
+      "userKey": "U262",
+      "type": "other",
+      "content": "可以出一个自制自用功能吗",
+      "date": "2026-09-10",
+      "originalStatus": "pending",
+      "requirements": [
+        "R052"
+      ]
+    },
+    {
+      "row": 326,
+      "id": "bf886e776aa2a99401c2d52471d536ce",
+      "userKey": "U263",
+      "type": "movie",
+      "content": "悬疑",
+      "date": "2026-09-10",
+      "originalStatus": "pending",
+      "requirements": [
+        "R022"
+      ]
+    },
+    {
+      "row": 327,
+      "id": "bf886e776aa2bc1f01c46bb07b642118",
+      "userKey": "U264",
+      "type": "movie",
+      "content": "cult片单……",
+      "date": "2026-09-10",
+      "originalStatus": "pending",
+      "requirements": [
+        "R059"
+      ]
+    },
+    {
+      "row": 328,
+      "id": "10b550da6aa34f6102148b6a7605c8b7",
+      "userKey": "U265",
+      "type": "movie",
+      "content": "我看过的电影",
+      "date": "2026-09-11",
+      "originalStatus": "pending",
+      "requirements": [
+        "R036"
+      ]
+    },
+    {
+      "row": 329,
+      "id": "b9a701d46aa41d13083730ec38481dea",
+      "userKey": "U266",
+      "type": "movie",
+      "content": "豆瓣top250",
+      "date": "2026-09-11",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 330,
+      "id": "d32b92d06aa4393001abbf2d213c0584",
+      "userKey": "U267",
+      "type": "movie",
+      "content": "漫威电影宇宙片单",
+      "date": "2026-09-12",
+      "originalStatus": "pending",
+      "requirements": [
+        "R008"
+      ]
+    },
+    {
+      "row": 331,
+      "id": "d32b92d06aa44c0e01ada6075ba46856",
+      "userKey": "U268",
+      "type": "movie",
+      "content": "豆瓣top250",
+      "date": "2026-09-12",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 332,
+      "id": "10b550da6aa4dc230236e1c7104591d1",
+      "userKey": "U269",
+      "type": "movie",
+      "content": "豆瓣Top250",
+      "date": "2026-09-12",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 333,
+      "id": "b9a701d46aa55dd80892719d38f56c59",
+      "userKey": "U270",
+      "type": "book",
+      "content": "思考快与慢",
+      "date": "2026-09-12",
+      "originalStatus": "pending",
+      "requirements": [
+        "R034"
+      ]
+    },
+    {
+      "row": 334,
+      "id": "d32b92d06aa63fc401c9cd314070fec7",
+      "userKey": "U271",
+      "type": "movie",
+      "content": "豆瓣top250",
+      "date": "2026-09-13",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 335,
+      "id": "b9a701d46aa64df508d5ce1f58c68dfd",
+      "userKey": "U272",
+      "type": "book",
+      "content": "推理小说",
+      "date": "2026-09-13",
+      "originalStatus": "pending",
+      "requirements": [
+        "R062"
+      ]
+    },
+    {
+      "row": 336,
+      "id": "b9a701d46aa6a10308ef2b8d76e9b348",
+      "userKey": "U273",
+      "type": "movie",
+      "content": "动漫榜单",
+      "date": "2026-09-13",
+      "originalStatus": "pending",
+      "requirements": [
+        "R045"
+      ]
+    },
+    {
+      "row": 337,
+      "id": "bf886e776aa7cfc90212fa14696f75b3",
+      "userKey": "U274",
+      "type": "movie",
+      "content": "港片",
+      "date": "2026-09-14",
+      "originalStatus": "pending",
+      "requirements": [
+        "R003"
+      ]
+    },
+    {
+      "row": 338,
+      "id": "b9a701d46aa7ea9309523a9b5028d5f4",
+      "userKey": "U016",
+      "type": "movie",
+      "content": "奥斯卡提名的影片～",
+      "date": "2026-09-14",
+      "originalStatus": "pending",
+      "requirements": [
+        "R089"
+      ]
+    },
+    {
+      "row": 339,
+      "id": "d32b92d06aa8118301e61746095cee31",
+      "userKey": "U275",
+      "type": "other",
+      "content": "乐器学习",
+      "date": "2026-09-14",
+      "originalStatus": "pending",
+      "requirements": [
+        "R118"
+      ]
+    },
+    {
+      "row": 340,
+      "id": "d32b92d06aa8ad9401efa53b0708ff50",
+      "userKey": "U220",
+      "type": "other",
+      "content": "每日打卡一览，希望添加每日步数",
+      "date": "2026-09-15",
+      "originalStatus": "pending",
+      "requirements": [
+        "R119"
+      ]
+    },
+    {
+      "row": 341,
+      "id": "d32b92d06aa8d96c01f2bf446eaba6b9",
+      "userKey": "U097",
+      "type": "movie",
+      "content": "科幻",
+      "date": "2026-09-15",
+      "originalStatus": "pending",
+      "requirements": [
+        "R049"
+      ]
+    },
+    {
+      "row": 342,
+      "id": "b9a701d46aa8d977099534e374919c07",
+      "userKey": "U097",
+      "type": "movie",
+      "content": "喜剧",
+      "date": "2026-09-15",
+      "originalStatus": "pending",
+      "requirements": [
+        "R023"
+      ]
+    },
+    {
+      "row": 343,
+      "id": "bf886e776aa8d9fc0223198a7247770e",
+      "userKey": "U276",
+      "type": "movie",
+      "content": "华语最佳影片",
+      "date": "2026-09-15",
+      "originalStatus": "pending",
+      "requirements": [
+        "R043"
+      ]
+    },
+    {
+      "row": 344,
+      "id": "b9a701d46aa8fb8f099f3a9f5c41f71c",
+      "userKey": "U277",
+      "type": "book",
+      "content": "推理小说",
+      "date": "2026-09-15",
+      "originalStatus": "pending",
+      "requirements": [
+        "R062"
+      ]
+    },
+    {
+      "row": 345,
+      "id": "bf886e776aa928ef022961095c170197",
+      "userKey": "U242",
+      "type": "movie",
+      "content": "安妮奖最佳动画",
+      "date": "2026-09-15",
+      "originalStatus": "pending",
+      "requirements": [
+        "R120"
+      ]
+    },
+    {
+      "row": 346,
+      "id": "ff4bc2646aa94efe0002d9ee2758552a",
+      "userKey": "U097",
+      "type": "movie",
+      "content": "科幻",
+      "date": "2026-09-15",
+      "originalStatus": "pending",
+      "requirements": [
+        "R049"
+      ]
+    },
+    {
+      "row": 347,
+      "id": "ff4bc2646aa95a060003b92e7163d993",
+      "userKey": "U278",
+      "type": "other",
+      "content": "讲座",
+      "date": "2026-09-15",
+      "originalStatus": "pending",
+      "requirements": [
+        "R121"
+      ]
+    },
+    {
+      "row": 348,
+      "id": "ff4bc2646aab2019001fd9c560be6bc0",
+      "userKey": "U279",
+      "type": "other",
+      "content": "城市旅游的地级市不准确，合肥只显示10个市",
+      "date": "2026-09-17",
+      "originalStatus": "pending",
+      "requirements": [
+        "R122"
+      ]
+    },
+    {
+      "row": 349,
+      "id": "c31d1f8a6aac33d00027af9c4f36c00d",
+      "userKey": "U280",
+      "type": "movie",
+      "content": "韩剧！！！！",
+      "date": "2026-09-18",
+      "originalStatus": "pending",
+      "requirements": [
+        "R030"
+      ]
+    },
+    {
+      "row": 350,
+      "id": "c31d1f8a6aac8ace0029f5a547c7eead",
+      "userKey": "U281",
+      "type": "movie",
+      "content": "豆瓣电影top250",
+      "date": "2026-09-18",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 351,
+      "id": "aeb983906aad84e0004336784d61ad39",
+      "userKey": "U282",
+      "type": "book",
+      "content": "畅销书书单",
+      "date": "2026-09-19",
+      "originalStatus": "pending",
+      "requirements": [
+        "R123"
+      ]
+    },
+    {
+      "row": 352,
+      "id": "c31d1f8a6aae37c300455c2143fc0174",
+      "userKey": "U283",
+      "type": "other",
+      "content": "每年华语乐坛经典歌曲",
+      "date": "2026-09-19",
+      "originalStatus": "pending",
+      "requirements": [
+        "R124"
+      ]
+    },
+    {
+      "row": 353,
+      "id": "ff4bc2646aae708b00612c1537ec1df5",
+      "userKey": "U284",
+      "type": "movie",
+      "content": "历届日本学院奖",
+      "date": "2026-09-19",
+      "originalStatus": "pending",
+      "requirements": [
+        "R125"
+      ]
+    },
+    {
+      "row": 354,
+      "id": "c31d1f8a6aae9c8c004ff6ce667b5fae",
+      "userKey": "U285",
+      "type": "book",
+      "content": "矛盾文学书单",
+      "date": "2026-09-19",
+      "originalStatus": "pending",
+      "requirements": [
+        "R015"
+      ]
+    },
+    {
+      "row": 355,
+      "id": "c31d1f8a6aaec2c700530e3f591211c0",
+      "userKey": "U286",
+      "type": "movie",
+      "content": "女性主义电影top250",
+      "date": "2026-09-20",
+      "originalStatus": "pending",
+      "requirements": [
+        "R126"
+      ]
+    },
+    {
+      "row": 356,
+      "id": "ff4bc2646aaf90c200748c05277a2427",
+      "userKey": "U287",
+      "type": "movie",
+      "content": "综艺",
+      "date": "2026-09-20",
+      "originalStatus": "pending",
+      "requirements": [
+        "R099"
+      ]
+    },
+    {
+      "row": 357,
+      "id": "d7580c016aafc46602059a39275e2f12",
+      "userKey": "U288",
+      "type": "movie",
+      "content": "浪漫电影",
+      "date": "2026-09-20",
+      "originalStatus": "pending",
+      "requirements": [
+        "R027"
+      ]
+    },
+    {
+      "row": 358,
+      "id": "d7580c016aafc675020653203763c036",
+      "userKey": "U289",
+      "type": "book",
+      "content": "豆瓣历史类书籍",
+      "date": "2026-09-20",
+      "originalStatus": "pending",
+      "requirements": [
+        "R102"
+      ]
+    },
+    {
+      "row": 359,
+      "id": "aeb983906ab09825006a4b820574fb10",
+      "userKey": "U290",
+      "type": "movie",
+      "content": "250",
+      "date": "2026-09-21",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 360,
+      "id": "d7580c016ab0bfd6024d4d94320a5cd2",
+      "userKey": "U097",
+      "type": "movie",
+      "content": "科幻",
+      "date": "2026-09-21",
+      "originalStatus": "pending",
+      "requirements": [
+        "R049"
+      ]
+    },
+    {
+      "row": 361,
+      "id": "aeb983906ab0bfe2006ccb214add3b4f",
+      "userKey": "U097",
+      "type": "movie",
+      "content": "喜剧",
+      "date": "2026-09-21",
+      "originalStatus": "pending",
+      "requirements": [
+        "R023"
+      ]
+    },
+    {
+      "row": 362,
+      "id": "ff4bc2646ab264bb00a8e25314ff4721",
+      "userKey": "U225",
+      "type": "movie",
+      "content": "柏林电影节",
+      "date": "2026-09-22",
+      "originalStatus": "pending",
+      "requirements": [
+        "R057"
+      ]
+    },
+    {
+      "row": 363,
+      "id": "c31d1f8a6ab2a25300a98d321b047b0e",
+      "userKey": "U291",
+      "type": "book",
+      "content": "豆瓣top250",
+      "date": "2026-09-22",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 364,
+      "id": "d7580c016ab2a60a02e0243a45ec3232",
+      "userKey": "U292",
+      "type": "book",
+      "content": "想要按照类型分类的书单，比如微信读书历史类top200等等这样的",
+      "date": "2026-09-23",
+      "originalStatus": "pending",
+      "requirements": [
+        "R102"
+      ]
+    },
+    {
+      "row": 365,
+      "id": "ff4bc2646ab3364a00b4471817489cfc",
+      "userKey": "U238",
+      "type": "movie",
+      "content": "漫威电影系列",
+      "date": "2026-09-23",
+      "originalStatus": "pending",
+      "requirements": [
+        "R008"
+      ]
+    },
+    {
+      "row": 366,
+      "id": "ff4bc2646ab34e0000b7244b69b0ffbc",
+      "userKey": "U293",
+      "type": "movie",
+      "content": "台湾",
+      "date": "2026-09-23",
+      "originalStatus": "pending",
+      "requirements": [
+        "R127"
+      ]
+    },
+    {
+      "row": 367,
+      "id": "c31d1f8a6ab552d400eab23e56229737",
+      "userKey": "U294",
+      "type": "movie",
+      "content": "三大电影节获奖名单",
+      "date": "2026-09-25",
+      "originalStatus": "pending",
+      "requirements": [
+        "R110"
+      ]
+    },
+    {
+      "row": 368,
+      "id": "d7580c016ab6489e03ea163c6366220c",
+      "userKey": "U097",
+      "type": "movie",
+      "content": "科幻",
+      "date": "2026-09-25",
+      "originalStatus": "pending",
+      "requirements": [
+        "R049"
+      ]
+    },
+    {
+      "row": 369,
+      "id": "d7580c016ab648a403ea16735f7290f9",
+      "userKey": "U097",
+      "type": "movie",
+      "content": "喜剧",
+      "date": "2026-09-25",
+      "originalStatus": "pending",
+      "requirements": [
+        "R023"
+      ]
+    },
+    {
+      "row": 370,
+      "id": "d7580c016ab6a563040597a52d564596",
+      "userKey": "U295",
+      "type": "other",
+      "content": "北京公园，或者中国公园 名单。并且可以打分的",
+      "date": "2026-09-26",
+      "originalStatus": "pending",
+      "requirements": [
+        "R128"
+      ]
+    },
+    {
+      "row": 371,
+      "id": "ff4bc2646ab700d800f4a46547ee8449",
+      "userKey": "U296",
+      "type": "book",
+      "content": "诺贝尔文学奖",
+      "date": "2026-09-26",
+      "originalStatus": "pending",
+      "requirements": [
+        "R016"
+      ]
+    },
+    {
+      "row": 372,
+      "id": "c31d1f8a6ab7183d01070c1357ed1faf",
+      "userKey": "U297",
+      "type": "book",
+      "content": "美国的豆瓣图书250 Goodreads“Best Books Ever\"",
+      "date": "2026-09-26",
+      "originalStatus": "pending",
+      "requirements": [
+        "R129"
+      ]
+    },
+    {
+      "row": 373,
+      "id": "d7580c016ab7a02b044899c031a1b3d4",
+      "userKey": "U298",
+      "type": "movie",
+      "content": "豆瓣top250",
+      "date": "2026-09-26",
+      "originalStatus": "pending",
+      "requirements": [
+        "R001"
+      ]
+    },
+    {
+      "row": 374,
+      "id": "d7580c016ab7af0e044caedd437c70b2",
+      "userKey": "U299",
+      "type": "movie",
+      "content": "TSPDT榜单",
+      "date": "2026-09-26",
+      "originalStatus": "pending",
+      "requirements": [
+        "R046"
+      ]
+    },
+    {
+      "row": 375,
+      "id": "ff4bc2646ab7dd5c010a358b590751d3",
+      "userKey": "U300",
+      "type": "movie",
+      "content": "历届香港金像奖最佳男主角",
+      "date": "2026-09-26",
+      "originalStatus": "pending",
+      "requirements": [
+        "R130"
+      ]
+    },
+    {
+      "row": 376,
+      "id": "d7580c016ab7dd72045ad1036382183e",
+      "userKey": "U300",
+      "type": "movie",
+      "content": "历届香港金像奖最佳导演",
+      "date": "2026-09-26",
+      "originalStatus": "pending",
+      "requirements": [
+        "R131"
+      ]
+    },
+    {
+      "row": 377,
+      "id": "c31d1f8a6ab7dd85011c7ceb63011424",
+      "userKey": "U300",
+      "type": "movie",
+      "content": "历届中国金鸡奖最佳男主角",
+      "date": "2026-09-26",
+      "originalStatus": "pending",
+      "requirements": [
+        "R132"
+      ]
+    },
+    {
+      "row": 378,
+      "id": "d7580c016ab9fec604fa1eae366fde26",
+      "userKey": "U301",
+      "type": "book",
+      "content": "诺贝尔文学奖",
+      "date": "2026-09-28",
+      "originalStatus": "pending",
+      "requirements": [
+        "R016"
+      ]
+    }
+  ]
+}

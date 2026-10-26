@@ -24,6 +24,7 @@ exports.main = async (event) => {
     // source 默认为 'douban'（向后兼容老调用，未传时才兜底）；传入其他值一律信任透传
     const effectiveSource = source || 'douban';
     const now = new Date().toISOString();
+    const succeededIds = [];
     const _ = db.command;
 
     try {
@@ -60,46 +61,50 @@ exports.main = async (event) => {
         const addTasks = [];
         const deleteTasks = [];
 
-        bookIds.forEach((bookId) => {
+        [...new Set(bookIds)].forEach((bookId) => {
             const existing = existingMap[bookId];
 
             if (status === 'unread') {
                 // 取消标记：有记录则删，没有就跳过
                 if (existing) {
                     deleteTasks.push(
-                        db.collection('BookMarks').doc(existing._id).remove()
+                        db.collection('BookMarks').where({ bookId, openid, ...sourceFilter }).remove().then(() => { succeededIds.push(bookId); })
                     );
                 }
                 return;
             }
 
+            if (existing && existing.status === status) return;
             if (existing) {
                 updateTasks.push(
                     db.collection('BookMarks').doc(existing._id).update({
                         data: { status, marked_at: now, source: effectiveSource }
-                    })
+                    }).then(() => { succeededIds.push(bookId); })
                 );
             } else {
                 addTasks.push(
                     db.collection('BookMarks').add({
                         data: { bookId, openid, status, marked_at: now, source: effectiveSource }
-                    })
+                    }).then(() => { succeededIds.push(bookId); })
                 );
             }
         });
 
-        await Promise.all([...updateTasks, ...addTasks, ...deleteTasks]);
+        const results = await Promise.allSettled([...updateTasks, ...addTasks, ...deleteTasks]);
+        const failed = results.filter(r => r.status === 'rejected').length;
 
         return {
-            success: true,
+            success: failed === 0,
+            partial: failed > 0,
+            succeededIds,
             source: effectiveSource,
             duplicates,
-            updated: updateTasks.length,
-            added: addTasks.length,
-            deleted: deleteTasks.length
+            updated: results.slice(0, updateTasks.length).filter(r => r.status === 'fulfilled').length,
+            added: results.slice(updateTasks.length, updateTasks.length + addTasks.length).filter(r => r.status === 'fulfilled').length,
+            deleted: results.slice(updateTasks.length + addTasks.length).filter(r => r.status === 'fulfilled').length
         };
     } catch (err) {
         console.error('batchUpdateBookMarks 失败:', err);
-        return { success: false, error: err.message };
+        return { success: false, succeededIds, error: err.message };
     }
 };

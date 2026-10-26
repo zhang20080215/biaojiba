@@ -1,0 +1,23 @@
+{
+  "_id": "doubanScifi250",
+  "theme": "doubanScifi250",
+  "type": "movie",
+  "enabled": true,
+  "order": 111,
+  "cardId": "douban_scifi_movies",
+  "title": "豆瓣科幻电影排行榜TOP250",
+  "description": "豆瓣选电影：科幻类型、评分8～10，按页面综合排序收录前250部",
+  "tag": "电影",
+  "category": "movie",
+  "newBadge": true,
+  "wishFrom": "",
+  "placeholderEmoji": "🚀",
+  "slogan": "标记你看过的科幻佳片，生成专属观影海报",
+  "brandPrimary": "#4776C8",
+  "brandSoft": "#93B2EB",
+  "shadowRgb": "71, 118, 200",
+  "showEdition": false,
+  "firstDirectorOnly": true,
+  "orderDirection": "asc",
+  "ratingLabel": "豆瓣"
+}
