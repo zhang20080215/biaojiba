@@ -1,0 +1,23 @@
+{
+  "theme": "bangumi250",
+  "idStrategy": "title-year",
+  "forceRefresh": true,
+  "autoContinue": false,
+  "movieList": [
+    {
+      "bangumiCover": "https://lain.bgm.tv/r/400/pic/cover/l/d7/cb/37063_2qQoN.jpg",
+      "bangumiId": "37063",
+      "bangumiRating": 8,
+      "originalTitle": "カレイドスター Legend of phoenix 〜レイラ・ハミルトン物語〜",
+      "rank": 249,
+      "title": "百变之星 不死鸟传说 ～蕾拉・汉密尔顿物语～",
+      "year": 2006,
+      "sourceRank": 251,
+      "bangumiUrl": "https://bangumi.tv/subject/37063",
+      "sourceUrl": "https://bangumi.tv/anime/browser?sort=rank",
+      "sourceUpdatedAt": "2026-10-10T13:58:33.364Z",
+      "doubanId": "3175460",
+      "preserveCover": true
+    }
+  ]
+}

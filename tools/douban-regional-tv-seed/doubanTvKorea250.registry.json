@@ -1,0 +1,23 @@
+{
+  "_id": "doubanTvKorea250",
+  "theme": "doubanTvKorea250",
+  "type": "movie",
+  "enabled": true,
+  "order": 112,
+  "cardId": "doubanTvKorea250",
+  "title": "豆瓣高分韩剧TOP250",
+  "description": "豆瓣选剧集：全部剧集、韩国地区、评分8～10，综合排序前250部",
+  "tag": "剧集",
+  "category": "tv",
+  "newBadge": true,
+  "wishFrom": "",
+  "placeholderEmoji": "🇰🇷",
+  "slogan": "标记你看过的高分剧集，生成专属观剧海报",
+  "brandPrimary": "#4776C8",
+  "brandSoft": "#93B2EB",
+  "shadowRgb": "71, 118, 200",
+  "showEdition": false,
+  "firstDirectorOnly": true,
+  "orderDirection": "asc",
+  "ratingLabel": "豆瓣"
+}

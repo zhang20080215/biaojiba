@@ -1,0 +1,710 @@
+{
+  "theme": "agatha",
+  "idStrategy": "rank",
+  "autoContinue": true,
+  "bookList": [
+    {
+      "rank": 1,
+      "year": 2008,
+      "title": "无人生还",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 9
+    },
+    {
+      "rank": 2,
+      "year": 2006,
+      "title": "东方快车谋杀案",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 9.1
+    },
+    {
+      "rank": 3,
+      "year": 2013,
+      "title": "罗杰疑案",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 9.2
+    },
+    {
+      "rank": 4,
+      "year": 2006,
+      "title": "尼罗河上的惨案",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 8.8
+    },
+    {
+      "rank": 5,
+      "year": 2013,
+      "title": "ABC谋杀案",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 8.5
+    },
+    {
+      "rank": 6,
+      "year": 2013,
+      "title": "斯泰尔斯庄园奇案",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.7
+    },
+    {
+      "rank": 7,
+      "year": 2015,
+      "title": "帷幕",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 9.1
+    },
+    {
+      "rank": 8,
+      "year": 2014,
+      "title": "五只小猪",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 8.5
+    },
+    {
+      "rank": 9,
+      "year": 2013,
+      "title": "悬崖山庄奇案",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 8.3
+    },
+    {
+      "rank": 10,
+      "year": 2014,
+      "title": "阳光下的罪恶",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 8.1
+    },
+    {
+      "rank": 11,
+      "year": 2014,
+      "title": "高尔夫球场命案",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 8
+    },
+    {
+      "rank": 12,
+      "year": 2013,
+      "title": "底牌",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 8.1
+    },
+    {
+      "rank": 13,
+      "year": 2014,
+      "title": "长夜",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 8
+    },
+    {
+      "rank": 14,
+      "year": 2016,
+      "title": "波洛圣诞探案记",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 8.2
+    },
+    {
+      "rank": 15,
+      "year": 2017,
+      "title": "牙医谋杀案",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 8
+    },
+    {
+      "rank": 16,
+      "year": 2014,
+      "title": "谋杀启事",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.8
+    },
+    {
+      "rank": 17,
+      "year": 2014,
+      "title": "人性记录",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.8
+    },
+    {
+      "rank": 18,
+      "year": 2014,
+      "title": "云中命案",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.2
+    },
+    {
+      "rank": 19,
+      "year": 2014,
+      "title": "死亡约会",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.5
+    },
+    {
+      "rank": 20,
+      "year": 2018,
+      "title": "三幕悲剧",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 8
+    },
+    {
+      "rank": 21,
+      "year": 2014,
+      "title": "沉默的证人",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.4
+    },
+    {
+      "rank": 22,
+      "year": 2013,
+      "title": "藏书室女尸之谜",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.4
+    },
+    {
+      "rank": 23,
+      "year": 2014,
+      "title": "古墓之谜",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.5
+    },
+    {
+      "rank": 24,
+      "year": 2016,
+      "title": "蓝色列车之谜",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.2
+    },
+    {
+      "rank": 25,
+      "year": 2018,
+      "title": "死亡草",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 8.1
+    },
+    {
+      "rank": 26,
+      "year": 2007,
+      "title": "捕鼠器",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 8.1
+    },
+    {
+      "rank": 27,
+      "year": 2018,
+      "title": "H庄园的午餐",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.9
+    },
+    {
+      "rank": 28,
+      "year": 2014,
+      "title": "怪屋",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.7
+    },
+    {
+      "rank": 29,
+      "year": 2014,
+      "title": "葬礼之后",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.6
+    },
+    {
+      "rank": 30,
+      "year": 2017,
+      "title": "控方证人",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.3
+    },
+    {
+      "rank": 31,
+      "year": 2018,
+      "title": "清洁女工之死",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.3
+    },
+    {
+      "rank": 32,
+      "year": 2017,
+      "title": "四魔头",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 6
+    },
+    {
+      "rank": 33,
+      "year": 2013,
+      "title": "寓所谜案",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.2
+    },
+    {
+      "rank": 34,
+      "year": 2018,
+      "title": "黑麦奇案",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.7
+    },
+    {
+      "rank": 35,
+      "year": 2018,
+      "title": "首相绑架案",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 6.4
+    },
+    {
+      "rank": 36,
+      "year": 2014,
+      "title": "空幻之屋",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.7
+    },
+    {
+      "rank": 37,
+      "year": 2006,
+      "title": "鸽群中的猫",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.4
+    },
+    {
+      "rank": 38,
+      "year": 2016,
+      "title": "万圣节前夜的谋杀",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 6.8
+    },
+    {
+      "rank": 39,
+      "year": 2017,
+      "title": "阿加莎·克里斯蒂自传",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 9
+    },
+    {
+      "rank": 40,
+      "year": 2014,
+      "title": "沉睡谋杀案",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.6
+    },
+    {
+      "rank": 41,
+      "year": 2014,
+      "title": "破镜谋杀案",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.6
+    },
+    {
+      "rank": 42,
+      "year": 2016,
+      "title": "零点",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 8.1
+    },
+    {
+      "rank": 43,
+      "year": 2015,
+      "title": "复仇女神",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.4
+    },
+    {
+      "rank": 44,
+      "year": 2018,
+      "title": "雪地上的女尸",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.2
+    },
+    {
+      "rank": 45,
+      "year": 2014,
+      "title": "命案目睹记",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.2
+    },
+    {
+      "rank": 46,
+      "year": 2014,
+      "title": "魔手",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 6.5
+    },
+    {
+      "rank": 47,
+      "year": 2016,
+      "title": "弄假成真",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7
+    },
+    {
+      "rank": 48,
+      "year": 2013,
+      "title": "七面钟之谜",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 6.7
+    },
+    {
+      "rank": 49,
+      "year": 2015,
+      "title": "他们来到巴格达",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 8.2
+    },
+    {
+      "rank": 50,
+      "year": 2007,
+      "title": "杀人不难",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.5
+    },
+    {
+      "rank": 51,
+      "year": 2016,
+      "title": "山核桃大街谋杀案",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 6.5
+    },
+    {
+      "rank": 52,
+      "year": 2018,
+      "title": "加勒比海之谜",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.5
+    },
+    {
+      "rank": 53,
+      "year": 2018,
+      "title": "赫尔克里·波洛的丰功伟绩",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.5
+    },
+    {
+      "rank": 54,
+      "year": 2018,
+      "title": "顺水推舟",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.2
+    },
+    {
+      "rank": 55,
+      "year": 2016,
+      "title": "马普尔小姐最后的案件",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 6.9
+    },
+    {
+      "rank": 56,
+      "year": 2017,
+      "title": "大象的证词",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 6.5
+    },
+    {
+      "rank": 57,
+      "year": 2018,
+      "title": "幽巷谋杀案",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 6.9
+    },
+    {
+      "rank": 58,
+      "year": 2015,
+      "title": "灰马酒店",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.5
+    },
+    {
+      "rank": 59,
+      "year": 2016,
+      "title": "蒙面女人",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.1
+    },
+    {
+      "rank": 60,
+      "year": 2018,
+      "title": "第三个女郎",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 6.5
+    },
+    {
+      "rank": 61,
+      "year": 2018,
+      "title": "怪钟疑案",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 6.3
+    },
+    {
+      "rank": 62,
+      "year": 2014,
+      "title": "幸福假面",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 8.6
+    },
+    {
+      "rank": 63,
+      "year": 2015,
+      "title": "借镜杀人",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 6.7
+    },
+    {
+      "rank": 64,
+      "year": 2018,
+      "title": "意外来客",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.7
+    },
+    {
+      "rank": 65,
+      "year": 2017,
+      "title": "黑咖啡",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 6.2
+    },
+    {
+      "rank": 66,
+      "year": 2018,
+      "title": "死亡终局",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.3
+    },
+    {
+      "rank": 67,
+      "year": 2017,
+      "title": "奉命谋杀",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.6
+    },
+    {
+      "rank": 68,
+      "year": 2018,
+      "title": "暗藏杀机",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.4
+    },
+    {
+      "rank": 69,
+      "year": 2018,
+      "title": "闪光的氰化物",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.2
+    },
+    {
+      "rank": 70,
+      "year": 2018,
+      "title": "伯特伦旅馆",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 6.7
+    },
+    {
+      "rank": 71,
+      "year": 2019,
+      "title": "褐衣男子",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.5
+    },
+    {
+      "rank": 72,
+      "year": 2019,
+      "title": "悬崖上的谋杀",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.7
+    },
+    {
+      "rank": 73,
+      "year": 2014,
+      "title": "桑苏西来客",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.3
+    },
+    {
+      "rank": 74,
+      "year": 2017,
+      "title": "蜘蛛网",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.4
+    },
+    {
+      "rank": 75,
+      "year": 2016,
+      "title": "灯火阑珊",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 6.9
+    },
+    {
+      "rank": 76,
+      "year": 2017,
+      "title": "惊险的浪漫",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.4
+    },
+    {
+      "rank": 77,
+      "year": 2018,
+      "title": "烟囱别墅之谜",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 6.8
+    },
+    {
+      "rank": 78,
+      "year": 2019,
+      "title": "斯塔福特疑案",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 6.9
+    },
+    {
+      "rank": 79,
+      "year": 2010,
+      "title": "告诉我，你怎样去生活",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 8.5
+    },
+    {
+      "rank": 80,
+      "year": 2014,
+      "title": "天涯过客",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 4.9
+    },
+    {
+      "rank": 81,
+      "year": 2017,
+      "title": "神秘的奎因先生",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 6.7
+    },
+    {
+      "rank": 82,
+      "year": 2015,
+      "title": "命运之门",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 5.2
+    },
+    {
+      "rank": 83,
+      "year": 2017,
+      "title": "金色的机遇",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 6.7
+    },
+    {
+      "rank": 84,
+      "year": 2017,
+      "title": "犯罪团伙",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 6.6
+    },
+    {
+      "rank": 85,
+      "year": 2008,
+      "title": "地狱之旅",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7
+    },
+    {
+      "rank": 86,
+      "year": 2019,
+      "title": "煦阳岭的疑云",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 6.8
+    },
+    {
+      "rank": 87,
+      "year": 2014,
+      "title": "未完成的肖像",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.7
+    },
+    {
+      "rank": 88,
+      "year": 2014,
+      "title": "玫瑰与紫杉",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.9
+    },
+    {
+      "rank": 89,
+      "year": 2014,
+      "title": "爱的重量",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.2
+    },
+    {
+      "rank": 90,
+      "year": 2014,
+      "title": "撒旦的情歌",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 8
+    },
+    {
+      "rank": 91,
+      "year": 2014,
+      "title": "母亲的女儿",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 8.1
+    },
+    {
+      "rank": 92,
+      "year": 2019,
+      "title": "马普尔小姐探案全集",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 9.2
+    },
+    {
+      "rank": 93,
+      "year": 2023,
+      "title": "马普尔小姐历险记",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 6.3
+    },
+    {
+      "rank": 94,
+      "year": 1992,
+      "title": "悬崖迷案",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.6
+    },
+    {
+      "rank": 95,
+      "year": 2003,
+      "title": "名苑猎凶·庄园迷案",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 6.1
+    },
+    {
+      "rank": 96,
+      "year": 1984,
+      "title": "迷雾园奇案",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 7.7
+    },
+    {
+      "rank": 97,
+      "year": 1994,
+      "title": "高尔夫球场疑云",
+      "author": "阿加莎·克里斯蒂",
+      "sourceRating": 8
+    },
+    {
+      "rank": 98,
+      "year": 2003,
+      "title": "万圣节前夜的谋杀案·ABC谋杀案",
+      "author": "阿加莎·克里斯蒂"
+    },
+    {
+      "rank": 99,
+      "year": 1999,
+      "title": "ABC谋杀案·死亡约会",
+      "author": "阿加莎·克里斯蒂"
+    },
+    {
+      "rank": 100,
+      "year": 2003,
+      "title": "迟来的报复·复仇女神",
+      "author": "阿加莎·克里斯蒂"
+    },
+    {
+      "rank": 101,
+      "year": 2003,
+      "title": "首相绑架案·蒙面女人",
+      "author": "阿加莎·克里斯蒂"
+    }
+  ]
+}

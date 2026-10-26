@@ -1,0 +1,23 @@
+{
+  "_id": "agatha",
+  "theme": "agatha",
+  "type": "book",
+  "enabled": false,
+  "order": 120,
+  "cardId": "agatha_books",
+  "title": "阿加莎·克里斯蒂作品集",
+  "description": "走进推理女王的作品世界，记录你的阅读足迹",
+  "tag": "读书",
+  "category": "reading",
+  "newBadge": true,
+  "wishFrom": "",
+  "placeholderEmoji": "🔎",
+  "slogan": "循着线索阅读，收藏阿加莎的推理故事",
+  "brandPrimary": "#66503F",
+  "brandSoft": "#A78A6C",
+  "shadowRgb": "102, 80, 63",
+  "showEdition": false,
+  "showYear": false,
+  "orderDirection": "asc",
+  "source": "agatha"
+}

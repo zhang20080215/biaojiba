@@ -1,0 +1,13 @@
+{
+  "theme": "bangumi250",
+  "manualRatings": [
+    { "bangumiId": "263750", "doubanId": "30353357", "rating": 9.8 },
+    { "bangumiId": "470660", "doubanId": "37291780", "rating": 9.0 },
+    { "bangumiId": "217300", "doubanId": "27072327", "rating": 9.7 },
+    { "bangumiId": "55770", "doubanId": "23748525", "rating": 9.4 },
+    { "bangumiId": "118335", "doubanId": "26268494", "rating": 9.5 },
+    { "bangumiId": "285901", "doubanId": "34456150", "rating": 9.6 },
+    { "bangumiId": "696", "doubanId": "4089438", "rating": 9.2 },
+    { "bangumiId": "88433", "doubanId": "25774052", "rating": 9.2 }
+  ]
+}

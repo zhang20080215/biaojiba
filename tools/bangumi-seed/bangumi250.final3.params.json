@@ -1,0 +1,49 @@
+{
+  "theme": "bangumi250",
+  "idStrategy": "title-year",
+  "forceRefresh": true,
+  "autoContinue": true,
+  "movieList": [
+    {
+      "rank": 169,
+      "year": 2024,
+      "title": "六样情",
+      "originalTitle": "六样情",
+      "bangumiId": "512876",
+      "bangumiRating": 8.1,
+      "bangumiRatingCount": 1861,
+      "bangumiUrl": "https://bangumi.tv/subject/512876",
+      "bangumiCover": "https://lain.bgm.tv/r/400/pic/cover/l/3b/66/512876_ZV2x7.jpg",
+      "sourceUrl": "https://bangumi.tv/anime/browser?sort=rank",
+      "sourceUpdatedAt": "2026-10-10T04:36:03.760Z",
+      "sourceRank": 171,
+      "doubanId": "37040084"
+    },
+    {
+      "bangumiCover": "https://lain.bgm.tv/r/400/pic/cover/l/d7/cb/37063_2qQoN.jpg",
+      "bangumiId": "37063",
+      "bangumiRating": 8,
+      "originalTitle": "カレイドスター Legend of phoenix 〜レイラ・ハミルトン物語〜",
+      "rank": 249,
+      "title": "百变之星 不死鸟传说 ～蕾拉・汉密尔顿物语～",
+      "year": 2006,
+      "sourceRank": 251,
+      "bangumiUrl": "https://bangumi.tv/subject/37063",
+      "sourceUrl": "https://bangumi.tv/anime/browser?sort=rank",
+      "sourceUpdatedAt": "2026-10-10T13:58:33.364Z"
+    },
+    {
+      "bangumiCover": "https://lain.bgm.tv/r/400/pic/cover/l/45/00/3428_NPdDd.jpg",
+      "bangumiId": "3428",
+      "bangumiRating": 8,
+      "originalTitle": "バクマン。",
+      "rank": 250,
+      "title": "爆漫王。",
+      "year": 2010,
+      "sourceRank": 252,
+      "bangumiUrl": "https://bangumi.tv/subject/3428",
+      "sourceUrl": "https://bangumi.tv/anime/browser?sort=rank",
+      "sourceUpdatedAt": "2026-10-10T13:58:33.369Z"
+    }
+  ]
+}

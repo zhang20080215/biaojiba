@@ -11,6 +11,11 @@ const ROOT = path.resolve(__dirname, '..');
 
 // 需要自检的 seed（*.json 是 movieList 数组本体）
 const FILES = [
+  { file: 'tools/douban-mystery-disaster-seed/doubanMystery250.json', theme: 'doubanMystery250' },
+  { file: 'tools/douban-regional-tv-seed/doubanTvKorea250.json', theme: 'doubanTvKorea250' },
+  { file: 'tools/douban-regional-tv-seed/doubanTvJapan250.json', theme: 'doubanTvJapan250' },
+  { file: 'tools/douban-comedy-seed/doubanComedy250.json', theme: 'doubanComedy250' },
+  { file: 'tools/douban-scifi-seed/doubanScifi250.json', theme: 'doubanScifi250' },
   { file: 'tools/rt-seed/rtHorror.json', theme: 'rtHorror' },
   { file: 'tools/rt-seed/rtWar.json', theme: 'rtWar' },
   { file: 'tools/rt-seed/rtAnimation.json', theme: 'rtAnimation' },
@@ -51,8 +56,8 @@ function check(cfg) {
   list.forEach((m) => {
     // 必填
     if (typeof m.rank !== 'number') errors.push(`${tag(m)}: rank 非数字`);
-    if (typeof m.year !== 'number') errors.push(`${tag(m)}: year 非数字`);
-    else if (m.year < 1910 || m.year > CUR_YEAR + 1) errors.push(`${tag(m)}: year 越界 (${m.year})`);
+    if (!Number.isInteger(m.year)) errors.push(`${tag(m)}: year 非整数`);
+    else if (m.year < 1888 || m.year > CUR_YEAR + 1) errors.push(`${tag(m)}: year 越界 (${m.year})`);
     if (!m.title || !String(m.title).trim()) errors.push(`${tag(m)}: title 为空`);
     if (!m.originalTitle || !String(m.originalTitle).trim()) warns.push(`${tag(m)}: originalTitle 为空（豆瓣按英文名搜的兜底会失效）`);
 
