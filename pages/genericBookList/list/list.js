@@ -10,8 +10,11 @@ var { getThemeConfig } = require('../../../utils/genericBookThemeConfig.js');
 // 通用读书榜单页：走 enrichThemeBooks/generic_theme_books 流水线的新读书主题共用这一套页面，
 // 通过 ?theme=xxx 区分（结构镜像 pages/genericList/list/list.js 电影版；标记语义/BookMarks 写入
 // 部分镜像 pages/doubanBooks/list/list.js —— 'read'/'wish'/'unread'，取消标记要删记录）。
-function queryOptionsFor(cfg) {
-    return { orderByField: 'rank', orderDirection: (cfg && cfg.orderDirection) || 'asc' };
+// 自建书单（theme=customBook）另带 listId，见 pages/customList。
+function queryOptionsFor(cfg, listId) {
+    const opts = { orderByField: 'rank', orderDirection: (cfg && cfg.orderDirection) || 'asc' };
+    if (listId) opts.listId = listId;
+    return opts;
 }
 
 Page({
@@ -49,6 +52,9 @@ Page({
         tempNickname: '',
         theme: '',
         cfg: {},
+        listId: '',        // 自建书单 id（cfg.custom 时才有）
+        isOwner: false,    // 自建书单是否本人的（决定是否露出「编辑书单」）
+        listMissing: false,
         statusBarHeight: 20,
         headerPadTop: 0,
         menuBtnHeight: 32,
@@ -67,13 +73,16 @@ Page({
         }
         const theme = (options && options.theme) || '';
         const cfg = getThemeConfig(theme);
+        const listId = (cfg.custom && options && options.listId) || '';
+        if (cfg.custom && options && options.title) cfg.title = decodeURIComponent(options.title);
         this.setData({
             statusBarHeight: 0,
             headerPadTop: 0,
             menuBtnHeight: 0,
             stickyTop: 0,
             theme,
-            cfg
+            cfg,
+            listId
         });
         wx.setNavigationBarTitle({ title: cfg.title });
         this.checkLoginStatus();
@@ -93,6 +102,35 @@ Page({
         this._timelineGroup = null;
         this.checkLoginStatus();
         this.setNavBarColor();
+        // 从编辑页回来：清单内容变了就重拉
+        const app = getApp();
+        if (this.data.listId && app.globalData && app.globalData.customListDirty === this.data.listId) {
+            app.globalData.customListDirty = '';
+            this.loadAllBooks(true);
+        }
+    },
+
+    onEditList() {
+        wx.navigateTo({ url: `/pages/customList/edit/edit?listId=${this.data.listId}` });
+    },
+
+    onAddToList() {
+        wx.navigateTo({ url: `/pages/customList/add/add?listId=${this.data.listId}&type=book` });
+    },
+
+    // 自建书单：云函数回的清单元信息覆盖兜底标题
+    applyListMeta(meta) {
+        if (!meta) return;
+        const cfg = { ...this.data.cfg, title: meta.title || this.data.cfg.title };
+        this.setData({ cfg, isOwner: !!meta.isOwner, listMissing: false });
+        wx.setNavigationBarTitle({ title: cfg.title });
+    },
+
+    // 书的标记按 source 区分来源：自建书单里从豆瓣读书/微信读书等榜单加进来的书，
+    // 沿用条目自带的 markSource，否则那些老页面（按 source 过滤读标记）看不到这次标记
+    markSourceFor(bookId) {
+        const book = this.data.allBooks.find(b => b._id === String(bookId));
+        return (book && book.markSource) || (this.data.cfg && this.data.cfg.source) || 'generic';
     },
 
     setNavBarColor() {
@@ -175,8 +213,9 @@ Page({
         this.setData({ showSharePicker: false }, () => {
             wx.nextTick(() => {
                 adManager.showInterstitial('share_interstitial').then(() => {
+                    const listQuery = this.data.listId ? `&listId=${this.data.listId}&title=${encodeURIComponent(this.data.cfg.title)}` : '';
                     wx.navigateTo({
-                        url: `/pages/genericBookList/share/share?type=${type}&theme=${this.data.theme}`,
+                        url: `/pages/genericBookList/share/share?type=${type}&theme=${this.data.theme}${listQuery}`,
                         complete: () => {
                             this._navigatingToShare = false;
                         }
@@ -278,7 +317,8 @@ Page({
         wx.showNavigationBarLoading();
         try {
             const openid = this.getActiveOpenid() || null;
-            const { movies: rawBooks, marks } = await DataLoader.loadMoviesData(this.data.theme, openid, forceRefresh, queryOptionsFor(this.data.cfg));
+            const { movies: rawBooks, marks, meta } = await DataLoader.loadMoviesData(this.data.theme, openid, forceRefresh, queryOptionsFor(this.data.cfg, this.data.listId));
+            this.applyListMeta(meta);
 
             const cfg = this.data.cfg;
             const editionField = cfg.editionField || 'edition';
@@ -287,7 +327,7 @@ Page({
                 const editionValue = b[editionField];
                 if (cfg.showEdition && editionValue != null) {
                     metaParts.push({ type: 'edition', text: `第${editionValue}届 · ${b.year}年` });
-                } else if (cfg.showYear && b.year != null) {
+                } else if (cfg.showYear && b.year != null && b.year !== '') {
                     // 按年份评选、无“届”概念的奖项（如纽伯瑞金奖）：只显示年份
                     metaParts.push({ type: 'edition', text: `${b.year}年` });
                 }
@@ -328,9 +368,10 @@ Page({
                 wishCount: 0,
                 unreadCount: 0,
                 allCount: 0,
-                ...this.buildReadProgress(0, 0)
+                ...this.buildReadProgress(0, 0),
+                listMissing: !!this.data.listId
             });
-            wx.showToast({ title: '暂无数据或加载失败', icon: 'none' });
+            wx.showToast({ title: this.data.listId ? '书单不存在或已删除' : '暂无数据或加载失败', icon: 'none' });
             wx.hideNavigationBarLoading();
         }
     },
@@ -341,7 +382,7 @@ Page({
         if (!openid) return;
         wx.showNavigationBarLoading();
         try {
-            const { marks } = await DataLoader.loadMoviesData(this.data.theme, openid, false, queryOptionsFor(this.data.cfg));
+            const { marks } = await DataLoader.loadMoviesData(this.data.theme, openid, false, queryOptionsFor(this.data.cfg, this.data.listId));
             const { markStatusMap, markDateMap, markRecordIdMap, readIds, wishIds, stats } = DataLoader.processBookMarks(marks, this.data.allBooks);
             this.setData({
                 markStatusMap, markDateMap, markRecordIdMap, readIds, wishIds,
@@ -560,7 +601,7 @@ Page({
         if (currentStatus === targetStatus) return;
 
         trackMark(this.data.theme, targetStatus || 'unmark', 'single', 1); // 埋点：单标记
-        const source = (this.data.cfg && this.data.cfg.source) || 'generic';
+        const source = this.markSourceFor(bookId);
         if (!this._pendingMarkMap) this._pendingMarkMap = {};
         if (this._pendingMarkMap[bookId]) return;
 
@@ -705,32 +746,38 @@ Page({
     batchUpdateBookMarks(bookIds, status) {
         const openid = this.getActiveOpenid();
         if (!openid) { wx.showToast({ title: '请先登录', icon: 'none' }); return; }
-        const source = (this.data.cfg && this.data.cfg.source) || 'generic';
+        // 按 source 分组各调一次（普通书单只有一组；自建书单里的书可能来自不同榜单，见 markSourceFor）
+        const groups = {};
+        bookIds.forEach(id => {
+            const source = this.markSourceFor(id);
+            (groups[source] = groups[source] || []).push(id);
+        });
 
         trackMark(this.data.theme, status, 'batch', bookIds.length); // 埋点：批量标记
         wx.showLoading({ title: '批量更新中...' });
-        wx.cloud.callFunction({
+        Promise.all(Object.keys(groups).map(source => wx.cloud.callFunction({
             name: 'batchUpdateBookMarks',
-            data: { bookIds, status, openid, source },
-            success: res => {
-                wx.hideLoading();
-                const savedIds = res.result && (res.result.succeededIds || (res.result.success ? bookIds : [])) || [];
-                if (savedIds.length) markTimeline.record(this, this.data.theme, status, savedIds, 'batch');
-                if (res.result && res.result.success) {
-                    this.applyBatchMarksLocally(bookIds, status);
-                    wx.showToast({ title: '批量标记成功', icon: 'success' });
-                    setTimeout(() => { this.loadUserMarks(); }, 300);
-                } else {
-                    wx.showToast({ title: '部分标记失败，正在刷新', icon: 'none' });
-                    // 本地状态没跟着改，用户看到的仍是旧的。重新拉一次标记，让显示收敛到云端真实状态。
-                    setTimeout(() => { this.loadUserMarks(); }, 300);
-                }
-            },
-            fail: err => {
-                wx.hideLoading();
-                console.error('批量标记云函数失败:', err);
-                wx.showToast({ title: '网络错误，请重试', icon: 'none' });
+            data: { bookIds: groups[source], status, openid, source }
+        }).then(res => {
+            const r = res.result || {};
+            return { success: !!r.success, savedIds: r.succeededIds || (r.success ? groups[source] : []) };
+        }))).then(parts => {
+            wx.hideLoading();
+            const savedIds = parts.reduce((acc, p) => acc.concat(p.savedIds), []);
+            if (savedIds.length) markTimeline.record(this, this.data.theme, status, savedIds, 'batch');
+            if (parts.every(p => p.success)) {
+                this.applyBatchMarksLocally(bookIds, status);
+                wx.showToast({ title: '批量标记成功', icon: 'success' });
+                setTimeout(() => { this.loadUserMarks(); }, 300);
+            } else {
+                wx.showToast({ title: '部分标记失败，正在刷新', icon: 'none' });
+                // 本地状态没跟着改，用户看到的仍是旧的。重新拉一次标记，让显示收敛到云端真实状态。
+                setTimeout(() => { this.loadUserMarks(); }, 300);
             }
+        }).catch(err => {
+            wx.hideLoading();
+            console.error('批量标记云函数失败:', err);
+            wx.showToast({ title: '网络错误，请重试', icon: 'none' });
         });
     },
 
@@ -767,17 +814,21 @@ Page({
         if (Object.keys(updates).length) this.setData(updates);
     },
 
+    shareQuery() {
+        return this.data.listId ? `theme=${this.data.theme}&listId=${this.data.listId}` : `theme=${this.data.theme}`;
+    },
+
     onShareAppMessage() {
         trackShare(this.data.theme, 'appmsg', this.route);
         return {
             title: `${this.data.cfg.title} - 记录你的阅读旅程`,
-            path: `/pages/genericBookList/list/list?theme=${this.data.theme}`
+            path: `/pages/genericBookList/list/list?${this.shareQuery()}`
         };
     },
 
     onShareTimeline() {
         trackShare(this.data.theme, 'timeline', this.route);
-        return { title: `${this.data.cfg.title} - 记录你的阅读旅程`, query: `theme=${this.data.theme}` };
+        return { title: `${this.data.cfg.title} - 记录你的阅读旅程`, query: this.shareQuery() };
     },
 
     // ========== 广告 ==========

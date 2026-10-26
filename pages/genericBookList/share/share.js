@@ -10,8 +10,11 @@ const userStore = require('../../../utils/userStore.js');
 var { getThemeConfig } = require('../../../utils/genericBookThemeConfig.js');
 var { simplifyTitle } = require('../../../utils/bookFormat.js');
 // 排序方向按主题不同，见 utils/genericBookThemeConfig.js 的 cfg.orderDirection
-function queryOptionsFor(cfg) {
-    return { orderByField: 'rank', orderDirection: (cfg && cfg.orderDirection) || 'asc' };
+// 自建书单另带 listId（与列表页同一份缓存键）
+function queryOptionsFor(cfg, listId) {
+    const opts = { orderByField: 'rank', orderDirection: (cfg && cfg.orderDirection) || 'asc' };
+    if (listId) opts.listId = listId;
+    return opts;
 }
 
 const FOOTER_TEXT = '小程序：标记吧，免费制作同款图';
@@ -83,6 +86,9 @@ Page({
         try {
             const theme = (options && options.theme) || '';
             const cfg = getThemeConfig(theme);
+            const listId = (cfg.custom && options.listId) || '';
+            if (cfg.custom && options.title) cfg.title = decodeURIComponent(options.title);
+            this._listId = listId;
             wx.setNavigationBarTitle({ title: '海报预览' });
             const windowInfo = wx.getWindowInfo();
             const menuBtn = wx.getMenuButtonBoundingClientRect();
@@ -108,7 +114,7 @@ Page({
     onBack() {
         wx.navigateBack({
             fail: () => {
-                wx.reLaunch({ url: `/pages/genericBookList/list/list?theme=${this.data.theme}` });
+                wx.reLaunch({ url: `/pages/genericBookList/list/list?theme=${this.data.theme}${this._listId ? `&listId=${this._listId}` : ''}` });
             }
         });
     },
@@ -203,7 +209,7 @@ Page({
         try {
             wx.showLoading({ title: '加载数据中...' });
             const openid = this.data.userInfo && this.data.userInfo._openid ? this.data.userInfo._openid : '';
-            const { movies: rawBooks, marks: allMarks } = await DataLoader.loadMoviesData(this.data.theme, openid, false, queryOptionsFor(this.data.cfg));
+            const { movies: rawBooks, marks: allMarks } = await DataLoader.loadMoviesData(this.data.theme, openid, false, queryOptionsFor(this.data.cfg, this._listId));
             // 海报用简化书名（去括注），只改本页的展示副本，不入库/不影响缓存
             const allBooks = this.data.cfg.simplifyTitle
                 ? rawBooks.map(b => ({ ...b, title: simplifyTitle(b.title) || b.title }))
@@ -1009,7 +1015,7 @@ Page({
     onShareAppMessage() {
         return {
             title: `我的${this.data.cfg.title}读书海报`,
-            path: `/pages/genericBookList/list/list?theme=${this.data.theme}`
+            path: `/pages/genericBookList/list/list?theme=${this.data.theme}${this._listId ? `&listId=${this._listId}` : ''}`
         };
     },
 

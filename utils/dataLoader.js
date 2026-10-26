@@ -66,9 +66,14 @@ const GENERIC_PROVINCE_THEMES = new Set(['province']);
 // 全国旅游城市（专属集合 travel_cities），读取走 getCities；标记复用 Marks（去过=watched、想去=wish）。
 const GENERIC_CITY_THEMES = new Set(['city']);
 
+// 用户自建影单/书单（集合 custom_lists），读取走 customList（缺省 action=get），queryOptions 带 listId。
+// listVersion = `listId:rev`，清单一改缓存就失效。
+const CUSTOM_LIST_THEMES = new Set(['customMovie', 'customBook']);
+
 function cloudFnForTheme(theme) {
   if (GENERIC_PROVINCE_THEMES.has(theme)) return 'getProvinces';
   if (GENERIC_CITY_THEMES.has(theme)) return 'getCities';
+  if (CUSTOM_LIST_THEMES.has(theme)) return 'customList';
   if (GENERIC_MUSEUM_THEMES.has(theme)) return 'getMuseums';
   if (GENERIC_SCENIC_THEMES.has(theme)) return 'getScenicSpots';
   if (GENERIC_BOOK_THEMES.has(theme)) return 'getThemeBooks';
@@ -93,8 +98,11 @@ function cloudFnForTheme(theme) {
  */
 async function loadMoviesData(theme, openid, forceRefresh = false, queryOptions = {}) {
   trackThemeOpen(theme); // 埋点：进入主题（含刷新会略多计，作热度/漏斗基数够用）
-  const cached = forceRefresh ? null : readMovieCache(theme);
+  // 自建清单同一个 theme 下有很多份，缓存按 listId 分开存
+  const cacheTheme = cacheKeyTheme(theme, queryOptions);
+  const cached = forceRefresh ? null : readMovieCache(cacheTheme);
 
+  let meta = null; // 自建清单的元信息（标题/是否本人），只在全量拉取时有
   let movies;
   let marks = [];
   let useFull = !cached;
@@ -132,10 +140,34 @@ async function loadMoviesData(theme, openid, forceRefresh = false, queryOptions 
     }
     movies = res.result.movies;
     marks = res.result.marks || [];
-    writeMovieCache(theme, movies, res.result.listVersion);
+    meta = res.result.list || null;
+    writeMovieCache(cacheTheme, movies, res.result.listVersion);
   }
 
-  return { movies, marks };
+  return { movies, marks, meta };
+}
+
+function cacheKeyTheme(theme, queryOptions) {
+  return queryOptions && queryOptions.listId ? `${theme}_${queryOptions.listId}` : theme;
+}
+
+/**
+ * 只取某个榜单的条目（不取标记、不打进入主题埋点）—— 自建清单「从榜单添加」用。
+ * 命中 24h 缓存直接返回，否则调该主题的读取云函数并回写缓存（与榜单页共用同一份缓存）。
+ */
+async function loadThemeItems(theme, queryOptions = {}) {
+  const cached = readMovieCache(theme);
+  if (cached && cached.data && cached.data.length) return cached.data;
+  const res = await wx.cloud.callFunction({
+    name: cloudFnForTheme(theme),
+    data: { theme, ...queryOptions }
+  });
+  if (!res.result || !res.result.success) {
+    throw new Error(res.result ? res.result.error : '云函数调用失败');
+  }
+  const movies = res.result.movies || [];
+  writeMovieCache(theme, movies, res.result.listVersion);
+  return movies;
 }
 
 // ─────────────────────────────────────────────
@@ -317,6 +349,7 @@ async function loadMarks(db, openid) {
 module.exports = {
   // 新接口（优化后）
   loadMoviesData,
+  loadThemeItems,
   invalidateMovieCache,
   processMarks,
   processBookMarks,

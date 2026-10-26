@@ -6,8 +6,11 @@ const rewardedSaveGate = require('../../../utils/rewardedSaveGate.js');
 const userStore = require('../../../utils/userStore.js');
 var { getThemeConfig } = require('../../../utils/genericThemeConfig.js');
 // 排序方向按主题不同，见 utils/genericThemeConfig.js 的 cfg.orderDirection
-function queryOptionsFor(cfg) {
-    return { orderByField: 'rank', orderDirection: (cfg && cfg.orderDirection) || 'asc' };
+// 自建影单另带 listId（与列表页同一份缓存键）
+function queryOptionsFor(cfg, listId) {
+    const opts = { orderByField: 'rank', orderDirection: (cfg && cfg.orderDirection) || 'asc' };
+    if (listId) opts.listId = listId;
+    return opts;
 }
 
 const FOOTER_TEXT = '小程序：标记吧，免费制作同款图';
@@ -79,6 +82,9 @@ Page({
         try {
             const theme = (options && options.theme) || '';
             const cfg = getThemeConfig(theme);
+            const listId = (cfg.custom && options.listId) || '';
+            if (cfg.custom && options.title) cfg.title = decodeURIComponent(options.title);
+            this._listId = listId;
             wx.setNavigationBarTitle({ title: '海报预览' });
             const windowInfo = wx.getWindowInfo();
             const menuBtn = wx.getMenuButtonBoundingClientRect();
@@ -104,7 +110,7 @@ Page({
     onBack() {
         wx.navigateBack({
             fail: () => {
-                wx.reLaunch({ url: `/pages/genericList/list/list?theme=${this.data.theme}` });
+                wx.reLaunch({ url: `/pages/genericList/list/list?theme=${this.data.theme}${this._listId ? `&listId=${this._listId}` : ''}` });
             }
         });
     },
@@ -199,7 +205,7 @@ Page({
         try {
             wx.showLoading({ title: '加载数据中...' });
             const openid = this.data.userInfo && this.data.userInfo._openid ? this.data.userInfo._openid : '';
-            const { movies: allMovies, marks: allMarks } = await DataLoader.loadMoviesData(this.data.theme, openid, false, queryOptionsFor(this.data.cfg));
+            const { movies: allMovies, marks: allMarks } = await DataLoader.loadMoviesData(this.data.theme, openid, false, queryOptionsFor(this.data.cfg, this._listId));
             const { markStatusMap, stats, watchedMovies } = DataLoader.processMarks(allMarks, allMovies);
             const listGridRows = Math.max(1, Math.ceil(allMovies.length / 5));
             this.setData({ allMovies, markStatusMap, stats, watchedMovies, listGridRows }, () => {
@@ -1032,7 +1038,7 @@ Page({
     onShareAppMessage() {
         return {
             title: `我的${this.data.cfg.title}观影海报`,
-            path: `/pages/genericList/list/list?theme=${this.data.theme}`
+            path: `/pages/genericList/list/list?theme=${this.data.theme}${this._listId ? `&listId=${this._listId}` : ''}`
         };
     },
 

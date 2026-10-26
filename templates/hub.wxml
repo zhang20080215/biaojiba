@@ -136,6 +136,7 @@
 
   <block wx:elif="{{pageKind === 'profile'}}">
     <view class="hub-profile" hover-class="hub-pressed" bindtap="onEditProfile" role="button" aria-label="编辑个人资料"><image class="hub-avatar" src="{{userInfo.avatarUrl || '/images/default-avatar.svg'}}" mode="aspectFill" /><view class="hub-record-body"><text class="hub-profile-name">{{userInfo.nickName || '点击登录'}}</text><text class="hub-muted">{{userInfo ? '编辑头像与昵称' : '设置头像昵称，留下你的模样'}}</text></view><text class="hub-arrow">›</text></view>
+    <view class="hub-menu"><button bindtap="onOpenCustomLists" aria-label="我的影单与书单">我的影单 · 书单<view class="hub-menu-trail"><text class="hub-muted">自己挑片挑书</text><text>›</text></view></button></view>
     <view class="hub-section-top hub-section"><text class="hub-section-title">我的主题</text><button class="hub-link" bindtap="onOpenPinManager">管理收藏 ›</button></view>
     <view class="hub-personal-panel">
     <view class="hub-personal-tabs"><button wx:for="{{personalTabs}}" wx:key="id" class="hub-chip {{personalTab === item.id ? 'hub-chip-active' : ''}}" data-tab="{{item.id}}" bindtap="onPersonalTab">{{item.label}}</button></view>

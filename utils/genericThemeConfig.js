@@ -13,6 +13,19 @@
 //   extraChips    — 评分后追加的小胶囊，按顺序取：'year'（年份）/ 'boxOffice'（全球票房，movieFormat.formatBoxOffice）
 //   useCache      — 走 24h 本地缓存、进页面不强制刷新（老主题榜单几乎不变；通用主题 listVersion 恒为 null 才要每次强拉）
 const THEME_CONFIG = {
+  // ── 用户自建影单（custom_lists，走 customList，页面带 ?listId=）──
+  // title 只是兜底，进页面后换成清单自己的标题；custom 打开「编辑清单」入口与空态
+  customMovie: {
+    title: '我的影单',
+    slogan: '亲手挑的片，一部部看完它',
+    brandPrimary: '#526631',
+    brandSoft: '#7F9459',
+    shadowRgb: '82, 102, 49',
+    showEdition: false,
+    orderDirection: 'asc',
+    extraChips: ['year'],
+    custom: true,
+  },
   // ── 走 generic_theme_movies 通用流水线 ──
   rtHorror: {
     title: '史上最佳恐怖电影',

@@ -43,8 +43,11 @@
             <view class="icon-btn action-cancel" bindtap="onCancelBatchEdit">取消</view>
           </block>
         </view>
-        <view class="generate-card-wrapper" bindtap="onShareTap" wx:if="{{!isBatchEditing}}">
-          <view class="generate-card-btn">生成观影海报</view>
+        <view class="action-right" wx:if="{{!isBatchEditing}}">
+          <view class="icon-btn batch-icon" bindtap="onEditList" wx:if="{{cfg.custom && isOwner}}">编辑影单</view>
+          <view class="generate-card-wrapper" bindtap="onShareTap" wx:if="{{allCount > 0}}">
+            <view class="generate-card-btn">生成观影海报</view>
+          </view>
         </view>
       </view>
     </view>
@@ -101,6 +104,13 @@
         </view>
       </view>
     </block>
+  </view>
+
+  <!-- 自建影单空态 -->
+  <view wx:if="{{cfg.custom && allCount === 0}}" class="custom-empty">
+    <text class="custom-empty-title">{{listMissing ? '这份影单不存在或已被删除' : isOwner ? '影单还是空的' : '这份影单还没有内容'}}</text>
+    <text wx:if="{{isOwner && !listMissing}}" class="custom-empty-sub">从现有榜单挑，或者按片名搜索加入，最多 200 部</text>
+    <view wx:if="{{isOwner && !listMissing}}" class="custom-empty-btn" bindtap="onAddToList">添加电影</view>
   </view>
 
   <view class="custom-toast {{customToastVisible ? 'show' : ''}}">

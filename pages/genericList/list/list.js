@@ -12,8 +12,11 @@ var markSync = require('../../../utils/markSync.js');
 // 通用榜单页：走 enrichThemeMovies/generic_theme_movies 流水线的新主题、以及迁移过来的老主题共用这一套页面，
 // 通过 ?theme=xxx 区分（同 pages/daily/index 靠 ?theme= 复用一套页面的思路）。
 // 排序方向按主题不同（新到旧连续编号的 asc，rank 本身是历史届数的 desc），见 cfg.orderDirection。
-function queryOptionsFor(cfg) {
-    return { orderByField: 'rank', orderDirection: (cfg && cfg.orderDirection) || 'asc' };
+// 自建影单（theme=customMovie）另带 listId，见 pages/customList。
+function queryOptionsFor(cfg, listId) {
+    const opts = { orderByField: 'rank', orderDirection: (cfg && cfg.orderDirection) || 'asc' };
+    if (listId) opts.listId = listId;
+    return opts;
 }
 
 Page({
@@ -51,6 +54,9 @@ Page({
         tempNickname: '',
         theme: '',
         cfg: {},
+        listId: '',        // 自建影单 id（cfg.custom 时才有）
+        isOwner: false,    // 自建影单是否本人的（决定是否露出「编辑影单」）
+        listMissing: false,
         statusBarHeight: 20,
         headerPadTop: 0,
         menuBtnHeight: 32,
@@ -69,6 +75,8 @@ Page({
         }
         const theme = (options && options.theme) || '';
         const cfg = getThemeConfig(theme);
+        const listId = (cfg.custom && options && options.listId) || '';
+        if (cfg.custom && options && options.title) cfg.title = decodeURIComponent(options.title);
         // 自定义导航：获取状态栏高度和胶囊按钮位置
         this.setData({
             statusBarHeight: 0,
@@ -76,7 +84,8 @@ Page({
             menuBtnHeight: 0,
             stickyTop: 0,
             theme,
-            cfg
+            cfg,
+            listId
         });
         wx.setNavigationBarTitle({ title: cfg.title });
         this.checkLoginStatus();
@@ -97,6 +106,28 @@ Page({
         this._timelineGroup = null;
         this.checkLoginStatus();
         this.setNavBarColor();
+        // 从编辑页回来：清单内容变了就重拉
+        const app = getApp();
+        if (this.data.listId && app.globalData && app.globalData.customListDirty === this.data.listId) {
+            app.globalData.customListDirty = '';
+            this.loadAllMovies(true);
+        }
+    },
+
+    onEditList() {
+        wx.navigateTo({ url: `/pages/customList/edit/edit?listId=${this.data.listId}` });
+    },
+
+    onAddToList() {
+        wx.navigateTo({ url: `/pages/customList/add/add?listId=${this.data.listId}&type=movie` });
+    },
+
+    // 自建影单：云函数回的清单元信息覆盖兜底标题
+    applyListMeta(meta) {
+        if (!meta) return;
+        const cfg = { ...this.data.cfg, title: meta.title || this.data.cfg.title };
+        this.setData({ cfg, isOwner: !!meta.isOwner, listMissing: false });
+        wx.setNavigationBarTitle({ title: cfg.title });
     },
 
     // 将导航栏背景色与 hero 配色对齐，消除 hairline 对比度
@@ -180,8 +211,9 @@ Page({
         this.setData({ showSharePicker: false }, () => {
             wx.nextTick(() => {
                 adManager.showInterstitial('share_interstitial').then(() => {
+                    const listQuery = this.data.listId ? `&listId=${this.data.listId}&title=${encodeURIComponent(this.data.cfg.title)}` : '';
                     wx.navigateTo({
-                        url: `/pages/genericList/share/share?type=${type}&theme=${this.data.theme}`,
+                        url: `/pages/genericList/share/share?type=${type}&theme=${this.data.theme}${listQuery}`,
                         complete: () => {
                             this._navigatingToShare = false;
                         }
@@ -283,7 +315,8 @@ Page({
         wx.showNavigationBarLoading();
         try {
             const openid = this.getActiveOpenid() || null;
-            const { movies, marks } = await DataLoader.loadMoviesData(this.data.theme, openid, forceRefresh, queryOptionsFor(this.data.cfg));
+            const { movies, marks, meta } = await DataLoader.loadMoviesData(this.data.theme, openid, forceRefresh, queryOptionsFor(this.data.cfg, this.data.listId));
+            this.applyListMeta(meta);
 
             const cfg = this.data.cfg;
             const editionField = cfg.editionField || 'edition';
@@ -363,9 +396,10 @@ Page({
                 wishCount: 0,
                 unwatchedCount: 0,
                 allCount: 0,
-                ...this.buildWatchedProgress(0, 0)
+                ...this.buildWatchedProgress(0, 0),
+                listMissing: !!this.data.listId
             });
-            wx.showToast({ title: '暂无数据或加载失败', icon: 'none' });
+            wx.showToast({ title: this.data.listId ? '影单不存在或已删除' : '暂无数据或加载失败', icon: 'none' });
             wx.hideNavigationBarLoading();
         }
     },
@@ -376,7 +410,7 @@ Page({
         if (!openid) return;
         wx.showNavigationBarLoading();
         try {
-            const { marks } = await DataLoader.loadMoviesData(this.data.theme, openid, false, queryOptionsFor(this.data.cfg));
+            const { marks } = await DataLoader.loadMoviesData(this.data.theme, openid, false, queryOptionsFor(this.data.cfg, this.data.listId));
             const { markStatusMap, markDateMap, markRecordIdMap, watchedIds, wishIds, stats } = DataLoader.processMarks(marks, this.data.allMovies);
             this.setData({
                 markStatusMap, markDateMap, markRecordIdMap, watchedIds, wishIds,
@@ -821,17 +855,21 @@ Page({
         if (Object.keys(updates).length) this.setData(updates);
     },
 
+    shareQuery() {
+        return this.data.listId ? `theme=${this.data.theme}&listId=${this.data.listId}` : `theme=${this.data.theme}`;
+    },
+
     onShareAppMessage() {
         trackShare(this.data.theme, 'appmsg', this.route);
         return {
             title: `${this.data.cfg.title} - 标记你的观影清单`,
-            path: `/pages/genericList/list/list?theme=${this.data.theme}`
+            path: `/pages/genericList/list/list?${this.shareQuery()}`
         };
     },
 
     onShareTimeline() {
         trackShare(this.data.theme, 'timeline', this.route);
-        return { title: `${this.data.cfg.title} - 标记你的观影清单`, query: `theme=${this.data.theme}` };
+        return { title: `${this.data.cfg.title} - 标记你的观影清单`, query: this.shareQuery() };
     },
 
     // ========== 广告 ==========

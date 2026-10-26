@@ -1052,6 +1052,7 @@ module.exports = function createHubPage(pageKind) {
   onSortChange(e) { this.setData({ sortMode: e.currentTarget.dataset.sort }); this.filterThemes(this.data.activeTab); },
   onEditProfile() { this.onGetUserProfile(); },
   onSubscriptions() { wx.openSetting({ withSubscriptions: true }); },
+  onOpenCustomLists() { wx.navigateTo({ url: '/pages/customList/index/index' }); },
   onAbout() { wx.showModal({ title: '关于标记吧', content: '用清单发现好内容，用标记留下生活。记录电影、阅读与旅行，回顾并分享你的专属记录。', showCancel: false }); },
   async loadPersonalSummary() {
     try {
