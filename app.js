@@ -13,6 +13,7 @@ App({
   onShow(options) {
     // 每次启动/回到前台埋点场景值（1007/1008 会话、1044 朋友圈、1047 扫码等），用于分享/回流来源分析
     track('app_open', { scene: (options && options.scene) || 0 })
+    require('./utils/openidWaiter').awaitOpenid().then(() => require('./utils/markTimeline').flush()).catch(() => {})
 
     // 每次进入小程序都刷一次远程广告配置 + 会员状态（两者内部各有 3 秒节流）。
     // onShow 冷启动和热启动都会触发，而 onLaunch 只在冷启动触发——会员开通要做到
@@ -37,7 +38,9 @@ App({
 
     // 主题色一次性载入内存，后续全站读 globalData.theme，避免各页重复 getStorageSync('appTheme')
     try {
-      this.globalData.theme = wx.getStorageSync('appTheme') || 'theme-green'
+      const savedTheme = wx.getStorageSync('appTheme')
+      const hasSavedTheme = wx.getStorageInfoSync().keys.includes('appTheme')
+      this.globalData.theme = hasSavedTheme && ['', 'theme-green', 'theme-gold', 'theme-sand'].includes(savedTheme) ? savedTheme : 'theme-green'
     } catch (e) {
       this.globalData.theme = 'theme-green'
     }

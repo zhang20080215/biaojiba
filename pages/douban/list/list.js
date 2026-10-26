@@ -1,3 +1,4 @@
+const markTimeline = require('../../../utils/markTimeline');
 import DataLoader from '../../../utils/dataLoader';
 import imageCacheManager from '../../../utils/imageCacheManager';
 var adConfig = require('../../../utils/adConfig');
@@ -49,6 +50,8 @@ Page({
         headerPadTop: 0,
         menuBtnHeight: 32,
         stickyTop: 0,
+        navHeight: 64,
+        navSolid: false,
         // 广告相关
         infeedSlots: {},
         adUnitIds: {
@@ -61,13 +64,22 @@ Page({
             wx.showToast({ title: '请升级基础库', icon: 'none' });
             return;
         }
-        // 自定义导航：获取状态栏高度和胶囊按钮位置
+        // 沉浸式导航：导航条高度 = 胶囊底 + 胶囊与状态栏的间距（与微信原生导航同高），返回钮与胶囊同尺寸、同一行
         const savedTheme = getApp().globalData.theme || '';
+        let statusBarHeight = 20, menuBtn = null;
+        try { statusBarHeight = wx.getWindowInfo().statusBarHeight || 20; } catch (e) {}
+        try { menuBtn = wx.getMenuButtonBoundingClientRect(); } catch (e) {}
+        const valid = menuBtn && menuBtn.height > 0 && menuBtn.top >= statusBarHeight;
+        const menuBtnHeight = valid ? menuBtn.height : 32;
+        const navHeight = valid ? menuBtn.bottom + (menuBtn.top - statusBarHeight) : statusBarHeight + 44;
+        this._navSolid = false;
         this.setData({
-            statusBarHeight: 0,
-            headerPadTop: 0,
-            menuBtnHeight: 0,
-            stickyTop: 0,
+            statusBarHeight,
+            headerPadTop: navHeight,
+            menuBtnHeight,
+            navHeight,
+            stickyTop: navHeight,
+            navSolid: false,
             themeClass: savedTheme
         });
         this.checkLoginStatus();
@@ -83,6 +95,7 @@ Page({
     },
 
     onShow() {
+        this._timelineGroup = null;
         const currentTheme = getApp().globalData.theme || '';
         if (this.data.themeClass !== currentTheme) {
             this.setData({ themeClass: currentTheme });
@@ -91,15 +104,23 @@ Page({
         this.setNavBarColor(currentTheme);
     },
 
-    // 将导航栏背景色与 hero 配色对齐，消除 hairline 对比度
-    setNavBarColor(theme) {
-        const colorMap = {
-            'theme-gold':  { bg: '#F7D66E', fg: '#000000' },
-            'theme-green': { bg: '#9AAB65', fg: '#ffffff' },
-            'theme-sand':  { bg: '#F8F3E7', fg: '#000000' },
-        };
-        const c = colorMap[theme] || { bg: '#FAE0E4', fg: '#000000' };
-        wx.setNavigationBarColor({ frontColor: c.fg, backgroundColor: c.bg, animation: { duration: 0 } });
+    // 沉浸式导航下只决定状态栏文字颜色：四套头图都是浅色、标题用深色，状态栏统一黑字
+    setNavBarColor() {
+        wx.setNavigationBarColor({ frontColor: '#000000', backgroundColor: '#ffffff', animation: { duration: 0 } });
+    },
+
+    // 滚过头图上半部分后导航变实底并显示标题；只在状态翻转时 setData，避免滚动时频繁渲染
+    onPageScroll(e) {
+        const solid = e.scrollTop > 60;
+        if (solid === this._navSolid) return;
+        this._navSolid = solid;
+        this.setData({ navSolid: solid });
+    },
+
+    // 有上一页就返回；从分享卡片 / 扫码直接打开时没有上一页，回首页
+    onNavBack() {
+        if (getCurrentPages().length > 1) wx.navigateBack();
+        else this.onBackHome();
     },
 
     onUnload() {
@@ -107,7 +128,7 @@ Page({
     },
 
     onBackHome() {
-        wx.reLaunch({ url: '/pages/category/category' });
+        wx.switchTab({ url: '/pages/category/category' });
     },
 
     getStoredUserInfo() {
@@ -620,6 +641,7 @@ Page({
             // 这些历史重复清干净，且不需要单独跑清理脚本。
             const persist = db.collection('Marks').where({ movieId, openid }).remove();
             persist.then(() => {
+                markTimeline.record(this, 'douban', 'unmark', [movieId]);
                 // 跨榜单同步：其他榜单里的同一部电影也一并取消。fire-and-forget，
                 // 失败不影响本次取消（详见 utils/markSync.js）
                 markSync.sync(movieId, '');
@@ -640,6 +662,7 @@ Page({
             : db.collection('Marks').add({ data: { movieId, openid, status: targetStatus, marked_at: now } });
 
         persist.then(res => {
+            markTimeline.record(this, 'douban', targetStatus, [movieId]);
             // 跨榜单同步：其他榜单里的同一部电影设成同一状态
             markSync.sync(movieId, targetStatus);
             if (!existingRecordId && res && res._id) {
@@ -764,6 +787,8 @@ Page({
             data: { movieIds, status, openid },
             success: res => {
                 wx.hideLoading();
+                const savedIds = res.result && (res.result.succeededIds || (res.result.success ? movieIds : [])) || [];
+                if (savedIds.length) markTimeline.record(this, 'douban', status, savedIds, 'batch');
                 if (res.result && res.result.success) {
                     this.applyBatchMarksLocally(movieIds, status);
                     wx.showToast({ title: '批量标记成功', icon: 'success' });

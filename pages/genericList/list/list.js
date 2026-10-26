@@ -1,3 +1,4 @@
+const markTimeline = require('../../../utils/markTimeline');
 import DataLoader from '../../../utils/dataLoader';
 import imageCacheManager from '../../../utils/imageCacheManager';
 var adConfig = require('../../../utils/adConfig');
@@ -93,6 +94,7 @@ Page({
     },
 
     onShow() {
+        this._timelineGroup = null;
         this.checkLoginStatus();
         this.setNavBarColor();
     },
@@ -108,7 +110,7 @@ Page({
     },
 
     onBackHome() {
-        wx.reLaunch({ url: '/pages/category/category' });
+        wx.switchTab({ url: '/pages/category/category' });
     },
 
     getStoredUserInfo() {
@@ -331,7 +333,7 @@ Page({
                     chips,
                     ratingVotesText: votes ? `${votes}人评` : '',
                     // thumbCover：优先取 originalCover（原始 douban URL）转缩略图，cover 保留用于海报生成
-                    thumbCover: imageCacheManager.getThumbnailUrl(m.cover || m.coverUrl || m.originalCover, 'list')
+                    thumbCover: imageCacheManager.getThumbnailUrl(m.cover || m.coverUrl || m.originalCover || m.bangumiCover, 'list')
                 };
             });
             this.data.allMovies = allMovies;
@@ -616,6 +618,7 @@ Page({
             // 这些历史重复清干净，且不需要单独跑清理脚本。
             const persist = db.collection('Marks').where({ movieId, openid }).remove();
             persist.then(() => {
+                markTimeline.record(this, this.data.theme, 'unmark', [movieId]);
                 // 跨榜单同步：其他榜单里的同一部电影也一并取消（详见 utils/markSync.js）
                 markSync.sync(movieId, '');
             }).catch(err => {
@@ -636,6 +639,7 @@ Page({
             : db.collection('Marks').add({ data: { movieId, openid, status: targetStatus, marked_at: now } });
 
         persist.then(res => {
+            markTimeline.record(this, this.data.theme, targetStatus, [movieId]);
             // 跨榜单同步：其他榜单里的同一部电影设成同一状态
             markSync.sync(movieId, targetStatus);
             if (!existingRecordId && res && res._id) {
@@ -761,6 +765,8 @@ Page({
             data: { movieIds, status, openid },
             success: res => {
                 wx.hideLoading();
+                const savedIds = res.result && (res.result.succeededIds || (res.result.success ? movieIds : [])) || [];
+                if (savedIds.length) markTimeline.record(this, this.data.theme, status, savedIds, 'batch');
                 if (res.result && res.result.success) {
                     this.applyBatchMarksLocally(movieIds, status);
                     wx.showToast({ title: '批量标记成功', icon: 'success' });
@@ -789,7 +795,9 @@ Page({
 
     tryFallbackImage(movieId) {
         const movie = this.data.movies.find(m => String(m._id) === String(movieId));
-        if (movie && movie.originalCover && movie.cover !== movie.originalCover) {
+        if (movie && movie.bangumiCover && movie.cover !== movie.bangumiCover) {
+            this.updateMovieImage(movieId, movie.bangumiCover);
+        } else if (movie && !movie.bangumiCover && movie.originalCover && movie.cover !== movie.originalCover) {
             this.updateMovieImage(movieId, movie.originalCover);
         } else {
             this.updateMovieImage(movieId, 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQ1MCIgdmlld0JveD0iMCAwIDMwMCA0NTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iNDUwIiBmaWxsPSIjRjVGNUY1Ii8+CjxwYXRoIGQ9Ik0xNTAgMjAwTDEyMCAyNTBMMTUwIDMwMEwyMDAgMjUwTDE1MCAyMDBaIiBmaWxsPSIjQ0NDQ0NDIi8+Cjx0ZXh0IHg9IjE1MCIgeT0iMzUwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOTk5OTk5IiBmb250LXNpemU9IjE0Ij7lm77niYfmlrDpl7vnpL7kvJ08L3RleHQ+Cjwvc3ZnPgo=');

@@ -3,7 +3,7 @@
 /* 填充导航栏底边与 hero-section 之间的 1px 渲染缝隙
    page / hero / setNavigationBarColor 三者统一为 brand-primary，消除色差 */
 page {
-  background-color: var(--brand-primary);
+  background-color: var(--brand-hero);
 }
 
 /* ========== 页面根 ========== */
@@ -18,31 +18,33 @@ page {
 .hero-section {
   position: relative;
   overflow: hidden;
-  background: var(--brand-primary);
+  background: var(--brand-hero);
   padding-bottom: var(--space-6);
 }
 
+/* 装饰圆：右上大、左下小，圆心落在两个角上，露出规整的四分之一圆（与首页同一构图）。
+   沉浸式导航下头图铺到屏幕最顶，右上角的切口在屏幕边缘，不会再出现被原生导航栏削成的平顶 */
 .hero-section::before {
   content: '';
   position: absolute;
-  top: -100rpx;
-  right: -60rpx;
-  width: 320rpx;
-  height: 320rpx;
+  top: -270rpx;
+  right: -250rpx;
+  width: 540rpx;
+  height: 540rpx;
   background: var(--info);
-  opacity: 0.35;
+  opacity: 0.3;
   border-radius: 50%;
 }
 
 .hero-section::after {
   content: '';
   position: absolute;
-  bottom: -60rpx;
-  left: -40rpx;
-  width: 220rpx;
-  height: 220rpx;
+  bottom: -180rpx;
+  left: -180rpx;
+  width: 360rpx;
+  height: 360rpx;
   background: var(--warning);
-  opacity: 0.25;
+  opacity: 0.22;
   border-radius: 50%;
 }
 
@@ -62,6 +64,72 @@ page {
 .header-left {
   display: flex;
   flex-direction: column;
+}
+
+/* ========== 沉浸式导航 ========== */
+.immersive-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  box-sizing: border-box;
+  background: transparent;
+  transition: background-color 180ms ease-out;
+}
+
+.immersive-nav.solid {
+  background: var(--brand-hero);
+}
+
+.immersive-nav-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0 24rpx;
+}
+
+.nav-back {
+  position: relative;
+  z-index: 1;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1rpx solid rgba(255, 255, 255, 0.9);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-back-hover {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+/* 用两条边画箭头，比字符「‹」在各机型上更居中 */
+.nav-back-arrow {
+  width: 18rpx;
+  height: 18rpx;
+  margin-left: 6rpx;
+  border-left: 4rpx solid var(--hero-ink);
+  border-bottom: 4rpx solid var(--hero-ink);
+  transform: rotate(45deg);
+}
+
+.nav-title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: var(--hero-ink);
+  opacity: 0;
+  transition: opacity 180ms ease-out;
+  pointer-events: none;
+}
+
+.immersive-nav.solid .nav-title {
+  opacity: 1;
 }
 
 /* 返回按钮 - 尺寸通过 inline style 与胶囊按钮一致 */
@@ -87,19 +155,20 @@ page {
   transform: scale(0.92);
 }
 
+/* 头图文字：四套主题的头图底色都偏浅，白字看不清，改用同色相的深色（见 styles/theme.wxss 的 hero-ink/soft） */
 .app-name {
   font-size: 60rpx;
-  font-weight: 800;
-  color: #FFFFFF;
+  font-weight: 700;
+  color: var(--hero-ink);
   line-height: 1.15;
-  letter-spacing: 2rpx;
+  letter-spacing: 1rpx;
   margin-top: 0;
-  text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
 }
 
 .app-slogan {
   font-size: var(--font-body);
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--hero-soft);
+  letter-spacing: 1rpx;
   margin-top: var(--space-2);
   margin-bottom: var(--space-2);
   line-height: 1.4;
@@ -120,18 +189,18 @@ page {
   display: inline-flex;
   align-items: center;
   padding: 8rpx 20rpx;
-  background: rgba(255, 255, 255, 0.18);
-  border: 1rpx solid rgba(255, 255, 255, 0.42);
+  background: rgba(255, 255, 255, 0.55);
+  border: 1rpx solid rgba(255, 255, 255, 0.85);
   border-radius: 999rpx;
 }
 
 .hero-subscribe-chip-hover {
-  background: rgba(255, 255, 255, 0.32);
+  background: rgba(255, 255, 255, 0.8);
 }
 
 .hero-subscribe-chip-text {
   font-size: var(--font-caption);
-  color: #FFFFFF;
+  color: var(--hero-ink);
   letter-spacing: 1rpx;
 }
 
@@ -144,28 +213,29 @@ page {
 
 .hero-progress-label {
   font-size: var(--font-caption);
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--hero-soft);
   letter-spacing: 1rpx;
 }
 
 .hero-progress-percent {
-  font-size: 44rpx;
+  font-size: 40rpx;
   line-height: 1;
-  font-weight: 800;
-  color: #FFFFFF;
+  font-weight: 700;
+  color: var(--brand-accent);
+  font-variant-numeric: tabular-nums;
 }
 
 .hero-progress-bar {
-  height: 16rpx;
+  height: 10rpx;
   margin-top: var(--space-2);
-  background: rgba(255, 255, 255, 0.26);
+  background: rgba(255, 255, 255, 0.6);
   border-radius: 999rpx;
   overflow: hidden;
 }
 
 .hero-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.78) 0%, #FFFFFF 100%);
+  background: var(--brand-accent);
   border-radius: 999rpx;
 }
 
@@ -190,7 +260,7 @@ page {
   width: 8rpx;
   height: 64rpx;
   border-radius: 4rpx;
-  background: var(--brand-primary);
+  background: var(--brand-accent);
   margin-right: var(--space-3);
   flex-shrink: 0;
 }
@@ -261,9 +331,9 @@ page {
 }
 
 .tab.active {
-  color: #FFFFFF;
+  color: var(--hero-ink);
   font-weight: 700;
-  background: var(--brand-primary);
+  background: var(--brand-button);
 }
 
 /* ========== 吸顶操作栏 ========== */
@@ -337,8 +407,8 @@ page {
 }
 
 .generate-card-btn {
-  background: var(--brand-primary);
-  color: #FFFFFF;
+  background: var(--brand-button);
+  color: var(--hero-ink);
   font-size: var(--font-body);
   font-weight: 700;
   padding: 18rpx var(--space-4);
@@ -405,8 +475,8 @@ page {
 }
 
 .batch-checkbox .wx-checkbox-input.wx-checkbox-input-checked {
-  background: var(--brand-primary) !important;
-  border-color: var(--brand-primary) !important;
+  background: var(--brand-accent) !important;
+  border-color: var(--brand-accent) !important;
 }
 
 .batch-checkbox .wx-checkbox-input.wx-checkbox-input-checked::before {
@@ -802,7 +872,7 @@ page {
 
 .avatar-edit-tip {
   font-size: var(--font-mini);
-  color: var(--brand-primary);
+  color: var(--brand-accent);
   margin-top: var(--space-1);
 }
 
@@ -865,8 +935,8 @@ page {
 }
 
 .auth-btn.confirm {
-  background: var(--brand-primary);
-  color: var(--text-primary);
+  background: var(--brand-accent);
+  color: #FFFFFF;
   box-shadow: var(--shadow-cta);
 }
 

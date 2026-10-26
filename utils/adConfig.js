@@ -40,6 +40,10 @@ const adConfig = {
   placements: {
     category_native: { unitId: 'adunit-0210c68397d60f88', type: 'native', enabled: true },
     category_banner: { unitId: 'adunit-991294f7567bd2b8', type: 'banner', enabled: false },
+    // 首页「最新上线」上方的原生模板位（每日标记与最新上线之间，内容流内、非悬浮）。
+    // 暂时复用 category_native 的广告单元；想单独看这个位置的数据，就在流量主后台新建一个
+    // 原生模板广告单元，把 id 换到这里。云端 app_config 可单独用 home_top_native.enabled 关停。
+    home_top_native: { unitId: 'adunit-0210c68397d60f88', type: 'native', enabled: true },
     // 已下线：40天数据 eCPM 仅 1.27、CTR 0.1%（占 52% 曝光却是垃圾流量），砍掉后整体 eCPM 显著上抬且改善体验
     movielist_infeed: { unitId: 'adunit-72684185bc7251e5', type: 'native', enabled: false },
     share_interstitial: { unitId: 'adunit-76c494953122488c', type: 'interstitial', enabled: true },

@@ -65,7 +65,8 @@
       { "type": "file", "value": "性能优化.md" },
       { "type": "file", "value": "Water Tracker _standalone_ (1).html" },
       { "type": "file", "value": "小程序首页码.png" },
-      { "type": "suffix", "value": ".DS_Store" }
+      { "type": "suffix", "value": ".DS_Store" },
+      { "type": "prefix", "value": "database_export-" }
     ],
     "include": []
   },

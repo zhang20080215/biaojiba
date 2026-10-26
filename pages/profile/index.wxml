@@ -1,0 +1,2 @@
+<import src="../../templates/hub.wxml" />
+<include src="../../templates/hub.wxml" />

@@ -163,6 +163,17 @@ const THEME_CONFIG = {
     firstDirectorOnly: true,
     orderDirection: 'asc',
   },
+  bangumi250: {
+    title: 'Bangumi 动画 Top 250',
+    slogan: '标记你看过的经典动画，生成专属追番海报',
+    brandPrimary: '#D65B88',
+    brandSoft: '#E99EB9',
+    shadowRgb: '214, 91, 136',
+    showEdition: false,
+    firstDirectorOnly: true,
+    orderDirection: 'asc',
+    showBangumiRating: true,
+  },
   doubanTvAnime: {
     title: '豆瓣9分动画',
     slogan: '标记你追过的高分动画，生成专属追番海报',

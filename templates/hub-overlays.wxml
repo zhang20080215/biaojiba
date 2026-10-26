@@ -1,0 +1,145 @@
+  <!-- 片单/书单需求收集弹窗 -->
+  <view class="modal-overlay" hidden="{{!showRequestModal}}">
+    <view class="modal-mask" bindtap="onCloseRequestModal"></view>
+    <view class="modal-card">
+      <text class="modal-title">许愿新榜单</text>
+      <text class="modal-hint">想标记什么片单/书单，写下来告诉我们</text>
+
+      <view class="request-type-row">
+        <view class="request-type-chip {{requestType === 'movie' ? 'active' : ''}}" data-type="movie" bindtap="onRequestTypeTap">片单</view>
+        <view class="request-type-chip {{requestType === 'book' ? 'active' : ''}}" data-type="book" bindtap="onRequestTypeTap">书单</view>
+        <view class="request-type-chip {{requestType === 'other' ? 'active' : ''}}" data-type="other" bindtap="onRequestTypeTap">其他</view>
+      </view>
+
+      <textarea
+        class="request-textarea"
+        placeholder="例如：戛纳金棕榈获奖片单、茅盾文学奖书单…"
+        placeholder-class="input-placeholder"
+        maxlength="200"
+        value="{{requestContent}}"
+        bindinput="onRequestInput"
+      ></textarea>
+      <view class="request-count">{{requestContent.length}}/200</view>
+
+      <view class="modal-actions">
+        <button class="action-btn secondary" bindtap="onCloseRequestModal">取消</button>
+        <button class="action-btn primary" bindtap="onSubmitRequest">提交</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 授权弹窗 -->
+  <view class="modal-overlay" hidden="{{!showAuthModal}}">
+    <view class="modal-mask" bindtap="onCancelAuth"></view>
+    <view class="modal-card">
+      <text class="modal-title">完善个人资料</text>
+      <text class="modal-hint">设置头像和昵称，开始你的标记旅程</text>
+
+      <button class="avatar-picker" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+        <image class="picker-img" src="{{tempAvatar || '/images/default-avatar.svg'}}" mode="aspectFill"></image>
+        <text class="picker-tip">点击选择头像</text>
+      </button>
+
+      <view class="input-row">
+        <text class="input-label">昵称</text>
+        <input
+          type="nickname"
+          class="input-field"
+          placeholder="请输入昵称"
+          placeholder-class="input-placeholder"
+          bindinput="onNicknameInput"
+          value="{{tempNickname}}"
+        />
+      </view>
+
+      <view class="modal-actions">
+        <button class="action-btn secondary" bindtap="onCancelAuth">取消</button>
+        <button class="action-btn primary" bindtap="onConfirmAuth">保存</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 批量置顶管理面板 -->
+  <view class="pin-sheet" hidden="{{!showPinManager}}" catchtouchmove="onNoop">
+    <view class="pin-sheet-mask" bindtap="onClosePinManager"></view>
+    <view class="pin-sheet-body">
+      <view class="pin-sheet-head">
+        <text class="pin-sheet-title">管理收藏</text>
+        <text class="pin-sheet-sub">选择要收藏的主题或每日记录，原有顺序会保留</text>
+      </view>
+      <scroll-view scroll-y class="pin-list" enhanced show-scrollbar="{{false}}">
+        <view
+          wx:for="{{pinManagerList}}"
+          wx:key="id"
+          class="pin-item {{item.pinned ? 'on' : ''}}"
+          data-id="{{item.id}}"
+          bindtap="onTogglePinItem"
+          hover-class="pin-item-hover"
+        >
+          <view class="pin-item-info">
+            <text class="pin-item-title">{{item.title}}</text>
+            <text class="pin-item-tag">{{item.tag}}</text>
+          </view>
+          <view class="pin-check {{item.pinned ? 'on' : ''}}"><text wx:if="{{item.pinned}}">✓</text></view>
+        </view>
+      </scroll-view>
+      <view class="pin-actions">
+        <button class="action-btn secondary" bindtap="onClosePinManager">取消</button>
+        <button class="action-btn primary" bindtap="onSavePin">保存</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 主题选择面板 -->
+  <view class="theme-sheet" hidden="{{!showThemePicker}}">
+    <view class="theme-sheet-mask" bindtap="onToggleThemePicker"></view>
+    <view class="theme-sheet-body">
+      <text class="theme-sheet-title">选择主题色</text>
+      <view class="theme-sheet-options">
+        <view
+          class="theme-option {{themeClass === '' ? 'active' : ''}}"
+          data-theme="" bindtap="onThemeSelect"
+        >
+          <view class="theme-option-circle" style="background:#FAE0E4"></view>
+          <text class="theme-option-label">樱花粉</text>
+        </view>
+        <view
+          class="theme-option {{themeClass === 'theme-gold' ? 'active' : ''}}"
+          data-theme="theme-gold" bindtap="onThemeSelect"
+        >
+          <view class="theme-option-circle" style="background:#F7D66E"></view>
+          <text class="theme-option-label">暖金</text>
+        </view>
+        <view
+          class="theme-option {{themeClass === 'theme-green' ? 'active' : ''}}"
+          data-theme="theme-green" bindtap="onThemeSelect"
+        >
+          <view class="theme-option-circle" style="background:#9AAB65"></view>
+          <text class="theme-option-label">橄榄绿</text>
+        </view>
+        <view
+          class="theme-option {{themeClass === 'theme-sand' ? 'active' : ''}}"
+          data-theme="theme-sand" bindtap="onThemeSelect"
+        >
+          <view class="theme-option-circle" style="background:#F8F3E7; border: 2rpx solid #EDE7DA"></view>
+          <text class="theme-option-label">暖沙</text>
+        </view>
+      </view>
+
+      <!-- 会员码：加白管理靠它。这里只显示和复制，不放任何联系方式/价格/外链 -->
+      <view class="member-row" bindtap="onCopyMemberCode">
+        <view class="member-row-left">
+          <text class="member-row-label">我的会员码</text>
+          <text class="member-row-code">{{memberCodeShort || '获取中…'}}</text>
+        </view>
+        <view class="member-row-right">
+          <block wx:if="{{isAdFree}}">
+            <text class="member-expire" wx:if="{{vipExpireText}}">{{vipExpireText}}</text>
+            <text class="member-badge">已开通</text>
+          </block>
+          <text class="member-copy" wx:else>复制</text>
+        </view>
+      </view>
+    </view>
+  </view>
+

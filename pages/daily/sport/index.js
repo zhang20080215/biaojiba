@@ -100,7 +100,7 @@ Page({
     if (getCurrentPages().length > 1) {
       wx.navigateBack();
     } else {
-      wx.reLaunch({ url: '/pages/category/category' });
+      wx.switchTab({ url: '/pages/category/category' });
     }
   },
 
