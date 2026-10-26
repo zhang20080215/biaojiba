@@ -16,7 +16,7 @@
 //     title:        '史上最佳惊悚电影',
 //     description:  '……',
 //     tag:          '电影',                  // 封面左上角标签
-//     category:     'movie',                 // 筛选 tab：'movie' | 'oscar' | 'reading'
+//     category:     'movie',                 // 筛选 tab：'movie' | 'tv' | 'anime' | 'oscar' | 'reading' | 'travel' | 'parenting'
 //     newBadge:     true,                    // 是否显示 NEW 角标
 //     wishFrom:     '',                      // 「来自用户 X 的许愿」，空则不显示
 //     placeholderEmoji: '🔪',               // 封面图加载前/失败时的占位 emoji

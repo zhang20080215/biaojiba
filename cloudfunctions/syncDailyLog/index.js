@@ -82,6 +82,13 @@ async function mirrorCover(url, openid) {
                 const resp = await axios.get(small, { responseType: 'arraybuffer', timeout: 12000, headers: { 'User-Agent': ua } });
                 buffer = Buffer.from(resp.data);
             }
+        } else if (/^https:\/\/m\.media-amazon\.com\//i.test(url)) {
+            // IMDb 海报兜底：同样转存，保证每日电影列表与分享 canvas 使用云封面。
+            const resp = await axios.get(url, {
+                responseType: 'arraybuffer', timeout: 12000,
+                headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://www.imdb.com/' }
+            });
+            buffer = Buffer.from(resp.data);
         } else if (/^https?:\/\/[^/]*\bmtime\.cn/i.test(url)) {
             // 时光网封面（豆瓣搜不到的正片走时光网兜底）：带 Referer 下载后同样镜像到云存储，
             // 否则停留在 http 直链 → canvas 分享绘制器只认 cloud://，会画不出海报背景。

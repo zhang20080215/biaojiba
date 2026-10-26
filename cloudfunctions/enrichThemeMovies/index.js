@@ -8,6 +8,7 @@
 const cloud = require('wx-server-sdk');
 const axios = require('axios');
 const cheerio = require('cheerio');
+const { applyDoubanSourceSnapshot } = require('./doubanSourceSnapshot');
 
 cloud.init({
     env: cloud.DYNAMIC_CURRENT_ENV
@@ -69,10 +70,11 @@ function isDetailMatch(detail, year, originalTitle) {
  * 豆瓣 rexxar 详情接口：取标准片名/年份/原名/别名/封面/评分，用于候选校验 + 灌库数据。
  * URL/headers 复用 checkDoubanTitles 已验证的同款接口；失败时返回 null。
  */
-async function fetchDoubanDetail(doubanId) {
+async function fetchDoubanDetail(doubanId, deadline = Infinity) {
+    if (Date.now() >= deadline) return null;
     try {
         const res = await axios.get(`https://m.douban.com/rexxar/api/v2/movie/${doubanId}`, {
-            timeout: 10000,
+            timeout: Math.max(1, Math.min(10000, deadline - Date.now())),
             responseType: 'json',
             headers: {
                 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1',
@@ -114,7 +116,7 @@ async function fetchDoubanDetail(doubanId) {
  *   "至少过了质量闸门"的候选，标记 matchVerified:false 交给调用方汇总提醒人工核对；
  *   若连质量闸门都没有候选通过，直接返回 null（调用方会跳过该条，计入 unmatchedMovies）。
  */
-async function fetchDoubanInfo(originalTitle, chineseTitle, year) {
+async function fetchDoubanInfo(originalTitle, chineseTitle, year, animationOnly = false, deadline = Infinity) {
     const searchQueries = [
         chineseTitle && year ? `${chineseTitle} ${year}` : null,
         originalTitle && year ? `${originalTitle} ${year}` : null,
@@ -124,11 +126,14 @@ async function fetchDoubanInfo(originalTitle, chineseTitle, year) {
 
     let fallback = null; // 全程都没校验通过时兜底：首个成功查询的第一条候选
 
+    let truncated = false; // 截止时间打断了搜索：后面的查询本可能验证通过，不能拿兜底候选顶替
+
     for (const query of searchQueries) {
+        if (Date.now() >= deadline) { truncated = true; break; }
         try {
             const searchUrl = `https://m.douban.com/search/?query=${encodeURIComponent(query)}`;
             const res = await axios.get(searchUrl, {
-                timeout: 10000,
+                timeout: Math.max(1, Math.min(10000, deadline - Date.now())),
                 headers: {
                     'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1',
                     'Accept-Charset': 'utf-8'
@@ -154,13 +159,17 @@ async function fetchDoubanInfo(originalTitle, chineseTitle, year) {
             if (candidates.length === 0) continue;
 
             for (const cand of candidates.slice(0, MAX_VERIFY_PER_QUERY)) {
-                const detail = await fetchDoubanDetail(cand.doubanId);
+                if (Date.now() >= deadline) { truncated = true; break; }
+                const detail = await fetchDoubanDetail(cand.doubanId, deadline);
                 // 质量闸门先过：评分0/无封面/非电影（综艺、电视剧等）直接排除，连兜底候选都不当
-                if (!isBasicallyValid(detail)) {
+                if (!isBasicallyValid(animationOnly && detail ? { ...detail, subtype: 'movie' } : detail)) {
                     console.warn(`  -> 排除候选 doubanId=${cand.doubanId}（评分0或无封面或非电影 subtype=${detail && detail.subtype}），query: "${query}"`);
                     continue;
                 }
-                if (isDetailMatch(detail, year, originalTitle)) {
+                const animationMatch = animationOnly && detail && detail.year === year &&
+                    [detail.title, detail.originalTitle, ...(detail.aka || [])].some(name =>
+                        [originalTitle, chineseTitle].filter(Boolean).some(target => normalizeForMatch(name) === normalizeForMatch(target)));
+                if (animationOnly ? animationMatch : isDetailMatch(detail, year, originalTitle)) {
                     console.log(`  -> 已验证匹配 doubanId=${cand.doubanId}「${detail.title}」, query: "${query}"`);
                     return {
                         doubanId: cand.doubanId,
@@ -173,13 +182,17 @@ async function fetchDoubanInfo(originalTitle, chineseTitle, year) {
                         matchVerified: true
                     };
                 }
-                if (!fallback) fallback = { cand, detail, query };
+                if (!animationOnly && !fallback) fallback = { cand, detail, query };
             }
         } catch (error) {
             console.error(`Fetch douban info failed for "${query}":`, error.message);
         }
     }
 
+    if (truncated) {
+        console.warn(`  -> 搜索被截止时间打断，本条留待接力重试：${chineseTitle || originalTitle}`);
+        return null;
+    }
     if (fallback) {
         console.warn(`  -> [未验证匹配] 兜底 doubanId=${fallback.cand.doubanId}，query: "${fallback.query}"，需人工核对`);
         return {
@@ -199,19 +212,22 @@ async function fetchDoubanInfo(originalTitle, chineseTitle, year) {
 /**
  * 下载图片并上传至云存储，失败时回退原图 URL
  */
-async function downloadAndUploadImage(imageUrl, theme, movieId) {
+async function downloadAndUploadImage(imageUrl, theme, movieId, timeout = 15000, onFailure = null) {
     try {
         const highResUrl = imageUrl.replace('/s_ratio_poster/', '/m_ratio_poster/');
 
         const response = await axios({
             url: highResUrl,
             responseType: 'arraybuffer',
-            timeout: 15000,
+            timeout,
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                'Referer': 'https://movie.douban.com/'
+                'Referer': imageUrl.includes('bgm.tv') ? 'https://bangumi.tv/' : imageUrl.includes('anilist.co') ? 'https://anilist.co/' : 'https://movie.douban.com/'
             }
         });
+
+        const contentType = String(response.headers && response.headers['content-type'] || '');
+        if (contentType && !contentType.startsWith('image/')) throw new Error(`封面返回非图片：${contentType}`);
 
         const fileName = `${theme}_covers/${movieId}_${Date.now()}.jpg`;
         const uploadResult = await cloud.uploadFile({
@@ -222,9 +238,84 @@ async function downloadAndUploadImage(imageUrl, theme, movieId) {
         return uploadResult.fileID;
 
     } catch (e) {
+        if (onFailure) onFailure({ url: imageUrl, status: e.response && e.response.status || null, code: e.code || '', message: e.message });
         console.warn(`Image download failed for ${movieId}, fallback to original url`, e.message);
         return imageUrl;
     }
+}
+
+// 封面补转存：每次只处理一条（外链图源慢，单条就可能吃掉大半预算），靠 autoContinue 接力。
+async function backfillCovers(theme, startFrom, autoContinue, startedAt, coverIds = null, coverTimeoutMs = 20000) {
+    let list = await fetchExistingByTheme(theme);
+    if (Array.isArray(coverIds)) {
+        const selectedIds = new Set(coverIds.map(String));
+        list = list.filter(m => [m._id, m.bangumiId, m.doubanId].some(id => id != null && selectedIds.has(String(id))));
+    }
+    list.sort((a, b) => String(a._id).localeCompare(String(b._id)));
+    let cursor = Number(startFrom) || 0;
+    let attempted = 0, updated = 0;
+    const failed = [];
+    const requestTimeout = Math.min(20000, Math.max(6000, Number(coverTimeoutMs) || 20000));
+    for (; cursor < list.length; cursor++) {
+        if (attempted >= 1 || Date.now() - startedAt >= 30000) break;
+        const doc = list[cursor];
+        if (doc.cover && doc.cover.startsWith('cloud://')) continue;
+        attempted++;
+        const urls = [...new Set([doc.alternativeCoverUrl, doc.coverUrl, doc.sourceCoverUrl, doc.bangumiCover, doc.cover].filter(u => /^https?:\/\//.test(u || '')))];
+        let cover = '';
+        const errors = [];
+        for (const url of urls.slice(0, 2)) {
+            const remaining = 30000 - (Date.now() - startedAt);
+            if (remaining <= 0) break;
+            const result = await downloadAndUploadImage(url, theme, doc._id, Math.min(requestTimeout, remaining), error => errors.push(error));
+            if (result && result.startsWith('cloud://')) { cover = result; break; }
+        }
+        if (!cover) { failed.push({ id: doc._id, rank: doc.rank, title: doc.title, errors }); continue; }
+        await collection.doc(doc._id).update({ data: { cover, updateTime: db.serverDate() } });
+        updated++;
+    }
+    const stoppedEarly = cursor < list.length;
+    let autoChained = false;
+    if (stoppedEarly && autoContinue && cursor > Number(startFrom || 0)) {
+        cloud.callFunction({ name: 'enrichThemeMovies', data: { theme, backfillCovers: true, coverTimeoutMs: requestTimeout, startFrom: cursor, autoContinue: true, ...(coverIds ? { coverIds } : {}) } })
+            .catch(e => console.error('封面修复接力失败:', e.message));
+        await new Promise(resolve => setTimeout(resolve, 1200));
+        autoChained = true;
+    }
+    console.log('[backfillCovers]', JSON.stringify({ attempted, updated, failed, nextStartFrom: cursor, stoppedEarly }));
+    return { success: true, attempted, updated, failed, stoppedEarly, autoChained, nextStartFrom: stoppedEarly ? cursor : 0 };
+}
+
+async function replaceBangumiSelection(movieList) {
+    if (!Array.isArray(movieList) || movieList.length !== 250 ||
+        new Set(movieList.map(m => String(m.bangumiId))).size !== 250 ||
+        movieList.some((m, i) => m.rank !== i + 1 || !m.bangumiId || !m.title)) {
+        return { success: false, error: '名单必须是250个不同Bangumi ID，按1..250排序' };
+    }
+    const removedIds = new Set(['1773', '72266']);
+    if (movieList.some(m => removedIds.has(String(m.bangumiId)))) return { success: false, error: '名单仍包含指定移除作品' };
+    const existing = await fetchExistingByTheme('bangumi250');
+    const byId = new Map(existing.map(m => [String(m.bangumiId), m]));
+    const selected = new Set(movieList.map(m => String(m.bangumiId)));
+    if (existing.some(m => !selected.has(String(m.bangumiId)) && !removedIds.has(String(m.bangumiId)))) {
+        return { success: false, error: '库内存在其他离榜条目，停止更新以便核对' };
+    }
+    for (let i = 0; i < movieList.length; i += 20) {
+        await Promise.all(movieList.slice(i, i + 20).map(async m => {
+            const old = byId.get(String(m.bangumiId));
+            if (old) {
+                await collection.doc(old._id).update({ data: { rank: m.rank, sourceRank: m.sourceRank, updateTime: db.serverDate() } });
+            } else {
+                const data = { ...m, theme: 'bangumi250', cover: m.bangumiCover || '', coverUrl: m.bangumiCover || '',
+                    rating: 0, ratingCount: 0, createTime: db.serverDate(), updateTime: db.serverDate() };
+                delete data._id;
+                await collection.doc(`bangumi250_subject_${m.bangumiId}`).set({ data });
+            }
+        }));
+    }
+    // 仅移除用户指定的两条榜单文档，不删除用户标记。
+    for (const old of existing.filter(m => removedIds.has(String(m.bangumiId)))) await collection.doc(old._id).remove();
+    return { success: true, total: 250, removedBangumiIds: [...removedIds], added: movieList.filter(m => !byId.has(String(m.bangumiId))).map(m => ({ rank: m.rank, title: m.title, bangumiId: m.bangumiId })) };
 }
 
 // 灌库前自检：写库前把脏数据/字段问题挡下（与 tools/validate-seed.js 同源的精简版）。
@@ -240,7 +331,7 @@ function validateMovieList(movieList) {
         if (!m || typeof m !== 'object') { errors.push(`${tag}: 非对象`); return; }
         if (typeof m.rank !== 'number') errors.push(`${tag}: rank 非数字`);
         else { if (ranks.has(m.rank)) errors.push(`${tag}: rank 重复`); ranks.add(m.rank); }
-        if (typeof m.year !== 'number' || m.year < 1910 || m.year > curYear + 1) errors.push(`${tag}: year 非法(${m.year})`);
+        if (!Number.isInteger(m.year) || m.year < 1888 || m.year > curYear + 1) errors.push(`${tag}: year 非法(${m.year})`);
         if (!m.title || !String(m.title).trim()) errors.push(`${tag}: title 为空`);
         if (!m.originalTitle || !String(m.originalTitle).trim()) warns.push(`${tag}: originalTitle 为空`);
         ['title', 'originalTitle', 'director', 'country'].forEach(k => { if (m[k] && DIRTY.test(String(m[k]))) warns.push(`${tag}: ${k} 含可疑字符 → "${m[k]}"`); });
@@ -423,7 +514,9 @@ async function rerankByWeightedRating(theme, opts) {
 
 exports.main = async (event, context) => {
     const START_TIME = Date.now();
-    const TIME_LIMIT = 45000;
+    // 为数据库落盘及接力预留时间；搜索内部也遵守同一截止时间。
+    const TIME_LIMIT = 30000;
+    const DEADLINE = START_TIME + TIME_LIMIT;
 
     const {
         theme,
@@ -437,6 +530,70 @@ exports.main = async (event, context) => {
 
     if (!theme) {
         return { success: false, error: '缺少 theme 参数' };
+    }
+
+    // 先登记核对后的备用图片地址；实际下载由 backfillCovers 分批执行。
+    if (event && event.alternativeCovers) {
+        if (theme !== 'bangumi250' || !Array.isArray(event.alternativeCovers) || !event.alternativeCovers.length || event.alternativeCovers.length > 50) {
+            return { success: false, error: 'alternativeCovers需提供1..50条Bangumi封面映射' };
+        }
+        const existing = await fetchExistingByTheme(theme);
+        const byId = new Map(existing.map(m => [String(m.bangumiId), m]));
+        const seen = new Set();
+        for (const item of event.alternativeCovers) {
+            if (!byId.has(String(item.bangumiId)) || seen.has(String(item.bangumiId)) ||
+                !/^https:\/\/s[0-9]+\.anilist\.co\//.test(item.coverUrl || '') ||
+                !/^https:\/\/anilist\.co\/anime\/\d+/.test(item.coverSourceUrl || '')) {
+                return { success: false, error: `备用封面校验失败：${item.bangumiId}` };
+            }
+            seen.add(String(item.bangumiId));
+        }
+        for (const item of event.alternativeCovers) {
+            await collection.doc(byId.get(String(item.bangumiId))._id).update({ data: {
+                alternativeCoverUrl: item.coverUrl, coverSource: 'anilist',
+                coverSourceUrl: item.coverSourceUrl, updateTime: db.serverDate()
+            } });
+        }
+        return { success: true, mode: 'alternativeCovers', updated: event.alternativeCovers.length };
+    }
+
+    // 人工核对的评分直接补录；先全量校验身份，再写入，不请求豆瓣。
+    if (event && event.manualRatings) {
+        if (theme !== 'bangumi250' || !Array.isArray(event.manualRatings) || !event.manualRatings.length || event.manualRatings.length > 50) {
+            return { success: false, error: 'manualRatings仅支持bangumi250，需提供1..50条记录' };
+        }
+        const list = await fetchExistingByTheme(theme);
+        const byId = new Map(list.map(m => [String(m.bangumiId), m]));
+        const seen = new Set();
+        for (const item of event.manualRatings) {
+            const id = String(item.bangumiId || '');
+            const old = byId.get(id);
+            if (!old || seen.has(id) || String(old.doubanId || '') !== String(item.doubanId || '') || !item.doubanId ||
+                typeof item.rating !== 'number' || !Number.isFinite(item.rating) || item.rating <= 0 || item.rating > 10) {
+                return { success: false, error: `人工评分身份或分值校验失败：Bangumi ${id}` };
+            }
+            seen.add(id);
+        }
+        for (const item of event.manualRatings) {
+            const old = byId.get(String(item.bangumiId));
+            await collection.doc(old._id).update({ data: {
+                rating: item.rating,
+                ratingSource: 'douban_manual',
+                ratingSourceUrl: `https://movie.douban.com/subject/${item.doubanId}/`,
+                ratingVerifiedAt: db.serverDate(),
+                updateTime: db.serverDate()
+            } });
+        }
+        return { success: true, mode: 'manualRatings', updated: event.manualRatings.length };
+    }
+
+    if (event && event.replaceSelection) {
+        if (theme !== 'bangumi250') return { success: false, error: 'replaceSelection仅支持bangumi250' };
+        return await replaceBangumiSelection(movieList);
+    }
+
+    if (event && event.backfillCovers) {
+        return await backfillCovers(theme, startFrom, autoContinue, START_TIME, event.coverIds || null, event.coverTimeoutMs);
     }
 
     // 重排模式：不吃 movieList，直接按库内已有的评分/评分人数重算 rank 并回写。
@@ -481,7 +638,9 @@ exports.main = async (event, context) => {
         const existingList = await fetchExistingByTheme(theme);
         const existingByRank = {};
         const existingByTitleYear = {};
+        const existingByBangumiId = {};
         existingList.forEach(m => {
+            if (m.bangumiId) existingByBangumiId[String(m.bangumiId)] = m;
             if (m.rank != null) existingByRank[m.rank] = m;
             if (m.originalTitle != null && m.year != null) {
                 existingByTitleYear[`${m.originalTitle}__${m.year}`] = m;
@@ -542,7 +701,9 @@ exports.main = async (event, context) => {
                 continue;
             }
 
-            const existingDoc = idStrategy === 'title-year'
+            const existingDoc = theme === 'bangumi250'
+                ? existingByBangumiId[String(movieTarget.bangumiId)]
+                : idStrategy === 'title-year'
                 ? existingByTitleYear[`${originalTitle}__${year}`]
                 : (existingByRank[rank] && !claimedIds.has(existingByRank[rank]._id) ? existingByRank[rank] : null);
 
@@ -559,7 +720,7 @@ exports.main = async (event, context) => {
                 // 名单本身没带导演/国家（比如 oscarScreenplay 只有片名+年份）且库里也缺：
                 // doubanId 已知，查一次详情补齐，不重新搜索/不重下封面
                 if ((!existingDoc.director || !existingDoc.country) && existingDoc.doubanId) {
-                    const detail = await fetchDoubanDetail(existingDoc.doubanId);
+                    const detail = await fetchDoubanDetail(existingDoc.doubanId, DEADLINE);
                     if (detail) {
                         if (!existingDoc.director && !patch.director && detail.directors) patch.director = detail.directors;
                         if (!existingDoc.country && !patch.country && detail.countries) patch.country = detail.countries;
@@ -578,7 +739,7 @@ exports.main = async (event, context) => {
             let doubanInfo;
             if (movieTarget.doubanId) {
                 console.log(`[enrichThemeMovies] 使用名单手动指定的 doubanId=${movieTarget.doubanId}: ${title}`);
-                const detail = await fetchDoubanDetail(movieTarget.doubanId);
+                const detail = await fetchDoubanDetail(movieTarget.doubanId, DEADLINE);
                 doubanInfo = detail ? {
                     doubanId: movieTarget.doubanId,
                     coverUrl: detail.coverUrl || '',
@@ -591,7 +752,18 @@ exports.main = async (event, context) => {
                 } : null;
             } else {
                 console.log(`[enrichThemeMovies] 搜索豆瓣: ${title} / ${originalTitle} (${year})`);
-                doubanInfo = await fetchDoubanInfo(originalTitle, title, year);
+                // 动画允许剧集，但必须同年且完整标题/别名精确命中；不采纳仅年份相同的候选。
+                const searchDeadline = theme === 'bangumi250' ? Math.min(DEADLINE, Date.now() + 15000) : DEADLINE;
+                doubanInfo = await fetchDoubanInfo(originalTitle, title, year, theme === 'bangumi250', searchDeadline);
+            }
+
+            // 校验豆瓣来源、同条目ID及评分/封面后兜底，新增榜单无需修改主题白名单。
+            doubanInfo = applyDoubanSourceSnapshot(movieTarget, doubanInfo);
+
+            // 本条未完成就续跑同一索引，避免把预算耗尽当成永久匹配失败。
+            if (!doubanInfo && Date.now() >= DEADLINE) {
+                stoppedEarly = true;
+                break;
             }
 
             if (doubanInfo) {
@@ -612,6 +784,7 @@ exports.main = async (event, context) => {
                 const naturalRankId = `${theme}_${rank}`;
                 const docId = existingDoc
                     ? existingDoc._id
+                    : theme === 'bangumi250' ? `${theme}_subject_${movieTarget.bangumiId}`
                     : (idStrategy === 'title-year' || claimedIds.has(naturalRankId)
                         ? `${theme}_${slugify(originalTitle)}_${year}`
                         : naturalRankId);
@@ -620,7 +793,7 @@ exports.main = async (event, context) => {
                     ...movieTarget,
                     theme,
                     doubanId: doubanInfo.doubanId,
-                    coverUrl: doubanInfo.coverUrl,
+                    coverUrl: doubanInfo.coverUrl || (theme === 'bangumi250' ? movieTarget.bangumiCover || '' : ''),
                     rating: doubanInfo.rating,
                     ratingCount: doubanInfo.ratingCount || 0,
                     updateTime: db.serverDate()
@@ -640,12 +813,18 @@ exports.main = async (event, context) => {
                 }
 
                 if (finalMovieData.coverUrl) {
-                    finalMovieData.cover = await downloadAndUploadImage(finalMovieData.coverUrl, theme, docId);
+                    finalMovieData.cover = theme === 'bangumi250'
+                        ? finalMovieData.coverUrl
+                        : await downloadAndUploadImage(finalMovieData.coverUrl, theme, docId);
                 } else {
                     finalMovieData.cover = '';
                 }
 
                 if (existingDoc) {
+                    if (movieTarget.preserveCover && existingDoc.cover) {
+                        finalMovieData.cover = existingDoc.cover;
+                        finalMovieData.coverUrl = existingDoc.coverUrl || existingDoc.cover;
+                    }
                     if (!forceRefresh && existingDoc.cover && existingDoc.cover.startsWith('cloud://')) {
                         delete finalMovieData.cover;
                     }
@@ -656,6 +835,26 @@ exports.main = async (event, context) => {
                     toAdd.push(finalMovieData);
                 }
             } else {
+                if (theme === 'bangumi250') {
+                    const docId = existingDoc ? existingDoc._id : `${theme}_subject_${movieTarget.bangumiId}`;
+                    const data = { ...movieTarget, theme, rating: 0, ratingCount: 0,
+                        coverUrl: movieTarget.bangumiCover || '',
+                        cover: movieTarget.bangumiCover || '',
+                        updateTime: db.serverDate() };
+                    delete data._id;
+                    if (movieTarget.preserveCover && existingDoc && existingDoc.cover) {
+                        data.cover = existingDoc.cover;
+                        data.coverUrl = existingDoc.coverUrl || existingDoc.cover;
+                    }
+                    // 临时豆瓣详情请求失败时保留已有评分。
+                    if (existingDoc && existingDoc.doubanId === movieTarget.doubanId) {
+                        data.rating = existingDoc.rating || 0;
+                        data.ratingCount = existingDoc.ratingCount || 0;
+                        data.cover = existingDoc.cover || data.cover;
+                    }
+                    if (existingDoc) toUpdate.push({ _id: docId, data });
+                    else toAdd.push({ ...data, _id: docId, createTime: db.serverDate() });
+                }
                 console.warn(`[enrichThemeMovies] 豆瓣未匹配到: ${title} / ${originalTitle}`);
                 // 手动指定 doubanId 时走的是直接取详情（非搜索候选），失败原因跟"候选全被质量闸门拦下"不是一回事，
                 // 常见是豆瓣临时限流/反爬验证（need_permission），消息分开避免误导排查方向

@@ -52,6 +52,40 @@ exports.main = async (event, context) => {
             .where({ theme })
             .orderBy(orderByField, orderDirection);
 
+        // 运维检查：精简、分页，不读取用户标记；不改变默认列表响应。
+        if (event && event.audit) {
+            const movies = await readAll(moviesQuery);
+            const missingId = m => !m.doubanId;
+            const missingRating = m => !(Number(m.rating) > 0);
+            // 地址存在并不保证图片可加载；外链单独统计供转存检查。
+            const coverOf = m => m.cover || m.coverUrl || m.originalCover || m.bangumiCover || '';
+            const missingCover = m => !coverOf(m);
+            const externalCover = m => /^https?:\/\//.test(coverOf(m));
+            const missingAny = m => missingId(m) || missingRating(m) || missingCover(m);
+            const summary = {
+                total: movies.length,
+                missingDoubanId: movies.filter(missingId).length,
+                missingRating: movies.filter(missingRating).length,
+                missingCover: movies.filter(missingCover).length,
+                externalCover: movies.filter(externalCover).length,
+                missingAny: movies.filter(missingAny).length
+            };
+            if (event.summaryOnly) return { success: true, summary };
+            const filters = { missing: missingAny, missingId, missingRating, missingCover, externalCover, all: () => true };
+            const filter = event.filter || 'missing';
+            if (!filters[filter]) return { success: false, error: '未知 audit filter', summary };
+            const matches = movies.filter(filters[filter]);
+            const offset = Math.max(0, Math.floor(Number(event.offset) || 0));
+            const limit = Math.min(50, Math.max(1, Math.floor(Number(event.limit) || 20)));
+            const items = matches.slice(offset, offset + limit).map(m => ({
+                id: m._id, rank: m.rank, title: m.title, bangumiId: m.bangumiId || '',
+                doubanId: m.doubanId || '', rating: m.rating || 0,
+                hasCover: !!coverOf(m), externalCover: externalCover(m)
+            }));
+            return { success: true, summary, filter, matched: matches.length, items,
+                nextOffset: offset + items.length < matches.length ? offset + items.length : null };
+        }
+
         const [movies, marks] = await Promise.all([
             readAll(moviesQuery),
             openid ? readAll(db.collection('Marks').where({ openid })) : Promise.resolve([])
