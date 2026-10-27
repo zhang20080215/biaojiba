@@ -81,12 +81,10 @@ function switchTo(kind, data) {
   wx.switchTab({ url: PATHS[kind], fail: () => { intent = null; wx.showToast({ title: '页面打开失败', icon: 'none' }); } });
 }
 function takeIntent(kind) { if (!intent || intent.kind !== kind) return null; const data = intent.data; intent = null; return data; }
-function applyTabStyle(theme) {
-  const selected = { 'theme-green': '#526631', 'theme-gold': '#856216', 'theme-sand': '#756448', '': '#9F4865' }[theme] || '#526631';
-  if (wx.setTabBarStyle) wx.setTabBarStyle({ color: '#77776D', selectedColor: selected, backgroundColor: '#FAFAFA', borderStyle: 'white' });
-  const suffix = { 'theme-green': '', 'theme-gold': '-gold', 'theme-sand': '-sand', '': '-pink' }[theme] || '';
-  if (wx.setTabBarItem) ['home', 'discover', 'records', 'profile'].forEach((name, index) => {
-    wx.setTabBarItem({ index, selectedIconPath: 'images/tabs/' + name + '-active' + suffix + '.png' });
-  });
+// 底部 tab 是自定义组件（custom-tab-bar/，为了能按云端开关隐藏「记录」），
+// 原生 setTabBarStyle/setTabBarItem 对它无效：选中态与主题色直接推给本页的 tabBar 实例。
+function applyTabStyle(theme, page, kind) {
+  const bar = page && typeof page.getTabBar === 'function' && page.getTabBar();
+  if (bar && bar.sync) bar.sync(kind, theme);
 }
 module.exports = { readStats, loadStats, readHistory, remember, invalidateSummary, loadSummary, switchTo, takeIntent, applyTabStyle };

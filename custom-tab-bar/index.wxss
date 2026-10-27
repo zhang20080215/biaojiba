@@ -1,0 +1,28 @@
+/* 尺寸对齐原生 tabBar：48px 高 + 底部安全区，图标 24px、文字 10px */
+.tab-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 48px;
+  padding-bottom: env(safe-area-inset-bottom);
+  background: #FAFAFA;
+  display: flex;
+  border-top: 1rpx solid rgba(0, 0, 0, 0.04);
+}
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.tab-icon {
+  width: 24px;
+  height: 24px;
+}
+.tab-text {
+  font-size: 10px;
+  line-height: 14px;
+  margin-top: 2px;
+}
