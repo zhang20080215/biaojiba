@@ -417,9 +417,14 @@ function preload(placementName, page) {
 
 /**
  * 展示激励广告
+ * @param {object} [opts] abandonToast：用户中途关掉时的提示（默认是保存海报的文案）；
+ *                        outcome：传一个空对象进来，结算时写入 outcome.value = watched|abandoned|failed
  * @returns {Promise<boolean>} true = 放行保存，false = 用户中途关闭
  */
-function show(placementName, page) {
+function show(placementName, page, opts) {
+  var outcomeBox = (opts && opts.outcome) || null
+  var abandonToast = (opts && opts.abandonToast) || '未完整观看广告，暂无法保存'
+  if (outcomeBox) outcomeBox.value = 'failed'
   var ad = _acquire(placementName, page)
   if (!ad) {
     // 无广告位/不支持：直接放行，记为无实例（无收入）
@@ -530,10 +535,12 @@ function show(placementName, page) {
 
     waiter.onClose = function (res) {
       if (res === undefined || (res && res.isEnded)) {
+        if (outcomeBox) outcomeBox.value = 'watched'
         finish(true, 'watched')
         return
       }
-      wx.showToast({ title: '未完整观看广告，暂无法保存', icon: 'none' })
+      if (outcomeBox) outcomeBox.value = 'abandoned'
+      wx.showToast({ title: abandonToast, icon: 'none' })
       finish(false, 'abandoned')
     }
 
@@ -616,8 +623,20 @@ function show(placementName, page) {
   return promise
 }
 
+/**
+ * 「看完才给」的激励：show() 为了不挡用户存图，把广告侧失败也当成放行（resolve true），
+ * 发放权益的场景不能这么算。这里只认 onClose 的 isEnded。
+ * 连点时第二次调用拿到的是第一次的 promise，outcome 不会被写，按 failed 处理，不会重复发放。
+ * @returns {Promise<'watched'|'abandoned'|'failed'>}
+ */
+function showForReward(placementName, page, abandonToast) {
+  var box = { value: 'failed' }
+  return show(placementName, page, { outcome: box, abandonToast: abandonToast }).then(function () { return box.value })
+}
+
 module.exports = {
   preload,
   show,
+  showForReward,
   isCircuitOpen,
 }

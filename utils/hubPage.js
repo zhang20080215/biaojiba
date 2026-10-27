@@ -7,9 +7,11 @@ const hubIcons = require('./hubIcons');
 const wishLike = require('./wishLike');
 const { track } = require('./track');
 var adConfig = require('./adConfig')
+var rewardedAdManager = require('./rewardedAdManager')
 var { awaitOpenid } = require('./openidWaiter.js')
 var userStore = require('./userStore.js')
 var themeRegistry = require('./themeRegistry.js')
+var customList = require('../pages/customList/common.js')
 
 // 用户对分类页的本地偏好（跨会话保留）：置顶主题 id 列表 + 卡片展示模式
 // 「我的 → 我的收藏」直接沿用旧首页置顶数据及顺序，不新建存储键或覆盖迁移；分类页卡片右上角的星标读写的也是这份数据。
@@ -144,6 +146,8 @@ module.exports = function createHubPage(pageKind) {
     wishLikes: 0, wishTotalText: '100+', likePop: '', likeBursts: [],
     pageTitle: { home: '标记吧', discover: '分类', records: '记录', profile: '我的' }[pageKind],
     discoverSection: 'lists', dailyThemes: [],
+    // 分类页「自定义」分区：用户自建影单/书单，切到该分区才读（customList mine）
+    customCards: customList.buildCards([], null), customState: 'idle', customError: '', customMaxItems: customList.MAX_ITEMS,
     personalTab: 'common', personalExpanded: false, personalThemes: [], personalTotal: 0,
     personalTabs: [{id:'common',label:'我的收藏'},{id:'recent',label:'最近使用'},{id:'marked',label:'标记进度'}],
     timelineRows: [], timelineLoading: false, timelineOffline: false, timelineHasMore: false,
@@ -181,9 +185,21 @@ module.exports = function createHubPage(pageKind) {
     // 骞垮憡鐩稿叧
     showNativeAd: false,
     showTopAd: false,
+    // 分类页标签线下的原生位：showDiscoverAd 决定挂不挂组件，discoverAdReady 等广告真正渲染出来才描边，免得空框先露出来
+    showDiscoverAd: false,
+    discoverAdReady: false,
+    // 「我的」头像卡下的原生位，同样等渲染出来才占位、描边
+    showProfileAd: false,
+    profileAdReady: false,
+    // 首页搜索下方 tips 条：看一段视频换 30 分钟不展示页面广告（adConfig.grantAdFreePass）。
+    // 会员不出；激励位被云端关掉也不出；生效期间换成「HH:MM 前不展示广告」
+    showAdFreeTip: false,
+    adFreePassUntilText: '',
     adUnitIds: {
       category_native: adConfig.getAdUnitId('category_native') || '',
       home_top_native: '',
+      discover_tab_native: '',
+      profile_top_native: '',
     },
     themes: require('./themeCatalog').map(t => ({ ...t })).concat(GAME_BLOCKS.filter(g => !g.hidden).map(g => ({ ...g, id: g.key, category: 'game', tag: '玩法', description: g.sub, placeholderEmoji: g.emoji }))),
     filteredThemes: [],
@@ -533,6 +549,7 @@ module.exports = function createHubPage(pageKind) {
     if (!this._firstShow && (pageKind === 'home' || pageKind === 'discover')) this.loadUserCounts();
     if (!this._firstShow && pageKind === 'profile') this.loadPersonalSummary();
     if (!this._firstShow && pageKind === 'records') this.loadTimeline();
+    if (!this._firstShow && pageKind === 'discover' && this.data.discoverSection === 'custom') this.loadCustomLists();
     this._firstShow = false;
   },
 
@@ -542,6 +559,7 @@ module.exports = function createHubPage(pageKind) {
 
   onUnload() {
     if (recordsLocked) this._flushWishLikes();
+    if (this._adFreePassTimer) { clearTimeout(this._adFreePassTimer); this._adFreePassTimer = null; }
     // syncMemberCode 的 openid 等待可能晚于页面销毁返回，落 setData 会往已销毁的
     // 父节点插节点（insertTextView:fail parent not found）
     this._pageUnloaded = true;
@@ -944,12 +962,72 @@ module.exports = function createHubPage(pageKind) {
     const unitId = pageKind === 'home' ? (adConfig.getAdUnitId('category_native') || '') : '';
     // 「最新上线」上方的原生位，与底部原生位各自独立开关、各自失败隐藏
     const topUnitId = pageKind === 'home' ? (adConfig.getAdUnitId('home_top_native') || '') : '';
+    const discoverUnitId = pageKind === 'discover' ? (adConfig.getAdUnitId('discover_tab_native') || '') : '';
+    const profileUnitId = pageKind === 'profile' ? (adConfig.getAdUnitId('profile_top_native') || '') : '';
     this.setData({
       'adUnitIds.category_native': unitId,
       showNativeAd: !!unitId,
       'adUnitIds.home_top_native': topUnitId,
       showTopAd: !!topUnitId,
+      'adUnitIds.discover_tab_native': discoverUnitId,
+      showDiscoverAd: !!discoverUnitId,
+      'adUnitIds.profile_top_native': profileUnitId,
+      showProfileAd: !!profileUnitId,
     });
+    this.syncAdFreePass();
+  },
+
+  // 通行证状态 → tips 条文案；生效中就按到期时间定一个闹钟，到点重新取广告位（广告恢复、tips 条变回邀请）
+  syncAdFreePass() {
+    const until = adConfig.getAdFreePassUntil();
+    if (this._adFreePassTimer) { clearTimeout(this._adFreePassTimer); this._adFreePassTimer = null; }
+    if (until && !this._pageUnloaded) {
+      this._adFreePassTimer = setTimeout(() => {
+        this._adFreePassTimer = null;
+        if (!this._pageUnloaded) this.initAds();
+      }, Math.max(0, until - Date.now()) + 1000);
+    }
+    if (pageKind !== 'home') return;
+    const offer = !adConfig.isAdFree() && !!adConfig.getAdUnitId('adfree_pass_rewarded');
+    const pad = n => (n < 10 ? '0' : '') + n;
+    const d = until ? new Date(until) : null;
+    this.setData({
+      showAdFreeTip: !adConfig.isAdFree() && (!!until || offer),
+      adFreePassUntilText: d ? pad(d.getHours()) + ':' + pad(d.getMinutes()) : '',
+    });
+  },
+
+  // tips 条上的问号：说清哪些广告不在 30 分钟范围内（与 adConfig.getPlacement 跳过的激励位一一对应，
+  // 封面广告是流量主后台配的开屏位，代码管不着）
+  onAdFreeHelp() {
+    wx.showModal({
+      title: '30 分钟无页面广告',
+      // 弹窗正文在真机上居中排版，项目符号列表居中后圆点参差不齐，所以写成三行长度相近的短句。
+      // 用用户看得见的说法：页面上的广告 = banner / 原生，弹出的广告 = 插屏，开屏广告 = 封面广告
+      content: '页面上的广告、弹出的广告都会暂停\n打开小程序时的开屏广告照常显示\n保存海报、填字换提示仍需看视频',
+      showCancel: false,
+      confirmText: '知道了',
+    });
+  },
+
+  async onWatchAdFreeVideo() {
+    if (this._adFreeWatching || this.data.adFreePassUntilText) return;
+    this._adFreeWatching = true;
+    try {
+      const outcome = await rewardedAdManager.showForReward('adfree_pass_rewarded', this, '看完视频才能生效');
+      track('adfree_pass', { result: outcome });
+      if (outcome === 'watched') {
+        adConfig.grantAdFreePass();
+        this.initAds();
+        wx.showToast({ title: '页面广告已关闭 30 分钟', icon: 'none' });
+      } else if (outcome === 'failed') {
+        wx.showToast({ title: '暂时没有可播放的视频，请稍后再试', icon: 'none' });
+      }
+    } catch (e) {
+      wx.showToast({ title: '暂时没有可播放的视频，请稍后再试', icon: 'none' });
+    } finally {
+      this._adFreeWatching = false;
+    }
   },
 
   onOpenTheme(e) {
@@ -965,7 +1043,27 @@ module.exports = function createHubPage(pageKind) {
     hubStore.switchTo('discover', { category: data.category || 'all', sort: data.sort || 'popular', query: data.query || '' });
   },
   onHomeSearch(e) { hubStore.switchTo('discover', { query: (e.detail && e.detail.value) || this.data.searchQuery || '' }); },
-  onDiscoverSection(e) { this.setData({ discoverSection: e.currentTarget.dataset.section }); },
+  onDiscoverSection(e) {
+    const section = e.currentTarget.dataset.section;
+    this.setData({ discoverSection: section });
+    if (section === 'custom') this.loadCustomLists();
+  },
+  // 首次读显示「读取中」，之后（从编辑页回来等）静默刷新，读失败也保留已有卡片
+  loadCustomLists() {
+    if (this._customLoading) return this._customLoading;
+    const first = this.data.customState !== 'ready';
+    if (first) this.setData({ customState: 'loading', customError: '' });
+    this._customLoading = customList.callList('mine').then(res => {
+      if (!this._pageUnloaded) this.setData({ customCards: customList.buildCards(res.lists || [], res.quota), customState: 'ready', customError: '' });
+    }, err => {
+      if (!this._pageUnloaded && first) this.setData({ customState: 'error', customError: err.message || '网络异常，请重试' });
+    }).then(() => { this._customLoading = null; });
+    return this._customLoading;
+  },
+  _customCard(e) { return this.data.customCards.find(c => c.type === e.currentTarget.dataset.type); },
+  onCustomOpen(e) { const card = this._customCard(e); if (card && card.list) wx.navigateTo({ url: customList.listUrl(card.list) }); },
+  onCustomEdit(e) { const card = this._customCard(e); if (card && card.list) wx.navigateTo({ url: '/pages/customList/edit/edit?listId=' + card.list._id }); },
+  onCustomCreate(e) { const card = this._customCard(e); if (card && card.canCreate) customList.promptCreate(card.type); },
   onPersonalTab(e) { this.setData({ personalTab: e.currentTarget.dataset.tab, personalExpanded: false }); this.updatePersonalThemes(); },
   onExpandPersonal() { this.setData({ personalExpanded: !this.data.personalExpanded }); this.updatePersonalThemes(); },
   updatePersonalThemes() {
@@ -1100,5 +1198,11 @@ module.exports = function createHubPage(pageKind) {
   onTopAdLoad() {},
   onTopAdError() {
     this.setData({ showTopAd: false });
+  },
+  onDiscoverAdLoad() { this.setData({ discoverAdReady: true }); },
+  onProfileAdLoad() { this.setData({ profileAdReady: true }); },
+  onProfileAdError() { this.setData({ showProfileAd: false, profileAdReady: false }); },
+  onDiscoverAdError() {
+    this.setData({ showDiscoverAd: false, discoverAdReady: false });
   },
 }; };

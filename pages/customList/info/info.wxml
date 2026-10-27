@@ -1,0 +1,15 @@
+<view class="cl-page" style="--cl-brand:{{meta.brand}};--cl-soft:{{meta.soft}}">
+  <view class="in-card">
+    <view class="in-label">{{meta.noun}}名称</view>
+    <input class="in-input" value="{{title}}" maxlength="{{titleMax}}" placeholder="{{mode === 'create' ? '我的' + meta.noun : ''}}" placeholder-class="in-placeholder" bindinput="onTitleInput" focus="{{mode === 'create'}}" confirm-type="next" />
+    <view class="in-count">{{title.length}} / {{titleMax}}</view>
+
+    <view class="in-label in-label-gap">说明语<text class="in-optional">（选填）</text></view>
+    <textarea class="in-textarea" value="{{description}}" maxlength="{{descMax}}" placeholder="一句话说说这份{{meta.noun}}，打开时显示在标题下面" placeholder-class="in-placeholder" auto-height bindinput="onDescInput" />
+    <view class="in-count">{{description.length}} / {{descMax}}</view>
+  </view>
+
+  <view class="cl-bottom">
+    <view class="cl-btn in-submit {{saving ? 'cl-btn-disabled' : ''}}" bindtap="onSubmit">{{saving ? '保存中…' : mode === 'create' ? '创建并挑选' + meta.item : '保存'}}</view>
+  </view>
+</view>

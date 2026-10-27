@@ -1,0 +1,48 @@
+<view class="cl-page" style="--cl-brand:{{meta.brand}};--cl-soft:{{meta.soft}}">
+  <view class="ed-head">
+    <view class="ed-title-row" bindtap="onRename" hover-class="ed-pressed">
+      <text class="ed-title">{{title || '…'}}</text>
+      <text class="ed-rename">编辑信息</text>
+    </view>
+    <text class="ed-desc {{description ? '' : 'ed-desc-empty'}}" bindtap="onRename">{{description || '还没有说明语，点这里写一句'}}</text>
+    <view class="ed-count-row">
+      <text class="cl-muted">{{count}} / {{maxItems}} {{meta.unit}}</text>
+      <view class="ed-progress"><view style="width:{{count * 100 / maxItems}}%"></view></view>
+    </view>
+    <view class="ed-add">
+      <view class="cl-btn {{count >= maxItems ? 'cl-btn-disabled' : ''}}" bindtap="onAddFromRanking">从榜单添加</view>
+      <view class="cl-btn cl-btn-ghost {{count >= maxItems ? 'cl-btn-disabled' : ''}}" bindtap="onAddBySearch">搜索{{meta.verb}}添加</view>
+    </view>
+  </view>
+
+  <view class="ed-toolbar" wx:if="{{items.length}}">
+    <text class="cl-muted">{{selecting ? '点选要移除的条目' : '点「⋯」调整顺序或移除'}}</text>
+    <text class="ed-link" bindtap="onToggleSelecting">{{selecting ? '取消' : '批量移除'}}</text>
+  </view>
+
+  <view wx:for="{{items}}" wx:key="_id" class="cl-row" data-id="{{item._id}}" bindtap="onToggleItem">
+    <view wx:if="{{selecting}}" class="cl-check {{selectedMap[item._id] ? 'on' : ''}}">{{selectedMap[item._id] ? '✓' : ''}}</view>
+    <text class="ed-index">{{index + 1}}</text>
+    <image class="cl-row-cover" src="{{item.thumb}}" mode="aspectFill" lazy-load />
+    <view class="cl-row-body">
+      <text class="cl-row-title">{{item.title}}</text>
+      <text class="cl-row-sub">{{item.sub}}</text>
+    </view>
+    <view wx:if="{{!selecting}}" class="ed-more" data-id="{{item._id}}" catchtap="onItemMore">⋯</view>
+  </view>
+
+  <view wx:if="{{!loading && !items.length}}" class="cl-empty">{{meta.noun}}还是空的<view>从榜单里勾选，或搜索{{meta.verb}}加进来</view></view>
+
+  <view class="ed-danger" bindtap="onDeleteList" wx:if="{{!loading}}">删除这份{{meta.noun}}</view>
+
+  <view class="cl-bottom">
+    <block wx:if="{{selecting}}">
+      <text class="cl-bottom-info">已选 {{selectedCount}} {{meta.unit}}</text>
+      <view class="cl-btn {{selectedCount ? '' : 'cl-btn-disabled'}}" style="{{selectedCount ? 'background:#E64340' : ''}}" bindtap="onRemoveSelected">移除选中</view>
+    </block>
+    <block wx:else>
+      <text class="cl-bottom-info">标记、生成海报请到清单页</text>
+      <view class="cl-btn" bindtap="onViewList">查看{{meta.noun}}</view>
+    </block>
+  </view>
+</view>

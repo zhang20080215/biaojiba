@@ -30,6 +30,18 @@
  *   share        { theme:字符串, channel:字符串, route:字符串 } —— 分享；channel ∈ appmsg|timeline
  *   growth       { step:字符串, age_months:整型 }               —— 育儿漏斗；step ∈ start|submit|result
  *   daily_checkin{ theme:字符串, route:字符串 }                 —— 每日打卡(water/movie/read/sport)
+ *   ── 第三版（1.0.56 首页导航改版，调用都在 utils/hubPage.js）──
+ *   hub_exposure { page:字符串, theme:字符串, module:字符串, version:字符串 } —— 首页/分类/我的卡片进入视口
+ *                 page ∈ home|discover|records|profile；module ∈ popular|new|featured|catalog|records；version 目前恒为 v1
+ *                 ⚠ 每张卡片进视口报一次，是量最大的事件，注意上报额度
+ *   hub_click    { page:字符串, theme:字符串, module:字符串, version:字符串 } —— 点卡片；首页意见反馈按钮
+ *                 也走它（theme=feedback, module=feedback）
+ *   hub_favorite { theme:字符串, on:整型(1收藏/0取消), version:字符串 } —— 收藏 / 取消收藏主题
+ *   records_wish_like { count:整型 }                            —— 记录页「期待上线」，每人每天只报一次（count 恒为 1）
+ *   ── 第四版（feature/custom-lists）──
+ *   adfree_pass  { result:字符串 }                              —— 首页 tips 条「看视频换 30 分钟无页面广告」的结果
+ *                 result ∈ watched(看完,发放) | abandoned(中途关,不发) | failed(无视频/加载失败,不发)
+ *                 同一次观看另有一条 ad_rewarded（route=首页），两者不要相加
  *
  * 参数值只支持 number / string。
  */

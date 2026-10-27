@@ -108,7 +108,8 @@ function vocabFor(rowTheme, t) {
   if (rowTheme === 'daily:read') return { kind: 'dailyRead', unit: '本', noun: '书', done: '读了', doneAdj: '读过', wish: '想读', quote: true };
   if (rowTheme === 'daily:sport') return { kind: 'sport' };
   if (rowTheme === 'daily:water') return { kind: 'water' };
-  const domain = t && t.domain;
+  // 自建书单不在主题目录里，按 theme id 认
+  const domain = rowTheme === 'customBook' ? 'reading' : t && t.domain;
   if (domain === 'travel') return { unit: '个', noun: '地方', done: '打卡了', doneAdj: '去过', wish: '想去', quote: false, ...(TRAVEL_VOCAB[t.id] || {}) };
   if (domain === 'reading') return { unit: '本', noun: '书', done: '读完了', doneAdj: '读过', wish: '想读', quote: true };
   if (domain === 'tv') return { unit: '部', noun: '剧', done: '看完了', doneAdj: '看过', wish: '想看', quote: true };

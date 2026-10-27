@@ -1,0 +1,54 @@
+@import "../common.wxss";
+
+.in-card {
+  padding: 32rpx 28rpx;
+  border-radius: 24rpx;
+  background: #FFFFFF;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
+}
+.in-label {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--cl-ink);
+}
+.in-label-gap {
+  margin-top: 36rpx;
+}
+.in-optional {
+  font-weight: 400;
+  color: var(--cl-mute);
+}
+.in-input,
+.in-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 16rpx;
+  padding: 20rpx 24rpx;
+  border-radius: 16rpx;
+  background: #F6F4EE;
+  font-size: 28rpx;
+  color: var(--cl-ink);
+}
+/* 原生 input 自己把文字垂直居中，再给上下 padding 会把文字挤到下沿：只留左右 padding，高度给满 */
+.in-input {
+  height: 88rpx;
+  min-height: 88rpx;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.in-textarea {
+  min-height: 140rpx;
+  line-height: 1.6;
+}
+.in-placeholder {
+  color: #B8B4A8;
+}
+.in-count {
+  margin-top: 10rpx;
+  text-align: right;
+  font-size: 22rpx;
+  color: var(--cl-mute);
+}
+.in-submit {
+  flex: 1;
+}

@@ -65,6 +65,21 @@ const THEME_CONFIG = {
     orderDirection: 'asc',
     source: 'newbery',
   },
+  // ── 用户自建书单（custom_lists，走 customList，页面带 ?listId=）──
+  // title 只是兜底，进页面后换成清单自己的标题。source 也只是兜底：
+  // 从豆瓣读书/微信读书等榜单加进来的书，标记时沿用条目自带的 markSource，老页面才读得到。
+  customBook: {
+    title: '我的书单',
+    slogan: '亲手挑的书，一本本读完它',
+    brandPrimary: '#8A5A3C',
+    brandSoft: '#B5835F',
+    shadowRgb: '138, 90, 60',
+    showEdition: false,
+    showYear: true,
+    orderDirection: 'asc',
+    source: 'custom',
+    custom: true,
+  },
 };
 
 const DEFAULT_CONFIG = {

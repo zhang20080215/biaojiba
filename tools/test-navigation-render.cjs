@@ -32,6 +32,26 @@ async function main() {
           assert.ok(popular.some(n=>n.attr['data-id']==='imdb_movies'));
           assert.ok(JSON.stringify(tree).includes('人数暂未更新'));
         }
+        // 搜索下方 tips 条：紧跟搜索行；未生效 = 文案 + 「看视频」按钮，生效中 = 只剩到期提示
+        f.page.setData({showAdFreeTip:true, adFreePassUntilText:''});
+        let tn = nodes(render(f.page.data));
+        const searchIdx = tn.findIndex(n => n.attr && n.attr.class === 'hub-hero-search-row');
+        const tipIdx = tn.findIndex(n => n.attr && (n.attr.class || '').startsWith('hub-adfree-tip'));
+        assert.ok(searchIdx >= 0 && tipIdx > searchIdx, 'tip sits right under the search row');
+        assert.ok(tn.slice(searchIdx + 1, tipIdx).every(n => searchIdx < tipIdx && !(n.attr && (n.attr.class || '').startsWith('hub-section'))));
+        let tipText = JSON.stringify(tn[tipIdx]);
+        assert.ok(tipText.includes('看段视频，30 分钟无页面广告') && tipText.includes('onWatchAdFreeVideo'));
+        const helpOf = node => (node.children || []).filter(c => c.attr && c.attr.class === 'hub-adfree-help');
+        assert.equal(helpOf(tn[tipIdx]).length, 1, 'question mark in the offer state');
+        assert.equal(helpOf(tn[tipIdx])[0].attr.bindtap, 'onAdFreeHelp');
+        const kids = tn[tipIdx].children.map(c => c.attr && c.attr.class);
+        assert.ok(kids.indexOf('hub-adfree-help') < kids.indexOf('hub-adfree-btn'), 'question mark sits before the 看视频 button');
+        f.page.setData({adFreePassUntilText:'14:32'});
+        tn = nodes(render(f.page.data)); tipText = JSON.stringify(tn.find(n => n.attr && (n.attr.class || '').startsWith('hub-adfree-tip')));
+        assert.ok(tipText.includes('页面广告已关闭至 14:32') && !tipText.includes('onWatchAdFreeVideo'));
+        assert.equal(helpOf(tn.find(n => n.attr && (n.attr.class || '').startsWith('hub-adfree-tip'))).length, 1, 'question mark while the pass runs');
+        f.page.setData({showAdFreeTip:false, adFreePassUntilText:''});
+        assert.ok(!nodes(render(f.page.data)).some(n => n.attr && (n.attr.class || '').startsWith('hub-adfree-tip')));
         const rendered = JSON.stringify(tree);
         assert.ok(rendered.indexOf('每日标记') < rendered.indexOf('最新上线'));
         assert.ok(rendered.indexOf('最新上线') < rendered.indexOf(options.offline ? '精选榜单' : '最受欢迎'));
@@ -74,6 +94,56 @@ async function main() {
           fs.mkdirSync(process.env.HUB_PREVIEW_DIR,{recursive:true});
           fs.writeFileSync(path.join(process.env.HUB_PREVIEW_DIR,'discover-daily-' + (options.theme || (options.theme === '' ? 'theme-pink' : 'theme-green')) + '.json'),JSON.stringify(dailyTree));
         }
+        // 标签下广告：独立卡片紧跟在标签后面，渲染出来之前不描边，失败后整块消失
+        f.page.setData({discoverSection:'lists', showDiscoverAd:true, discoverAdReady:false, 'adUnitIds.discover_tab_native':'adunit-tab'});
+        let adNodes = nodes(render(f.page.data));
+        const tabsIndex = adNodes.findIndex(n => n.attr && n.attr.class === 'hub-major-tabs');
+        const adIndex = adNodes.findIndex(n => n.attr && (n.attr.class || '').startsWith('hub-tab-ad'));
+        assert.ok(tabsIndex >= 0 && adIndex > tabsIndex, 'ad follows the section tabs');
+        assert.equal(adNodes[adIndex].attr.class.trim(), 'hub-tab-ad');
+        assert.ok(adNodes.slice(tabsIndex + 1, adIndex).every(n => n.tag !== 'wx-view' || n.attr['data-section']), 'nothing sits between the tab line and the ad');
+        assert.equal(adNodes[adIndex].children[0].tag, 'wx-ad-custom'); assert.equal(adNodes[adIndex].children[0].attr.unitId, 'adunit-tab');
+        f.page.setData({discoverAdReady:true});
+        adNodes = nodes(render(f.page.data));
+        assert.ok(adNodes.some(n => n.attr && n.attr.class === 'hub-tab-ad hub-tab-ad-ready'));
+        f.page.setData({showDiscoverAd:false, discoverAdReady:false});
+        adNodes = nodes(render(f.page.data));
+        assert.ok(!adNodes.some(n => n.attr && (n.attr.class || '').startsWith('hub-tab-ad')));
+        assert.ok(adNodes.some(n => n.attr && n.attr.class === 'hub-major-tabs'), 'tabs markup does not change with the ad');
+        // 自定义分区：读取中 → 一份影单 + 待创建书单；云函数失败时只出重试
+        f.page.setData({discoverSection:'custom', customState:'loading'});
+        assert.equal(nodes(render(f.page.data)).filter(n => n.attr && n.attr.class === 'hub-custom-card').length,2);
+        f.page.setData({customState:'ready', customCards:[
+          {type:'movie',noun:'影单',unit:'部',item:'电影',list:{_id:'l1',type:'movie',title:'周末片单',description:'周末窝在家里看',count:3,covers:['cloud://a.jpg','cloud://b.jpg']},canCreate:false},
+          {type:'book',noun:'书单',unit:'本',item:'图书',list:null,canCreate:true}]});
+        const customTree = render(f.page.data), customNodes = nodes(customTree), customText = JSON.stringify(customTree);
+        assert.equal(customNodes.filter(n => n.attr && n.attr.class === 'hub-custom-card').length,2);
+        assert.equal(customNodes.filter(n => n.attr && n.attr.class === 'hub-custom-cover').length,2);
+        assert.ok(customText.includes('周末片单') && customText.includes('周末窝在家里看') && customText.includes('创建书单') && customText.includes('管理影单'));
+        assert.ok(customText.includes('实验功能，每个用户可创建 1 个自定义影单和书单。'));
+        assert.ok(!customText.includes('从现有榜单里勾选'), 'only the experimental note sits under the section tabs');
+        assert.equal(customNodes.filter(n => n.attr && n.attr.class === 'hub-muted hub-custom-desc').length,1);
+        assert.equal(customNodes.filter(n => n.attr && n.attr.class === 'hub-search').length,0);
+        f.page.setData({customState:'error', customError:'网络异常，请重试'});
+        assert.ok(JSON.stringify(render(f.page.data)).includes('重新加载'));
+        assert.equal(nodes(render(f.page.data)).filter(n => n.attr && n.attr.class === 'hub-custom-card').length,0);
+        f.page.setData({discoverSection:'lists'});
+      }
+      if (kind === 'profile') {
+        // 头像卡下广告：紧跟头像卡、在「我的主题」前（「我的」里已没有影单·书单入口）；渲染出来才加 ready（占位 + 描边）
+        f.page.setData({showProfileAd:true, profileAdReady:false, 'adUnitIds.profile_top_native':'adunit-profile'});
+        let pn = nodes(render(f.page.data));
+        const cardIdx = pn.findIndex(n => n.attr && n.attr.class === 'hub-profile');
+        const adIdx = pn.findIndex(n => n.attr && (n.attr.class || '').startsWith('hub-profile-ad'));
+        const menuIdx = pn.findIndex(n => n.attr && n.attr.class === 'hub-section-top hub-section');
+        assert.ok(!JSON.stringify(render(f.page.data)).includes('我的影单 · 书单'), 'profile no longer links to custom lists');
+        assert.ok(cardIdx >= 0 && cardIdx < adIdx && adIdx < menuIdx, 'ad sits between the avatar card and 我的主题');
+        assert.equal(pn[adIdx].attr.class.trim(), 'hub-profile-ad');
+        assert.equal(pn[adIdx].children[0].tag, 'wx-ad-custom'); assert.equal(pn[adIdx].children[0].attr.unitId, 'adunit-profile');
+        f.page.setData({profileAdReady:true});
+        assert.ok(nodes(render(f.page.data)).some(n => n.attr && n.attr.class === 'hub-profile-ad hub-profile-ad-ready'));
+        f.page.setData({showProfileAd:false, profileAdReady:false});
+        assert.ok(!nodes(render(f.page.data)).some(n => n.attr && (n.attr.class || '').startsWith('hub-profile-ad')));
       }
       for (const node of all.filter(n => n.attr && (n.attr.class || '').includes('modal-overlay'))) assert.equal(node.attr.hidden, true);
       // Optional inspectable HTML is derived from the actual compiler tree, using fixture data.

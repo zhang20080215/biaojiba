@@ -33,6 +33,7 @@
  */
 
 var adFree = require('./adFree')
+var adFreePass = require('./adFreePass')
 
 // ── 本地默认配置（兜底，云端拉取失败时使用） ──
 const adConfig = {
@@ -45,6 +46,12 @@ const adConfig = {
     // 暂时复用 category_native 的广告单元；想单独看这个位置的数据，就在流量主后台新建一个
     // 原生模板广告单元，把 id 换到这里。云端 app_config 可单独用 home_top_native.enabled 关停。
     home_top_native: { unitId: 'adunit-0210c68397d60f88', type: 'native', enabled: true },
+    // 分类页「榜单 / 每日标记 / 自定义」标签线正下方的原生模板位（三个分区共用、内容流内、非悬浮）。
+    // 同样暂时复用 category_native 的单元，要单独看数据就新建单元换 id；云端 discover_tab_native.enabled 可单独关停。
+    discover_tab_native: { unitId: 'adunit-0210c68397d60f88', type: 'native', enabled: true },
+    // 「我的」页头像卡正下方的原生模板位（头像卡与「我的主题」之间）。同样暂复用 category_native 的单元；
+    // 云端 profile_top_native.enabled 可单独关停。
+    profile_top_native: { unitId: 'adunit-0210c68397d60f88', type: 'native', enabled: true },
     // 已下线：40天数据 eCPM 仅 1.27、CTR 0.1%（占 52% 曝光却是垃圾流量），砍掉后整体 eCPM 显著上抬且改善体验
     movielist_infeed: { unitId: 'adunit-72684185bc7251e5', type: 'native', enabled: false },
     share_interstitial: { unitId: 'adunit-76c494953122488c', type: 'interstitial', enabled: true },
@@ -53,6 +60,10 @@ const adConfig = {
     // 是仅次于分类页的第二大内容页面，此前完全没有广告位。后台广告位名「每日电影-底部Banner」。
     daily_movie_banner: { unitId: 'adunit-999e7d872a4458ba', type: 'banner', enabled: true },
     save_image_rewarded: { unitId: 'adunit-16f5506ef74be138', type: 'rewarded', enabled: true },
+    // 首页搜索下方 tips 条：看完一段视频 → 30 分钟不展示页面广告（utils/adFreePass.js；激励位不受影响）。
+    // 独立激励单元（2026-10-27 新建）：完播 / 收入可单独看，也不和保存海报那个单元抢同一个 SDK 实例。
+    // 云端 adfree_pass_rewarded.enabled 可关停，关停后 tips 条不出现。
+    adfree_pass_rewarded: { unitId: 'adunit-32f974192bb5096f', type: 'rewarded', enabled: true },
     // 每日填字：提示次数用完后换一次提示、三颗星扣完后复活一颗。
     // 与保存海报那个位刻意分开：两处的曝光量级和用户心态差很远，共用一个位会把数据搅在一起，
     // 也没法单独关停其中一个。
@@ -251,6 +262,10 @@ function getPlacement(placementName) {
   if (!adConfig.enabled) return null
   var placement = adConfig.placements[placementName]
   if (!placement || !placement.enabled) return null
+  // 看视频换来的 30 分钟：只关「页面广告」（banner / 原生 / 插屏）。激励位照旧——
+  // 保存海报 / 填字的激励视频是收入大头（四到五成），通行证要是连它一起关，看 1 次就能连存，
+  // 重度保存用户会把这部分吃掉，整个功能就从小赚变成倒亏。
+  if (placement.type !== 'rewarded' && adFreePass.isActive()) return null
   return placement
 }
 
@@ -323,4 +338,10 @@ module.exports = {
   refreshAdFree: adFree.refresh,
   onAdFreeChange: adFree.onChange,
   offAdFreeChange: adFree.offChange,
+  // 限时无广告通行证（实现在 utils/adFreePass.js；与会员状态分开，isAdFree 仍只表示会员）
+  isAdFreePassActive: adFreePass.isActive,
+  getAdFreePassUntil: adFreePass.getUntil,
+  grantAdFreePass: adFreePass.grant,
+  onAdFreePassChange: adFreePass.onChange,
+  offAdFreePassChange: adFreePass.offChange,
 }

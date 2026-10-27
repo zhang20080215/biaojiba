@@ -1,0 +1,98 @@
+@import "../common.wxss";
+
+.ed-head {
+  padding: 28rpx;
+  border-radius: 24rpx;
+  background: #FFFFFF;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
+}
+.ed-pressed {
+  opacity: 0.75;
+}
+.ed-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 16rpx;
+}
+.ed-title {
+  font-size: 38rpx;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ed-rename {
+  flex: 0 0 auto;
+  font-size: 24rpx;
+  color: var(--cl-brand);
+}
+.ed-desc {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  line-height: 1.6;
+  color: var(--cl-sub);
+}
+.ed-desc-empty {
+  color: var(--cl-mute);
+}
+.ed-count-row {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin-top: 16rpx;
+}
+.ed-progress {
+  flex: 1;
+  height: 10rpx;
+  border-radius: 999rpx;
+  background: var(--cl-soft);
+  overflow: hidden;
+}
+.ed-progress view {
+  height: 100%;
+  border-radius: 999rpx;
+  background: var(--cl-brand);
+}
+.ed-add {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 28rpx;
+}
+.ed-add .cl-btn {
+  flex: 1;
+}
+
+.ed-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 36rpx 0 4rpx;
+}
+.ed-link {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--cl-brand);
+}
+
+.ed-index {
+  flex: 0 0 auto;
+  width: 48rpx;
+  text-align: center;
+  font-size: 24rpx;
+  color: var(--cl-mute);
+}
+.ed-more {
+  flex: 0 0 auto;
+  padding: 12rpx 20rpx;
+  font-size: 36rpx;
+  color: var(--cl-sub);
+  line-height: 1;
+}
+
+.ed-danger {
+  margin: 56rpx auto 0;
+  text-align: center;
+  font-size: 26rpx;
+  color: #C7361A;
+}

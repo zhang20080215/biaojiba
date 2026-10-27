@@ -1,0 +1,31 @@
+<view class="cl-page">
+  <text class="cl-intro">挑出属于你自己的片单和书单：从现有榜单里勾选，或按名字搜索加入。影单、书单各可创建 1 份，每份最多 {{maxItems}} 条。</text>
+
+  <view wx:if="{{error}}" class="cl-empty">{{error}}<view><text class="cl-retry" bindtap="load">重新加载</text></view></view>
+
+  <view wx:for="{{cards}}" wx:key="type" class="cl-card" style="--cl-brand:{{item.brand}};--cl-soft:{{item.soft}}">
+    <view class="cl-card-kind">{{item.noun}}</view>
+    <block wx:if="{{item.list}}">
+      <view class="cl-card-main" data-type="{{item.type}}" bindtap="onOpen" hover-class="cl-pressed">
+        <view class="cl-covers">
+          <image wx:for="{{item.list.covers}}" wx:for-item="cover" wx:key="*this" class="cl-cover" src="{{cover}}" mode="aspectFill" lazy-load />
+          <view wx:if="{{!item.list.covers.length}}" class="cl-cover cl-cover-empty">空</view>
+        </view>
+        <view class="cl-card-text">
+          <text class="cl-card-title">{{item.list.title}}</text>
+          <text wx:if="{{item.list.description}}" class="cl-card-desc">{{item.list.description}}</text>
+          <text class="cl-muted">{{item.list.count}} / {{maxItems}} {{item.unit}}</text>
+        </view>
+      </view>
+      <view class="cl-card-actions">
+        <view class="cl-btn cl-btn-ghost" data-type="{{item.type}}" bindtap="onEdit">管理{{item.noun}}</view>
+        <view class="cl-btn" data-type="{{item.type}}" bindtap="onOpen">查看并标记</view>
+      </view>
+    </block>
+    <view wx:elif="{{!loading}}" class="cl-card-create">
+      <text class="cl-muted">还没有{{item.noun}}</text>
+      <view wx:if="{{item.canCreate}}" class="cl-btn" data-type="{{item.type}}" bindtap="onCreate">创建{{item.noun}}</view>
+    </view>
+    <view wx:else class="cl-card-create"><text class="cl-muted">读取中…</text></view>
+  </view>
+</view>

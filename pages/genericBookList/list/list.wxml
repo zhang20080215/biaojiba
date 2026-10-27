@@ -43,7 +43,14 @@
             <view class="icon-btn action-cancel" bindtap="onCancelBatchEdit">取消</view>
           </block>
         </view>
-        <view class="generate-card-wrapper" bindtap="onShareTap" wx:if="{{!isBatchEditing}}">
+        <!-- 自建书单：编辑入口 + 空书单不出海报按钮；其它榜单维持原样 -->
+        <view class="action-right" wx:if="{{cfg.custom && !isBatchEditing}}">
+          <view class="icon-btn batch-icon" bindtap="onEditList" wx:if="{{isOwner}}">编辑书单</view>
+          <view class="generate-card-wrapper" bindtap="onShareTap" wx:if="{{allCount > 0}}">
+            <view class="generate-card-btn">生成读书海报</view>
+          </view>
+        </view>
+        <view class="generate-card-wrapper" bindtap="onShareTap" wx:elif="{{!isBatchEditing}}">
           <view class="generate-card-btn">生成读书海报</view>
         </view>
       </view>
@@ -78,7 +85,7 @@
               </block>
             </view>
             <view class="movie-meta-row">
-              <text class="movie-rating-star">豆瓣 {{item.rating}}</text>
+              <text class="movie-rating-star">豆瓣 {{item.rating || '暂无评分'}}</text>
               <view class="movie-action" wx:if="{{!isBatchEditing}}">
                 <block wx:if="{{markStatusMap[item._id] === 'read'}}">
                   <view class="mark-tag watched" data-id="{{item._id}}" catchtap="onOpenMarkSheet">{{markDateMap[item._id]}}已读 ▾</view>
@@ -96,6 +103,13 @@
         </view>
       </view>
     </block>
+  </view>
+
+  <!-- 自建书单空态 -->
+  <view wx:if="{{cfg.custom && allCount === 0}}" class="custom-empty">
+    <text class="custom-empty-title">{{listMissing ? '这份书单不存在，或仅创建者本人可见' : '书单还是空的'}}</text>
+    <text wx:if="{{isOwner && !listMissing}}" class="custom-empty-sub">从现有榜单挑，或者按书名搜索加入，最多 200 本</text>
+    <view wx:if="{{isOwner && !listMissing}}" class="custom-empty-btn" bindtap="onAddToList">添加图书</view>
   </view>
 
   <view class="custom-toast {{customToastVisible ? 'show' : ''}}">

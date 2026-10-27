@@ -94,30 +94,62 @@ test('tab pages, icons and visible catalog routes all exist and old home path re
   for (const t of catalog.filter(t => !t.hidden)) assert.ok(app.pages.includes(t.url.split('?')[0].replace(/^\//, '')), t.id);
 });
 function storeFixture(response = () => ({ result: { success: false } })) {
-  const storage = new Map(); let calls = 0; const navigations = [], tabStyles = [], tabItems = [];
-  const wx = { getStorageSync: k => storage.get(k), setStorageSync: (k,v) => storage.set(k,v), setTabBarStyle: args => tabStyles.push(args), setTabBarItem: args => tabItems.push(args), switchTab: args => navigations.push(args.url), cloud: { callFunction: async args => { calls++; return response(args); } } };
+  const storage = new Map(); let calls = 0; const navigations = [];
+  const wx = { getStorageSync: k => storage.get(k), setStorageSync: (k,v) => storage.set(k,v), switchTab: args => navigations.push(args.url), cloud: { callFunction: async args => { calls++; return response(args); } } };
   const sandbox = { module: { exports: {} }, require: p => require(path.join(root,'utils',p)), wx, Date, console, setTimeout: fn => setImmediate(fn) }; vm.runInNewContext(fs.readFileSync(path.join(root, 'utils/hubStore.js'), 'utf8'), sandbox);
-  return { store: sandbox.module.exports, storage, navigations, tabStyles, tabItems, calls: () => calls };
+  return { store: sandbox.module.exports, storage, navigations, calls: () => calls };
+}
+// 自定义 tab-bar 组件：Component 定义在沙箱里取出，setData 直接合并进 data
+function tabBarFixture({ showRecords = true, appTheme = 'theme-green' } = {}) {
+  let def; const navigations = [];
+  const adConfig = { shouldShowRecordsTab: () => showRecords, onRemoteApplied() {}, offRemoteApplied() {} };
+  vm.runInNewContext(fs.readFileSync(path.join(root, 'custom-tab-bar/index.js'), 'utf8'), {
+    Component: d => { def = d; }, require: () => adConfig, getApp: () => ({ globalData: { theme: appTheme } }),
+    wx: { switchTab: args => navigations.push(args.url) }
+  });
+  const bar = { data: JSON.parse(JSON.stringify(def.data)), setData(patch) { Object.assign(this.data, patch); }, ...def.methods };
+  def.lifetimes.attached.call(bar);
+  return { bar, navigations };
 }
 
-test('all four palettes update native tab text and bundled selected icons', () => {
+test('tab pages forward theme and kind to the custom tab bar', () => {
+  const { store } = storeFixture(); const synced = [];
+  store.applyTabStyle('theme-gold', { getTabBar: () => ({ sync: (kind, theme) => synced.push([kind, theme]) }) }, 'discover');
+  assert.deepEqual(synced, [['discover', 'theme-gold']]);
+  store.applyTabStyle('theme-gold', { getTabBar: () => null }, 'home');
+  store.applyTabStyle('theme-gold', {}, 'home');
+  store.applyTabStyle('theme-gold', null, 'home');
+  assert.equal(synced.length, 1);
+});
+test('all four palettes update custom tab text and bundled selected icons', () => {
   for (const [theme, suffix, color] of [['theme-green', '', '#526631'], ['', '-pink', '#9F4865'], ['theme-gold', '-gold', '#856216'], ['theme-sand', '-sand', '#756448']]) {
-    const f = storeFixture(); f.store.applyTabStyle(theme);
-    assert.equal(f.tabStyles[0].selectedColor, color);
-    assert.equal(f.tabItems.length, 4);
-    for (const [index, item] of f.tabItems.entries()) {
-      assert.equal(item.index, index);
-      assert.ok(item.selectedIconPath.endsWith('-active' + suffix + '.png'));
-      assert.ok(fs.existsSync(path.join(root, item.selectedIconPath)));
+    const { bar } = tabBarFixture(); bar.sync('profile', theme);
+    assert.equal(bar.data.selectedColor, color);
+    assert.equal(bar.data.selected, 'profile');
+    assert.deepEqual(Array.from(bar.data.tabs, t => t.kind), ['home', 'discover', 'records', 'profile']);
+    for (const item of bar.data.tabs) {
+      assert.ok(item.activeIcon.endsWith('/' + item.kind + '-active' + suffix + '.png'));
+      assert.ok(fs.existsSync(path.join(root, item.activeIcon)));
+      assert.ok(fs.existsSync(path.join(root, item.icon)));
     }
   }
+});
+test('records tab follows the cloud switch and attached bar uses the app theme', () => {
+  const { bar, navigations } = tabBarFixture({ showRecords: false, appTheme: '' });
+  assert.equal(bar.data.selectedColor, '#9F4865');
+  assert.deepEqual(Array.from(bar.data.tabs, t => t.kind), ['home', 'discover', 'profile']);
+  bar.sync('home', undefined);
+  assert.equal(bar.data.selectedColor, '#526631');
+  bar.onTap({ currentTarget: { dataset: { kind: 'home', path: '/pages/category/category' } } });
+  bar.onTap({ currentTarget: { dataset: { kind: 'profile', path: '/pages/profile/index' } } });
+  assert.deepEqual(navigations, ['/pages/profile/index']);
 });
 
 test('pink theme survives cold launch while first launch defaults to green', () => {
   for (const [savedTheme, stored, expected] of [['', true, ''], ['', false, 'theme-green'], ['theme-gold', true, 'theme-gold'], ['theme-sand', true, 'theme-sand'], ['invalid', true, 'theme-green']]) {
     let app;
     const wx = { cloud: { init() {} }, getStorageSync: () => savedTheme, getStorageInfoSync: () => ({ keys: stored ? ['appTheme'] : [] }) };
-    vm.runInNewContext(fs.readFileSync(path.join(root, 'app.js'), 'utf8'), { wx, App: config => { app = config; }, require: () => ({ onAdFreeChange() {} }), console, setTimeout() {} });
+    vm.runInNewContext(fs.readFileSync(path.join(root, 'app.js'), 'utf8'), { wx, App: config => { app = config; }, require: () => ({ onAdFreeChange() {}, onAdFreePassChange() {} }), console, setTimeout() {} });
     app.onLaunch();
     assert.equal(app.globalData.theme, expected);
   }
@@ -514,4 +546,161 @@ test('cached covers are present in the very first rendered lists, and unchanged 
   const before = patches.length;
   await f.page.loadDynamicCovers();
   assert.equal(patches.slice(before).filter(k => k.includes('themes')).length, 0, 'same covers do not trigger another render');
+});
+
+test('discover custom section loads own lists once and routes open, manage and create', async () => {
+  const requests = []; let fail = true;
+  const f = fixture('discover', {
+    callFunction: req => { if (req.name !== 'customList') return { result: { success: false } }; requests.push(req.data); return fail ? { result: { success: false, error: '网络异常，请重试' } } : { result: { success: true, quota: { movie: 1, book: 1 }, lists: [{ _id: 'l1', type: 'movie', title: '周末片单', count: 3, covers: ['cloud://a.jpg'] }] } }; }
+  });
+  f.page.onLoad(); f.page.onShow(); await new Promise(setImmediate);
+  assert.equal(requests.length, 0, 'lists and daily sections never read custom lists');
+  f.page.onDiscoverSection({ currentTarget: { dataset: { section: 'custom' } } });
+  assert.equal(f.page.data.customState, 'loading');
+  await f.page.loadCustomLists();
+  assert.equal(f.page.data.customState, 'error');
+  assert.equal(f.page.data.customError, '网络异常，请重试');
+  fail = false;
+  await Promise.all([f.page.loadCustomLists(), f.page.loadCustomLists()]);
+  assert.equal(requests.length, 2, 'concurrent reloads share one request');
+  assert.equal(requests[1].action, 'mine');
+  assert.equal(f.page.data.customState, 'ready');
+  const [movie, book] = f.page.data.customCards;
+  assert.equal(movie.list.title, '周末片单');
+  assert.equal(book.list, null); assert.equal(book.canCreate, true);
+  const tap = type => ({ currentTarget: { dataset: { type } } });
+  f.page.onCustomOpen(tap('movie')); f.page.onCustomEdit(tap('movie')); f.page.onCustomOpen(tap('book'));
+  assert.deepEqual(f.navigations.map(n => n.url), ['/pages/genericList/list/list?theme=customMovie&listId=l1&title=' + encodeURIComponent('周末片单'), '/pages/customList/edit/edit?listId=l1']);
+  f.page.onCustomCreate(tap('book')); f.page.onCustomCreate(tap('movie'));
+  assert.equal(f.navigations[2].url, '/pages/customList/info/info?type=book', 'create goes to the name + description form; an existing list cannot be created again');
+  assert.equal(f.navigations.length, 3);
+  // 回到分类页时静默刷新：失败不清掉已有卡片
+  fail = true; f.page.onShow(); await f.page.loadCustomLists();
+  assert.equal(f.page.data.customState, 'ready');
+  assert.equal(f.page.data.customCards[0].list.title, '周末片单');
+  assert.equal(requests.length, 3);
+});
+
+test('discover tab ad hangs under the section tabs only on the discover page and hides on error', async () => {
+  const units = { discover_tab_native: 'adunit-tab', home_top_native: 'adunit-top', category_native: 'adunit-native' };
+  const d = fixture('discover', { adUnits: units }); d.page.onLoad(); d.page.onShow(); await new Promise(setImmediate);
+  assert.equal(d.page.data.showDiscoverAd, true);
+  assert.equal(d.page.data.adUnitIds.discover_tab_native, 'adunit-tab');
+  assert.equal(d.page.data.discoverAdReady, false, 'no outline until the ad has rendered');
+  assert.equal(d.page.data.showTopAd, false); assert.equal(d.page.data.showNativeAd, false);
+  d.page.onDiscoverAdLoad();
+  assert.equal(d.page.data.discoverAdReady, true);
+  for (const section of ['daily', 'custom', 'lists']) { d.page.onDiscoverSection({ currentTarget: { dataset: { section } } }); assert.equal(d.page.data.showDiscoverAd, true, section + ' keeps the same ad'); }
+  d.page.onDiscoverAdError();
+  assert.equal(d.page.data.showDiscoverAd, false); assert.equal(d.page.data.discoverAdReady, false);
+  for (const kind of ['home', 'records', 'profile']) {
+    const f = fixture(kind, { adUnits: units }); f.page.onLoad(); f.page.onShow(); await new Promise(setImmediate);
+    assert.equal(f.page.data.showDiscoverAd, false, kind + ' never shows the discover tab ad');
+  }
+  const none = fixture('discover'); none.page.onLoad(); none.page.onShow(); await new Promise(setImmediate);
+  assert.equal(none.page.data.showDiscoverAd, false, 'ad-free or disabled placement renders nothing');
+});
+
+test('profile ad sits under the avatar card only on the profile page and hides on error', async () => {
+  const units = { profile_top_native: 'adunit-profile', discover_tab_native: 'adunit-tab', home_top_native: 'adunit-top', category_native: 'adunit-native' };
+  const p = fixture('profile', { adUnits: units }); p.page.onLoad(); p.page.onShow(); await new Promise(setImmediate);
+  assert.equal(p.page.data.showProfileAd, true);
+  assert.equal(p.page.data.adUnitIds.profile_top_native, 'adunit-profile');
+  assert.equal(p.page.data.profileAdReady, false);
+  assert.equal(p.page.data.showDiscoverAd, false); assert.equal(p.page.data.showTopAd, false);
+  p.page.onProfileAdLoad(); assert.equal(p.page.data.profileAdReady, true);
+  p.page.onProfileAdError();
+  assert.equal(p.page.data.showProfileAd, false); assert.equal(p.page.data.profileAdReady, false);
+  for (const kind of ['home', 'discover', 'records']) {
+    const f = fixture(kind, { adUnits: units }); f.page.onLoad(); f.page.onShow(); await new Promise(setImmediate);
+    assert.equal(f.page.data.showProfileAd, false, kind + ' never shows the profile ad');
+  }
+});
+
+test('home ad-free tip offers a video, grants 30 minutes only when watched and hides every hub ad', async () => {
+  const units = { adfree_pass_rewarded: 'adunit-reward', home_top_native: 'adunit-top', category_native: 'adunit-native' };
+  const open = async (kind, opts) => { const f = fixture(kind, { adUnits: units, ...opts }); f.page.onLoad(); f.page.onShow(); await new Promise(setImmediate); return f; };
+  let outcome = 'failed';
+  const f = await open('home', { rewardOutcome: () => outcome });
+  assert.equal(f.page.data.showAdFreeTip, true);
+  assert.equal(f.page.data.adFreePassUntilText, '');
+  assert.equal(f.page.data.showTopAd, true);
+
+  await f.page.onWatchAdFreeVideo();
+  assert.deepEqual({ ...f.rewards[0] }, { placement: 'adfree_pass_rewarded', toast: '看完视频才能生效' });
+  assert.equal(f.pass.until, 0, 'no fill grants nothing');
+  assert.equal(f.toasts.at(-1), '暂时没有可播放的视频，请稍后再试');
+
+  outcome = 'abandoned'; const toastCount = f.toasts.length;
+  await f.page.onWatchAdFreeVideo();
+  assert.equal(f.pass.until, 0, 'closing the video early grants nothing');
+  assert.equal(f.toasts.length, toastCount, 'the manager already told the user why');
+
+  outcome = 'watched';
+  await f.page.onWatchAdFreeVideo();
+  assert.ok(f.pass.until > Date.now() + 29 * 60000);
+  assert.equal(f.page.data.showTopAd, false); assert.equal(f.page.data.showNativeAd, false);
+  assert.equal(f.page.data.showAdFreeTip, true);
+  assert.match(f.page.data.adFreePassUntilText, /^\d\d:\d\d$/);
+  assert.equal(f.toasts.at(-1), '页面广告已关闭 30 分钟');
+  assert.deepEqual(f.tracked.filter(t => t.name === 'adfree_pass').map(t => t.data.result), ['failed', 'abandoned', 'watched']);
+  await f.page.onWatchAdFreeVideo();
+  assert.equal(f.rewards.length, 3, 'no second video while the pass is running');
+  f.page.onUnload();
+
+  // 冷启动时通行证仍在：直接是「HH:MM 前不再展示」，广告不出
+  const live = await open('home', { passUntil: Date.now() + 10 * 60000 });
+  assert.equal(live.page.data.showAdFreeTip, true); assert.ok(live.page.data.adFreePassUntilText);
+  assert.equal(live.page.data.showTopAd, false);
+  live.page.onUnload();
+  // 会员 / 激励位关停 / 非首页：都不出 tips 条
+  for (const [kind, opts] of [['home', { vip: true }], ['home', { adUnits: { home_top_native: 'adunit-top' } }], ['discover', {}], ['profile', {}]]) {
+    const g = await open(kind, opts);
+    assert.equal(g.page.data.showAdFreeTip, false, kind + ' ' + JSON.stringify(opts));
+    g.page.onUnload();
+  }
+});
+
+test('when the pass runs out the page restores its ads and the offer by itself', async () => {
+  const units = { adfree_pass_rewarded: 'adunit-reward', home_top_native: 'adunit-top' };
+  const f = fixture('home', { adUnits: units, passUntil: Date.now() + 400 }); f.page.onLoad(); f.page.onShow(); await new Promise(setImmediate);
+  assert.equal(f.page.data.showTopAd, false); assert.ok(f.page.data.adFreePassUntilText);
+  await new Promise(r => setTimeout(r, 1700));
+  assert.equal(f.page.data.showTopAd, true);
+  assert.equal(f.page.data.adFreePassUntilText, '');
+  assert.equal(f.page.data.showAdFreeTip, true);
+  // 卸载后定时器清掉，不再 setData
+  const g = fixture('discover', { adUnits: { discover_tab_native: 'adunit-tab' }, passUntil: Date.now() + 400 }); g.page.onLoad(); g.page.onShow(); await new Promise(setImmediate);
+  assert.equal(g.page.data.showDiscoverAd, false);
+  g.page.onUnload();
+  await new Promise(r => setTimeout(r, 1700));
+  assert.equal(g.page.data.showDiscoverAd, false);
+});
+
+test('the tip question mark lists the ads the 30 minutes do not cover', async () => {
+  let modal = null;
+  const f = fixture('home', { adUnits: { adfree_pass_rewarded: 'adunit-reward' }, showModal: a => { modal = a; } });
+  f.page.onLoad(); f.page.onShow(); await new Promise(setImmediate);
+  f.page.onAdFreeHelp();
+  assert.equal(modal.title, '30 分钟无页面广告');
+  assert.equal(modal.showCancel, false);
+  assert.equal(modal.content, '页面上的广告、弹出的广告都会暂停\n打开小程序时的开屏广告照常显示\n保存海报、填字换提示仍需看视频');
+  const lines = modal.content.split('\n');
+  assert.ok(lines.every(line => line.length <= 18), 'short lines that read well centered');
+  assert.ok(Math.max(...lines.map(l => l.length)) - Math.min(...lines.map(l => l.length)) <= 2, 'lines of similar length look even when centered');
+  assert.ok(!/横幅|原生|插屏|封面/.test(modal.content), 'no ad-industry jargon');
+  assert.equal(f.rewards.length, 0, 'asking never starts a video');
+  f.page.onUnload();
+});
+
+test('tab pages leave room for the fixed custom tab bar so the last content can scroll into view', () => {
+  const bar = fs.readFileSync(path.join(root, 'custom-tab-bar/index.wxss'), 'utf8');
+  const hub = fs.readFileSync(path.join(root, 'styles/hub.wxss'), 'utf8');
+  assert.match(bar, /\.tab-bar\s*\{[^}]*position:\s*fixed/, 'the custom tab bar floats over the page');
+  const barHeight = bar.match(/\.tab-bar\s*\{[^}]*?\bheight:\s*(\d+px)/)[1];
+  const rootRule = hub.match(/\.hub-root\s*\{([^}]*)\}/)[1];
+  assert.equal(rootRule.match(/--hub-tabbar-h:\s*(\d+px)/)[1], barHeight, 'reserved height matches the tab bar');
+  const padding = rootRule.match(/padding:\s*([^;]+);/)[1];
+  assert.ok(padding.includes('var(--hub-tabbar-h)') && padding.includes('env(safe-area-inset-bottom)'), padding);
+  assert.match(bar, /padding-bottom:\s*env\(safe-area-inset-bottom\)/);
 });
