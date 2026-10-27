@@ -9,7 +9,8 @@
 //   - 从已有榜单加入：沿用该榜单条目原 _id —— Marks/BookMarks 里已有的标记直接显示，
 //     在自建清单里标记也就是标记了那个榜单条目（movie_alias 还会继续扩散到其它榜单）。
 //   - 搜索加入的电影：先查 movie_facts（_id=doubanId，buildMovieFacts 产出）里有没有这部片，
-//     有就借用它在某个榜单里的 _id；没有才用 `cm_<doubanId>`。书没有这类索引，一律 `cb_<doubanId>`。
+//     有就借用它在某个榜单里的 _id；没有才用 `cm_<doubanId>`。
+//   - 搜索加入的书：先查 douban_books（_id 就是豆瓣 id），在榜就沿用；没有才用 `cb_<doubanId>`。
 //
 // 配额：每人每种类型 QUOTA 份（默认各 1 份），每份上限 MAX_ITEMS 条。
 // 写入一律「读-改-写 + rev 乐观锁」：where({_id, rev}) 命中 0 条说明被并发改过，重读重试。
@@ -23,7 +24,11 @@
 //   moveItem { listId, id, to: 'top'|'up'|'down' }
 //   remove   { listId }           —— 删除整份清单（不动标记记录）
 //   get（缺省）{ listId, openid, marksOnly } —— 列表页读路径，形状对齐 getThemeMovies
-//                                  （{ success, movies, marks, listVersion }）+ list 元信息；任何人可读（分享）
+//                                  （{ success, movies, marks, listVersion }）+ list 元信息；任何人可读（分享）。
+//                                  marks 只含本清单条目的标记（按 id 精确查），不走 processMarks 的片名兜底
+//
+// 去重：_id / doubanId / 标准化标题+年份（书用作者），见 dedupeKeys。
+// 搜索加入的书若在豆瓣读书 TOP250 里，沿用其 _id（= 豆瓣 subject id）与 source=douban。
 const cloud = require('wx-server-sdk');
 const axios = require('axios');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
@@ -159,11 +164,60 @@ async function resolveSearchItem(item, type) {
             } catch (e) { /* 片库里没有这部：正常 */ }
         }
         if (!item._id) item._id = `cm_${item.doubanId}`;
-    } else if (!item._id) {
-        item._id = `cb_${item.doubanId}`;
+    } else {
+        // 豆瓣读书 TOP250 的 _id 就是豆瓣 subject id：在榜就沿用它，标记和那个榜单互通
+        if (item.doubanId) {
+            try {
+                const res = await db.collection('douban_books').doc(item.doubanId).get();
+                const book = res && res.data;
+                if (book && book.isTop250 !== false) {
+                    item._id = String(book._id);
+                    item.markSource = 'douban';
+                    if (book.cover && /^cloud:\/\//.test(book.cover)) item.cover = book.cover;
+                }
+            } catch (e) { /* 不在豆瓣读书 TOP250：正常 */ }
+        }
+        if (!item._id) item._id = `cb_${item.doubanId}`;
     }
     item.cover = await mirrorCover(item.cover, item.doubanId, type);
     return item;
+}
+
+// 去重键：_id、doubanId，再加「标准化标题 + 年份（书用作者）」——
+// IMDb 榜等条目没有 doubanId，同一部片从不同榜单加进来只能靠标题对上
+const normTitle = s => String(s || '').toLowerCase().replace(/[\s·・:：,，.。!！?？'"“”‘’\-—_()（）《》\[\]【】]/g, '');
+function dedupeKeys(item, type) {
+    const keys = [];
+    if (item._id) keys.push(`id:${item._id}`);
+    if (item.doubanId) keys.push(`db:${item.doubanId}`);
+    const t = normTitle(item.title);
+    const second = type === 'book'
+        ? normTitle(String(item.author || '').split(/[、,，/]/)[0])
+        : String(item.year || '').slice(0, 4);
+    if (t && second) keys.push(`t:${t}|${second}`);
+    return keys;
+}
+function keySetOf(items, type) {
+    const set = new Set();
+    items.forEach(i => dedupeKeys(i, type).forEach(k => set.add(k)));
+    return set;
+}
+const hasAnyKey = (set, item, type) => dedupeKeys(item, type).some(k => set.has(k));
+const addKeys = (set, item, type) => dedupeKeys(item, type).forEach(k => set.add(k));
+
+const isCollectionMissing = err => {
+    const msg = String((err && (err.errMsg || err.message)) || '');
+    return (err && err.errCode === -502005) || /not exist|DATABASE_COLLECTION_NOT_EXIST/i.test(msg);
+};
+
+// 只读本清单条目对应的标记（_.in 分片，每片 100 个 id），不把用户全部标记拉回来
+async function readMarksFor(collection, idField, openid, ids) {
+    const out = [];
+    for (let i = 0; i < ids.length; i += MAX_LIMIT) {
+        const chunk = ids.slice(i, i + MAX_LIMIT);
+        out.push(...await readAll(db.collection(collection).where({ openid, [idField]: _.in(chunk) })));
+    }
+    return out;
 }
 
 function summarize(doc) {
@@ -181,7 +235,13 @@ function summarize(doc) {
 
 const actions = {
     async mine({ openid }) {
-        const docs = await readAll(db.collection(COLLECTION).where({ openid }));
+        let docs = [];
+        try {
+            docs = await readAll(db.collection(COLLECTION).where({ openid }));
+        } catch (err) {
+            // 新环境里还没人创建过清单：集合不存在，等同于「没有清单」
+            if (!isCollectionMissing(err)) throw err;
+        }
         const lists = docs
             .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
             .map(summarize);
@@ -218,14 +278,12 @@ const actions = {
         const type = doc0.type;
         let prepared = incoming.map(raw => sanitizeItem(raw || {}, type)).filter(i => i.title && (i._id || i.doubanId));
         // 只为「放得下且不重复」的搜索条目做慢操作（查片库 / 转存封面）
-        const seenIds = new Set((doc0.items || []).map(i => i._id));
-        const seenDouban = new Set((doc0.items || []).map(i => i.doubanId).filter(Boolean));
+        const seen = keySetOf(doc0.items || [], type);
         const room = MAX_ITEMS - (doc0.items || []).length;
         const fresh = [];
         prepared.forEach(i => {
-            if ((i._id && seenIds.has(i._id)) || (i.doubanId && seenDouban.has(i.doubanId))) return;
-            if (i._id) seenIds.add(i._id);
-            if (i.doubanId) seenDouban.add(i.doubanId);
+            if (hasAnyKey(seen, i, type)) return;
+            addKeys(seen, i, type);
             fresh.push(i);
         });
         const accepted = fresh.slice(0, Math.max(0, room));
@@ -234,15 +292,14 @@ const actions = {
         let added = 0;
         const out = await mutateList(event.listId, openid, doc => {
             const items = (doc.items || []).slice();
-            const ids = new Set(items.map(i => i._id));
-            const dids = new Set(items.map(i => i.doubanId).filter(Boolean));
+            // 锁内再查一次：搜索条目解析后 _id 可能变成已在清单里的榜单 id，并发写入也可能刚加过
+            const keys = keySetOf(items, type);
             added = 0;
             accepted.forEach(i => {
                 if (items.length >= MAX_ITEMS) return;
-                if (ids.has(i._id) || (i.doubanId && dids.has(i.doubanId))) return;
+                if (hasAnyKey(keys, i, type)) return;
                 items.push(i);
-                ids.add(i._id);
-                if (i.doubanId) dids.add(i.doubanId);
+                addKeys(keys, i, type);
                 added++;
             });
             if (!added) return null;
@@ -294,10 +351,13 @@ const actions = {
     async get({ openid: callerOpenid, event }) {
         const doc = await getDoc(event.listId);
         if (!doc) return { success: false, code: 'NOT_FOUND', error: '清单不存在或已删除', movies: [], marks: [] };
-        const marksCollection = doc.type === 'book' ? 'BookMarks' : 'Marks';
+        const isBook = doc.type === 'book';
         // 标记只读调用者自己的（列表页传的 openid 必须等于真实身份，防止读别人的标记）
         const openid = event.openid && event.openid === callerOpenid ? callerOpenid : '';
-        const marks = openid ? await readAll(db.collection(marksCollection).where({ openid })) : [];
+        const itemIds = (doc.items || []).map(i => String(i._id));
+        const marks = openid && itemIds.length
+            ? await readMarksFor(isBook ? 'BookMarks' : 'Marks', isBook ? 'bookId' : 'movieId', openid, itemIds)
+            : [];
         const listVersion = `${doc._id}:${doc.rev || 0}`;
         if (event.marksOnly) return { success: true, movies: [], marks, listVersion };
         const movies = (doc.items || []).map((it, i) => ({ ...it, rank: i + 1 }));

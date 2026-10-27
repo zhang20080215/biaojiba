@@ -5,13 +5,7 @@ var adConfig = require('../../../utils/adConfig');
 const rewardedSaveGate = require('../../../utils/rewardedSaveGate.js');
 const userStore = require('../../../utils/userStore.js');
 var { getThemeConfig } = require('../../../utils/genericThemeConfig.js');
-// 排序方向按主题不同，见 utils/genericThemeConfig.js 的 cfg.orderDirection
-// 自建影单另带 listId（与列表页同一份缓存键）
-function queryOptionsFor(cfg, listId) {
-    const opts = { orderByField: 'rank', orderDirection: (cfg && cfg.orderDirection) || 'asc' };
-    if (listId) opts.listId = listId;
-    return opts;
-}
+// 查询参数（排序方向 / 自建影单 listId）与列表页同一份：DataLoader.queryOptions
 
 const FOOTER_TEXT = '小程序：标记吧，免费制作同款图';
 const FIXED_CANVAS_WIDTH = 1242;
@@ -205,7 +199,7 @@ Page({
         try {
             wx.showLoading({ title: '加载数据中...' });
             const openid = this.data.userInfo && this.data.userInfo._openid ? this.data.userInfo._openid : '';
-            const { movies: allMovies, marks: allMarks } = await DataLoader.loadMoviesData(this.data.theme, openid, false, queryOptionsFor(this.data.cfg, this._listId));
+            const { movies: allMovies, marks: allMarks } = await DataLoader.loadMoviesData(this.data.theme, openid, false, DataLoader.queryOptions(this.data.cfg, this._listId));
             const { markStatusMap, stats, watchedMovies } = DataLoader.processMarks(allMarks, allMovies);
             const listGridRows = Math.max(1, Math.ceil(allMovies.length / 5));
             this.setData({ allMovies, markStatusMap, stats, watchedMovies, listGridRows }, () => {

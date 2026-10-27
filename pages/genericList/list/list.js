@@ -12,12 +12,7 @@ var markSync = require('../../../utils/markSync.js');
 // 通用榜单页：走 enrichThemeMovies/generic_theme_movies 流水线的新主题、以及迁移过来的老主题共用这一套页面，
 // 通过 ?theme=xxx 区分（同 pages/daily/index 靠 ?theme= 复用一套页面的思路）。
 // 排序方向按主题不同（新到旧连续编号的 asc，rank 本身是历史届数的 desc），见 cfg.orderDirection。
-// 自建影单（theme=customMovie）另带 listId，见 pages/customList。
-function queryOptionsFor(cfg, listId) {
-    const opts = { orderByField: 'rank', orderDirection: (cfg && cfg.orderDirection) || 'asc' };
-    if (listId) opts.listId = listId;
-    return opts;
-}
+// 自建影单（theme=customMovie）另带 listId，见 pages/customList；查询参数统一由 DataLoader.queryOptions 生成。
 
 Page({
     data: {
@@ -107,11 +102,7 @@ Page({
         this.checkLoginStatus();
         this.setNavBarColor();
         // 从编辑页回来：清单内容变了就重拉
-        const app = getApp();
-        if (this.data.listId && app.globalData && app.globalData.customListDirty === this.data.listId) {
-            app.globalData.customListDirty = '';
-            this.loadAllMovies(true);
-        }
+        if (DataLoader.consumeCustomListDirty(this.data.listId)) this.loadAllMovies(true);
     },
 
     onEditList() {
@@ -315,7 +306,7 @@ Page({
         wx.showNavigationBarLoading();
         try {
             const openid = this.getActiveOpenid() || null;
-            const { movies, marks, meta } = await DataLoader.loadMoviesData(this.data.theme, openid, forceRefresh, queryOptionsFor(this.data.cfg, this.data.listId));
+            const { movies, marks, meta } = await DataLoader.loadMoviesData(this.data.theme, openid, forceRefresh, DataLoader.queryOptions(this.data.cfg, this.data.listId));
             this.applyListMeta(meta);
 
             const cfg = this.data.cfg;
@@ -410,7 +401,7 @@ Page({
         if (!openid) return;
         wx.showNavigationBarLoading();
         try {
-            const { marks } = await DataLoader.loadMoviesData(this.data.theme, openid, false, queryOptionsFor(this.data.cfg, this.data.listId));
+            const { marks } = await DataLoader.loadMoviesData(this.data.theme, openid, false, DataLoader.queryOptions(this.data.cfg, this.data.listId));
             const { markStatusMap, markDateMap, markRecordIdMap, watchedIds, wishIds, stats } = DataLoader.processMarks(marks, this.data.allMovies);
             this.setData({
                 markStatusMap, markDateMap, markRecordIdMap, watchedIds, wishIds,

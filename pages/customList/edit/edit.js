@@ -1,15 +1,7 @@
 // 管理一份自建影单 / 书单：改名、调整顺序、移除条目（单个 / 批量）、删除整份清单，
 // 以及去「添加」页（从榜单勾选 / 按名字搜索）。
 const imageCacheManager = require('../../../utils/imageCacheManager.js');
-const { MAX_ITEMS, TYPE_META, callList, listUrl, markDirty } = require('../common.js');
-
-function subLine(item, type) {
-  const parts = [];
-  if (item.year) parts.push(String(item.year).slice(0, 4));
-  if (type === 'book' ? item.author : item.director) parts.push(type === 'book' ? item.author : item.director);
-  if (item.rating) parts.push(`豆瓣 ${item.rating}`);
-  return parts.join(' · ');
-}
+const { MAX_ITEMS, TYPE_META, callList, listUrl, markDirty, subLine } = require('../common.js');
 
 Page({
   data: {
@@ -197,6 +189,8 @@ Page({
         wx.showLoading({ title: '删除中', mask: true });
         try {
           await callList('remove', { listId: this.data.listId });
+          // 页面栈里若还开着这份清单的列表页，回去时重拉并显示「已被删除」
+          markDirty(this.data.listId);
           wx.hideLoading();
           wx.showToast({ title: '已删除', icon: 'success' });
           setTimeout(() => wx.redirectTo({ url: '/pages/customList/index/index' }), 800);

@@ -147,6 +147,27 @@ async function loadMoviesData(theme, openid, forceRefresh = false, queryOptions 
   return { movies, marks, meta };
 }
 
+/**
+ * 通用榜单列表/海报页传给 loadMoviesData 的查询参数：按 rank 排序（方向见 cfg.orderDirection），
+ * 自建清单（customMovie / customBook）另带 listId。
+ */
+function queryOptions(cfg, listId) {
+  const opts = { orderByField: 'rank', orderDirection: (cfg && cfg.orderDirection) || 'asc' };
+  if (listId) opts.listId = listId;
+  return opts;
+}
+
+/**
+ * 自建清单列表页 onShow 用：编辑页改过这份清单（pages/customList/common.markDirty）就返回 true 并清掉标记。
+ */
+function consumeCustomListDirty(listId) {
+  const app = getApp();
+  const dirty = app && app.globalData && app.globalData.customListDirty;
+  if (!listId || !dirty || !dirty[listId]) return false;
+  delete dirty[listId];
+  return true;
+}
+
 function cacheKeyTheme(theme, queryOptions) {
   return queryOptions && queryOptions.listId ? `${theme}_${queryOptions.listId}` : theme;
 }
@@ -350,6 +371,8 @@ module.exports = {
   // 新接口（优化后）
   loadMoviesData,
   loadThemeItems,
+  queryOptions,
+  consumeCustomListDirty,
   invalidateMovieCache,
   processMarks,
   processBookMarks,

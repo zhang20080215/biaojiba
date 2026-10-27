@@ -43,11 +43,15 @@
             <view class="icon-btn action-cancel" bindtap="onCancelBatchEdit">取消</view>
           </block>
         </view>
-        <view class="action-right" wx:if="{{!isBatchEditing}}">
-          <view class="icon-btn batch-icon" bindtap="onEditList" wx:if="{{cfg.custom && isOwner}}">编辑影单</view>
+        <!-- 自建影单：编辑入口 + 空影单不出海报按钮；其它榜单维持原样 -->
+        <view class="action-right" wx:if="{{cfg.custom && !isBatchEditing}}">
+          <view class="icon-btn batch-icon" bindtap="onEditList" wx:if="{{isOwner}}">编辑影单</view>
           <view class="generate-card-wrapper" bindtap="onShareTap" wx:if="{{allCount > 0}}">
             <view class="generate-card-btn">生成观影海报</view>
           </view>
+        </view>
+        <view class="generate-card-wrapper" bindtap="onShareTap" wx:elif="{{!isBatchEditing}}">
+          <view class="generate-card-btn">生成观影海报</view>
         </view>
       </view>
     </view>

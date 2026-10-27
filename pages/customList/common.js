@@ -39,10 +39,23 @@ function listUrl(list) {
   return `${meta.listPage}?theme=${meta.theme}&listId=${list._id}&title=${encodeURIComponent(list.title || '')}`;
 }
 
-// 编辑过清单后，通知已打开的列表页 onShow 时重拉
+// 编辑过清单后，通知已打开的列表页 onShow 时重拉（按 listId 各记一份，影单书单互不覆盖；
+// 列表页那头的读取见 dataLoader.consumeCustomListDirty）
 function markDirty(listId) {
   const app = getApp();
-  if (app && app.globalData) app.globalData.customListDirty = listId;
+  if (!app || !app.globalData || !listId) return;
+  app.globalData.customListDirty = { ...(app.globalData.customListDirty || {}), [listId]: true };
+}
+
+// 条目副信息行：年份 · 第一位导演/作者 · 豆瓣分
+function subLine(item, type) {
+  const parts = [];
+  if (item.year) parts.push(String(item.year).slice(0, 4));
+  const who = type === 'book' ? item.author : item.director;
+  if (who) parts.push(String(who).split(/[、/]/)[0].trim());
+  const rating = Number(item.rating);
+  if (rating > 0 && rating <= 10) parts.push(`豆瓣 ${item.rating}`);
+  return parts.join(' · ');
 }
 
 // 「从榜单添加」可选的来源：分类目录里走通用影单/书单页的榜单 + 豆瓣电影 TOP250
@@ -73,7 +86,8 @@ function snapshotFromRanking(m, theme, type, markSource) {
     title: m.title || m.name || '',
     year: m.year || '',
     cover: m.cover || m.coverUrl || m.originalCover || m.bangumiCover || '',
-    doubanId: m.doubanId || '',
+    // 豆瓣读书 TOP250 的条目没有 doubanId 字段，_id 本身就是豆瓣 subject id
+    doubanId: m.doubanId || (theme === 'douban_books' ? String(m._id) : ''),
     ratingCount: m.ratingCount || 0,
     from: theme,
   };
@@ -99,4 +113,4 @@ function snapshotFromSearch(c, type) {
     : { ...base, director: c.director || '' };
 }
 
-module.exports = { MAX_ITEMS, TYPE_META, callList, listUrl, markDirty, rankingSources, snapshotFromRanking, snapshotFromSearch };
+module.exports = { MAX_ITEMS, TYPE_META, callList, listUrl, markDirty, subLine, rankingSources, snapshotFromRanking, snapshotFromSearch };

@@ -9,13 +9,7 @@ const rewardedSaveGate = require('../../../utils/rewardedSaveGate.js');
 const userStore = require('../../../utils/userStore.js');
 var { getThemeConfig } = require('../../../utils/genericBookThemeConfig.js');
 var { simplifyTitle } = require('../../../utils/bookFormat.js');
-// 排序方向按主题不同，见 utils/genericBookThemeConfig.js 的 cfg.orderDirection
-// 自建书单另带 listId（与列表页同一份缓存键）
-function queryOptionsFor(cfg, listId) {
-    const opts = { orderByField: 'rank', orderDirection: (cfg && cfg.orderDirection) || 'asc' };
-    if (listId) opts.listId = listId;
-    return opts;
-}
+// 查询参数（排序方向 / 自建书单 listId）与列表页同一份：DataLoader.queryOptions
 
 const FOOTER_TEXT = '小程序：标记吧，免费制作同款图';
 const FIXED_CANVAS_WIDTH = 1242;
@@ -209,7 +203,7 @@ Page({
         try {
             wx.showLoading({ title: '加载数据中...' });
             const openid = this.data.userInfo && this.data.userInfo._openid ? this.data.userInfo._openid : '';
-            const { movies: rawBooks, marks: allMarks } = await DataLoader.loadMoviesData(this.data.theme, openid, false, queryOptionsFor(this.data.cfg, this._listId));
+            const { movies: rawBooks, marks: allMarks } = await DataLoader.loadMoviesData(this.data.theme, openid, false, DataLoader.queryOptions(this.data.cfg, this._listId));
             // 海报用简化书名（去括注），只改本页的展示副本，不入库/不影响缓存
             const allBooks = this.data.cfg.simplifyTitle
                 ? rawBooks.map(b => ({ ...b, title: simplifyTitle(b.title) || b.title }))

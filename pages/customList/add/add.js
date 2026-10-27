@@ -6,17 +6,7 @@ const DataLoader = require('../../../utils/dataLoader.js');
 const imageCacheManager = require('../../../utils/imageCacheManager.js');
 const { getThemeConfig: movieCfg } = require('../../../utils/genericThemeConfig.js');
 const { getThemeConfig: bookCfg } = require('../../../utils/genericBookThemeConfig.js');
-const { MAX_ITEMS, TYPE_META, callList, markDirty, rankingSources, snapshotFromRanking, snapshotFromSearch } = require('../common.js');
-
-function subLine(item, type) {
-  const parts = [];
-  if (item.year) parts.push(String(item.year).slice(0, 4));
-  const who = type === 'book' ? item.author : item.director;
-  if (who) parts.push(String(who).split(/[、/]/)[0].trim());
-  const rating = Number(item.rating);
-  if (rating > 0 && rating <= 10) parts.push(`豆瓣 ${item.rating}`);
-  return parts.join(' · ');
-}
+const { MAX_ITEMS, TYPE_META, callList, markDirty, subLine, rankingSources, snapshotFromRanking, snapshotFromSearch } = require('../common.js');
 
 Page({
   data: {
@@ -25,6 +15,7 @@ Page({
     meta: TYPE_META.movie,
     tab: 'rank',
     count: 0,
+    maxItems: MAX_ITEMS,
     room: MAX_ITEMS,
     // 榜单
     sources: [],
