@@ -2,8 +2,9 @@
   <view class="ed-head">
     <view class="ed-title-row" bindtap="onRename" hover-class="ed-pressed">
       <text class="ed-title">{{title || '…'}}</text>
-      <text class="ed-rename">改名</text>
+      <text class="ed-rename">编辑信息</text>
     </view>
+    <text class="ed-desc {{description ? '' : 'ed-desc-empty'}}" bindtap="onRename">{{description || '还没有说明语，点这里写一句'}}</text>
     <view class="ed-count-row">
       <text class="cl-muted">{{count}} / {{maxItems}} {{meta.unit}}</text>
       <view class="ed-progress"><view style="width:{{count * 100 / maxItems}}%"></view></view>

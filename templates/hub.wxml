@@ -41,6 +41,10 @@
     <view class="hub-search hub-hero-search"><view class="hub-search-icon" aria-hidden="true"></view><input placeholder="片单、书单、旅行" aria-label="搜索主题" placeholder-class="hub-input-placeholder" value="{{searchQuery}}" bindinput="onSearchInput" bindconfirm="onHomeSearch" confirm-type="search" maxlength="80" /></view>
     <button class="hub-feedback-btn" open-type="feedback" bindtap="onFeedbackTap" aria-label="意见反馈"><view class="hub-feedback-icon" aria-hidden="true"></view><text class="hub-feedback-text">反馈</text></button>
   </view>
+  <view wx:if="{{pageKind === 'home' && showAdFreeTip}}" class="hub-adfree-tip {{adFreePassUntilText ? 'hub-adfree-tip-on' : ''}}">
+    <text wx:if="{{adFreePassUntilText}}" class="hub-adfree-text">页面广告已关闭至 {{adFreePassUntilText}}</text><button wx:if="{{adFreePassUntilText}}" class="hub-adfree-help" bindtap="onAdFreeHelp" aria-label="哪些广告不在 30 分钟范围内">?</button>
+    <block wx:else><text class="hub-adfree-text">看段视频，30 分钟无页面广告</text><button class="hub-adfree-help" bindtap="onAdFreeHelp" aria-label="哪些广告不在 30 分钟范围内">?</button><button class="hub-adfree-btn" bindtap="onWatchAdFreeVideo" aria-label="观看视频，30 分钟内不展示页面广告">看视频</button></block>
+  </view>
 
   <block wx:if="{{pageKind === 'home'}}">
     <view class="hub-section-top hub-section"><text class="hub-section-title">每日标记</text></view>
@@ -58,8 +62,31 @@
   </block>
 
   <block wx:elif="{{pageKind === 'discover'}}">
-    <view class="hub-major-tabs"><button class="{{discoverSection === 'lists' ? 'active' : ''}}" data-section="lists" bindtap="onDiscoverSection">榜单</button><button class="{{discoverSection === 'daily' ? 'active' : ''}}" data-section="daily" bindtap="onDiscoverSection">每日标记</button></view>
+    <view class="hub-major-tabs"><button class="{{discoverSection === 'lists' ? 'active' : ''}}" data-section="lists" bindtap="onDiscoverSection">榜单</button><button class="{{discoverSection === 'daily' ? 'active' : ''}}" data-section="daily" bindtap="onDiscoverSection">每日标记</button><button class="{{discoverSection === 'custom' ? 'active' : ''}}" data-section="custom" bindtap="onDiscoverSection">自定义</button></view>
+    <view wx:if="{{showDiscoverAd}}" class="hub-tab-ad {{discoverAdReady ? 'hub-tab-ad-ready' : ''}}"><ad-custom unit-id="{{adUnitIds.discover_tab_native}}" bindload="onDiscoverAdLoad" binderror="onDiscoverAdError" /></view>
     <view wx:if="{{discoverSection === 'daily'}}" class="hub-daily-catalog"><view wx:for="{{dailyThemes}}" wx:key="id" class="hub-daily-card" hover-class="hub-pressed" role="button" aria-label="{{item.title}}" data-id="{{item.id}}" bindtap="onOpenTheme"><view class="hub-daily-icon"><view class="hub-glyph icon-{{item.iconKey}}" aria-hidden="true"></view></view><view><text class="hub-row-title">{{item.title}}</text><text class="hub-muted">{{item.description}}</text></view><text class="hub-arrow">›</text></view></view>
+    <view wx:elif="{{discoverSection === 'custom'}}" class="hub-daily-catalog">
+      <text class="hub-muted hub-custom-intro">实验功能，每个用户可创建 1 个自定义影单和书单。</text>
+      <view wx:if="{{customState === 'error'}}" class="hub-empty hub-empty-small"><text class="hub-muted">{{customError}}</text><button class="hub-link" bindtap="loadCustomLists">重新加载</button></view>
+      <block wx:else>
+        <view wx:for="{{customCards}}" wx:key="type" class="hub-custom-card">
+          <block wx:if="{{item.list}}">
+            <view class="hub-custom-main" hover-class="hub-pressed" role="button" aria-label="查看{{item.noun}}{{item.list.title}}" data-type="{{item.type}}" bindtap="onCustomOpen">
+              <view class="hub-custom-covers"><image wx:for="{{item.list.covers}}" wx:for-item="cover" wx:key="*this" class="hub-custom-cover" src="{{cover}}" mode="aspectFill" lazy-load /><view wx:if="{{!item.list.covers.length}}" class="hub-custom-cover hub-custom-cover-empty">空</view></view>
+              <view class="hub-custom-text"><text class="hub-custom-kind">{{item.noun}}</text><text class="hub-row-title">{{item.list.title}}</text><text wx:if="{{item.list.description}}" class="hub-muted hub-custom-desc">{{item.list.description}}</text><text class="hub-muted">{{item.list.count}} / {{customMaxItems}} {{item.unit}}</text></view>
+              <text class="hub-arrow">›</text>
+            </view>
+            <view class="hub-custom-actions"><button class="hub-link" data-type="{{item.type}}" bindtap="onCustomEdit">管理{{item.noun}} ›</button></view>
+          </block>
+          <view wx:elif="{{customState === 'ready' && item.canCreate}}" class="hub-custom-main" hover-class="hub-pressed" role="button" aria-label="创建{{item.noun}}" data-type="{{item.type}}" bindtap="onCustomCreate">
+            <view class="hub-custom-cover hub-custom-cover-add" aria-hidden="true">+</view>
+            <view class="hub-custom-text"><text class="hub-custom-kind">{{item.noun}}</text><text class="hub-row-title">创建{{item.noun}}</text><text class="hub-muted">还没有{{item.noun}}，挑些{{item.item}}放进来</text></view>
+            <text class="hub-arrow">›</text>
+          </view>
+          <view wx:elif="{{customState !== 'ready'}}" class="hub-custom-main"><view class="hub-custom-cover hub-custom-cover-empty"></view><view class="hub-custom-text"><text class="hub-custom-kind">{{item.noun}}</text><text class="hub-muted">读取中…</text></view></view>
+        </view>
+      </block>
+    </view>
     <block wx:else>
     <view class="hub-search"><view class="hub-search-icon" aria-hidden="true"></view><input aria-label="搜索榜单" placeholder="榜单、作者、类型或地区" placeholder-class="hub-input-placeholder" value="{{searchQuery}}" bindinput="onSearchInput" bindconfirm="onSearchConfirm" confirm-type="search" maxlength="80" /><button wx:if="{{searchQuery}}" class="hub-search-btn hub-search-clear" bindtap="onClearSearch">清空</button></view>
     <view class="hub-catalog-layout">
@@ -136,7 +163,7 @@
 
   <block wx:elif="{{pageKind === 'profile'}}">
     <view class="hub-profile" hover-class="hub-pressed" bindtap="onEditProfile" role="button" aria-label="编辑个人资料"><image class="hub-avatar" src="{{userInfo.avatarUrl || '/images/default-avatar.svg'}}" mode="aspectFill" /><view class="hub-record-body"><text class="hub-profile-name">{{userInfo.nickName || '点击登录'}}</text><text class="hub-muted">{{userInfo ? '编辑头像与昵称' : '设置头像昵称，留下你的模样'}}</text></view><text class="hub-arrow">›</text></view>
-    <view class="hub-menu"><button bindtap="onOpenCustomLists" aria-label="我的影单与书单">我的影单 · 书单<view class="hub-menu-trail"><text class="hub-muted">自己挑片挑书</text><text>›</text></view></button></view>
+    <view wx:if="{{showProfileAd}}" class="hub-profile-ad {{profileAdReady ? 'hub-profile-ad-ready' : ''}}"><ad-custom unit-id="{{adUnitIds.profile_top_native}}" bindload="onProfileAdLoad" binderror="onProfileAdError" /></view>
     <view class="hub-section-top hub-section"><text class="hub-section-title">我的主题</text><button class="hub-link" bindtap="onOpenPinManager">管理收藏 ›</button></view>
     <view class="hub-personal-panel">
     <view class="hub-personal-tabs"><button wx:for="{{personalTabs}}" wx:key="id" class="hub-chip {{personalTab === item.id ? 'hub-chip-active' : ''}}" data-tab="{{item.id}}" bindtap="onPersonalTab">{{item.label}}</button></view>

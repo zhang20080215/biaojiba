@@ -13,6 +13,7 @@
         </view>
         <view class="cl-card-text">
           <text class="cl-card-title">{{item.list.title}}</text>
+          <text wx:if="{{item.list.description}}" class="cl-card-desc">{{item.list.description}}</text>
           <text class="cl-muted">{{item.list.count}} / {{maxItems}} {{item.unit}}</text>
         </view>
       </view>

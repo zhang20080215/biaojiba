@@ -1,6 +1,9 @@
 /* Four root pages share the existing warm palette and theme preferences. */
 /* 强调色/浅底直接取全局主题（styles/theme.wxss 的 brand-accent / brand-tint），与豆瓣等内容页同一份，不再各自维护 */
-.hub-root { --hub-gutter: 32rpx; --hub-accent: var(--brand-accent); --hub-soft: var(--brand-tint); min-height: 100vh; padding: 0 var(--hub-gutter) 48rpx; color: var(--text-primary); }
+/* 底部 tab 是自定义组件（custom-tab-bar，position: fixed 浮在页面上），微信不会像原生 tabBar 那样把页面高度让出来，
+   所以底部留白 = 原来的 48rpx + tab 栏 48px + 底部安全区，否则最后一屏内容被 tab 栏盖住、看起来「划不到底」。
+   tab 栏高度改了这里要跟着改（custom-tab-bar/index.wxss 的 .tab-bar height） */
+.hub-root { --hub-gutter: 32rpx; --hub-accent: var(--brand-accent); --hub-soft: var(--brand-tint); --hub-tabbar-h: 48px; min-height: 100vh; box-sizing: border-box; padding: 0 var(--hub-gutter) calc(48rpx + var(--hub-tabbar-h) + env(safe-area-inset-bottom)); color: var(--text-primary); }
 .hub-header { padding-bottom: 28rpx; }
 .hub-brand-row { display: flex; align-items: center; gap: 16rpx; padding-right: 200rpx; }
 .hub-brand { display: block; font-size: 42rpx; line-height: 72rpx; font-weight: 700; letter-spacing: 1rpx; color: var(--category-hero-title); }
@@ -35,6 +38,13 @@
    反馈走微信原生反馈页（open-type="feedback"），与「我的 → 意见反馈」同一入口 */
 .hub-hero-search-row { --hub-lift: 0 16rpx 44rpx rgba(70, 50, 20, 0.10), 0 2rpx 6rpx rgba(70, 50, 20, 0.06); position: relative; z-index: 2; display: flex; align-items: stretch; gap: 20rpx; margin: -48rpx 0 0; }
 .hub-hero-search-row .hub-hero-search { flex: 1; min-width: 0; margin: 0; min-height: 96rpx; padding: 0 32rpx; gap: 20rpx; background: var(--bg-card); border: 1rpx solid rgba(0, 0, 0, 0.03); border-radius: 28rpx; box-shadow: var(--hub-lift); }
+/* 搜索下方的小 tips 条：看视频换 30 分钟无页面广告。左右与搜索行同一条边线，弱化成一行灰字 + 问号 + 小按钮；
+   问号紧跟文字，「看视频」靠右 */
+.hub-adfree-tip { display: flex; align-items: center; gap: 16rpx; margin: 20rpx 0 0; padding: 14rpx 16rpx 14rpx 24rpx; background: var(--hub-soft); border: 1rpx solid var(--line-subtle); border-radius: 20rpx; }
+.hub-adfree-tip.hub-adfree-tip-on { padding: 18rpx 24rpx; }
+.hub-adfree-text { flex: 0 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 23rpx; line-height: 1.5; color: var(--text-secondary); }
+.hub-root button.hub-adfree-help { flex: 0 0 auto; width: 36rpx; height: 36rpx; min-height: 0; margin: 0; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 22rpx; font-weight: 600; line-height: 1; color: var(--text-secondary); background: transparent; border: 2rpx solid currentColor; border-radius: 50%; opacity: .7; }
+.hub-root button.hub-adfree-btn { flex: 0 0 auto; width: auto; margin: 0 0 0 auto; padding: 0 22rpx; min-height: 0; line-height: 52rpx; font-size: 23rpx; font-weight: 600; color: var(--hub-accent); background: var(--bg-card); border: 1rpx solid var(--line-subtle); border-radius: 999rpx; }
 .hub-hero-search-row .hub-search input { height: 96rpx; font-size: 28rpx; }
 .hub-root button.hub-feedback-btn { flex: 0 0 96rpx; width: 96rpx; min-width: 0; min-height: 96rpx; margin: 0; padding: 0; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8rpx; line-height: 1; background: var(--bg-card); border: 1rpx solid rgba(0, 0, 0, 0.03); border-radius: 28rpx; box-shadow: var(--hub-lift); }
 .hub-root button.hub-feedback-btn::after { border: none; }
@@ -120,6 +130,10 @@
 .hub-profile { display: flex; align-items: center; gap: 24rpx; padding: 30rpx 24rpx; background: var(--hub-soft); border-radius: 24rpx; border: 1rpx solid var(--line-subtle); }
 .hub-avatar { width: 104rpx; height: 104rpx; border-radius: 50%; flex-shrink: 0; background: var(--bg-card); border: 4rpx solid var(--bg-card); }
 .hub-profile-name { display: block; font-size: 32rpx; font-weight: 600; line-height: 1.45; overflow-wrap: anywhere; }
+/* 「我的」头像卡下的广告：卡片外观与下面的菜单卡一致；广告渲染出来之前不占高、不描边，原布局不动 */
+.hub-profile-ad { overflow: hidden; border-radius: 24rpx; }
+.hub-profile-ad.hub-profile-ad-ready { margin: 24rpx 0; background: var(--bg-card); border: 1rpx solid var(--line-subtle); }
+.hub-profile-ad ad-custom { display: block; }
 .hub-menu { background: var(--bg-card); border: 1rpx solid var(--line-subtle); border-radius: 24rpx; padding: 0 24rpx; margin-bottom: 24rpx; }
 .hub-menu button { width: 100%; min-height: 100rpx; background: transparent; font-size: 28rpx; line-height: 1.5; padding: 26rpx 0; gap: 20rpx; display: flex; align-items: center; justify-content: space-between; text-align: left; color: var(--text-primary); }
 .hub-menu button + button { border-top: 1rpx solid var(--line-subtle); }
@@ -166,9 +180,27 @@
 .hub-root .hub-major-tabs button { position: relative; width: auto; padding: 0 0 16rpx; background: transparent; color: var(--text-secondary); font-size: 30rpx; line-height: 64rpx; border-radius: 0; }
 .hub-root .hub-major-tabs button.active { color: var(--text-primary); font-weight: 600; }
 .hub-major-tabs button.active::before { content: ''; position: absolute; bottom: 0; left: calc(50% - 18rpx); width: 36rpx; height: 5rpx; border-radius: 4rpx; background: var(--hub-accent); }
+/* 分类页标签下的广告：独立卡片，与下面的每日卡片、搜索框同一套（白底 + 发丝线 + 24rpx 圆角），
+   上距沿用标签栏自己的 24rpx 下边距。广告渲染出来之前不占高、不描边，标签与内容的间距保持原样 */
+.hub-tab-ad { overflow: hidden; border-radius: 24rpx; }
+.hub-tab-ad.hub-tab-ad-ready { margin: 0 0 24rpx; background: var(--bg-card); border: 1rpx solid var(--line-subtle); }
+.hub-tab-ad ad-custom { display: block; }
 .hub-daily-catalog { display: flex; flex-direction: column; gap: 20rpx; }
 .hub-daily-card { display: flex; align-items: center; gap: 24rpx; padding: 30rpx 24rpx; background: var(--bg-card); border: 1rpx solid var(--line-subtle); border-radius: 24rpx; }
 .hub-daily-card > view { flex: 1; min-width: 0; }
+/* 分类页「自定义」分区：自建影单 / 书单卡（封面叠放 + 标题 + 条数，下方「管理」） */
+.hub-custom-intro { margin: 0 4rpx 4rpx; }
+.hub-custom-card { background: var(--bg-card); border: 1rpx solid var(--line-subtle); border-radius: 24rpx; overflow: hidden; }
+.hub-custom-main { display: flex; align-items: center; gap: 24rpx; padding: 28rpx 24rpx; }
+.hub-custom-covers { display: flex; flex-shrink: 0; }
+.hub-custom-cover { width: 72rpx; height: 102rpx; border-radius: 10rpx; background: var(--hub-soft); box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, .08); flex-shrink: 0; }
+.hub-custom-covers .hub-custom-cover + .hub-custom-cover { margin-left: -36rpx; border: 2rpx solid var(--bg-card); }
+.hub-custom-cover-empty, .hub-custom-cover-add { display: flex; align-items: center; justify-content: center; color: var(--hub-accent); font-size: 24rpx; box-shadow: none; }
+.hub-custom-cover-add { font-size: 44rpx; font-weight: 300; border: 2rpx dashed var(--hub-accent); box-sizing: border-box; background: transparent; }
+.hub-custom-text { flex: 1; min-width: 0; }
+.hub-custom-desc { color: var(--text-primary); opacity: .72; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hub-custom-kind { display: inline-block; font-size: 20rpx; line-height: 1.6; padding: 0 12rpx; margin-bottom: 6rpx; border-radius: 8rpx; color: var(--hub-accent); background: var(--hub-soft); }
+.hub-custom-actions { display: flex; justify-content: flex-end; padding: 0 24rpx; border-top: 1rpx solid var(--line-subtle); }
 .hub-personal-tabs { display: flex; gap: 0; padding: 0 16rpx; border-bottom: 1rpx solid var(--line-subtle); }
 .timeline-intro { display: flex; gap: 24rpx; align-items: center; padding: 28rpx 24rpx; background: var(--hub-soft); border: 1rpx solid var(--line-subtle); border-radius: 24rpx; }
 .timeline-date { font-size: 28rpx; font-weight: 600; margin: 36rpx 0 22rpx; color: var(--text-primary); }

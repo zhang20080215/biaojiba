@@ -26,6 +26,16 @@
   font-size: 24rpx;
   color: var(--cl-brand);
 }
+.ed-desc {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  line-height: 1.6;
+  color: var(--cl-sub);
+}
+.ed-desc-empty {
+  color: var(--cl-mute);
+}
 .ed-count-row {
   display: flex;
   align-items: center;

@@ -5,6 +5,9 @@
 const catalog = require('../../utils/themeCatalog.js');
 
 const MAX_ITEMS = 200;
+// 名称 / 说明语长度上限，与云函数 customList 的 TITLE_MAX / DESC_MAX 一致
+const TITLE_MAX = 20;
+const DESC_MAX = 40;
 
 const TYPE_META = {
   movie: {
@@ -37,6 +40,35 @@ async function callList(action, data) {
 function listUrl(list) {
   const meta = TYPE_META[list.type];
   return `${meta.listPage}?theme=${meta.theme}&listId=${list._id}&title=${encodeURIComponent(list.title || '')}`;
+}
+
+// 入口卡：影单、书单各一张，没有就给「创建」。「我的」入口页和分类页「自定义」分区共用
+function buildCards(lists, quota) {
+  return ['movie', 'book'].map(type => {
+    const meta = TYPE_META[type];
+    const mine = (lists || []).filter(l => l.type === type);
+    return {
+      type,
+      noun: meta.noun,
+      unit: meta.unit,
+      item: meta.item,
+      brand: meta.brand,
+      soft: meta.soft,
+      list: mine[0] || null,
+      canCreate: mine.length < ((quota && quota[type]) || 1),
+    };
+  });
+}
+
+// 创建 / 修改「名称 + 说明语」都走表单页 info（showModal 只能放一个输入框）
+function promptCreate(type) {
+  if (!TYPE_META[type]) return;
+  wx.navigateTo({ url: `/pages/customList/info/info?type=${type}` });
+}
+
+function infoUrl(list) {
+  const q = v => encodeURIComponent(v || '');
+  return `/pages/customList/info/info?listId=${list._id}&type=${list.type}&title=${q(list.title)}&description=${q(list.description)}`;
 }
 
 // 编辑过清单后，通知已打开的列表页 onShow 时重拉（按 listId 各记一份，影单书单互不覆盖；
@@ -113,4 +145,4 @@ function snapshotFromSearch(c, type) {
     : { ...base, director: c.director || '' };
 }
 
-module.exports = { MAX_ITEMS, TYPE_META, callList, listUrl, markDirty, subLine, rankingSources, snapshotFromRanking, snapshotFromSearch };
+module.exports = { MAX_ITEMS, TITLE_MAX, DESC_MAX, TYPE_META, callList, listUrl, buildCards, promptCreate, infoUrl, markDirty, subLine, rankingSources, snapshotFromRanking, snapshotFromSearch };

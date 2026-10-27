@@ -7,7 +7,8 @@ var AD_FREE_NOTIFIED_KEY = 'ad_free_notified'
 
 // 各页面渲染广告用的显隐布尔字段。全项目的广告都是 <ad>/<ad-custom> 绑 adUnitIds.xxx，
 // 把 adUnitIds 清空即可移除；这两个 flag 是外层容器，一并收掉免得留下空白占位。
-var AD_VISIBILITY_FLAGS = ['showNativeAd', 'showBannerAd']
+// 首页 / 分类 / 我的 三个 tab 另有自己的原生位开关（hubPage），一并撤
+var AD_VISIBILITY_FLAGS = ['showNativeAd', 'showBannerAd', 'showTopAd', 'showDiscoverAd', 'showProfileAd']
 
 App({
   onShow(options) {
@@ -95,6 +96,12 @@ App({
         // 广告本身不用管，用户进入下一个页面时自然恢复。
         try { wx.removeStorageSync(AD_FREE_NOTIFIED_KEY) } catch (e) { /* ignore */ }
       }
+    })
+
+    // 首页看视频换来的 30 分钟无广告：生效那一刻同样就地撤掉存活页面上的广告；
+    // 到期不用管，各页下次 onShow 重新取广告位时自然恢复（首页 / 分类 / 我的 自己按到期时间定时恢复）。
+    adConfig.onAdFreePassChange((active) => {
+      if (active) this.clearAdsOnLivePages()
     })
 
     // 非关键启动任务延迟到首屏渲染后发起，避免阻塞 onLaunch 同步路径

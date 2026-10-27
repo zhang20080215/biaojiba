@@ -1,7 +1,7 @@
 // 管理一份自建影单 / 书单：改名、调整顺序、移除条目（单个 / 批量）、删除整份清单，
 // 以及去「添加」页（从榜单勾选 / 按名字搜索）。
 const imageCacheManager = require('../../../utils/imageCacheManager.js');
-const { MAX_ITEMS, TYPE_META, callList, listUrl, markDirty, subLine } = require('../common.js');
+const { MAX_ITEMS, TYPE_META, callList, listUrl, infoUrl, markDirty, subLine } = require('../common.js');
 
 Page({
   data: {
@@ -9,6 +9,7 @@ Page({
     type: 'movie',
     meta: TYPE_META.movie,
     title: '',
+    description: '',
     items: [],
     count: 0,
     maxItems: MAX_ITEMS,
@@ -44,7 +45,7 @@ Page({
         sub: subLine(it, type),
         thumb: imageCacheManager.getThumbnailUrl(it.cover, 'list'),
       }));
-      this.setData({ type, meta: TYPE_META[type], title: list.title, items, count: items.length, loading: false });
+      this.setData({ type, meta: TYPE_META[type], title: list.title, description: list.description || '', items, count: items.length, loading: false });
       wx.setNavigationBarTitle({ title: `管理${TYPE_META[type].noun}` });
       // 刚创建的空清单：直接引导去添加
       if (this._fresh && !items.length) {
@@ -57,25 +58,11 @@ Page({
     }
   },
 
+  // 名称 + 说明语在表单页 info 里改，保存后返回这里由 onShow 重拉
   onRename() {
-    wx.showModal({
-      title: `修改${this.data.meta.noun}名称`,
-      editable: true,
-      content: this.data.title,
-      placeholderText: '20 字内',
-      success: async (r) => {
-        if (!r.confirm) return;
-        const title = String(r.content || '').trim().slice(0, 20);
-        if (!title || title === this.data.title) return;
-        try {
-          await callList('rename', { listId: this.data.listId, title });
-          this.setData({ title });
-          markDirty(this.data.listId);
-        } catch (e) {
-          wx.showToast({ title: e.message, icon: 'none' });
-        }
-      },
-    });
+    if (this.data.loading) return;
+    const { listId, type, title, description } = this.data;
+    wx.navigateTo({ url: infoUrl({ _id: listId, type, title, description }) });
   },
 
   onAddFromRanking() {

@@ -107,7 +107,7 @@
 
   <!-- 自建书单空态 -->
   <view wx:if="{{cfg.custom && allCount === 0}}" class="custom-empty">
-    <text class="custom-empty-title">{{listMissing ? '这份书单不存在或已被删除' : isOwner ? '书单还是空的' : '这份书单还没有内容'}}</text>
+    <text class="custom-empty-title">{{listMissing ? '这份书单不存在，或仅创建者本人可见' : '书单还是空的'}}</text>
     <text wx:if="{{isOwner && !listMissing}}" class="custom-empty-sub">从现有榜单挑，或者按书名搜索加入，最多 200 本</text>
     <view wx:if="{{isOwner && !listMissing}}" class="custom-empty-btn" bindtap="onAddToList">添加图书</view>
   </view>

@@ -83,6 +83,7 @@ Page({
             const listId = (cfg.custom && options.listId) || '';
             if (cfg.custom && options.title) cfg.title = decodeURIComponent(options.title);
             this._listId = listId;
+            if (listId && wx.hideShareMenu) wx.hideShareMenu({ menus: ['shareAppMessage', 'shareTimeline'] });
             wx.setNavigationBarTitle({ title: '海报预览' });
             const windowInfo = wx.getWindowInfo();
             const menuBtn = wx.getMenuButtonBoundingClientRect();
@@ -1009,7 +1010,8 @@ Page({
     onShareAppMessage() {
         return {
             title: `我的${this.data.cfg.title}读书海报`,
-            path: `/pages/genericBookList/list/list?theme=${this.data.theme}${this._listId ? `&listId=${this._listId}` : ''}`
+            // 自建清单只有本人可见：转发海报页时落到首页，不把 listId 带出去
+            path: this._listId ? '/pages/category/category' : `/pages/genericBookList/list/list?theme=${this.data.theme}`
         };
     },
 

@@ -45,7 +45,8 @@
     "pages/guess/cross/index",
     "pages/customList/index/index",
     "pages/customList/edit/edit",
-    "pages/customList/add/add"
+    "pages/customList/add/add",
+    "pages/customList/info/info"
   ],
   "window": {
     "navigationBarTitleText": "标记吧",

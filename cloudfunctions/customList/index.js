@@ -1,7 +1,8 @@
 // 云函数：customList —— 用户自建影单 / 书单（单一入口，action 分发，同 syncDailyLog 的写法）
 //
 // 集合 custom_lists，一份清单一个文档（_id 由数据库生成，不含 openid，分享链接里带 listId 不泄露身份）：
-//   { openid, type: 'movie'|'book', title, items: [Item], count, rev, createdAt, updatedAt }
+//   { openid, type: 'movie'|'book', title, description, items: [Item], count, rev, createdAt, updatedAt }
+//   description 是用户写的说明语（≤ DESC_MAX 字，可空），列表页顶部替代主题 slogan 显示。
 //   Item = { _id, title, year, cover, rating, ratingCount, director|author, country, doubanId, from, markSource, addedAt }
 //   items 数组顺序即展示顺序（新加的排在后面），读出时按下标补 rank。
 //
@@ -17,14 +18,16 @@
 //
 // action（openid 一律取 wxContext，不接受前端传参）：
 //   mine                          —— 我的清单概要（两种类型），供入口页
-//   create   { type, title }
-//   rename   { listId, title }
+//   create   { type, title, description }
+//   rename   { listId, title, description }  —— description 不传则不改；名称/说明语都过 msgSecCheck
 //   addItems { listId, items }    —— 去重 + 截到剩余容量；返回 added / skipped / overflow
 //   removeItems { listId, ids }
 //   moveItem { listId, id, to: 'top'|'up'|'down' }
 //   remove   { listId }           —— 删除整份清单（不动标记记录）
 //   get（缺省）{ listId, openid, marksOnly } —— 列表页读路径，形状对齐 getThemeMovies
-//                                  （{ success, movies, marks, listVersion }）+ list 元信息；任何人可读（分享）。
+//                                  （{ success, movies, marks, listVersion }）+ list 元信息。
+//                                  **只有创建者本人能读**（2026-10-28 定：自建清单是私人的，不对外分享）；
+//                                  别人拿着 listId 来读，回 PRIVATE，与「不存在」同一条提示，不泄露清单内容。
 //                                  marks 只含本清单条目的标记（按 id 精确查），不走 processMarks 的片名兜底
 //
 // 去重：_id / doubanId / 标准化标题+年份（书用作者），见 dedupeKeys。
@@ -40,6 +43,7 @@ const COLLECTION = 'custom_lists';
 const QUOTA = { movie: 1, book: 1 };
 const MAX_ITEMS = 200;
 const TITLE_MAX = 20;
+const DESC_MAX = 40;
 const MAX_LIMIT = 100;
 const COVER_DIR = 'custom_list_covers';
 const TYPES = ['movie', 'book'];
@@ -47,6 +51,20 @@ const DEFAULT_TITLE = { movie: '我的影单', book: '我的书单' };
 
 const clip = (v, n) => String(v == null ? '' : v).trim().slice(0, n);
 const num = v => (Number.isFinite(Number(v)) ? Number(v) : 0);
+
+// 名称和说明语会随分享链接给别人看，属于用户发布内容，提交前过一遍微信内容安全。
+// 只拦明确判 risky 的；接口本身出错（未开权限 / 用户 2 小时内未访问等）不挡用户，只记日志。
+async function checkText(openid, text) {
+    if (!text) return true;
+    try {
+        const res = await cloud.openapi.security.msgSecCheck({ openid, scene: 1, version: 2, content: text });
+        return !(res && res.result && res.result.suggest === 'risky');
+    } catch (err) {
+        console.warn('[customList] msgSecCheck failed', err && (err.errCode || err.message));
+        return true;
+    }
+}
+const TEXT_REJECTED = { success: false, code: 'SEC_CHECK', error: '名称或说明语含有不适宜的内容，请修改后再试' };
 
 async function readAll(query) {
     const countRes = await query.count();
@@ -226,6 +244,7 @@ function summarize(doc) {
         _id: doc._id,
         type: doc.type,
         title: doc.title,
+        description: doc.description || '',
         count: items.length,
         max: MAX_ITEMS,
         covers: items.slice(0, 4).map(i => i.cover).filter(Boolean),
@@ -257,18 +276,28 @@ const actions = {
             return { success: false, code: 'QUOTA', error: `每人只能创建 ${QUOTA[type]} 份${type === 'book' ? '书单' : '影单'}` };
         }
         const title = clip(event.title, TITLE_MAX) || DEFAULT_TITLE[type];
+        const description = clip(event.description, DESC_MAX);
+        if (!(await checkText(openid, [title, description].filter(Boolean).join('\n')))) return TEXT_REJECTED;
         const now = new Date();
         const res = await db.collection(COLLECTION).add({
-            data: { openid, type, title, items: [], count: 0, rev: 0, createdAt: now, updatedAt: now }
+            data: { openid, type, title, description, items: [], count: 0, rev: 0, createdAt: now, updatedAt: now }
         });
-        return { success: true, listId: res._id, list: { _id: res._id, type, title, count: 0, max: MAX_ITEMS, covers: [] } };
+        return { success: true, listId: res._id, list: { _id: res._id, type, title, description, count: 0, max: MAX_ITEMS, covers: [] } };
     },
 
     async rename({ openid, event }) {
         const title = clip(event.title, TITLE_MAX);
         if (!title) return { success: false, error: '标题不能为空' };
-        await mutateList(event.listId, openid, doc => (doc.title === title ? null : { title }));
-        return { success: true, title };
+        const hasDesc = typeof event.description === 'string';
+        const description = hasDesc ? clip(event.description, DESC_MAX) : undefined;
+        if (!(await checkText(openid, [title, description].filter(Boolean).join('\n')))) return TEXT_REJECTED;
+        await mutateList(event.listId, openid, doc => {
+            const patch = {};
+            if (doc.title !== title) patch.title = title;
+            if (hasDesc && (doc.description || '') !== description) patch.description = description;
+            return Object.keys(patch).length ? patch : null;
+        });
+        return hasDesc ? { success: true, title, description } : { success: true, title };
     },
 
     async addItems({ openid, event }) {
@@ -351,6 +380,9 @@ const actions = {
     async get({ openid: callerOpenid, event }) {
         const doc = await getDoc(event.listId);
         if (!doc) return { success: false, code: 'NOT_FOUND', error: '清单不存在或已删除', movies: [], marks: [] };
+        if (!callerOpenid || doc.openid !== callerOpenid) {
+            return { success: false, code: 'PRIVATE', error: '清单不存在，或仅创建者本人可见', movies: [], marks: [] };
+        }
         const isBook = doc.type === 'book';
         // 标记只读调用者自己的（列表页传的 openid 必须等于真实身份，防止读别人的标记）
         const openid = event.openid && event.openid === callerOpenid ? callerOpenid : '';
@@ -366,7 +398,7 @@ const actions = {
             movies,
             marks,
             listVersion,
-            list: { _id: doc._id, type: doc.type, title: doc.title, count: movies.length, max: MAX_ITEMS, isOwner: doc.openid === callerOpenid }
+            list: { _id: doc._id, type: doc.type, title: doc.title, description: doc.description || '', count: movies.length, max: MAX_ITEMS, isOwner: doc.openid === callerOpenid }
         };
     }
 };

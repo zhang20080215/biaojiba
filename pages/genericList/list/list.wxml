@@ -112,7 +112,7 @@
 
   <!-- 自建影单空态 -->
   <view wx:if="{{cfg.custom && allCount === 0}}" class="custom-empty">
-    <text class="custom-empty-title">{{listMissing ? '这份影单不存在或已被删除' : isOwner ? '影单还是空的' : '这份影单还没有内容'}}</text>
+    <text class="custom-empty-title">{{listMissing ? '这份影单不存在，或仅创建者本人可见' : '影单还是空的'}}</text>
     <text wx:if="{{isOwner && !listMissing}}" class="custom-empty-sub">从现有榜单挑，或者按片名搜索加入，最多 200 部</text>
     <view wx:if="{{isOwner && !listMissing}}" class="custom-empty-btn" bindtap="onAddToList">添加电影</view>
   </view>

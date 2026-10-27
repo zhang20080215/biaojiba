@@ -68,7 +68,10 @@ Page({
         }
         const theme = (options && options.theme) || '';
         const cfg = getThemeConfig(theme);
+        this._defaultSlogan = cfg.slogan;  // 自建清单清空说明语时退回主题 slogan
         const listId = (cfg.custom && options && options.listId) || '';
+        // 自建书单只有本人可见（customList.get 拒绝非本人），右上角转发 / 朋友圈一并关掉
+        if (cfg.custom && wx.hideShareMenu) wx.hideShareMenu({ menus: ['shareAppMessage', 'shareTimeline'] });
         if (cfg.custom && options && options.title) cfg.title = decodeURIComponent(options.title);
         this.setData({
             statusBarHeight: 0,
@@ -109,10 +112,10 @@ Page({
         wx.navigateTo({ url: `/pages/customList/add/add?listId=${this.data.listId}&type=book` });
     },
 
-    // 自建书单：云函数回的清单元信息覆盖兜底标题
+    // 自建书单：云函数回的清单元信息覆盖兜底标题，用户写了说明语就替掉主题 slogan
     applyListMeta(meta) {
         if (!meta) return;
-        const cfg = { ...this.data.cfg, title: meta.title || this.data.cfg.title };
+        const cfg = { ...this.data.cfg, title: meta.title || this.data.cfg.title, slogan: meta.description || this._defaultSlogan || this.data.cfg.slogan };
         this.setData({ cfg, isOwner: !!meta.isOwner, listMissing: false });
         wx.setNavigationBarTitle({ title: cfg.title });
     },
@@ -362,7 +365,7 @@ Page({
                 ...this.buildReadProgress(0, 0),
                 listMissing: !!this.data.listId
             });
-            wx.showToast({ title: this.data.listId ? '书单不存在或已删除' : '暂无数据或加载失败', icon: 'none' });
+            wx.showToast({ title: this.data.listId ? '书单不存在或仅本人可见' : '暂无数据或加载失败', icon: 'none' });
             wx.hideNavigationBarLoading();
         }
     },
@@ -811,6 +814,8 @@ Page({
 
     onShareAppMessage() {
         trackShare(this.data.theme, 'appmsg', this.route);
+        // 兜底：菜单已关，万一仍触发转发，也只发首页，不带 listId
+        if (this.data.cfg.custom) return { title: '标记吧', path: '/pages/category/category' };
         return {
             title: `${this.data.cfg.title} - 记录你的阅读旅程`,
             path: `/pages/genericBookList/list/list?${this.shareQuery()}`
@@ -819,6 +824,7 @@ Page({
 
     onShareTimeline() {
         trackShare(this.data.theme, 'timeline', this.route);
+        if (this.data.cfg.custom) return { title: '标记吧', query: '' };
         return { title: `${this.data.cfg.title} - 记录你的阅读旅程`, query: this.shareQuery() };
     },
 
