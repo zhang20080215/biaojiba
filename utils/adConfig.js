@@ -18,7 +18,8 @@
  *   grayForceIn: {                 // 可选，白名单 openid 直通灰度（自测用）
  *     daily_movie_banner: ["o..."],
  *   },
- *   forceUpdatePrompt: true        // 可选，出 P0 时打开：提示用户立即重启用新版
+ *   forceUpdatePrompt: true,       // 可选，出 P0 时打开：提示用户立即重启用新版
+ *   showRecordsTab: true           // 可选，底部「记录」tab 开关；提审期间保持 false，过审上线后改 true
  * }
  *
  * 灰度只对**接了 adPlacementGate 的展示位**和激励闸门生效；老广告位直接读 getAdUnitId，
@@ -89,6 +90,11 @@ const adConfig = {
   // 出 P0 需要快速铺开修复时，把云端 app_config 的 forceUpdatePrompt 改成 true，
   // 用户下次冷启动即弹窗提示立即重启——不用发版。
   forceUpdatePrompt: false,
+
+  // 底部「记录」tab 是否露出（custom-tab-bar 读它）。默认 false：提审包里看不到这个 tab
+  // （1.0.56 审核以「记录点击无响应」驳回——那页还是「打磨中」蒙版）。
+  // 过审上线后把云端 app_config 的 showRecordsTab 改成 true，用户下次进入即出现，不用发版。
+  showRecordsTab: false,
 }
 
 // ── 远程配置缓存 key ──
@@ -148,6 +154,7 @@ function fetchRemoteConfig(force) {
     if (res.data && res.data.length > 0) {
       var remote = res.data[0]
       _applyRemoteConfig(remote)
+      _notifyRemoteApplied()
       // 写入本地缓存
       try {
         wx.setStorageSync(CACHE_KEY, { data: remote, timestamp: Date.now() })
@@ -214,6 +221,12 @@ function _applyRemoteConfig(remote) {
     adConfig.forceUpdatePrompt = false
   }
 
+  if (remote.showRecordsTab === true) {
+    adConfig.showRecordsTab = true
+  } else if (remote.showRecordsTab === false) {
+    adConfig.showRecordsTab = false
+  }
+
   if (remote.grayForceIn) {
     var forceKeys = Object.keys(remote.grayForceIn)
     for (var k = 0; k < forceKeys.length; k++) {
@@ -267,6 +280,26 @@ function shouldPromptUpdate() {
   return adConfig.forceUpdatePrompt === true
 }
 
+/** 底部「记录」tab 是否露出（默认 false，过审后云端打开） */
+function shouldShowRecordsTab() {
+  return adConfig.showRecordsTab === true
+}
+
+// 云端配置拉回来后通知已渲染的界面（custom-tab-bar 据此即时增减「记录」tab）
+var _remoteListeners = []
+function onRemoteApplied(fn) {
+  if (typeof fn === 'function' && _remoteListeners.indexOf(fn) === -1) _remoteListeners.push(fn)
+}
+function offRemoteApplied(fn) {
+  var i = _remoteListeners.indexOf(fn)
+  if (i !== -1) _remoteListeners.splice(i, 1)
+}
+function _notifyRemoteApplied() {
+  _remoteListeners.slice().forEach(function (fn) {
+    try { fn() } catch (e) { /* 单个监听出错不影响其他 */ }
+  })
+}
+
 /** 云端那次网络拉取是否已收口。用于区分「确实关着」和「配置还没到」 */
 function isRemoteFetched() {
   return _remoteFetched
@@ -280,6 +313,9 @@ module.exports = {
   isForcedIntoGray,
   fetchRemoteConfig,
   shouldPromptUpdate,
+  shouldShowRecordsTab,
+  onRemoteApplied,
+  offRemoteApplied,
   isRemoteFetched,
   // 会员免广告（实现在 utils/adFree.js，这里转出去省得各处再 require 一个模块）
   isAdFree: adFree.isAdFree,

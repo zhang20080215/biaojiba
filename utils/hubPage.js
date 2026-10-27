@@ -523,7 +523,7 @@ module.exports = function createHubPage(pageKind) {
     this.checkLoginStatus();
     this._mergeCloudThemes(themeRegistry.readAll());
     this.setData({ themeClass: getApp().globalData.theme == null ? 'theme-green' : getApp().globalData.theme });
-    hubStore.applyTabStyle(this.data.themeClass);
+    hubStore.applyTabStyle(this.data.themeClass, this, pageKind);
     this.initAds();
     const intent = hubStore.takeIntent(pageKind);
     if (intent) this.setData({ discoverSection: 'lists', activeTab: intent.category || 'all', searchQuery: intent.query || '', sortMode: intent.sort || 'popular' });
@@ -602,7 +602,7 @@ module.exports = function createHubPage(pageKind) {
     app.globalData.theme = theme;
     wx.setStorageSync('appTheme', theme);
     this.setData({ themeClass: theme, showThemePicker: false });
-    hubStore.applyTabStyle(theme);
+    hubStore.applyTabStyle(theme, this, pageKind);
   },
 
   // 鍒嗙被Tab鍒囨崲
