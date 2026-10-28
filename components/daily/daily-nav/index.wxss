@@ -5,7 +5,9 @@
   right: 0;
   z-index: 50;
   background: var(--bg-page, #FAFAFA);
-  box-sizing: content-box;
+  /* height 已含状态栏（navOffset = 状态栏 + 导航条），padding-top 必须算在 height 里，
+     否则导航栏比下面的占位多出一截状态栏高度，压住页面顶部（统计页的周/月/年曾被挡住） */
+  box-sizing: border-box;
 }
 .bar {
   position: relative;
