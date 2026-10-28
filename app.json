@@ -41,7 +41,6 @@
     "pages/daily/sport/share",
     "pages/daily/metric/index",
     "pages/daily/metric/stats",
-    "pages/daily/metric/year",
     "pages/daily/metric/share",
     "pages/movie-search/input/input",
     "pages/movie-search/list/list",

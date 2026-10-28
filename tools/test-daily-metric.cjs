@@ -83,13 +83,6 @@ test('month cells start on Monday and mark today / future / missing', () => {
   assert.ok(before.every(c => c.level === -1));
 });
 
-test('year rows have one cell per calendar day', () => {
-  const rows = M.buildYearRows(2028, {}, 8000, '2028-12-31');
-  assert.equal(rows.length, 12);
-  assert.equal(rows[1].cells.length, 29);
-  assert.equal(rows.reduce((n, r) => n + r.cells.length, 0), 366);
-});
-
 test('number formatting', () => {
   assert.equal(M.formatNum(1234567), '1,234,567');
   assert.equal(M.formatShort(9999), '9,999');
@@ -236,7 +229,6 @@ test('views render both measures', () => {
   const st = V.viewOf(sleep).stats(s, { '2026-10-27': sd }, sleep, 660, '本月');
   assert.equal(st.headline, '22:20');
   assert.equal(st.kpi[3].value, '06:50');
-  assert.equal(V.viewOf(sleep).year(s, { '2026-10-27': sd }, sleep).heroNum, '1');
   assert.equal(V.viewOf(steps).posterMonth(M.summarize({ '2026-10-27': 9000 }, '2026-10-01', '2026-10-31', 8000, '2026-10-28'), [], {}, steps, 't').tiles.length, 3);
 });
 
@@ -310,6 +302,8 @@ test('week and month candles: open = first day, close = last day, high/low = ext
   assert.deepEqual(m.map(x => x.key), ['2026-10', '2026-11']);
   assert.deepEqual([m[1].from, m[1].to, m[1].open, m[1].close], ['2026-11-01', '2026-11-30', 8000, 8000]);
   assert.equal(Math.round(K.changePct(m, 1)), -6);                   // 8000 vs 8500
+  const y = K.buildCandles(map, 'year');
+  assert.deepEqual(y.map(x => [x.key, x.from, x.to, x.count, x.high, x.low, x.sum]), [['2026', '2026-01-01', '2026-12-31', 5, 15000, 3000, 42000]]);
   assert.equal(K.changePct(m, 0), null);
   assert.deepEqual(K.movingAverage([{ main: 1 }, { main: 2 }, { main: 3 }, { main: 6 }], 3), [null, null, 2, 11 / 3]);
 });

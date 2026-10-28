@@ -162,22 +162,6 @@ function buildMonthCells(year, month, dayMap, goal, today, measure) {
   return cells;
 }
 
-// 年历：12 行，每行是该月每一天（列数 = 当月天数）
-function buildYearRows(year, dayMap, goal, today, measure) {
-  const rows = [];
-  for (let m = 1; m <= 12; m++) {
-    const r = D.monthRange(year, m);
-    const cells = [];
-    for (let day = 1; day <= r.lastDay; day++) {
-      const date = D.ymd(year, m, day);
-      const isFuture = date > today;
-      const has = !isFuture && date in dayMap;
-      cells.push({ key: date, date, level: isFuture ? -2 : heatLevel(has ? dayMap[date] : 0, goal, has, measure) });
-    }
-    rows.push({ month: m, label: m + '月', cells });
-  }
-  return rows;
-}
 
 // 12345 → '12,345'
 function formatNum(n) {
@@ -211,7 +195,6 @@ module.exports = {
   summarize,
   goalProgress,
   buildMonthCells,
-  buildYearRows,
   formatNum,
   formatShort,
   equivalentOf

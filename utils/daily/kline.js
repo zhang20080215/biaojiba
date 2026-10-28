@@ -1,7 +1,7 @@
 /**
  * 每日主题公共层 · 统计页 K 线（日K / 周K / 月K）的数据计算，纯函数便于测试
  *
- * 每根蜡烛 = 一段时间：
+ * 每根 = 一段时间（日 / 周 / 月 / 年）：
  *   周K / 月K —— 高 / 低 = 这段里最多 / 最少的一天，开 = 第一个有数据的日子，收 = 最后一个；
  *   日 —— 一天只有一个总数：高 = 低 = 收 = 当天的值，开 = 上一个有数据的日子的值（第一天开 = 收）。
  * 统计页现在不画蜡烛实体（柱形 / 折线 / 箱体「十」字，见 components/daily/kline-chart），开 / 收只是保留下来的数据。
@@ -16,6 +16,10 @@ function periodOf(date, period) {
     const r = D.weekRange(date, 0);
     return { key: r.from, from: r.from, to: r.to };
   }
+  if (period === 'year') {
+    const y = date.slice(0, 4);
+    return { key: y, from: `${y}-01-01`, to: `${y}-12-31` };
+  }
   if (period === 'month') {
     const r = D.monthRange(Number(date.slice(0, 4)), Number(date.slice(5, 7)));
     return { key: date.slice(0, 7), from: r.from, to: r.to };
@@ -25,7 +29,7 @@ function periodOf(date, period) {
 
 /**
  * @param map    { 'YYYY-MM-DD': value }（只含有数据的日子）
- * @param period 'day' | 'week' | 'month'
+ * @param period 'day' | 'week' | 'month' | 'year'
  * @returns 按时间升序的蜡烛 [{ key, from, to, open, close, high, low, main, count }]，没有数据的周 / 月不出现
  */
 function buildCandles(map, period) {

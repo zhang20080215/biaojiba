@@ -21,7 +21,7 @@ const LONG_PRESS_MS = 300;
 Component({
   properties: {
     candles: { type: Array, value: [] },
-    period: { type: String, value: 'day' },     // day | week | month
+    period: { type: String, value: 'day' },     // day | week | month | year
     mode: { type: String, value: 'bar' },       // bar | line | box
     value: { type: String, value: 'main' },     // main | sum（柱形 / 折线取哪个数）
     goal: { type: Number, value: 0 },
@@ -91,6 +91,7 @@ Component({
 
     _dateLabel(c) {
       if (!c) return '';
+      if (this.data.period === 'year') return c.key;
       if (this.data.period === 'month') return c.key.replace('-', '/');
       return c.from.slice(5).replace('-', '/');
     },

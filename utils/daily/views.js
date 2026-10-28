@@ -1,5 +1,5 @@
 /**
- * 每日主题公共层 · 各度量的展示文案（统计页 / 年度页 / 海报 / 日详情）
+ * 每日主题公共层 · 各度量的展示文案（统计页 / 海报 / 日详情）
  *
  * 页面只调这里，不写 if (睡眠)：步数（count）和睡眠（bedtime）在「显示什么数、KPI 是哪几项、海报写什么」上
  * 的差别全收在这一个文件里。加一种新度量 = 这里加一组 + metric.MEASURES 加一个。
@@ -56,21 +56,6 @@ const VIEWS = {
       };
     },
 
-    year(s, docs, theme) {
-      const v = theme.vocab;
-      return {
-        heroCap: '年度累计',
-        heroNum: M.formatNum(s.total),
-        heroUnit: theme.unit,
-        heroSub: eqText(theme, s.total),
-        kpi: [
-          { label: v.avgLabel, value: M.formatNum(s.avg), unit: theme.unit },
-          { label: '达标天数', value: s.achieved, unit: `/ ${s.dataDays} 天` },
-          { label: '最长连续达标', value: s.longestStreak, unit: '天' },
-          { label: v.bestLabel, value: s.best ? M.formatShort(s.best.value) : '—', unit: s.best ? `${theme.unit} · ${D.formatDateCN(s.best.date)}` : '' }
-        ]
-      };
-    },
 
     posterDay(doc, goal, theme, title) {
       const value = Number(doc.total_value) || 0;
@@ -133,21 +118,6 @@ const VIEWS = {
       };
     },
 
-    year(s, docs, theme) {
-      const x = sleepExtras(docs);
-      return {
-        heroCap: '年度早睡',
-        heroNum: String(s.achieved),
-        heroUnit: '天',
-        heroSub: s.dataDays ? `共记录 ${s.dataDays} 晚` : '',
-        kpi: [
-          { label: theme.vocab.avgLabel, value: s.dataDays ? T.offsetToClock(s.avg) : '—', unit: '' },
-          { label: '平均睡眠', value: x.avgDuration, unit: '' },
-          { label: '最长连续早睡', value: s.longestStreak, unit: '天' },
-          { label: theme.vocab.bestLabel, value: s.best ? T.offsetToClock(s.best.value) : '—', unit: s.best ? D.formatDateCN(s.best.date) : '' }
-        ]
-      };
-    },
 
     posterDay(doc, goal, theme, title) {
       const meta = doc.meta || {};

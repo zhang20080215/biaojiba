@@ -151,85 +151,9 @@
   border-radius: 99rpx;
 }
 
-/* 读图说明 */
-.legend {
-  min-height: 230rpx;
-  box-sizing: border-box;
-  margin-top: 16rpx;
-  padding-top: 16rpx;
-  border-top: 2rpx solid var(--line-subtle, #EAEAE7);
-}
-.legend-box {
-  display: flex;
-  align-items: center;
-  gap: 24rpx;
-}
-/* 箱体图例：一个「十」字 —— 竖线 = 最少到最多，横线 = 平均 */
-.mini-cross {
-  position: relative;
-  flex-shrink: 0;
-  width: 40rpx;
-  height: 100rpx;
-  margin: 0 8rpx;
-}
-.mini-v {
-  position: absolute;
-  left: 19rpx;
-  top: 0;
-  bottom: 0;
-  width: 3rpx;
-  border-radius: 2rpx;
-  background: var(--brand-accent, #526631);
-}
-.mini-h {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 42rpx;
-  height: 6rpx;
-  border-radius: 3rpx;
-  background: var(--brand-accent, #526631);
-}
-.legend-rows {
-  flex: 1;
-  min-width: 0;
-}
-.legend-row {
-  display: flex;
-  font-size: 22rpx;
-  line-height: 1.7;
-}
-.legend-k {
-  flex-shrink: 0;
-  width: 112rpx;
-  color: var(--text-primary, #2D2D2B);
-  font-weight: 600;
-}
-.legend-v {
-  color: var(--text-secondary, #6F6F68);
-}
-.legend-text {
-  display: block;
-  font-size: 22rpx;
-  line-height: 1.7;
-  color: var(--text-secondary, #6F6F68);
-}
-.legend-tip {
-  display: block;
-  margin-top: 8rpx;
-  font-size: 20rpx;
-  color: var(--text-muted, #9C998F);
-}
-
 .sec-title {
   display: block;
   margin: 32rpx 8rpx 0;
   font-size: 24rpx;
   color: var(--text-muted, #9C998F);
-}
-.cal-title {
-  display: block;
-  font-size: 28rpx;
-  font-weight: 700;
-  margin-bottom: 16rpx;
 }

@@ -12,7 +12,7 @@
         <text class="quote-num">{{big}}</text><text class="quote-unit" wx:if="{{bigUnit}}">{{bigUnit}}</text>
         <text class="quote-chg" wx:if="{{change}}" style="color: {{changeColor}};">{{change}}</text>
       </view>
-      <!-- 第三行固定一行高：周 / 月放 最多·最少·累计，日放 目标说明 —— 切换时下面的内容不跟着上下跳 -->
+      <!-- 第三行固定一行高：周 / 月 / 年放 最多·最少·累计，日放 目标说明 —— 切换时下面的内容不跟着上下跳 -->
       <view class="quote-sub">
         <view class="ohlc" wx:if="{{ohlc.length}}">
           <view wx:for="{{ohlc}}" wx:key="k" class="ohlc-item"><text class="ohlc-k">{{item.k}}</text><text class="ohlc-v">{{item.v}}</text></view>
@@ -22,7 +22,7 @@
     </view>
 
     <view class="card chart-card">
-      <!-- 左：日 / 周 / 月；右：这张图的设置 -->
+      <!-- 左：日 / 周 / 月 / 年；右：这张图的设置 -->
       <view class="chart-head">
         <view class="periods">
           <view wx:for="{{periods}}" wx:key="key" class="period {{period === item.key ? 'is-on' : ''}}" data-key="{{item.key}}" bindtap="onPeriod">{{item.label}}</view>
@@ -34,9 +34,9 @@
           <view class="opt opt-single {{showMA ? 'is-on' : ''}}" bindtap="onToggleMA">均线</view>
         </view>
       </view>
-      <!-- 周 / 月的柱形、折线：看日均还是总数。用不上时只隐藏、仍占位，图表不跟着上下跳 -->
+      <!-- 周 / 月 / 年的柱形、折线：看日均还是总数。用不上时只隐藏、仍占位，图表不跟着上下跳 -->
       <view class="chart-sub {{showAgg ? '' : 'is-hidden'}}">
-        <text class="chart-sub-label">每{{period === 'week' ? '周' : '月'}}看</text>
+        <text class="chart-sub-label">每{{period === 'week' ? '周' : period === 'year' ? '年' : '月'}}看</text>
         <view class="opt-group">
           <view wx:for="{{aggs}}" wx:key="key" class="opt {{agg === item.key ? 'is-on' : ''}}" data-agg="{{item.key}}" bindtap="onAgg">{{item.label}}</view>
         </view>
@@ -45,19 +45,6 @@
                    goal="{{goalPlot}}" showGoal="{{showGoal}}" goalText="{{goalText}}" format="{{format}}" accent="{{accent}}" showMA="{{showMA}}"
                    bind:select="onSelect" />
       <view class="empty-tip" wx:if="{{empty && !loading}}">还没有数据</view>
-
-      <!-- 读图说明：箱体画一个「十」字小样，旁边逐条说清楚 -->
-      <view class="legend" wx:if="{{legend && !empty}}">
-        <view wx:if="{{legend.kind === 'box'}}" class="legend-box">
-          <view class="mini-cross"><view class="mini-v"></view><view class="mini-h"></view></view>
-          <view class="legend-rows">
-            <view wx:for="{{legend.rows}}" wx:key="k" class="legend-row"><text class="legend-k">{{item.k}}</text><text class="legend-v">{{item.v}}</text></view>
-          </view>
-        </view>
-        <text wx:else class="legend-text">{{legend.text}}</text>
-        <text class="legend-text" wx:if="{{legend.ma}}">{{legend.ma}}</text>
-        <text class="legend-tip">左右拖动看更早 · 点一下看某一{{period === 'day' ? '天' : period === 'week' ? '周' : '月'}}</text>
-      </view>
     </view>
 
     <block wx:if="{{kpi.length}}">
@@ -71,16 +58,7 @@
       </view>
     </block>
 
-    <!-- 月历一直留着（没记录的月份就是一片虚线格），切换时页面底部不会忽长忽短 -->
-    <view class="card section" wx:if="{{!empty}}">
-      <text class="cal-title">{{calYear}}年{{calMonth}}月</text>
-      <month-heatmap year="{{calYear}}" month="{{calMonth}}" days="{{monthDays}}" goal="{{goal}}" measure="{{measure}}" today="{{today}}" heat="{{heat}}"
-                     showNav="{{false}}" selected="{{selectedDay}}" bind:select="onSelectDay" />
-      <view class="selected-line" wx:if="{{selectedText}}">{{selectedText}}</view>
-    </view>
-
     <view class="links">
-      <view class="link-btn" bindtap="onGoYear" hover-class="link-hover">年度视图</view>
       <view class="link-btn" bindtap="onGoShare" hover-class="link-hover">生成海报</view>
     </view>
   </view>
