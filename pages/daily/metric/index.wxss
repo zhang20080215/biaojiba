@@ -104,11 +104,87 @@
 }
 
 .selected-line {
+  display: flex;
+  align-items: center;
   margin-top: 20rpx;
   padding: 16rpx 24rpx;
   border-radius: var(--radius-md, 16rpx);
   background: var(--bg-section, #F5F5F4);
   font-size: 26rpx;
+  color: var(--text-primary, #2D2D2B);
+}
+.selected-text {
+  flex: 1;
+  min-width: 0;
+}
+.selected-edit {
+  flex-shrink: 0;
+  margin-left: 16rpx;
+  color: var(--brand-accent, #526631);
+  font-weight: 600;
+}
+
+/* 睡眠今晚卡 */
+.sleep-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.sleep-cap {
+  font-size: 26rpx;
+  color: var(--text-muted, #9C998F);
+}
+.sleep-main {
+  display: flex;
+  align-items: center;
+  margin: 20rpx 0 8rpx;
+}
+.sleep-time {
+  font-size: 96rpx;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--text-primary, #2D2D2B);
+}
+.sleep-time.is-empty {
+  color: var(--line-subtle, #EAEAE7);
+}
+.sleep-badge {
+  margin-left: 24rpx;
+  padding: 8rpx 20rpx;
+  border-radius: var(--radius-pill, 9999rpx);
+  background: var(--bg-section, #F5F5F4);
+  color: var(--text-secondary, #6F6F68);
+  font-size: 24rpx;
+  font-weight: 600;
+}
+.sleep-badge.is-ok {
+  background: var(--brand-tint, #EEF2E5);
+  color: var(--brand-accent, #526631);
+}
+.sleep-sub {
+  display: block;
+  font-size: 26rpx;
+  color: var(--text-secondary, #6F6F68);
+}
+.sleep-btn {
+  margin-top: 28rpx;
+}
+.sleep-link {
+  display: block;
+  text-align: center;
+  margin-top: 20rpx;
+  font-size: 24rpx;
+  color: var(--brand-accent, #526631);
+}
+.bed-picker {
+  height: 360rpx;
+  margin: 16rpx 0 32rpx;
+}
+.bed-option {
+  height: 88rpx;
+  line-height: 88rpx;
+  text-align: center;
+  font-size: 32rpx;
   color: var(--text-primary, #2D2D2B);
 }
 

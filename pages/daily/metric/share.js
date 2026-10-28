@@ -7,6 +7,7 @@ const MetricPosterDrawer = require('../../../utils/metricPosterDrawer.js');
 const palette = require('../../../utils/daily/palette.js');
 const D = require('../../../utils/daily/date.js');
 const M = require('../../../utils/daily/metric.js');
+const V = require('../../../utils/daily/views.js');
 const C = require('./common.js');
 
 const { width: CANVAS_W, height: CANVAS_H } = MetricPosterDrawer.SIZE;
@@ -39,7 +40,7 @@ Page({
     const theme = C.resolveTheme(options && options.theme);
     this.theme = theme;
     this._storageKey = theme.id + 'ShareTheme';
-    const today = D.todayStr();
+    const today = C.todayOf(theme);
     const date = options && options.date && options.date <= today ? options.date : today;
     const win = D.getWindowInfoCompat();
     const previewW = Math.min(Math.round((win.windowWidth || 375) * 0.84), 340);
@@ -129,32 +130,20 @@ Page({
       const r = await C.callDaily({ action: 'getRange', theme: themeId, from: range.from, to: range.to });
       if (this._destroyed || seq !== this._seq) return;
       const goal = (r.settings && r.settings.daily_goal) || this.theme.defaultGoal;
-      const map = M.toDayMap(r.days);
-      const eq = this.theme.vocab.equivalent;
-      const eqText = v => (eq && v > 0 ? `${eq.label} ${M.equivalentOf(v, eq)} ${eq.unit}` : '');
+      const measure = this.theme.measure;
+      const view = V.viewOf(this.theme);
+      const map = M.toDayMap(r.days, measure);
+      const docs = M.toDocMap(r.days);
+      Object.keys(docs).forEach(d => { if (!(d in map) || d > today) delete docs[d]; });
       if (isDay) {
-        const has = date in map;
-        const value = map[date] || 0;
-        this._poster = has ? {
-          layout: 'day',
-          title: `${date.slice(0, 4)}年${D.formatDateCN(date)} ${D.weekdayCN(date)}`,
-          value,
-          goal,
-          unit: this.theme.unit,
-          cheer: this.theme.cheerFor ? this.theme.cheerFor(goal > 0 ? value / goal : 0, value, goal) : '',
-          equivalentText: eqText(value)
-        } : { layout: 'empty', title: `${date.slice(0, 4)}年${D.formatDateCN(date)} ${D.weekdayCN(date)}` };
+        const title = `${date.slice(0, 4)}年${D.formatDateCN(date)} ${D.weekdayCN(date)}`;
+        this._poster = docs[date] ? view.posterDay(docs[date], goal, this.theme, title) : { layout: 'empty', title };
       } else {
-        const summary = M.summarize(map, range.from, range.to, goal, today);
-        this._poster = summary.dataDays ? {
-          layout: 'month',
-          title: D.formatMonthLabel(y, m),
-          unit: this.theme.unit,
-          goal,
-          cells: M.buildMonthCells(y, m, map, goal, today),
-          summary,
-          equivalentText: eqText(summary.total)
-        } : { layout: 'empty', title: D.formatMonthLabel(y, m) };
+        const title = D.formatMonthLabel(y, m);
+        const summary = M.summarize(map, range.from, range.to, goal, today, measure);
+        this._poster = summary.dataDays
+          ? view.posterMonth(summary, M.buildMonthCells(y, m, map, goal, today, measure), docs, this.theme, title)
+          : { layout: 'empty', title };
       }
       this.setData({ empty: this._poster.layout === 'empty' });
       this.render();

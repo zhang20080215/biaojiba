@@ -1,6 +1,7 @@
 // 数值型每日主题（pages/daily/metric/*）的页面公共逻辑：主题解析、主题色、云函数调用、外部数据源同步
 const { THEMES } = require('../../../utils/dailyThemes.js');
 const palette = require('../../../utils/daily/palette.js');
+const D = require('../../../utils/daily/date.js');
 
 const DEFAULT_THEME = 'steps';
 
@@ -8,6 +9,11 @@ const DEFAULT_THEME = 'steps';
 function resolveTheme(id) {
   const t = THEMES[id];
   return t && t.kind === 'metric' ? t : THEMES[DEFAULT_THEME];
+}
+
+// 主题眼里的「今天」：睡眠往前挪 12 小时（中午前打开还算昨晚），步数就是自然日
+function todayOf(theme) {
+  return D.todayStr(Date.now() - (theme.dayOffsetHours || 0) * 3600 * 1000);
 }
 
 // 页面根节点用的全站主题 class + JS 侧颜色（热力梯度、进度环、海报）
@@ -85,4 +91,4 @@ function syncAgoText(ts, sourceName) {
   return `${when}已同步${sourceName || ''}`;
 }
 
-module.exports = { resolveTheme, themeState, callDaily, syncSource, syncAgoText };
+module.exports = { resolveTheme, todayOf, themeState, callDaily, syncSource, syncAgoText };

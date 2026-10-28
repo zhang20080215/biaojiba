@@ -6,15 +6,16 @@ Component({
     year: { type: Number, value: 2026 },
     days: { type: Array, value: [] },     // getYear 的 days（只有有文档的日子）
     goal: { type: Number, value: 0 },
+    measure: { type: String, value: 'count' },
     today: { type: String, value: '' },
     heat: { type: Array, value: [] }
   },
   data: { rows: [] },
   observers: {
-    'year, days, goal, today, heat': function () {
-      const { year, days, goal, today, heat } = this.data;
+    'year, days, goal, today, heat, measure': function () {
+      const { year, days, goal, today, heat, measure } = this.data;
       if (!today || !heat.length) return;
-      const rows = M.buildYearRows(year, M.toDayMap(days), goal, today).map(r => ({
+      const rows = M.buildYearRows(year, M.toDayMap(days, measure), goal, today, measure).map(r => ({
         month: r.month,
         label: r.label,
         cells: r.cells.map(c => ({ key: c.key, cls: c.level === -1 ? 'is-missing' : (c.level === -2 ? 'is-future' : ''), bg: c.level >= 0 ? heat[c.level] : '' }))

@@ -13,13 +13,13 @@
     </view>
 
     <view class="hero">
-      <text class="hero-cap">年度累计</text>
-      <view><text class="hero-num">{{totalText}}</text><text class="hero-unit">{{unit}}</text></view>
-      <text class="hero-sub" wx:if="{{eqText}}">{{eqText}}</text>
+      <text class="hero-cap">{{heroCap}}</text>
+      <view><text class="hero-num">{{heroNum}}</text><text class="hero-unit">{{heroUnit}}</text></view>
+      <text class="hero-sub" wx:if="{{heroSub}}">{{heroSub}}</text>
     </view>
 
     <view class="card {{loading ? 'is-loading' : ''}}">
-      <year-heatmap year="{{year}}" days="{{days}}" goal="{{goal}}" today="{{today}}" heat="{{heat}}" />
+      <year-heatmap year="{{year}}" days="{{days}}" goal="{{goal}}" measure="{{measure}}" today="{{today}}" heat="{{heat}}" />
     </view>
 
     <view class="kpi-grid">

@@ -255,10 +255,13 @@ const THEMES = {
   // ── 数值型主题（kind: 'metric'）：每天一个数 + 每日目标，走 pages/daily/metric/* 共享页面，
   //    颜色跟随全站主题色（utils/daily/palette.js），不用上面的 DESIGN_TOKENS / accent。
   //    再加一个数值型主题 = 这里一行 + syncDailyLog THEME_DEFAULTS 一行 + themeCatalog 一张卡片。
+  //    measure 决定「每天比哪个数、怎样算达标」（utils/daily/metric.js MEASURES + views.js）：
+  //      'count' 数量越多越好（步数）/ 'bedtime' 入睡时刻越早越好（睡眠）
   steps: {
     id: 'steps',
     kind: 'metric',
-    // 数据来源：'werun' = 微信运动自动同步（syncDailyLog.syncSource）；不填 = 手动记录（暂未实现）
+    measure: 'count',
+    // 数据来源：'werun' = 微信运动自动同步（syncDailyLog.syncSource）；'manual' = 手动记录（syncDailyLog.setDayValue）
     source: 'werun',
     title: '每日步数',
     description: '同步微信运动步数，看见每天走过的路',
@@ -292,6 +295,11 @@ const THEMES = {
 
     // 截止日期累计目标
     deadlineGoal: {
+      // sum = 累计数值（走满 100 万步）；days = 累计达标天数（早睡满 30 天）
+      mode: 'sum',
+      unit: '步',
+      verb: '走',
+      example: '年底前走满 100 万步',
       presets: [100000, 500000, 1000000],
       min: 10000,
       max: 50000000,
@@ -306,6 +314,64 @@ const THEMES = {
       if (progress >= 0.5) return '已经过半，继续走';
       if (total > 0) return '每一步都算数';
       return '今天还没开始走，出门转转吧';
+    }
+  },
+
+  // 每日睡眠：主攻早睡。达标看入睡时刻（不晚于目标），时长只做参考。
+  // 一晚记在「那一晚」的日期上（中午 12 点前打开算昨晚），见 utils/daily/clock.js
+  sleep: {
+    id: 'sleep',
+    kind: 'metric',
+    measure: 'bedtime',
+    source: 'manual',
+    // 「今天」往前挪 12 小时：凌晨 1 点、早上 8 点打开都还是昨晚
+    dayOffsetHours: 12,
+    title: '每日睡眠',
+    description: '记录入睡和起床时间，养成早睡习惯',
+
+    unit: '分钟',
+    unitLabel: '分钟',
+    // daily_goal 存目标入睡时刻的 bedOffset（中午 12 点起算的分钟数）：660 = 23:00
+    defaultGoal: 660,
+    goalRange: [540, 780],     // 21:00 ~ 01:00
+    goalStep: 15,
+    defaultPresets: [],
+    inverseGoal: false,
+    coverEmoji: '🌙',
+    tag: '每日',
+
+    vocab: {
+      noun: '睡眠',
+      verb: '早睡',
+      todayCap: '入睡时间',
+      avgLabel: '平均入睡',
+      bestLabel: '最早入睡',
+      totalLabel: '睡眠时长',
+      dayUnit: '晚',
+      emoji: '🌙',
+      emptyText: '这段时间还没有睡眠记录',
+      signature: '标记吧 · 每日睡眠',
+      sourceName: ''
+    },
+
+    deadlineGoal: {
+      mode: 'days',
+      unit: '天',
+      verb: '早睡',
+      example: '一个月内早睡满 21 天',
+      presets: [7, 21, 30, 100],
+      min: 1,
+      max: 366,
+      backfillDays: 30,
+      maxDays: 366
+    },
+
+    // late = 比目标晚了多少分钟（≤0 = 准时）
+    cheerFor: late => {
+      if (late <= -30) return '早早入睡，状态拉满';
+      if (late <= 0) return '准时入睡，今天也很棒';
+      if (late <= 30) return '只晚了一点点，明天再早一些';
+      return '熬夜伤身，今晚早点睡吧';
     }
   }
 

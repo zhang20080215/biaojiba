@@ -6,8 +6,53 @@
  * 「无数据」和「0」是两回事：数据库里没有这一天的文档 = 无数据（比如微信运动只给 30 天，
  * 用户很久没打开就补不回来），它不进日均、达标率的分母，也不打断连续达标；
  * 有文档但值为 0 = 真的是 0，照常计入。
+ *
+ * 度量（measure）决定「每天取哪个数、怎样算达标、怎样分档」，主题配置里用 measure: 'count' | 'bedtime' 选：
+ *   count   —— 数量，越多越好，取 total_value（步数）
+ *   bedtime —— 入睡时刻，越早越好，取 meta.bedOffset（中午 12 点起算的分钟数，见 clock.js）
+ * 下面所有函数的 measure 参数都可省略，省略即 count。
  */
 const D = require('./date.js');
+
+const MEASURES = {
+  count: {
+    id: 'count',
+    valueOf: day => Number(day.total_value) || 0,
+    achieved: (v, goal) => goal > 0 && v >= goal,
+    better: (a, b) => a > b,
+    // 0 为 0 / 1 <25% / 2 <50% / 3 <100% / 4 达标
+    level(v, goal) {
+      if (v <= 0) return 0;
+      const r = goal > 0 ? v / goal : 1;
+      if (r >= 1) return 4;
+      if (r >= 0.5) return 3;
+      if (r >= 0.25) return 2;
+      return 1;
+    }
+  },
+  bedtime: {
+    id: 'bedtime',
+    valueOf(day) {
+      const o = day.meta && Number(day.meta.bedOffset);
+      return Number.isFinite(o) ? o : null;
+    },
+    achieved: (v, goal) => v <= goal,
+    better: (a, b) => a < b,
+    // 4 准时 / 3 晚 30 分钟内 / 2 晚 1 小时内 / 1 更晚（没有 0 档：睡了就有时刻）
+    level(v, goal) {
+      const late = v - goal;
+      if (late <= 0) return 4;
+      if (late <= 30) return 3;
+      if (late <= 60) return 2;
+      return 1;
+    }
+  }
+};
+
+function measureOf(m) {
+  if (m && typeof m === 'object') return m;
+  return MEASURES[m] || MEASURES.count;
+}
 
 // getRange 会给区间内没有文档的日子补一个空壳：新版云函数带 missing:true，旧版只能靠「没有 _id」认
 function isMissing(day) {
@@ -15,34 +60,40 @@ function isMissing(day) {
 }
 
 // days（getRange / getYear 的返回）→ { 'YYYY-MM-DD': value }，只收有数据的日子
-function toDayMap(days) {
+function toDayMap(days, measure) {
+  const ms = measureOf(measure);
   const map = {};
   (days || []).forEach(d => {
-    if (!isMissing(d)) map[d.date] = Number(d.total_value) || 0;
+    if (isMissing(d)) return;
+    const v = ms.valueOf(d);
+    if (v != null) map[d.date] = v;
   });
   return map;
 }
 
+// 同上，但保留整份文档（详情、睡眠时长等要用）
+function toDocMap(days) {
+  const map = {};
+  (days || []).forEach(d => { if (!isMissing(d)) map[d.date] = d; });
+  return map;
+}
+
 /**
- * 热力分档：-1 无数据 / 0 为 0 / 1 <25% / 2 <50% / 3 <100% / 4 达标
+ * 热力分档：-1 无数据，0~4 见各度量的 level
  * 下标直接对应 palette.heat 的颜色（-1 由样式画虚线框）
  */
-function heatLevel(value, goal, hasData) {
+function heatLevel(value, goal, hasData, measure) {
   if (!hasData) return -1;
-  const v = Number(value) || 0;
-  if (v <= 0) return 0;
-  const r = goal > 0 ? v / goal : 1;
-  if (r >= 1) return 4;
-  if (r >= 0.5) return 3;
-  if (r >= 0.25) return 2;
-  return 1;
+  return measureOf(measure).level(Number(value) || 0, goal);
 }
 
 /**
  * 区间汇总（只算到 today 为止，未来的日子不算）
  * @returns {{ total, dataDays, achieved, avg, best:{date,value}|null, longestStreak, spanDays }}
+ *   best 按度量取「最好」的一天（count 最大、bedtime 最早）
  */
-function summarize(dayMap, from, to, goal, today) {
+function summarize(dayMap, from, to, goal, today, measure) {
+  const ms = measureOf(measure);
   const end = to < today ? to : today;
   let total = 0, dataDays = 0, achieved = 0, best = null, streak = 0, longestStreak = 0, spanDays = 0;
   for (let d = from; d <= end; d = D.addDays(d, 1)) {
@@ -51,8 +102,8 @@ function summarize(dayMap, from, to, goal, today) {
     const v = dayMap[d];
     total += v;
     dataDays++;
-    if (!best || v > best.value) best = { date: d, value: v };
-    if (goal > 0 && v >= goal) {
+    if (!best || ms.better(v, best.value)) best = { date: d, value: v };
+    if (ms.achieved(v, goal)) {
       achieved++;
       streak++;
       if (streak > longestStreak) longestStreak = streak;
@@ -65,11 +116,13 @@ function summarize(dayMap, from, to, goal, today) {
 
 /**
  * 截止日期累计目标的进度
- * @param goal  { target, startDate, endDate }
- * @param walked 区间内（startDate ~ min(endDate, today)）已累计的量
- * @returns { target, walked, remaining, pct(0~100), daysLeft(含今天), perDayNeeded, totalDays, status: active|done|expired }
+ * @param goal   { target, startDate, endDate }
+ * @param walked 区间内（startDate ~ min(endDate, today)）已累计的量：mode=sum 是数值之和，mode=days 是达标天数
+ * @param mode   'sum'（累计 100 万步）| 'days'（早睡满 30 天）
+ * @returns { target, walked, remaining, pct(0~100), daysLeft(含今天), perDayNeeded, feasible, totalDays, status: active|done|expired }
+ *   perDayNeeded 只对 sum 有意义；days 模式看 feasible（剩下的天数还够不够）
  */
-function goalProgress(goal, walked, today) {
+function goalProgress(goal, walked, today, mode) {
   const target = Number(goal && goal.target) || 0;
   const w = Math.max(0, Number(walked) || 0);
   const remaining = Math.max(0, target - w);
@@ -84,14 +137,16 @@ function goalProgress(goal, walked, today) {
     remaining,
     pct: target > 0 ? Math.min(100, Math.floor(w / target * 100)) : 0,
     daysLeft,
-    perDayNeeded: daysLeft > 0 ? Math.ceil(remaining / daysLeft) : 0,
+    perDayNeeded: mode !== 'days' && daysLeft > 0 ? Math.ceil(remaining / daysLeft) : 0,
+    feasible: remaining <= daysLeft || mode !== 'days',
     totalDays,
     status
   };
 }
 
 // 月历格子（周一开头，前面补空位）
-function buildMonthCells(year, month, dayMap, goal, today) {
+function buildMonthCells(year, month, dayMap, goal, today, measure) {
+  const ms = measureOf(measure);
   const r = D.monthRange(year, month);
   const lead = D.dayOfWeekMon(D.parseDate(r.from));
   const cells = [];
@@ -101,14 +156,14 @@ function buildMonthCells(year, month, dayMap, goal, today) {
     const isFuture = date > today;
     const has = !isFuture && date in dayMap;
     const value = has ? dayMap[date] : 0;
-    const level = isFuture ? -2 : heatLevel(value, goal, has);
-    cells.push({ empty: false, key: date, day, date, value, has, level, achieved: level === 4, isToday: date === today, isFuture });
+    const level = isFuture ? -2 : heatLevel(value, goal, has, ms);
+    cells.push({ empty: false, key: date, day, date, value, has, level, achieved: has && ms.achieved(value, goal), isToday: date === today, isFuture });
   }
   return cells;
 }
 
 // 年历：12 行，每行是该月每一天（列数 = 当月天数）
-function buildYearRows(year, dayMap, goal, today) {
+function buildYearRows(year, dayMap, goal, today, measure) {
   const rows = [];
   for (let m = 1; m <= 12; m++) {
     const r = D.monthRange(year, m);
@@ -117,7 +172,7 @@ function buildYearRows(year, dayMap, goal, today) {
       const date = D.ymd(year, m, day);
       const isFuture = date > today;
       const has = !isFuture && date in dayMap;
-      cells.push({ key: date, date, level: isFuture ? -2 : heatLevel(has ? dayMap[date] : 0, goal, has) });
+      cells.push({ key: date, date, level: isFuture ? -2 : heatLevel(has ? dayMap[date] : 0, goal, has, measure) });
     }
     rows.push({ month: m, label: m + '月', cells });
   }
@@ -147,8 +202,11 @@ function equivalentOf(total, eq) {
 }
 
 module.exports = {
+  MEASURES,
+  measureOf,
   isMissing,
   toDayMap,
+  toDocMap,
   heatLevel,
   summarize,
   goalProgress,

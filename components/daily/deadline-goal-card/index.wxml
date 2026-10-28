@@ -1,7 +1,7 @@
 <view wx:if="{{!view}}" class="dg dg-empty" bindtap="onCreate" hover-class="dg-hover">
   <view class="dg-empty-main">
     <text class="dg-empty-title">设一个累计目标</text>
-    <text class="dg-empty-sub">比如：年底前{{verb}}满 100 万{{unit}}</text>
+    <text class="dg-empty-sub" wx:if="{{example}}">比如：{{example}}</text>
   </view>
   <text class="dg-plus">＋</text>
 </view>
@@ -19,16 +19,16 @@
 
   <block wx:if="{{view.status === 'active'}}">
     <view class="dg-row">
-      <text class="dg-strong">{{view.walkedText}}</text><text class="dg-muted"> 已{{verb}} · {{view.pct}}%</text>
-      <text class="dg-right dg-muted">还差 {{view.remainingText}}</text>
+      <text class="dg-strong">{{view.walkedText}}</text><text class="dg-muted"> {{unit}} · {{view.pct}}%</text>
+      <text class="dg-right dg-muted">还差 {{view.remainingText}} {{unit}}</text>
     </view>
-    <view class="dg-tip">剩 {{view.daysLeft}} 天，每天平均还需 <text class="dg-accent">{{view.perDayText}}</text> {{unit}}</view>
+    <view class="dg-tip">{{view.tip}}</view>
   </block>
 
   <block wx:elif="{{view.status === 'done'}}">
     <view class="dg-result">
       <text class="dg-result-title">🎉 目标达成</text>
-      <text class="dg-muted">用了 {{view.usedDays}} 天，共 {{view.walkedText}} {{unit}}</text>
+      <text class="dg-muted">用了 {{view.usedDays}} 天，{{verb}}满 {{view.walkedText}} {{unit}}</text>
     </view>
     <view class="dg-btn" bindtap="onRestart" hover-class="dg-hover">再设一个</view>
   </block>

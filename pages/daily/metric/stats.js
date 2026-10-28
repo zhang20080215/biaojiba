@@ -1,8 +1,10 @@
 // 数值型每日主题 · 统计（周 / 月 / 年，可前后翻）
 // 柱子颜色与月历同一套热力分档；无数据的日子不画柱、不进日均分母。
+// 显示哪个数、KPI 是哪几项由度量决定（utils/daily/views.js）：步数柱高 = 步数，睡眠柱高 = 时长、颜色 = 入睡早晚。
 const toast = require('../../../utils/dailyToast.js');
 const D = require('../../../utils/daily/date.js');
 const M = require('../../../utils/daily/metric.js');
+const V = require('../../../utils/daily/views.js');
 const C = require('./common.js');
 
 const MAX_BACK = { week: 52, month: 36, year: 10 };
@@ -25,7 +27,9 @@ Page({
     periodLabel: '',
     headlineCap: '',
     headline: '0',
+    headlineUnit: '',
     headlineSub: '',
+    chartNote: '',
     bars: [],
     goalLine: 0,
     showGoalLine: false,
@@ -36,6 +40,7 @@ Page({
   onLoad(options) {
     const theme = C.resolveTheme(options && options.theme);
     this.theme = theme;
+    this.view = V.viewOf(theme);
     const ts = C.themeState();
     this.setData({
       themeClass: ts.themeClass,
@@ -43,7 +48,7 @@ Page({
       themeId: theme.id,
       title: theme.title + '统计',
       unit: theme.unit,
-      today: D.todayStr()
+      today: C.todayOf(theme)
     });
     this.fetch();
   },
@@ -101,7 +106,7 @@ Page({
         : await C.callDaily({ action: 'getRange', theme: themeId, from: p.from, to: p.to });
       if (this._destroyed || seq !== this._seq) return;
       const goal = (r.settings && r.settings.daily_goal) || this.theme.defaultGoal;
-      this._render(p, M.toDayMap(r.days), goal);
+      this._render(p, r.days, goal);
     } catch (err) {
       if (seq !== this._seq) return;
       console.warn('[metric stats] fetch fail', err);
@@ -110,31 +115,44 @@ Page({
     this.setData({ loading: false });
   },
 
-  _render(p, map, goal) {
-    const { range, today, unit, heat } = this.data;
-    const s = M.summarize(map, p.from, p.to, goal, today);
-    const eq = this.theme.vocab.equivalent;
+  _render(p, days, goal) {
+    const { range, today, heat } = this.data;
+    const measure = this.theme.measure;
+    const view = this.view;
+    const map = M.toDayMap(days, measure);
+    const allDocs = M.toDocMap(days);
+    const docsIn = (from, to) => {
+      const out = {};
+      Object.keys(allDocs).forEach(d => { if (d >= from && d <= to && d <= today && d in map) out[d] = allDocs[d]; });
+      return out;
+    };
+    const s = M.summarize(map, p.from, p.to, goal, today, measure);
 
     let items;
     if (range === 'year') {
-      // 年：12 根柱 = 每月日均（只算有数据的日子）
+      // 年：12 根柱 = 每月平均（只算有数据的日子），颜色按当月平均的度量值分档
       items = [];
       for (let m = 1; m <= 12; m++) {
         const r = D.monthRange(p.year, m);
-        const ms = M.summarize(map, r.from, r.to, goal, today);
-        items.push({ key: 'm' + m, label: m % 3 === 1 ? m + '月' : '', value: ms.avg, has: ms.dataDays > 0, future: r.from > today });
+        const ms = M.summarize(map, r.from, r.to, goal, today, measure);
+        const docs = Object.values(docsIn(r.from, r.to));
+        const avgBar = docs.length ? Math.round(docs.reduce((a, doc) => a + view.barValueOf(doc), 0) / docs.length) : 0;
+        items.push({ key: 'm' + m, label: m % 3 === 1 ? m + '月' : '', value: avgBar, judged: ms.avg, has: ms.dataDays > 0, future: r.from > today });
       }
     } else {
       items = [];
       for (let d = p.from, i = 0; d <= p.to; d = D.addDays(d, 1), i++) {
         const day = Number(d.slice(8));
         const label = range === 'week' ? D.WD_MON[i] : (day === 1 || day % 7 === 1 ? String(day) : '');
-        items.push({ key: d, label, value: map[d] || 0, has: d in map && d <= today, future: d > today });
+        const has = d in map && d <= today;
+        items.push({ key: d, label, value: has ? view.barValueOf(allDocs[d]) : 0, judged: map[d], has, future: d > today });
       }
     }
-    const max = Math.max(goal, ...items.map(it => it.value)) || 1;
+    // 数量型的柱子要和目标线同一把尺；睡眠的柱子是时长，至少按 8 小时撑满
+    const floor = view.showGoalLine ? goal : 480;
+    const max = Math.max(floor, ...items.map(it => it.value)) || 1;
     const bars = items.map(it => {
-      const level = M.heatLevel(it.value, goal, it.has);
+      const level = M.heatLevel(it.judged, goal, it.has, measure);
       return {
         key: it.key,
         label: it.label,
@@ -145,21 +163,18 @@ Page({
       };
     });
 
-    const best = s.best ? `${M.formatShort(s.best.value)}` : '—';
+    const sv = view.stats(s, docsIn(p.from, p.to), this.theme, goal, p.cap);
     this.setData({
       empty: s.dataDays === 0,
-      headlineCap: (p.cap || '') + this.theme.vocab.avgLabel,
-      headline: M.formatNum(s.avg),
-      headlineSub: `累计 ${M.formatNum(s.total)} ${unit} · 有数据 ${s.dataDays} 天`,
+      headlineCap: sv.headlineCap,
+      headline: sv.headline,
+      headlineUnit: sv.headlineUnit,
+      headlineSub: sv.headlineSub,
+      chartNote: view.chartNote,
       bars,
       goalLine: Math.round(goal / max * 100),
-      showGoalLine: s.dataDays > 0,
-      kpi: [
-        { label: '达标天数', value: s.achieved, unit: `/ ${s.dataDays} 天`, sub: `每日目标 ${M.formatNum(goal)} ${unit}` },
-        { label: this.theme.vocab.bestLabel, value: best, unit, sub: s.best ? D.formatDateCN(s.best.date) : '' },
-        { label: '最长连续达标', value: s.longestStreak, unit: '天', sub: '' },
-        { label: this.theme.vocab.totalLabel, value: M.formatShort(s.total), unit, sub: eq ? `${eq.label} ${M.equivalentOf(s.total, eq)} ${eq.unit}` : '' }
-      ]
+      showGoalLine: view.showGoalLine && s.dataDays > 0,
+      kpi: sv.kpi
     });
   }
 });

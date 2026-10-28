@@ -152,3 +152,90 @@ test('sync only writes new or changed days', () => {
   assert.deepEqual(plan.adds, [{ date: '2026-10-26', value: 10 }]);
   assert.deepEqual(plan.updates, [{ _id: 'b', date: '2026-10-28', value: 300 }]);
 });
+
+// ───────── 每日睡眠：时刻工具 / bedtime 度量 / 首页卡片 ─────────
+const T = require('../utils/daily/clock');
+const V = require('../utils/daily/views');
+const { THEMES } = require('../utils/dailyThemes');
+
+test('clock offsets keep times across midnight comparable', () => {
+  assert.equal(T.clockToOffset('23:00'), 660);
+  assert.equal(T.clockToOffset('00:30'), 750);
+  assert.equal(T.clockToOffset('21:00'), 540);
+  assert.equal(T.clockToOffset('25:00'), null);
+  assert.equal(T.offsetToClock(750), '00:30');
+  assert.equal(T.offsetToClock(Math.round((T.clockToOffset('23:50') + T.clockToOffset('00:10')) / 2)), '00:00');
+  assert.equal(T.durationOf('23:30', '07:10'), 460);
+  assert.equal(T.durationOf('23:30', ''), 0);
+  assert.equal(T.formatDuration(460), '7小时40分');
+  assert.equal(T.formatDuration(480), '8小时');
+  assert.equal(T.formatDuration(45), '45分');
+  // 中午 12 点前算昨晚
+  assert.equal(T.nightOf(Date.parse('2026-10-28T01:30:00+08:00')), '2026-10-27');
+  assert.equal(T.nightOf(Date.parse('2026-10-28T11:59:00+08:00')), '2026-10-27');
+  assert.equal(T.nightOf(Date.parse('2026-10-28T12:00:00+08:00')), '2026-10-28');
+  assert.equal(T.nowClock(Date.parse('2026-10-28T06:05:00+08:00')), '06:05');
+  assert.deepEqual(T.sleepEntry('23:10', '07:00'), { value: 470, meta: { bedTime: '23:10', wakeTime: '07:00', bedOffset: 670, duration: 470 } });
+});
+
+test('bedtime measure: earlier is better, missing bedOffset is no data', () => {
+  const doc = (date, bed) => ({ _id: date, date, total_value: 0, meta: bed ? { bedOffset: T.clockToOffset(bed) } : {} });
+  const map = M.toDayMap([doc('2026-10-01', '22:50'), doc('2026-10-02', '23:20'), doc('2026-10-03', null), doc('2026-10-04', '00:30'), doc('2026-10-05', '22:00')], 'bedtime');
+  assert.deepEqual(Object.keys(map), ['2026-10-01', '2026-10-02', '2026-10-04', '2026-10-05']);
+  const s = M.summarize(map, '2026-10-01', '2026-10-31', 660, '2026-10-05', 'bedtime');
+  assert.equal(s.achieved, 2);
+  assert.equal(s.best.date, '2026-10-05');
+  assert.equal(s.longestStreak, 1);
+  assert.equal(M.heatLevel(660, 660, true, 'bedtime'), 4);
+  assert.equal(M.heatLevel(690, 660, true, 'bedtime'), 3);
+  assert.equal(M.heatLevel(720, 660, true, 'bedtime'), 2);
+  assert.equal(M.heatLevel(721, 660, true, 'bedtime'), 1);
+  assert.equal(M.buildMonthCells(2026, 10, map, 660, '2026-10-05', 'bedtime').find(c => c.date === '2026-10-01').achieved, true);
+});
+
+test('deadline goal counted in days', () => {
+  const goal = { target: 30, startDate: '2026-10-01', endDate: '2026-10-31' };
+  const p = M.goalProgress(goal, 10, '2026-10-28', 'days');
+  assert.equal(p.remaining, 20);
+  assert.equal(p.daysLeft, 4);
+  assert.equal(p.feasible, false);
+  assert.equal(p.perDayNeeded, 0);
+  assert.equal(M.goalProgress(goal, 28, '2026-10-28', 'days').feasible, true);
+});
+
+test('sleep home card adapts to the time of day', () => {
+  const at = s => Date.parse(s + '+08:00');
+  const evening = V.sleepCard(null, 660, at('2026-10-28T21:40:00'));
+  assert.equal(evening.nightLabel, '今晚');
+  assert.equal(evening.showSleep, true);
+  assert.equal(evening.countdownText, '距离目标入睡还有 1小时20分');
+  const late = V.sleepCard(null, 660, at('2026-10-29T00:20:00'));
+  assert.equal(late.night, '2026-10-28');
+  assert.ok(late.countdownText.includes('已经超过目标 1小时20分'));
+  const noon = V.sleepCard(null, 660, at('2026-10-28T09:00:00'));
+  assert.equal(noon.nightLabel, '昨晚');
+  assert.equal(noon.showSleep, false);
+  assert.equal(noon.countdownText, '昨晚还没有记录');
+  const slept = { date: '2026-10-27', meta: T.sleepEntry('23:25', '').meta };
+  const morning = V.sleepCard(slept, 660, at('2026-10-28T07:10:00'));
+  assert.equal(morning.statusText, '比目标晚 25分');
+  assert.equal(morning.showWake, true);
+  assert.equal(V.sleepCard(slept, 660, at('2026-10-27T23:30:00')).showWake, false);
+});
+
+test('views render both measures', () => {
+  const steps = THEMES.steps, sleep = THEMES.sleep;
+  assert.equal(V.viewOf(steps).dayText({ total_value: 8234 }, steps), '8,234 步');
+  const sd = { date: '2026-10-27', ...T.sleepEntry('22:40', '06:50') };
+  sd.total_value = sd.value;
+  assert.equal(V.viewOf(sleep).dayText(sd, sleep), '22:40 入睡 · 06:50 起床 · 睡了 8小时10分');
+  const pd = V.viewOf(sleep).posterDay(sd, 660, sleep, 't');
+  assert.equal(pd.statusText, '早睡达标');
+  assert.equal(pd.ratio, 1);
+  const s = M.summarize({ '2026-10-27': 620 }, '2026-10-01', '2026-10-31', 660, '2026-10-28', 'bedtime');
+  const st = V.viewOf(sleep).stats(s, { '2026-10-27': sd }, sleep, 660, '本月');
+  assert.equal(st.headline, '22:20');
+  assert.equal(st.kpi[3].value, '06:50');
+  assert.equal(V.viewOf(sleep).year(s, { '2026-10-27': sd }, sleep).heroNum, '1');
+  assert.equal(V.viewOf(steps).posterMonth(M.summarize({ '2026-10-27': 9000 }, '2026-10-01', '2026-10-31', 8000, '2026-10-28'), [], {}, steps, 't').tiles.length, 3);
+});

@@ -1,0 +1,106 @@
+.bs-mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: flex-end;
+}
+.bs-panel {
+  width: 100%;
+  background: var(--bg-card, #FFFFFF);
+  border-radius: var(--radius-xl, 32rpx) var(--radius-xl, 32rpx) 0 0;
+  padding: 32rpx 32rpx calc(32rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+.bs-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+.bs-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: var(--text-primary, #2D2D2B);
+}
+.bs-close {
+  font-size: 32rpx;
+  color: var(--text-muted, #9C998F);
+  padding: 8rpx;
+}
+.bs-row {
+  display: flex;
+  align-items: center;
+  min-height: 104rpx;
+  border-bottom: 2rpx solid var(--line-subtle, #EAEAE7);
+}
+.bs-grow {
+  flex: 1;
+}
+.bs-inline {
+  display: flex;
+  align-items: center;
+  min-height: 104rpx;
+}
+.bs-label {
+  width: 120rpx;
+  font-size: 26rpx;
+  color: var(--text-muted, #9C998F);
+}
+.bs-value {
+  flex: 1;
+  font-size: 30rpx;
+  color: var(--text-primary, #2D2D2B);
+}
+.bs-big {
+  font-size: 40rpx;
+  font-weight: 700;
+}
+.bs-value.is-empty {
+  color: var(--text-muted, #9C998F);
+  font-weight: 400;
+  font-size: 30rpx;
+}
+.bs-arrow {
+  color: var(--text-muted, #9C998F);
+  font-size: 36rpx;
+}
+.bs-clear {
+  font-size: 24rpx;
+  color: var(--brand-accent, #526631);
+  padding: 12rpx 0 12rpx 24rpx;
+}
+.bs-hint {
+  display: block;
+  margin-top: 20rpx;
+  font-size: 24rpx;
+  color: var(--brand-accent, #526631);
+}
+.bs-actions {
+  display: flex;
+  align-items: center;
+  margin-top: 32rpx;
+}
+.bs-delete {
+  font-size: 26rpx;
+  color: #C0392B;
+  padding: 20rpx 32rpx 20rpx 0;
+}
+.bs-save {
+  flex: 1;
+  height: 88rpx;
+  line-height: 88rpx;
+  text-align: center;
+  border-radius: var(--radius-pill, 9999rpx);
+  background: var(--brand-button, #9AAB65);
+  color: var(--hero-ink, #1F2B12);
+  font-size: 30rpx;
+  font-weight: 700;
+}
+.bs-save-hover {
+  opacity: 0.85;
+}

@@ -1,9 +1,13 @@
-// 数值型每日主题首页（?theme=steps）：今日 + 累计目标 + 月历热力图
-// 进页面先展示库里的数据，再在后台同步外部数据源（微信运动），有变化才重拉。
+// 数值型每日主题首页（?theme=steps | sleep）：今日卡 + 累计目标 + 月历热力图
+// 步数（count，微信运动同步）：进页面先展示库里的数据，再在后台同步，有变化才重拉。
+// 睡眠（bedtime，手动记录）：「我去睡了 / 我起床了」快捷记录 + 半屏表单补记、修改、删除。
+// 两种度量的展示差别在 utils/daily/views.js，这里只按 measure 选今日卡的样式。
 const toast = require('../../../utils/dailyToast.js');
 const { trackDaily } = require('../../../utils/track.js');
 const D = require('../../../utils/daily/date.js');
 const M = require('../../../utils/daily/metric.js');
+const T = require('../../../utils/daily/clock.js');
+const V = require('../../../utils/daily/views.js');
 const { ringUri } = require('../../../utils/daily/ring.js');
 const C = require('./common.js');
 
@@ -17,6 +21,8 @@ Page({
     heat: [],
 
     themeId: 'steps',
+    measure: 'count',
+    manual: false,
     title: '',
     unit: '',
     vocab: {},
@@ -24,7 +30,7 @@ Page({
     today: '',
     loading: true,
 
-    // 今日
+    // 今日（count）
     todayValue: 0,
     todayText: '0',
     todayMissing: true,
@@ -39,6 +45,9 @@ Page({
     syncFailed: false,
     authDenied: false,
 
+    // 今晚（bedtime）
+    sleep: null,
+
     // 累计目标
     deadlineGoal: null,
     goalWalked: 0,
@@ -51,6 +60,12 @@ Page({
     goalMin: 1000,
     goalMax: 30000,
     goalStep: 500,
+    bedOptions: [],
+    bedIndex: 0,
+
+    // 睡眠记录面板
+    showEntrySheet: false,
+    entry: { date: '', bedTime: '', wakeTime: '', canDelete: false },
 
     // 月历
     year: 2026,
@@ -60,35 +75,45 @@ Page({
     canPrev: true,
     canNext: false,
     selected: '',
-    selectedText: ''
+    selectedText: '',
+    selectedHas: false
   },
 
   onLoad(options) {
     const theme = C.resolveTheme(options && options.theme);
     this.theme = theme;
-    const today = D.todayStr();
+    this.view = V.viewOf(theme);
+    const today = C.todayOf(theme);
     const ts = C.themeState();
     this._palette = ts.palette;
+    const [gMin, gMax] = theme.goalRange;
+    const bedOptions = [];
+    if (theme.measure === 'bedtime') {
+      for (let v = gMin; v <= gMax; v += theme.goalStep) bedOptions.push({ value: v, label: T.offsetToClock(v) });
+    }
     this.setData({
       themeClass: ts.themeClass,
       heat: ts.heat,
       themeId: theme.id,
+      measure: theme.measure || 'count',
+      manual: theme.source === 'manual',
       title: theme.title,
       unit: theme.unit,
       vocab: theme.vocab,
       goalConfig: theme.deadlineGoal || {},
-      goalMin: theme.goalRange[0],
-      goalMax: theme.goalRange[1],
+      goalMin: gMin,
+      goalMax: gMax,
       goalStep: theme.goalStep,
+      bedOptions,
       dailyGoal: theme.defaultGoal,
       today,
       year: Number(today.slice(0, 4)),
       month: Number(today.slice(5, 7))
     });
-    this._renderToday(0, true);
+    this._renderToday();
     Promise.all([this.loadOverview(), this.loadMonth()]).then(() => {
       this.setData({ loading: false });
-      this.sync();
+      if (this.theme.source === 'werun') this.sync();
     });
   },
 
@@ -99,17 +124,20 @@ Page({
     if (ts.themeClass !== this.data.themeClass) {
       this._palette = ts.palette;
       this.setData({ themeClass: ts.themeClass, heat: ts.heat });
-      this._renderToday(this.data.todayValue, this.data.todayMissing);
     }
-    // 挂着页面跨过零点
-    const today = D.todayStr();
+    // 挂着页面跨过零点（睡眠是跨过中午）
+    const today = C.todayOf(this.theme);
     if (today !== this.data.today) {
       this.setData({ today });
       this.loadOverview();
       this.loadMonth();
+    } else {
+      this._renderToday();   // 睡眠的倒计时、按钮跟着当前时刻变
     }
-    if (!this._lastSync || Date.now() - this._lastSync > RESYNC_MS) this.sync();
-    else this._refreshSyncText();
+    if (this.theme.source === 'werun') {
+      if (!this._lastSync || Date.now() - this._lastSync > RESYNC_MS) this.sync();
+      else this._refreshSyncText();
+    }
   },
 
   onUnload() {
@@ -117,7 +145,9 @@ Page({
   },
 
   onPullDownRefresh() {
-    this.sync(true).then(() => wx.stopPullDownRefresh());
+    const done = () => wx.stopPullDownRefresh();
+    if (this.theme.source === 'werun') this.sync(true).then(done);
+    else Promise.all([this.loadOverview(), this.loadMonth()]).then(done);
   },
 
   onShareAppMessage() {
@@ -130,14 +160,13 @@ Page({
       const r = await C.callDaily({ action: 'getMetricOverview', theme: this.data.themeId, date: this.data.today });
       if (this._destroyed) return;
       const s = r.settings || {};
-      const goal = s.daily_goal || this.theme.defaultGoal;
+      this._todayDoc = M.isMissing(r.today) ? null : r.today;
       this.setData({
-        dailyGoal: goal,
+        dailyGoal: s.daily_goal || this.theme.defaultGoal,
         deadlineGoal: s.deadlineGoal || null,
         goalWalked: r.goalWalked || 0
       });
-      const day = r.today || {};
-      this._renderToday(Number(day.total_value) || 0, M.isMissing(day));
+      this._renderToday();
     } catch (err) {
       console.warn('[metric] overview fail', err);
       toast.show(this, '加载失败，下拉重试');
@@ -151,7 +180,7 @@ Page({
     try {
       const res = await C.callDaily({ action: 'getRange', theme: themeId, from: r.from, to: r.to });
       if (this._destroyed || year !== this.data.year || month !== this.data.month) return;
-      this._monthMap = M.toDayMap(res.days);
+      this._monthDocs = M.toDocMap(res.days);
       this.setData({ monthDays: res.days || [], monthLoading: false });
       this._renderSelected();
     } catch (err) {
@@ -160,7 +189,7 @@ Page({
     }
   },
 
-  // force：下拉刷新时即使同步没有变化也重拉一次
+  // 外部数据源同步（只有 source=werun 的主题会走到）。force：下拉刷新时即使没有变化也重拉
   async sync(force) {
     if (this._syncing) return;
     this._syncing = true;
@@ -170,7 +199,7 @@ Page({
     if (this._destroyed) return;
     if (res.ok) {
       this._lastSync = Date.now();
-      if (!this._tracked) { this._tracked = true; trackDaily(this.data.themeId, this.route); }
+      this._trackOnce();
       this.setData({ syncing: false, syncFailed: false, authDenied: false });
       this._refreshSyncText();
       if (res.changed || force) await Promise.all([this.loadOverview(), this.loadMonth()]);
@@ -181,22 +210,35 @@ Page({
     if (force) await Promise.all([this.loadOverview(), this.loadMonth()]);
   },
 
+  _trackOnce() {
+    if (this._tracked) return;
+    this._tracked = true;
+    trackDaily(this.data.themeId, this.route);
+  },
+
   _refreshSyncText() {
     this.setData({ syncText: C.syncAgoText(this._lastSync, this.data.vocab.sourceName) });
   },
 
   // ========= 渲染 =========
-  _renderToday(value, missing) {
+  _renderToday() {
     const goal = this.data.dailyGoal;
+    const doc = this._todayDoc || null;
+    const dailyGoalText = this.view.goalText(goal, this.theme);
+    if (this.data.measure === 'bedtime') {
+      this.setData({ dailyGoalText, sleep: V.sleepCard(doc, goal, Date.now()) });
+      return;
+    }
+    const value = doc ? Number(doc.total_value) || 0 : 0;
     const ratio = goal > 0 ? value / goal : 0;
     const pct = Math.round(ratio * 100);
     const p = this._palette;
     const eq = this.data.vocab.equivalent;
     this.setData({
       todayValue: value,
-      todayMissing: missing,
+      todayMissing: !doc,
       todayText: M.formatNum(value),
-      dailyGoalText: M.formatNum(goal),
+      dailyGoalText,
       pct,
       ring: ringUri(Math.min(100, pct), { color: p.accent, track: p.tint }),
       cheer: this.theme.cheerFor ? this.theme.cheerFor(ratio, value, goal) : '',
@@ -206,10 +248,10 @@ Page({
 
   _renderSelected() {
     const d = this.data.selected;
-    if (!d) return this.setData({ selectedText: '' });
-    const map = this._monthMap || {};
-    const text = d in map ? `${M.formatNum(map[d])} ${this.data.unit}` : '无数据';
-    this.setData({ selectedText: `${D.formatDateCN(d)} ${D.weekdayCN(d)} · ${text}` });
+    if (!d) return this.setData({ selectedText: '', selectedHas: false });
+    const doc = (this._monthDocs || {})[d];
+    const text = doc ? this.view.dayText(doc, this.theme) : '无数据';
+    this.setData({ selectedText: `${D.formatDateCN(d)} ${D.weekdayCN(d)} · ${text}`, selectedHas: !!doc });
   },
 
   // ========= 月历 =========
@@ -239,7 +281,7 @@ Page({
     this._renderSelected();
   },
 
-  // ========= 授权 =========
+  // ========= 授权（werun） =========
   onOpenSetting() {
     wx.openSetting({
       success: res => {
@@ -250,13 +292,19 @@ Page({
 
   // ========= 每日目标 =========
   onOpenDailySheet() {
-    this.setData({ showDailySheet: true, dailyDraft: this.data.dailyGoal });
+    const goal = this.data.dailyGoal;
+    const idx = Math.max(0, this.data.bedOptions.findIndex(o => o.value === goal));
+    this.setData({ showDailySheet: true, dailyDraft: goal, bedIndex: idx });
   },
   onCloseDailySheet() {
     this.setData({ showDailySheet: false });
   },
   onDailyDraft(e) {
     this.setData({ dailyDraft: e.detail.value });
+  },
+  onBedGoalPick(e) {
+    const idx = Number((e.detail.value || [])[0]) || 0;   // picker-view 回传的是每列下标的数组
+    this.setData({ bedIndex: idx, dailyDraft: this.data.bedOptions[idx].value });
   },
   async onSaveDailyGoal() {
     const v = this.data.dailyDraft;
@@ -265,13 +313,82 @@ Page({
     try {
       await C.callDaily({ action: 'setGoal', theme: this.data.themeId, daily_goal: v });
       this.setData({ dailyGoal: v });
-      this._renderToday(this.data.todayValue, this.data.todayMissing);
+      this._renderToday();
+      // 按天数计的累计目标是按当前目标判达标的，目标一改要重算
+      if (this.data.goalConfig.mode === 'days' && this.data.deadlineGoal) this.loadOverview();
       toast.show(this, '已保存', { icon: 'success' });
     } catch (err) {
       toast.show(this, '保存失败');
     }
   },
   noop() {},
+
+  // ========= 睡眠记录（manual） =========
+  async _saveSleep(date, bedTime, wakeTime) {
+    const { value, meta } = T.sleepEntry(bedTime, wakeTime);
+    await C.callDaily({ action: 'setDayValue', theme: this.data.themeId, date, value, meta });
+    this._trackOnce();
+    await Promise.all([this.loadOverview(), this.loadMonth()]);
+  },
+  async onSleepNow() {
+    const night = T.nightOf();
+    try {
+      await this._saveSleep(night, T.nowClock(), '');
+      toast.show(this, '晚安，明早记得点「我起床了」', { icon: 'success' });
+    } catch (err) {
+      toast.show(this, '记录失败');
+    }
+  },
+  async onWakeNow() {
+    const doc = this._todayDoc;
+    if (!doc || !doc.meta) return;
+    try {
+      await this._saveSleep(doc.date, doc.meta.bedTime, T.nowClock());
+      toast.show(this, '早安', { icon: 'success' });
+    } catch (err) {
+      toast.show(this, '记录失败');
+    }
+  },
+  _openEntry(date, doc) {
+    const meta = (doc && doc.meta) || {};
+    this.setData({
+      showEntrySheet: true,
+      entry: { date, bedTime: meta.bedTime || '', wakeTime: meta.wakeTime || '', canDelete: !!doc }
+    });
+  },
+  onOpenEntry() {
+    this._openEntry(this.data.today, this._todayDoc);
+  },
+  onEditSelected() {
+    const d = this.data.selected;
+    if (d) this._openEntry(d, (this._monthDocs || {})[d]);
+  },
+  onEntryClose() {
+    this.setData({ showEntrySheet: false });
+  },
+  async onEntrySubmit(e) {
+    const { date, bedTime, wakeTime } = e.detail;
+    wx.showLoading({ title: '保存中' });
+    try {
+      await this._saveSleep(date, bedTime, wakeTime);
+      this.setData({ showEntrySheet: false });
+      toast.show(this, '已保存', { icon: 'success' });
+    } catch (err) {
+      toast.show(this, (err && err.message) || '保存失败');
+    } finally {
+      wx.hideLoading();
+    }
+  },
+  async onEntryRemove(e) {
+    try {
+      await C.callDaily({ action: 'clearDay', theme: this.data.themeId, date: e.detail.date });
+      this.setData({ showEntrySheet: false });
+      await Promise.all([this.loadOverview(), this.loadMonth()]);
+      toast.show(this, '已删除', { icon: 'success' });
+    } catch (err) {
+      toast.show(this, '删除失败');
+    }
+  },
 
   // ========= 累计目标 =========
   onGoalCreate() {

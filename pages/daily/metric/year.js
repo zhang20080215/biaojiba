@@ -1,7 +1,7 @@
-// 数值型每日主题 · 年度视图：全年热力格 + 年度汇总
+// 数值型每日主题 · 年度视图：全年热力格 + 年度汇总（文案按度量取自 utils/daily/views.js）
 const toast = require('../../../utils/dailyToast.js');
-const D = require('../../../utils/daily/date.js');
 const M = require('../../../utils/daily/metric.js');
+const V = require('../../../utils/daily/views.js');
 const C = require('./common.js');
 
 const MIN_YEAR = 2015;
@@ -12,8 +12,8 @@ Page({
     themeClass: '',
     heat: [],
     themeId: 'steps',
+    measure: 'count',
     title: '',
-    unit: '',
     today: '',
     year: 2026,
     canPrev: true,
@@ -22,23 +22,26 @@ Page({
     days: [],
     goal: 0,
     kpi: [],
-    totalText: '0',
-    eqText: ''
+    heroCap: '',
+    heroNum: '0',
+    heroUnit: '',
+    heroSub: ''
   },
 
   onLoad(options) {
     const theme = C.resolveTheme(options && options.theme);
     this.theme = theme;
+    this.view = V.viewOf(theme);
     const ts = C.themeState();
-    const today = D.todayStr();
+    const today = C.todayOf(theme);
     const thisYear = Number(today.slice(0, 4));
     const year = Math.min(thisYear, Math.max(MIN_YEAR, Number(options && options.year) || thisYear));
     this.setData({
       themeClass: ts.themeClass,
       heat: ts.heat,
       themeId: theme.id,
+      measure: theme.measure || 'count',
       title: theme.title + '年度',
-      unit: theme.unit,
       today,
       year,
       goal: theme.defaultGoal
@@ -70,19 +73,20 @@ Page({
       const r = await C.callDaily({ action: 'getYear', theme: themeId, year });
       if (this._destroyed || seq !== this._seq) return;
       const goal = (r.settings && r.settings.daily_goal) || this.theme.defaultGoal;
-      const s = M.summarize(M.toDayMap(r.days), `${year}-01-01`, `${year}-12-31`, goal, today);
-      const eq = this.theme.vocab.equivalent;
+      const measure = this.theme.measure;
+      const map = M.toDayMap(r.days, measure);
+      const s = M.summarize(map, `${year}-01-01`, `${year}-12-31`, goal, today, measure);
+      const docs = M.toDocMap(r.days);
+      Object.keys(docs).forEach(d => { if (!(d in map) || d > today) delete docs[d]; });
+      const yv = this.view.year(s, docs, this.theme);
       this.setData({
         days: r.days || [],
         goal,
-        totalText: M.formatNum(s.total),
-        eqText: eq && s.total ? `${eq.label} ${M.equivalentOf(s.total, eq)} ${eq.unit}` : '',
-        kpi: [
-          { label: this.theme.vocab.avgLabel, value: M.formatNum(s.avg), unit: this.data.unit },
-          { label: '达标天数', value: s.achieved, unit: `/ ${s.dataDays} 天` },
-          { label: '最长连续达标', value: s.longestStreak, unit: '天' },
-          { label: this.theme.vocab.bestLabel, value: s.best ? M.formatShort(s.best.value) : '—', unit: s.best ? `${this.data.unit} · ${D.formatDateCN(s.best.date)}` : '' }
-        ]
+        heroCap: yv.heroCap,
+        heroNum: yv.heroNum,
+        heroUnit: yv.heroUnit,
+        heroSub: yv.heroSub,
+        kpi: yv.kpi
       });
     } catch (err) {
       if (seq !== this._seq) return;

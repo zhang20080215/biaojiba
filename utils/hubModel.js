@@ -1,7 +1,7 @@
 // Pure selection logic shared by the four root pages and regression tests.
 const hubIcons = require('./hubIcons');
 const LABELS = { movie: '电影', tv: '剧集', anime: '动漫', reading: '读书', travel: '旅行', daily: '每日记录', parenting: '育儿' };
-const ROUTES = { douban_movies: 'douban', travel_provinces: 'province', travel_cities: 'city', daily_movie: 'daily:movie', daily_read: 'daily:read', daily_sport: 'daily:sport', daily_water: 'daily:water', daily_steps: 'daily:steps' };
+const ROUTES = { douban_movies: 'douban', travel_provinces: 'province', travel_cities: 'city', daily_movie: 'daily:movie', daily_read: 'daily:read', daily_sport: 'daily:sport', daily_water: 'daily:water', daily_steps: 'daily:steps', daily_sleep: 'daily:sleep' };
 const normalize = s => String(s || '').toLowerCase().replace(/\s+/g, '');
 function routeKey(t) {
   if (ROUTES[t.id]) return ROUTES[t.id];

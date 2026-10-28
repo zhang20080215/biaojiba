@@ -471,6 +471,20 @@ module.exports = [
         url: '/pages/daily/metric/index?theme=steps'
       },
       {
+        id: 'daily_sleep',
+        title: '每日睡眠',
+        description: '记录入睡和起床时间，养成早睡习惯',
+        image: '',
+        brand: ['#A9B3D6', '#4A5785'],
+        placeholderEmoji: '🌙',
+        placeholderText: '每日睡眠',
+        userCount: 0,
+        tag: '每日',
+        category: 'daily',
+        isNew: true,
+        url: '/pages/daily/metric/index?theme=sleep'
+      },
+      {
         id: 'weread_books',
         title: '微信读书 TOP200 总榜',
         description: '微信读书全平台热榜，记录你的阅读旅程',

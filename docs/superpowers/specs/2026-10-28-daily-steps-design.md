@@ -52,3 +52,18 @@
 
 ## 测试
 `node --test tools/test-daily-metric.cjs`：日期工具、热力分档、汇总与连续达标、累计目标进度、色板与 `theme.wxss` 一致、微信运动数据解析。
+
+---
+
+## 追加：每日睡眠（`sleep`）
+
+用户选定：入睡 + 起床时间手动记录；**达标看入睡时刻**（主攻早睡）；累计目标是「早睡达标天数」；入口只放分类页。
+
+- **度量（measure）抽象**：数值型主题再分「每天比哪个数、怎样算达标」。`utils/daily/metric.js` 的 `MEASURES`：`count`（`total_value`，越多越好，步数）/ `bedtime`（`meta.bedOffset`，越早越好，睡眠）。展示文案（统计 KPI、年度、海报、日详情）集中在 `utils/daily/views.js`，页面不写主题判断。
+- **时刻存法**：`bedOffset` = 中午 12 点起算的分钟数（23:00 → 660、00:30 → 750），跨午夜可直接比大小和求平均。`utils/daily/clock.js`。
+- **归属**：一晚记在「那一晚」：中午 12 点前打开算昨晚（主题配置 `dayOffsetHours: 12`，所有页面的「今天」都按它算）。
+- **记录**：首页「我去睡了」（18 点 ~ 次日 4 点出现，记当前时刻）、「我起床了」（早上 3~12 点、已有入睡时间才出现，补起床并算时长）；半屏面板补记 / 修改 / 删除；月历选中某天可编辑。后端通用动作 `setDayValue {theme, date, value, meta}`（整条覆盖，meta 只收扁平短字段）/ `clearDay`。文档：`total_value` = 时长（分钟），`meta = {bedTime, wakeTime, bedOffset, duration}`。
+- **达标与热力**：入睡 ≤ 目标（默认 23:00，可选 21:00~01:00，15 分钟一档）；分档 准时 / 晚 30 分钟内 / 晚 1 小时内 / 更晚。
+- **累计目标**：`deadlineGoal.mode = 'days'`，「12月31日前早睡满 30 天」；云端 `THEME_DEFAULTS.sleep.goalCount = {field:'meta.bedOffset', op:'lte'}`，按**当前**目标时间数达标晚数，改目标后重算；面板校验目标天数不超过区间总天数，进度卡在剩余天数不够时提示「来不及了」。
+- **统计**：柱高 = 睡眠时长、颜色 = 入睡早晚；KPI 早睡天数 / 最早入睡 / 最长连续早睡 / 平均起床（含平均时长）。年度主数字是「年度早睡 N 天」。
+- **海报**：绘制器改为只认页面算好的通用字段（`bigText / statusText / subLine / tiles`），步数和睡眠共用同一版式。

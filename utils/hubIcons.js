@@ -19,6 +19,8 @@ const ICONS = {
   reading: `<path d='M12 6.6C10.3 5.1 7.8 4.6 4 4.6v13.2c3.8 0 6.3.5 8 2 1.7-1.5 4.2-2 8-2V4.6c-3.8 0-6.3.5-8 2z'/><path d='M12 6.6v13.2'/>`,
   // 哑铃：两片杠铃片用圆角矩形，比单线更有分量，和另外三个每日图标视觉重量一致
   dumbbell: `<rect x='5.4' y='6.8' width='3.2' height='10.4' rx='1.1'/><rect x='15.4' y='6.8' width='3.2' height='10.4' rx='1.1'/><path d='M2.8 10.3v3.4M21.2 10.3v3.4M8.6 12h6.8'/>`,
+  // 弯月 + 小星：每日睡眠
+  moon: `<path d='M19.5 14.6A7.8 7.8 0 1 1 9.4 4.5a6.2 6.2 0 0 0 10.1 10.1z'/><path d='M17 3.5v3M15.5 5h3'/>`,
   // 两只脚印：每日步数
   footprints: `<path d='M8.2 3.8c-1.9 0-3 2.1-3 4.6 0 2 .9 3.7 1.6 4.8h3.2c.7-1.1 1.6-2.8 1.6-4.8 0-2.5-1.5-4.6-3.4-4.6z'/><path d='M6.9 15.4h3l-.2 1.9a1.3 1.3 0 0 1-2.6 0z'/><path d='M15.8 7.3c-1.9 0-3.4 2.1-3.4 4.6 0 2 .9 3.7 1.6 4.8h3.2c.7-1.1 1.6-2.8 1.6-4.8 0-2.5-1.1-4.6-3-4.6z'/><path d='M14.1 18.9h3l-.2 1.9a1.3 1.3 0 0 1-2.6 0z'/>`,
   droplet: `<path d='M12 3.5s6 6.2 6 10.6a6 6 0 0 1-12 0c0-4.4 6-10.6 6-10.6z'/><path d='M9.3 14.4a2.9 2.9 0 0 0 2.6 2.6'/>`,
@@ -40,7 +42,7 @@ const ICON_BY_ID = {
   rt_animation_movies: 'sparkle', douban_tv_anime: 'sparkle', bangumi_anime: 'sparkle',
   douban_books: 'book', weread_books: 'book', maodun_books: 'book', newbery_books: 'book',
   scenic_5a: 'mountain', museum_grade1: 'museum', travel_provinces: 'pin', travel_cities: 'pin',
-  daily_movie: 'clapper', daily_read: 'reading', daily_sport: 'dumbbell', daily_water: 'droplet', daily_steps: 'footprints',
+  daily_movie: 'clapper', daily_read: 'reading', daily_sport: 'dumbbell', daily_water: 'droplet', daily_steps: 'footprints', daily_sleep: 'moon',
   movie_search_all_platforms: 'search', child_growth: 'ruler'
 };
 const ICON_BY_CATEGORY = { movie: 'film', oscar: 'trophy', tv: 'tv', anime: 'sparkle', reading: 'book', travel: 'pin', parenting: 'ruler', daily: 'sparkle', game: 'film' };

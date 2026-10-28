@@ -14,6 +14,7 @@
 // 入参约定（所有 action 都必填 theme）：
 //   action: 'getToday' | 'addEntry' | 'removeEntry' | 'updateEntry' | 'reorderEntries' | 'setGoal' | 'setPresets' | 'getRange' | 'getYear' | 'getAll'
 //         | 'syncSource' | 'getMetricOverview' | 'setDeadlineGoal' | 'endDeadlineGoal'   （数值型主题，如 steps）
+//         | 'setDayValue' | 'clearDay'   （数值型手动记录主题，如 sleep：按天整条覆盖 / 删除）
 //   另有运维动作 'stats'（各主题参与人数）/ 'fixBookPages'（修正某用户某本书的总页数），都不需要 openid，从云函数控制台跑
 //   theme:  'water' | 'milktea' | ...
 
@@ -296,7 +297,10 @@ const THEME_DEFAULTS = {
     // sport 里 daily_goal 复用为"每月目标训练次数"，用于月度进度。
     sport:   { unit: '次', daily_goal: 20,   presets: [1] },
     // steps 是数值型主题：一天一个数（微信运动同步），没有快捷量
-    steps:   { unit: '步', daily_goal: 8000, presets: [] }
+    steps:   { unit: '步', daily_goal: 8000, presets: [] },
+    // sleep：total_value = 睡眠时长（分钟），meta.bedOffset = 入睡时刻（中午 12 点起算的分钟数）；
+    // daily_goal = 目标入睡的 bedOffset（660 = 23:00）。累计目标数的是「早睡天数」：bedOffset <= daily_goal 的晚上
+    sleep:   { unit: '分钟', daily_goal: 660, presets: [], goalCount: { field: 'meta.bedOffset', op: 'lte' } }
 };
 
 const MAX_PAST_GOALS = 20;
@@ -384,6 +388,30 @@ async function syncSource(openid, theme, event) {
         }))
     ]);
     return { success: true, theme, source: event.source, days: valid.length, added: plan.adds.length, updated: plan.updates.length, syncedAt: Date.now() };
+}
+
+// 累计目标的已完成量：默认是区间内数值之和；主题配了 goalCount 时数的是达标天数（按当前 daily_goal 判）
+async function goalWalked(openid, theme, settings, from, to) {
+    const gc = defaultsOf(theme).goalCount;
+    if (!gc) return sumRange(openid, theme, from, to);
+    if (from > to) return 0;
+    const res = await db.collection('DailyLogs')
+        .where({ openid, theme, date: _.gte(from).and(_.lte(to)), [gc.field]: _[gc.op](settings.daily_goal) })
+        .count();
+    return res.total || 0;
+}
+
+// 手动记录的 meta：只收扁平的数字 / 短字符串，挡住任意大对象写库
+function cleanMeta(meta) {
+    if (!meta || typeof meta !== 'object' || Array.isArray(meta)) return null;
+    const out = {};
+    Object.keys(meta).slice(0, 12).forEach(k => {
+        const v = meta[k];
+        if (typeof v === 'number' && Number.isFinite(v)) out[k] = v;
+        else if (typeof v === 'string' && v.length <= 40) out[k] = v;
+        else if (typeof v === 'boolean') out[k] = v;
+    });
+    return out;
 }
 
 function isDateStr(v) {
@@ -895,15 +923,48 @@ exports.main = async (event, context) => {
             const date = event.date || todayStr();
             const [settings, today] = await Promise.all([getSettings(openid, theme), getDay(openid, theme, date)]);
             const g = settings.deadlineGoal;
-            const goalWalked = g ? await sumRange(openid, theme, g.startDate, g.endDate < date ? g.endDate : date) : null;
+            const walked = g ? await goalWalked(openid, theme, settings, g.startDate, g.endDate < date ? g.endDate : date) : null;
             return {
                 success: true,
                 theme,
                 date,
                 today: today || { theme, date, total_value: 0, entries: [], unit: settings.unit, missing: true },
                 settings,
-                goalWalked
+                goalWalked: walked
             };
+        }
+
+        // 手动记录：这一天整条覆盖（value → total_value，meta 原样存）
+        if (action === 'setDayValue') {
+            const { date } = event;
+            const value = Number(event.value);
+            if (!isDateStr(date) || date > todayStr()) return { success: false, error: 'date 无效' };
+            if (!Number.isFinite(value) || value < 0 || value > 1e7) return { success: false, error: 'value 无效' };
+            const meta = cleanMeta(event.meta);
+            const now = new Date().toISOString();
+            const data = { total_value: value, meta, updated_at: now };
+            const existing = await getDay(openid, theme, date);
+            if (existing) {
+                await db.collection('DailyLogs').doc(existing._id).update({ data });
+            } else {
+                try {
+                    await db.collection('DailyLogs').add({
+                        data: { openid, theme, date, unit: defaultsOf(theme).unit, entries: [], source: 'manual', ...data, created_at: now }
+                    });
+                } catch (err) {
+                    console.warn('setDayValue add 冲突，回退 update：', err.message);
+                    await db.collection('DailyLogs').where({ openid, theme, date }).update({ data });
+                }
+            }
+            return { success: true, theme, date, day: await getDay(openid, theme, date) };
+        }
+
+        // 手动记录：删掉这一天（回到「无数据」）
+        if (action === 'clearDay') {
+            const { date } = event;
+            if (!isDateStr(date)) return { success: false, error: 'date 无效' };
+            const res = await db.collection('DailyLogs').where({ openid, theme, date }).remove();
+            return { success: true, theme, date, removed: (res.stats && res.stats.removed) || 0 };
         }
 
         if (action === 'setDeadlineGoal') {
@@ -927,7 +988,7 @@ exports.main = async (event, context) => {
             const g = settings.deadlineGoal;
             if (!g) return { success: true, theme, pastGoals: settings.pastGoals };
             const today = todayStr();
-            const walked = await sumRange(openid, theme, g.startDate, g.endDate < today ? g.endDate : today);
+            const walked = await goalWalked(openid, theme, settings, g.startDate, g.endDate < today ? g.endDate : today);
             const pastGoals = [{ ...g, status, walked, endedAt: new Date().toISOString() }]
                 .concat(settings.pastGoals || [])
                 .slice(0, MAX_PAST_GOALS);

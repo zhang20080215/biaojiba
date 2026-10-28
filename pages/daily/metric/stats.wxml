@@ -14,7 +14,7 @@
 
     <view class="headline">
       <text class="headline-cap">{{headlineCap}}</text>
-      <view><text class="headline-num">{{headline}}</text><text class="headline-unit">{{unit}}</text></view>
+      <view><text class="headline-num">{{headline}}</text><text class="headline-unit" wx:if="{{headlineUnit}}">{{headlineUnit}}</text></view>
       <text class="headline-sub">{{headlineSub}}</text>
     </view>
 
@@ -41,6 +41,7 @@
         <view class="legend-line"></view><text>每日目标</text>
         <text wx:if="{{range === 'year'}}" class="legend-note">年视图柱高为当月日均</text>
       </view>
+      <view class="chart-legend" wx:if="{{chartNote && !empty}}"><text>{{chartNote}}{{range === 'year' ? '（年视图为当月平均）' : ''}}</text></view>
       <view class="empty-tip" wx:if="{{empty && !loading}}">这段时间还没有数据</view>
     </view>
 

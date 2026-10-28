@@ -9,6 +9,7 @@ Component({
     month: { type: Number, value: 1 },
     days: { type: Array, value: [] },     // getRange 的 days
     goal: { type: Number, value: 0 },
+    measure: { type: String, value: 'count' },   // metric.MEASURES 的键
     today: { type: String, value: '' },
     heat: { type: Array, value: [] },     // palette.heat
     selected: { type: String, value: '' },
@@ -18,13 +19,13 @@ Component({
   },
   data: { cells: [], label: '', weekHeader: D.WD_MON },
   observers: {
-    'year, month, days, goal, today, heat': function () { this._build(); }
+    'year, month, days, goal, today, heat, measure': function () { this._build(); }
   },
   methods: {
     _build() {
-      const { year, month, days, goal, today, heat } = this.data;
+      const { year, month, days, goal, today, heat, measure } = this.data;
       if (!today || !heat.length) return;
-      const cells = M.buildMonthCells(year, month, M.toDayMap(days), goal, today).map(c => {
+      const cells = M.buildMonthCells(year, month, M.toDayMap(days, measure), goal, today, measure).map(c => {
         if (c.empty || c.level < 0) return c;
         return Object.assign({}, c, { bg: heat[c.level], light: c.level >= 3 });
       });

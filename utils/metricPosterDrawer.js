@@ -5,15 +5,15 @@
  *   day   —— 单日：大进度环 + 当天数值 + 完成率 + 每日目标 + 鼓励语
  *   month —— 月度：月历热力图 + 累计 / 日均 / 达标天数
  * 纯 ctx 绘制，不加载任何图片。颜色来自 utils/daily/palette.js 的某一套全站主题色；
- * 文案来自主题配置的 vocab（dailyThemes.js），换主题不改这里。
+ * 画什么字由页面按度量算好再传进来（utils/daily/views.js 的 posterDay / posterMonth），这里只管版式，
+ * 步数和睡眠共用；署名 / 空态 emoji 来自主题配置的 vocab。
  *
  * 用法：
  *   new MetricPosterDrawer(canvas, ctx).draw(data, palette, vocab)
- *   data.layout = 'day':   { title, value, goal, unit, cheer, equivalentText }
- *   data.layout = 'month': { title, unit, goal, cells(metric.buildMonthCells), summary(metric.summarize), equivalentText }
+ *   data.layout = 'day':   { title, cap, bigText, bigUnit, ratio(进度环 0~1+), statusText, subLine, cheer }
+ *   data.layout = 'month': { title, subtitle, tiles:[{label,value,sub}]×3, cells(metric.buildMonthCells) }
  *   data.layout = 'empty': { title }   —— 没有数据时的占位图
  */
-const M = require('./daily/metric.js');
 const P = require('./daily/palette.js');
 
 const W = 1080;
@@ -131,10 +131,10 @@ class MetricPosterDrawer {
     const { ctx, p } = this;
     const ink = P.NEUTRAL.ink;
     this._text(d.title, 120, 190, 40, P.NEUTRAL.inkSoft, 'left');
-    this._text(this.v.todayCap || '今日', 120, 262, 64, ink, 'left', 'bold');
+    this._text(d.cap || '', 120, 262, 64, ink, 'left', 'bold');
 
     const cx = W / 2, cy = 690, R = 290, LW = 46;
-    const ratio = d.goal > 0 ? d.value / d.goal : 0;
+    const ratio = Number(d.ratio) || 0;
     ctx.lineCap = 'round';
     ctx.lineWidth = LW;
     ctx.strokeStyle = P.mix(p.tint, p.accent, 0.15);
@@ -149,12 +149,12 @@ class MetricPosterDrawer {
     }
     ctx.lineCap = 'butt';
 
-    this._fitText(M.formatNum(d.value), cx, cy - 20, 150, 2 * (R - LW) - 40, ink, 'bold');
-    this._text(d.unit, cx, cy + 90, 40, P.NEUTRAL.inkSoft, 'center');
-    this._text(`完成 ${Math.round(ratio * 100)}%`, cx, cy + 160, 40, p.accent, 'center', 'bold');
+    this._fitText(d.bigText, cx, cy - 20, 150, 2 * (R - LW) - 40, ink, 'bold');
+    this._text(d.bigUnit || '', cx, cy + 90, 40, P.NEUTRAL.inkSoft, 'center');
+    this._fitText(d.statusText || '', cx, cy + 160, 40, 2 * (R - LW) - 60, p.accent, 'bold');
 
     let y = cy + R + 130;
-    this._text(`每日目标 ${M.formatNum(d.goal)} ${d.unit}${d.equivalentText ? ' · ' + d.equivalentText : ''}`, cx, y, 36, P.NEUTRAL.inkSoft, 'center');
+    this._fitText(d.subLine || '', cx, y, 36, W - 160, P.NEUTRAL.inkSoft);
     if (d.cheer) {
       y += 100;
       this._fitText(d.cheer, cx, y, 46, W - 200, ink, 'bold');
@@ -165,16 +165,11 @@ class MetricPosterDrawer {
   _month(d) {
     const { ctx, p } = this;
     const ink = P.NEUTRAL.ink;
-    const s = d.summary || {};
     this._text(d.title, 120, 170, 64, ink, 'left', 'bold');
-    this._text(`${this.v.noun || ''}月报`, 120, 244, 36, P.NEUTRAL.inkSoft, 'left');
+    this._text(d.subtitle || '', 120, 244, 36, P.NEUTRAL.inkSoft, 'left');
 
     // 三格统计
-    const tiles = [
-      { label: this.v.totalLabel || '累计', value: M.formatShort(s.total || 0), sub: d.equivalentText || d.unit },
-      { label: this.v.avgLabel || '日均', value: M.formatNum(s.avg || 0), sub: d.unit },
-      { label: '达标天数', value: String(s.achieved || 0), sub: `/ ${s.dataDays || 0} 天` }
-    ];
+    const tiles = d.tiles || [];
     const tw = 260, th = 170, gap = 30, tx = (W - tw * 3 - gap * 2) / 2, ty = 310;
     tiles.forEach((t, i) => {
       const x = tx + i * (tw + gap);
@@ -182,7 +177,7 @@ class MetricPosterDrawer {
       this._roundRect(x, ty, tw, th, 28); ctx.fill();
       this._text(t.label, x + tw / 2, ty + 40, 26, P.NEUTRAL.inkMuted, 'center');
       this._fitText(t.value, x + tw / 2, ty + 92, 52, tw - 30, ink, 'bold');
-      this._text(t.sub, x + tw / 2, ty + 140, 24, P.NEUTRAL.inkSoft, 'center');
+      if (t.sub) this._fitText(t.sub, x + tw / 2, ty + 140, 24, tw - 24, P.NEUTRAL.inkSoft);
     });
 
     // 月历

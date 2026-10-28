@@ -14,8 +14,8 @@
       <view class="btn-primary" bindtap="onOpenSetting">去开启</view>
     </view>
 
-    <!-- 今日 -->
-    <view class="card today-card">
+    <!-- 今日：数量型（步数） -->
+    <view class="card today-card" wx:if="{{measure === 'count'}}">
       <view class="today-ring">
         <image class="ring-img" src="{{ring}}" />
         <view class="ring-center">
@@ -26,7 +26,7 @@
       </view>
       <view class="today-side">
         <view class="goal-pill" bindtap="onOpenDailySheet" hover-class="pill-hover">
-          <text>每日目标 {{dailyGoalText}} {{unit}}</text><text class="goal-edit">✎</text>
+          <text>每日目标 {{dailyGoalText}}</text><text class="goal-edit">✎</text>
         </view>
         <text class="today-cheer">{{cheer}}</text>
         <text class="today-eq" wx:if="{{equivalent}}">{{equivalent}}</text>
@@ -34,18 +34,49 @@
       </view>
     </view>
 
+    <!-- 今晚：时刻型（睡眠） -->
+    <view class="card sleep-card" wx:if="{{measure === 'bedtime' && sleep}}">
+      <view class="sleep-top">
+        <text class="sleep-cap">{{sleep.nightLabel}}{{vocab.todayCap}}</text>
+        <view class="goal-pill" bindtap="onOpenDailySheet" hover-class="pill-hover">
+          <text>目标 {{dailyGoalText}}</text><text class="goal-edit">✎</text>
+        </view>
+      </view>
+      <block wx:if="{{sleep.recorded}}">
+        <view class="sleep-main">
+          <text class="sleep-time">{{sleep.bedTime}}</text>
+          <text class="sleep-badge {{sleep.achieved ? 'is-ok' : ''}}">{{sleep.statusText}}</text>
+        </view>
+        <text class="sleep-sub" wx:if="{{sleep.wakeTime}}">{{sleep.wakeTime}} 起床 · {{sleep.durationText}}</text>
+        <text class="sleep-sub" wx:elif="{{sleep.wakeHint}}">{{sleep.wakeHint}}</text>
+        <view class="btn-primary sleep-btn" wx:if="{{sleep.showWake}}" bindtap="onWakeNow">☀️ 我起床了</view>
+      </block>
+      <block wx:else>
+        <view class="sleep-main">
+          <text class="sleep-time is-empty">--:--</text>
+        </view>
+        <text class="sleep-sub">{{sleep.countdownText}}</text>
+        <view class="btn-primary sleep-btn" wx:if="{{sleep.showSleep}}" bindtap="onSleepNow">🌙 我去睡了</view>
+      </block>
+      <text class="sleep-link" bindtap="onOpenEntry">{{sleep.recorded ? '修改' + sleep.nightLabel + '的记录' : '手动补记'}}</text>
+    </view>
+
     <!-- 累计目标 -->
     <view class="section">
-      <deadline-goal-card goal="{{deadlineGoal}}" walked="{{goalWalked}}" today="{{today}}" unit="{{unit}}" verb="{{vocab.verb}}"
+      <deadline-goal-card goal="{{deadlineGoal}}" walked="{{goalWalked}}" today="{{today}}" mode="{{goalConfig.mode}}"
+                          unit="{{goalConfig.unit}}" verb="{{goalConfig.verb}}" example="{{goalConfig.example}}"
                           bind:create="onGoalCreate" bind:edit="onGoalEdit" bind:restart="onGoalRestart" />
     </view>
 
     <!-- 月历热力图 -->
     <view class="card section">
-      <month-heatmap year="{{year}}" month="{{month}}" days="{{monthDays}}" goal="{{dailyGoal}}" today="{{today}}" heat="{{heat}}"
+      <month-heatmap year="{{year}}" month="{{month}}" days="{{monthDays}}" goal="{{dailyGoal}}" measure="{{measure}}" today="{{today}}" heat="{{heat}}"
                      selected="{{selected}}" canPrev="{{canPrev}}" canNext="{{canNext}}" loading="{{monthLoading}}"
                      bind:prev="onPrevMonth" bind:next="onNextMonth" bind:select="onSelectDay" />
-      <view class="selected-line" wx:if="{{selectedText}}">{{selectedText}}</view>
+      <view class="selected-line" wx:if="{{selectedText}}">
+        <text class="selected-text">{{selectedText}}</text>
+        <text wx:if="{{manual}}" class="selected-edit" bindtap="onEditSelected">{{selectedHas ? '编辑' : '补记'}}</text>
+      </view>
     </view>
 
     <!-- 入口 -->
@@ -57,17 +88,31 @@
     <text class="foot-note" wx:if="{{vocab.equivalent}}">{{vocab.equivalent.label}}距离{{vocab.equivalent.note}}，仅供参考</text>
   </view>
 
-  <!-- 每日目标面板 -->
+  <!-- 每日目标面板：数量型用滑杆，时刻型选目标入睡时间 -->
   <view wx:if="{{showDailySheet}}" class="sheet-mask" bindtap="onCloseDailySheet" catchtouchmove="noop">
     <view class="sheet" catchtap="noop">
-      <text class="sheet-title">每日目标</text>
-      <view class="sheet-value"><text class="sheet-num">{{dailyDraft}}</text><text class="sheet-unit">{{unit}}</text></view>
-      <slider min="{{goalMin}}" max="{{goalMax}}" step="{{goalStep}}" value="{{dailyDraft}}" activeColor="{{heat[4]}}" block-size="24" bindchanging="onDailyDraft" bindchange="onDailyDraft" />
-      <view class="sheet-range"><text>{{goalMin}}</text><text>{{goalMax}}</text></view>
+      <block wx:if="{{measure === 'bedtime'}}">
+        <text class="sheet-title">目标入睡时间</text>
+        <picker-view class="bed-picker" value="{{[bedIndex]}}" bindchange="onBedGoalPick" indicator-style="height: 88rpx;">
+          <picker-view-column>
+            <view wx:for="{{bedOptions}}" wx:key="value" class="bed-option">{{item.label}} 前入睡</view>
+          </picker-view-column>
+        </picker-view>
+      </block>
+      <block wx:else>
+        <text class="sheet-title">每日目标</text>
+        <view class="sheet-value"><text class="sheet-num">{{dailyDraft}}</text><text class="sheet-unit">{{unit}}</text></view>
+        <slider min="{{goalMin}}" max="{{goalMax}}" step="{{goalStep}}" value="{{dailyDraft}}" activeColor="{{heat[4]}}" block-size="24" bindchanging="onDailyDraft" bindchange="onDailyDraft" />
+        <view class="sheet-range"><text>{{goalMin}}</text><text>{{goalMax}}</text></view>
+      </block>
       <view class="btn-primary" bindtap="onSaveDailyGoal">保存</view>
     </view>
   </view>
 
-  <deadline-goal-sheet show="{{showGoalSheet}}" goal="{{sheetGoal}}" config="{{goalConfig}}" today="{{today}}" unit="{{unit}}" verb="{{vocab.verb}}"
+  <deadline-goal-sheet show="{{showGoalSheet}}" goal="{{sheetGoal}}" config="{{goalConfig}}" today="{{today}}" unit="{{goalConfig.unit}}" verb="{{goalConfig.verb}}"
                        bind:submit="onGoalSubmit" bind:close="onGoalSheetClose" bind:abandon="onGoalAbandon" />
+
+  <bedtime-entry-sheet wx:if="{{manual}}" show="{{showEntrySheet}}" date="{{entry.date}}" bedTime="{{entry.bedTime}}" wakeTime="{{entry.wakeTime}}"
+                       maxDate="{{today}}" canDelete="{{entry.canDelete}}"
+                       bind:submit="onEntrySubmit" bind:remove="onEntryRemove" bind:close="onEntryClose" />
 </view>

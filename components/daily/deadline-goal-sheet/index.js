@@ -41,9 +41,12 @@ Component({
       const { goal, config, today } = this.data;
       const cfg = config || {};
       const editing = !!goal;
-      const target = editing ? goal.target : (cfg.presets && cfg.presets[cfg.presets.length - 1]) || 0;
       const startDate = editing ? goal.startDate : today;
       const endDate = editing ? goal.endDate : defaultEnd(today);
+      // 新建时默认选最大的、且放得进这段时间的预设（按天数计的目标不能超过总天数）
+      const span = D.daysBetween(startDate, endDate) + 1;
+      const fits = (cfg.presets || []).filter(v => cfg.mode !== 'days' || v <= span);
+      const target = editing ? goal.target : (fits.length ? fits[fits.length - 1] : (cfg.presets || [])[0] || 0);
       this.setData({
         editing,
         presets: (cfg.presets || []).map(v => ({ value: v, text: M.formatShort(v) })),
@@ -64,6 +67,10 @@ Component({
       if (next.endDate < endMin) next.endDate = endMin;
       if (next.endDate > endMax) next.endDate = endMax;
       const days = D.daysBetween(next.startDate, next.endDate) + 1;
+      const byDays = config && config.mode === 'days';
+      let summary = '';
+      if (next.target && byDays) summary = `${days} 天里${verb}满 ${next.target} 天${next.target > days ? '（超过了总天数）' : ''}`;
+      else if (next.target) summary = `${days} 天${verb}满 ${M.formatShort(next.target)}${unit}，平均每天约 ${M.formatNum(Math.ceil(next.target / days))} ${unit}`;
       this.setData({
         target: next.target,
         targetText: next.target ? M.formatNum(next.target) : '',
@@ -71,9 +78,7 @@ Component({
         endDate: next.endDate,
         endMin,
         endMax,
-        summary: next.target
-          ? `${days} 天${verb}满 ${M.formatShort(next.target)}${unit}，平均每天约 ${M.formatNum(Math.ceil(next.target / days))} ${unit}`
-          : '',
+        summary,
         error: ''
       });
     },
@@ -101,6 +106,8 @@ Component({
       if (!target) return this.setData({ error: '先选一个目标' });
       if (cfg.min && target < cfg.min) return this.setData({ error: `目标至少 ${M.formatNum(cfg.min)} ${unit}` });
       if (cfg.max && target > cfg.max) return this.setData({ error: `目标最多 ${M.formatShort(cfg.max)} ${unit}` });
+      const span = D.daysBetween(startDate, endDate) + 1;
+      if (cfg.mode === 'days' && target > span) return this.setData({ error: `这段时间只有 ${span} 天，目标不能超过它` });
       this.triggerEvent('submit', { target, startDate, endDate });
     },
 
