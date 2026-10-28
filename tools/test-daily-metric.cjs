@@ -297,9 +297,25 @@ test('line chart breaks at missing days and maps heights like the bars', () => {
     { h: 25, color: '#333333' }, { h: 0, missing: true, future: true }
   ];
   const svg = decodeURIComponent(lineChartSvg(bars, { color: '#526631' }));
-  assert.equal((svg.match(/<polyline/g) || []).length, 1);          // 第 4 天单独一个点，不连线
+  assert.equal((svg.match(/fill="none"/g) || []).length, 1);       // 只有前两天连成一段；第 4 天单独一个点，不连线
   assert.equal((svg.match(/<circle/g) || []).length, 3);
-  assert.ok(svg.includes('points="61.6,160 184.8,0"'), svg);        // 616 宽 5 等分取中点；320 高按百分比
+  assert.ok(svg.includes('d="M61.6,160 L184.8,0"'), svg);          // 616 宽 5 等分取中点；320 高按百分比；两点一段是直线
   assert.ok(svg.includes('cy="240"'));
   assert.ok(!svg.includes('<text'));
+});
+
+test('smooth line passes through every point and never overshoots', () => {
+  const { monotoneCurve } = require('../utils/daily/chart');
+  const pts = [{ x: 0, y: 100 }, { x: 10, y: 20 }, { x: 20, y: 100 }, { x: 30, y: 100 }, { x: 40, y: 0 }];
+  const d = monotoneCurve(pts);
+  assert.equal((d.match(/C/g) || []).length, 4);
+  pts.slice(1).forEach(p => assert.ok(d.includes(` ${p.x},${p.y}`), d));      // 每段终点就是数据点
+  // 控制点的 y 不越过相邻两点的范围 → 曲线不会冲过峰值、也不会在平坦段鼓包
+  const ctrl = [...d.matchAll(/C([\d.-]+),([\d.-]+) ([\d.-]+),([\d.-]+)/g)];
+  assert.equal(ctrl.length, 4);
+  ctrl.forEach((c, i) => {
+    const lo = Math.min(pts[i].y, pts[i + 1].y), hi = Math.max(pts[i].y, pts[i + 1].y);
+    [Number(c[2]), Number(c[4])].forEach(y => assert.ok(y >= lo - 1e-6 && y <= hi + 1e-6, `seg ${i}: ${y} not in [${lo},${hi}]`));
+  });
+  assert.ok(d.includes('C23.3,100 26.7,100 30,100'), d);                       // 两天相同 → 平直，不鼓包
 });
