@@ -4,8 +4,6 @@
   "backgroundColor": "#FAFAFA",
   "enablePullDownRefresh": true,
   "usingComponents": {
-    "daily-nav": "/components/daily/daily-nav/index",
-    "month-heatmap": "/components/daily/month-heatmap/index",
     "deadline-goal-card": "/components/daily/deadline-goal-card/index",
     "deadline-goal-sheet": "/components/daily/deadline-goal-sheet/index",
     "bedtime-entry-sheet": "/components/daily/bedtime-entry-sheet/index"

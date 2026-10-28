@@ -13,6 +13,7 @@ Component({
     today: { type: String, value: '' },
     heat: { type: Array, value: [] },     // palette.heat
     selected: { type: String, value: '' },
+    showNav: { type: Boolean, value: true },     // 统计页自己有区间导航时关掉
     canPrev: { type: Boolean, value: true },
     canNext: { type: Boolean, value: false },
     loading: { type: Boolean, value: false }

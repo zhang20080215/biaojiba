@@ -1,6 +1,7 @@
 // 数值型每日主题 · 统计（周 / 月 / 年，可前后翻）
 // 柱子颜色与月历同一套热力分档；无数据的日子不画柱、不进日均分母。
 // 显示哪个数、KPI 是哪几项由度量决定（utils/daily/views.js）：步数柱高 = 步数，睡眠柱高 = 时长、颜色 = 入睡早晚。
+// 月视图下面多一张月历热力图（首页不放月历，学每日喝水一屏一个焦点）；底部是年度视图和海报的入口。
 const toast = require('../../../utils/dailyToast.js');
 const D = require('../../../utils/daily/date.js');
 const M = require('../../../utils/daily/metric.js');
@@ -34,7 +35,15 @@ Page({
     goalLine: 0,
     showGoalLine: false,
     kpi: [],
-    empty: false
+    empty: false,
+
+    measure: 'count',
+    goal: 0,
+    calYear: 2026,
+    calMonth: 1,
+    monthDays: [],
+    selected: '',
+    selectedText: ''
   },
 
   onLoad(options) {
@@ -47,6 +56,7 @@ Page({
       heat: ts.heat,
       themeId: theme.id,
       title: theme.title + '统计',
+      measure: theme.measure || 'count',
       unit: theme.unit,
       today: C.todayOf(theme)
     });
@@ -107,12 +117,37 @@ Page({
       if (this._destroyed || seq !== this._seq) return;
       const goal = (r.settings && r.settings.daily_goal) || this.theme.defaultGoal;
       this._render(p, r.days, goal);
+      this._docs = M.toDocMap(r.days);
+      this.setData({
+        goal,
+        monthDays: this.data.range === 'month' ? r.days || [] : [],
+        calYear: p.year || 0,
+        calMonth: p.month || 0,
+        selected: '',
+        selectedText: ''
+      });
     } catch (err) {
       if (seq !== this._seq) return;
       console.warn('[metric stats] fetch fail', err);
       toast.show(this, '加载失败');
     }
     this.setData({ loading: false });
+  },
+
+  onSelectDay(e) {
+    const d = e.detail.date;
+    if (this.data.selected === d) return this.setData({ selected: '', selectedText: '' });
+    const doc = (this._docs || {})[d];
+    this.setData({ selected: d, selectedText: `${D.formatDateCN(d)} ${D.weekdayCN(d)} · ${doc ? this.view.dayText(doc, this.theme) : '无数据'}` });
+  },
+
+  onGoYear() {
+    const y = this.data.range === 'year' ? this.data.periodLabel.slice(0, 4) : this.data.today.slice(0, 4);
+    wx.navigateTo({ url: `/pages/daily/metric/year?theme=${this.data.themeId}&year=${y}` });
+  },
+  onGoShare() {
+    const date = this.data.selected || this.data.today;
+    wx.navigateTo({ url: `/pages/daily/metric/share?theme=${this.data.themeId}&date=${date}` });
   },
 
   _render(p, days, goal) {

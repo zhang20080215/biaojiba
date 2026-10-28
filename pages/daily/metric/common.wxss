@@ -7,11 +7,12 @@
 .content {
   padding: 16rpx 32rpx calc(48rpx + env(safe-area-inset-bottom));
 }
+/* 卡片学每日喝水：白底 + 细描边 + 大圆角，不用阴影 */
 .card {
   background: var(--bg-card, #FFFFFF);
-  border-radius: var(--radius-lg, 24rpx);
+  border: 3rpx solid var(--line-subtle, #EAEAE7);
+  border-radius: 36rpx;
   padding: 28rpx 32rpx;
-  box-shadow: var(--shadow-card, 0 4rpx 16rpx rgba(0, 0, 0, 0.08));
 }
 .section {
   margin-top: 24rpx;
@@ -110,7 +111,8 @@
   border-radius: var(--radius-md, 16rpx);
   padding: 22rpx 24rpx;
   box-sizing: border-box;
-  box-shadow: var(--shadow-card, 0 4rpx 16rpx rgba(0, 0, 0, 0.08));
+  border: 3rpx solid var(--line-subtle, #EAEAE7);
+  border-radius: 28rpx;
 }
 .kpi-label {
   display: block;
@@ -132,6 +134,33 @@
   font-size: 20rpx;
   color: var(--text-muted, #9C998F);
   margin-top: 4rpx;
+}
+.selected-line {
+  margin-top: 20rpx;
+  padding: 16rpx 24rpx;
+  border-radius: var(--radius-md, 16rpx);
+  background: var(--bg-section, #F5F5F4);
+  font-size: 26rpx;
+}
+.links {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 28rpx;
+}
+.link-btn {
+  flex: 1;
+  height: 84rpx;
+  line-height: 84rpx;
+  text-align: center;
+  border-radius: 99rpx;
+  border: 3rpx solid var(--line-subtle, #EAEAE7);
+  background: var(--bg-card, #FFFFFF);
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--text-primary, #2D2D2B);
+}
+.link-hover {
+  opacity: 0.8;
 }
 .empty-tip {
   text-align: center;

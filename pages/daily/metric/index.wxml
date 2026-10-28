@@ -4,95 +4,72 @@
     <text class="top-toast-text">{{toast.text}}</text>
   </view>
 
-  <daily-nav title="{{title}}" />
-
-  <view class="content">
-    <!-- 没有授权：说明卡，历史数据照常展示 -->
-    <view class="card auth-card" wx:if="{{authDenied}}">
-      <text class="auth-title">还没有开启{{vocab.sourceName}}权限</text>
-      <text class="auth-sub">开启后自动同步最近 30 天的{{vocab.noun}}，不用手动记录</text>
-      <view class="btn-primary" bindtap="onOpenSetting">去开启</view>
-    </view>
-
-    <!-- 今日：数量型（步数） -->
-    <view class="card today-card" wx:if="{{measure === 'count'}}">
-      <view class="today-ring">
-        <image class="ring-img" src="{{ring}}" />
-        <view class="ring-center">
-          <text class="ring-cap">{{vocab.todayCap}}</text>
-          <text class="ring-num">{{todayMissing ? '—' : todayText}}</text>
-          <text class="ring-pct" wx:if="{{!todayMissing}}">{{pct}}%</text>
+  <!-- 左上胶囊：返回 / 统计 / 设置（同每日喝水） -->
+  <view class="custom-nav" style="height: {{navOffset}}px; padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-pills">
+        <view class="nav-pill nav-pill-back" bindtap="onBack" hover-class="nav-pill-active"><text class="nav-pill-back-icon">‹</text></view>
+        <view class="nav-pill" bindtap="onOpenStats" hover-class="nav-pill-active">
+          <image class="nav-pill-icon" src="/images/icon-stats.svg" mode="aspectFit" />
+          <text class="nav-pill-label">统计</text>
+        </view>
+        <view class="nav-pill" bindtap="onOpenSettings" hover-class="nav-pill-active">
+          <image class="nav-pill-icon" src="/images/icon-settings.svg" mode="aspectFit" />
+          <text class="nav-pill-label">设置</text>
         </view>
       </view>
-      <view class="today-side">
-        <view class="goal-pill" bindtap="onOpenDailySheet" hover-class="pill-hover">
-          <text>每日目标 {{dailyGoalText}}</text><text class="goal-edit">✎</text>
-        </view>
-        <text class="today-cheer">{{cheer}}</text>
-        <text class="today-eq" wx:if="{{equivalent}}">{{equivalent}}</text>
-        <text class="today-sync {{syncFailed ? 'is-fail' : ''}}">{{syncing ? '正在同步' + vocab.sourceName + '…' : (syncFailed ? '同步失败，下拉重试' : syncText)}}</text>
-      </view>
     </view>
-
-    <!-- 今晚：时刻型（睡眠） -->
-    <view class="card sleep-card" wx:if="{{measure === 'bedtime' && sleep}}">
-      <view class="sleep-top">
-        <text class="sleep-cap">{{sleep.nightLabel}}{{vocab.todayCap}}</text>
-        <view class="goal-pill" bindtap="onOpenDailySheet" hover-class="pill-hover">
-          <text>目标 {{dailyGoalText}}</text><text class="goal-edit">✎</text>
-        </view>
-      </view>
-      <block wx:if="{{sleep.recorded}}">
-        <view class="sleep-main">
-          <text class="sleep-time">{{sleep.bedTime}}</text>
-          <text class="sleep-badge {{sleep.achieved ? 'is-ok' : ''}}">{{sleep.statusText}}</text>
-        </view>
-        <text class="sleep-sub" wx:if="{{sleep.wakeTime}}">{{sleep.wakeTime}} 起床 · {{sleep.durationText}}</text>
-        <text class="sleep-sub" wx:elif="{{sleep.wakeHint}}">{{sleep.wakeHint}}</text>
-        <view class="btn-primary sleep-btn" wx:if="{{sleep.showWake}}" bindtap="onWakeNow">☀️ 我起床了</view>
-      </block>
-      <block wx:else>
-        <view class="sleep-main">
-          <text class="sleep-time is-empty">--:--</text>
-        </view>
-        <text class="sleep-sub">{{sleep.countdownText}}</text>
-        <view class="btn-primary sleep-btn" wx:if="{{sleep.showSleep}}" bindtap="onSleepNow">🌙 我去睡了</view>
-      </block>
-      <text class="sleep-link" bindtap="onOpenEntry">{{sleep.recorded ? '修改' + sleep.nightLabel + '的记录' : '手动补记'}}</text>
-    </view>
-
-    <!-- 累计目标 -->
-    <view class="section">
-      <deadline-goal-card goal="{{deadlineGoal}}" walked="{{goalWalked}}" today="{{today}}" mode="{{goalConfig.mode}}"
-                          unit="{{goalConfig.unit}}" verb="{{goalConfig.verb}}" example="{{goalConfig.example}}"
-                          bind:create="onGoalCreate" bind:edit="onGoalEdit" bind:restart="onGoalRestart" />
-    </view>
-
-    <!-- 月历热力图 -->
-    <view class="card section">
-      <month-heatmap year="{{year}}" month="{{month}}" days="{{monthDays}}" goal="{{dailyGoal}}" measure="{{measure}}" today="{{today}}" heat="{{heat}}"
-                     selected="{{selected}}" canPrev="{{canPrev}}" canNext="{{canNext}}" loading="{{monthLoading}}"
-                     bind:prev="onPrevMonth" bind:next="onNextMonth" bind:select="onSelectDay" />
-      <view class="selected-line" wx:if="{{selectedText}}">
-        <text class="selected-text">{{selectedText}}</text>
-        <text wx:if="{{manual}}" class="selected-edit" bindtap="onEditSelected">{{selectedHas ? '编辑' : '补记'}}</text>
-      </view>
-    </view>
-
-    <!-- 入口 -->
-    <view class="entries section">
-      <view class="entry" bindtap="onGoStats" hover-class="entry-hover"><text class="entry-icon">📊</text><text class="entry-text">统计</text></view>
-      <view class="entry" bindtap="onGoYear" hover-class="entry-hover"><text class="entry-icon">🗓</text><text class="entry-text">年度</text></view>
-      <view class="entry" bindtap="onGoShare" hover-class="entry-hover"><text class="entry-icon">🖼</text><text class="entry-text">海报</text></view>
-    </view>
-    <text class="foot-note" wx:if="{{vocab.equivalent}}">{{vocab.equivalent.label}}距离{{vocab.equivalent.note}}，仅供参考</text>
   </view>
 
-  <!-- 每日目标面板：数量型用滑杆，时刻型选目标入睡时间 -->
-  <view wx:if="{{showDailySheet}}" class="sheet-mask" bindtap="onCloseDailySheet" catchtouchmove="noop">
+  <view class="content" style="padding-top: {{navOffset}}px;">
+    <view class="hero">
+      <view class="date-block">
+        <view class="back-today" wx:if="{{!isToday}}" bindtap="onBackToToday" hover-class="pill-hover">↺ 回到{{measure === 'bedtime' ? '今晚' : '今天'}}</view>
+        <view class="date-row">
+          <view class="date-arrow {{canPrev ? '' : 'is-off'}}" bindtap="onPrevDay" hover-class="arrow-hover">‹</view>
+          <text class="date-main">{{dateTitle}}</text>
+          <view class="date-arrow {{canNext ? '' : 'is-off'}}" bindtap="onNextDay" hover-class="arrow-hover">›</view>
+        </view>
+        <text class="date-sub">{{dateSub}}</text>
+      </view>
+
+      <image class="mascot {{measure === 'bedtime' ? 'is-moon' : ''}}" src="{{mascot}}" mode="aspectFit" />
+
+      <view class="amount-block">
+        <view class="amount"><text class="amount-num">{{bigText}}</text><text class="amount-unit" wx:if="{{bigUnit}}">{{bigUnit}}</text></view>
+        <text class="amount-sub">{{subText}}</text>
+        <text class="amount-extra" wx:if="{{extraText}}">{{extraText}}</text>
+      </view>
+
+      <view class="progress-track" wx:if="{{showBar}}"><view class="progress-fill" style="width: {{pct}}%;"></view></view>
+
+      <view class="goal-line" bindtap="onGoalLineTap" hover-class="pill-hover">{{goalLine.text}} ›</view>
+    </view>
+
+    <!-- 没有授权：一条提示，历史数据照常看 -->
+    <view class="auth-tip" wx:if="{{authDenied}}" bindtap="onOpenSetting">
+      <text>开启{{vocab.sourceName}}权限后自动同步{{vocab.noun}}</text><text class="auth-go">去开启 ›</text>
+    </view>
+
+    <view class="cards">
+      <view wx:for="{{cards}}" wx:key="key" class="card {{item.disabled ? 'is-off' : ''}}" data-key="{{item.key}}" bindtap="onCardTap" hover-class="card-hover">
+        <image class="card-icon" src="{{item.iconSrc}}" mode="aspectFit" />
+        <text class="card-value">{{item.value}}</text>
+        <text class="card-label">{{item.label}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 设置：每日目标 + 累计目标 -->
+  <view wx:if="{{showSettings}}" class="sheet-mask" bindtap="onCloseSettings" catchtouchmove="noop">
     <view class="sheet" catchtap="noop">
+      <view class="sheet-grip"></view>
+      <view class="sheet-head">
+        <text class="sheet-title">设置</text>
+        <text class="sheet-done" bindtap="onSaveSettings">完成</text>
+      </view>
+      <text class="sheet-section">{{measure === 'bedtime' ? '目标入睡时间' : '每日目标'}}</text>
       <block wx:if="{{measure === 'bedtime'}}">
-        <text class="sheet-title">目标入睡时间</text>
         <picker-view class="bed-picker" value="{{[bedIndex]}}" bindchange="onBedGoalPick" indicator-style="height: 88rpx;">
           <picker-view-column>
             <view wx:for="{{bedOptions}}" wx:key="value" class="bed-option">{{item.label}} 前入睡</view>
@@ -100,12 +77,14 @@
         </picker-view>
       </block>
       <block wx:else>
-        <text class="sheet-title">每日目标</text>
-        <view class="sheet-value"><text class="sheet-num">{{dailyDraft}}</text><text class="sheet-unit">{{unit}}</text></view>
-        <slider min="{{goalMin}}" max="{{goalMax}}" step="{{goalStep}}" value="{{dailyDraft}}" activeColor="{{heat[4]}}" block-size="24" bindchanging="onDailyDraft" bindchange="onDailyDraft" />
-        <view class="sheet-range"><text>{{goalMin}}</text><text>{{goalMax}}</text></view>
+        <view class="sheet-value"><text class="sheet-num">{{dailyDraftText}}</text><text class="sheet-unit">{{unit}}</text></view>
+        <slider min="{{goalMin}}" max="{{goalMax}}" step="{{goalStep}}" value="{{dailyDraft}}" activeColor="{{heatTop}}" block-size="24" bindchanging="onDailyDraft" bindchange="onDailyDraft" />
       </block>
-      <view class="btn-primary" bindtap="onSaveDailyGoal">保存</view>
+      <text class="sheet-section">累计目标</text>
+      <deadline-goal-card goal="{{deadlineGoal}}" walked="{{goalWalked}}" today="{{today}}" mode="{{goalConfig.mode}}"
+                          unit="{{goalConfig.unit}}" verb="{{goalConfig.verb}}" example="{{goalConfig.example}}"
+                          bind:create="onGoalCreate" bind:edit="onGoalEdit" bind:restart="onGoalRestart" />
+      <text class="sheet-foot" wx:if="{{vocab.equivalent}}">{{vocab.equivalent.label}}距离{{vocab.equivalent.note}}，仅供参考</text>
     </view>
   </view>
 

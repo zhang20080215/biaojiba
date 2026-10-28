@@ -45,12 +45,23 @@
       <view class="empty-tip" wx:if="{{empty && !loading}}">这段时间还没有数据</view>
     </view>
 
+    <view class="card section" wx:if="{{range === 'month' && monthDays.length}}">
+      <month-heatmap year="{{calYear}}" month="{{calMonth}}" days="{{monthDays}}" goal="{{goal}}" measure="{{measure}}" today="{{today}}" heat="{{heat}}"
+                     showNav="{{false}}" selected="{{selected}}" bind:select="onSelectDay" />
+      <view class="selected-line" wx:if="{{selectedText}}">{{selectedText}}</view>
+    </view>
+
     <view class="kpi-grid">
       <view class="kpi-tile" wx:for="{{kpi}}" wx:key="label">
         <text class="kpi-label">{{item.label}}</text>
         <view><text class="kpi-value">{{item.value}}</text><text class="kpi-unit">{{item.unit}}</text></view>
         <text class="kpi-sub" wx:if="{{item.sub}}">{{item.sub}}</text>
       </view>
+    </view>
+
+    <view class="links">
+      <view class="link-btn" bindtap="onGoYear" hover-class="link-hover">年度视图</view>
+      <view class="link-btn" bindtap="onGoShare" hover-class="link-hover">生成海报</view>
     </view>
   </view>
 </view>

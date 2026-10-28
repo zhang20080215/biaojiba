@@ -5,9 +5,9 @@
 }
 .options {
   background: var(--bg-card, #FFFFFF);
-  border-radius: var(--radius-lg, 24rpx);
+  border: 3rpx solid var(--line-subtle, #EAEAE7);
+  border-radius: 36rpx;
   padding: 20rpx 24rpx;
-  box-shadow: var(--shadow-card, 0 4rpx 16rpx rgba(0, 0, 0, 0.08));
 }
 .options .period-nav {
   margin-top: 12rpx;

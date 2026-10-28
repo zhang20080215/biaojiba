@@ -19,7 +19,6 @@
 | `utils/daily/date.js` | 北京时区日期计算、周一开头的周/月区间、导航栏尺寸（替代三份 common.js 的重复，本期只新代码用） |
 | `utils/daily/palette.js` | 四套全站主题色的 JS 镜像（粉/暖金/橄榄绿/暖沙）+ 热力 5 档梯度；`tools/test-daily-metric.cjs` 逐项比对 `styles/theme.wxss` |
 | `utils/daily/metric.js` | 纯函数：热力分档、区间汇总（日均/达标/最高/最长连续）、累计目标进度、月历/年历格子、数字格式 |
-| `utils/daily/ring.js` | 进度环 SVG data URI |
 | `utils/dailyThemes.js` | 主题配置新增 `kind` / `source` / `vocab` / `deadlineGoal` 字段 |
 | `components/daily/*` | `daily-nav`、`month-heatmap`、`year-heatmap`、`deadline-goal-card`、`deadline-goal-sheet`；颜色只用 CSS 变量或 palette，四套主题色自动兼容 |
 | `utils/metricPosterDrawer.js` | 数值型海报绘制器；文案词表从主题配置的 `vocab` 传入，换主题不改绘制器 |
@@ -67,3 +66,9 @@
 - **累计目标**：`deadlineGoal.mode = 'days'`，「12月31日前早睡满 30 天」；云端 `THEME_DEFAULTS.sleep.goalCount = {field:'meta.bedOffset', op:'lte'}`，按**当前**目标时间数达标晚数，改目标后重算；面板校验目标天数不超过区间总天数，进度卡在剩余天数不够时提示「来不及了」。
 - **统计**：柱高 = 睡眠时长、颜色 = 入睡早晚；KPI 早睡天数 / 最早入睡 / 最长连续早睡 / 平均起床（含平均时长）。年度主数字是「年度早睡 N 天」。
 - **海报**：绘制器改为只认页面算好的通用字段（`bigText / statusText / subLine / tiles`），步数和睡眠共用同一版式。
+
+---
+
+## 追加：首页改成每日喝水的版式（2026-10-28）
+
+第一版首页（今日卡 + 累计目标卡 + 月历 + 三个入口，全是带阴影的卡片）用户认为不简洁、没有设计感。参照每日喝水重做：一屏一个焦点（日期 ‹ › 翻天 → 会变表情的主角 → 超大数字 → 一行说明 → 细进度条 → 一行累计目标 → 底部三张卡），左上胶囊 ‹ / 统计 / 设置；月历挪到统计页月视图，每日目标和累计目标卡进「设置」面板。主角插画 `utils/daily/mascots.js`（鞋子按完成度从后跟往前染色、4 档表情；月亮 还没睡 / 早睡 / 晚睡），首页视图模型 `utils/daily/home.js`。卡片统一成喝水的细描边无阴影样式。进度环工具 `ring.js` 随之删除。

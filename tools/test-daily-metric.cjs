@@ -239,3 +239,51 @@ test('views render both measures', () => {
   assert.equal(V.viewOf(sleep).year(s, { '2026-10-27': sd }, sleep).heroNum, '1');
   assert.equal(V.viewOf(steps).posterMonth(M.summarize({ '2026-10-27': 9000 }, '2026-10-01', '2026-10-31', 8000, '2026-10-28'), [], {}, steps, 't').tiles.length, 3);
 });
+
+// ───────── 首页视图模型 / 主角插画 ─────────
+const H = require('../utils/daily/home');
+const Ms = require('../utils/daily/mascots');
+
+test('home: streak skips missing days and today-in-progress', () => {
+  const map = { '2026-10-20': 9000, '2026-10-21': 9000, '2026-10-23': 8500, '2026-10-24': 9100, '2026-10-25': 3000 };
+  assert.equal(H.streakAt(map, '2026-10-24', 8000, '2026-10-25', '2026-10-01'), 4);
+  assert.equal(H.streakAt(map, '2026-10-25', 8000, '2026-10-25', '2026-10-01'), 4);   // 今天还没达标：从昨天数
+  assert.equal(H.streakAt(map, '2026-10-25', 8000, '2026-10-26', '2026-10-01'), 0);
+  assert.equal(H.streakAt(map, '2026-10-24', 8000, '2026-10-25', '2026-10-23'), 2);   // 最早数到已加载窗口
+  assert.equal(H.dateTitle('2026-10-25', '2026-10-25', 'count'), '今天');
+  assert.equal(H.dateTitle('2026-10-24', '2026-10-25', 'bedtime'), '昨晚');
+  assert.equal(H.dateTitle('2026-10-20', '2026-10-25', 'bedtime'), '10月20日晚');
+});
+
+test('home: steps and sleep view models', () => {
+  const docs = { '2026-10-27': { _id: 'a', date: '2026-10-27', total_value: 6420 } };
+  const s = H.stepsHome(docs, '2026-10-27', '2026-10-27', 8000, THEMES.steps, '2026-09-01');
+  assert.equal(s.bigText, '6,420');
+  assert.equal(s.subText, '目标 8,000 · 还差 1,580');
+  assert.equal(s.cards[0].value, '4.5');
+  assert.equal(H.stepsHome({}, '2026-10-26', '2026-10-27', 8000, THEMES.steps, '2026-09-01').subText, '这一天没有数据');
+  const at = t => Date.parse('2026-10-27T' + t + ':00+08:00');
+  const empty = H.sleepHome({}, '2026-10-27', '2026-10-27', 660, at('21:00'));
+  assert.equal(empty.mood, 'pending');
+  assert.deepEqual(empty.cards.map(c => c.disabled), [false, true, false]);
+  const past = H.sleepHome({}, '2026-10-20', '2026-10-27', 660, at('21:00'));
+  assert.equal(past.subText, '这一晚没有记录');
+  assert.deepEqual(past.cards.map(c => c.disabled), [true, true, false]);
+  const late = { '2026-10-27': { _id: 'b', date: '2026-10-27', meta: T.sleepEntry('23:40', '').meta } };
+  const lh = H.sleepHome(late, '2026-10-27', '2026-10-27', 660, at('23:50'));
+  assert.equal(lh.mood, 'late');
+  assert.equal(lh.subText, '目标 23:00 前 · 晚了 40分');
+  assert.equal(lh.cards[2].value, '修改');
+});
+
+test('home: goal line and mascots follow the theme colour', () => {
+  assert.equal(H.goalLine(null, 0, '2026-10-27', THEMES.steps.deadlineGoal).status, 'none');
+  const g = { target: 1000000, startDate: '2026-10-01', endDate: '2026-12-31' };
+  assert.equal(H.goalLine(g, 250000, '2026-10-27', THEMES.steps.deadlineGoal).text, '12月31日前走满 100万步 · 已完成 25%');
+  assert.equal(H.goalLine(g, 1000000, '2026-10-27', THEMES.steps.deadlineGoal).status, 'done');
+  const pink = P.get('pink');
+  const shoe = decodeURIComponent(Ms.shoeSvg(0.5, pink));
+  assert.ok(shoe.includes(P.mix(pink.tint, pink.accent, 0.32)));
+  assert.ok(!decodeURIComponent(Ms.shoeSvg(0, pink)).includes('<rect x="0"'));
+  assert.ok(!decodeURIComponent(Ms.moonSvg('ok', pink)).includes('<text'));   // 小程序 <image> 里 SVG 文字不可靠
+});

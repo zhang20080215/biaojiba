@@ -3,6 +3,7 @@
   "navigationBarTextStyle": "black",
   "backgroundColor": "#FAFAFA",
   "usingComponents": {
-    "daily-nav": "/components/daily/daily-nav/index"
+    "daily-nav": "/components/daily/daily-nav/index",
+    "month-heatmap": "/components/daily/month-heatmap/index"
   }
 }

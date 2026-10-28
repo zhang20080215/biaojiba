@@ -1,5 +1,5 @@
 <view class="mh">
-  <view class="mh-nav">
+  <view class="mh-nav" wx:if="{{showNav}}">
     <view class="mh-arrow {{canPrev ? '' : 'is-off'}}" bindtap="onPrev" hover-class="mh-arrow-hover">‹</view>
     <text class="mh-label">{{label}}</text>
     <view class="mh-arrow {{canNext ? '' : 'is-off'}}" bindtap="onNext" hover-class="mh-arrow-hover">›</view>
