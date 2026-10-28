@@ -77,7 +77,7 @@
   padding: 4rpx;
 }
 .period {
-  min-width: 64rpx;
+  min-width: 56rpx;
   height: 52rpx;
   line-height: 52rpx;
   text-align: center;
@@ -104,7 +104,7 @@
   overflow: hidden;
 }
 .opt {
-  padding: 8rpx 16rpx;
+  padding: 8rpx 14rpx;
   font-size: 22rpx;
   color: var(--text-muted, #9C998F);
 }
@@ -112,6 +112,17 @@
   color: var(--brand-accent, #526631);
   background: var(--brand-tint, #EEF2E5);
   font-weight: 600;
+}
+.chart-sub {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12rpx;
+  margin: -4rpx 0 8rpx;
+}
+.chart-sub-label {
+  font-size: 22rpx;
+  color: var(--text-muted, #9C998F);
 }
 .opt-single {
   border: 2rpx solid var(--line-subtle, #EAEAE7);
@@ -129,42 +140,31 @@
   align-items: center;
   gap: 24rpx;
 }
-.legend-candles {
-  display: flex;
-  gap: 16rpx;
-  padding: 0 8rpx;
-}
-.mini-candle {
+/* 箱体图例：一个「十」字 —— 竖线 = 最少到最多，横线 = 平均 */
+.mini-cross {
   position: relative;
-  width: 24rpx;
-  height: 120rpx;
+  flex-shrink: 0;
+  width: 40rpx;
+  height: 100rpx;
+  margin: 0 8rpx;
 }
-.mini-wick {
+.mini-v {
   position: absolute;
-  left: 11rpx;
+  left: 19rpx;
   top: 0;
   bottom: 0;
-  width: 2rpx;
+  width: 3rpx;
+  border-radius: 2rpx;
+  background: var(--brand-accent, #526631);
 }
-.mini-body {
+.mini-h {
   position: absolute;
   left: 0;
   right: 0;
-  top: 30rpx;
-  height: 54rpx;
+  top: 42rpx;
+  height: 6rpx;
   border-radius: 3rpx;
-}
-.mini-candle.is-up .mini-wick,
-.mini-candle.is-up .mini-body {
-  background: #E25A4E;
-}
-.mini-candle.is-down .mini-wick,
-.mini-candle.is-down .mini-body {
-  background: #3A9F6E;
-}
-.mini-candle.is-down .mini-body {
-  top: 44rpx;
-  height: 40rpx;
+  background: var(--brand-accent, #526631);
 }
 .legend-rows {
   flex: 1;

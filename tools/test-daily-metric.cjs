@@ -291,12 +291,12 @@ test('home: goal line and mascots follow the theme colour', () => {
 // ───────── 统计页 K 线 / 平滑曲线 ─────────
 const K = require('../utils/daily/kline');
 
-test('day candles open at the previous recorded day', () => {
+test('day candles: high = low = the day itself, open = previous recorded day', () => {
   const c = K.buildCandles({ '2026-10-01': 8000, '2026-10-02': 6000, '2026-10-05': 9000 }, 'day');
   assert.deepEqual(c.map(x => [x.open, x.close, x.high, x.low, x.main]), [
     [8000, 8000, 8000, 8000, 8000],
-    [8000, 6000, 8000, 6000, 6000],
-    [6000, 9000, 9000, 6000, 9000]        // 10-03、10-04 没数据：开盘接 10-02 的收盘
+    [8000, 6000, 6000, 6000, 6000],
+    [6000, 9000, 9000, 9000, 9000]        // 10-03、10-04 没数据：开盘接 10-02 的收盘
   ]);
 });
 

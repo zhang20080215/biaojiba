@@ -1,7 +1,8 @@
 // 数值型每日主题 · 统计（股票软件的看法：日 / 周 / 月）
-// 一次拉全部记录（getAll，一天一条，量很小），本地聚合成蜡烛；最新一根在最右，左右拖动翻历史，
-// 点一下 / 长按拖动选中某一根，表头、汇总、月历都跟着它走。
-// 日 = 短柱（达标深色）；周 / 月 = 箱体（含义见 utils/daily/kline.js，图下有图例说明）；都能切折线、开关均线，按主题记在本地。
+// 一次拉全部记录（getAll，一天一条，量很小），本地聚合成每天 / 每周 / 每月一根（utils/daily/kline.js）；
+// 最新一根在最右，左右拖动翻历史，点一下 / 长按拖动选中某一根，表头、汇总、月历都跟着它走。
+// 图表上方：左边 日 / 周 / 月，右边设置 —— 画法 柱形 / 折线 / 箱体（三种日周月都能用）、
+// 周 / 月的柱形和折线看「日均」还是「总数」（只有步数有；箱体固定看平均和高低）、均线开关；都按主题记在本地。
 // 睡眠画的是入睡时间，取反后越早越往上（红 = 比上一根早）。
 const toast = require('../../../utils/dailyToast.js');
 const D = require('../../../utils/daily/date.js');
@@ -12,6 +13,8 @@ const V = require('../../../utils/daily/views.js');
 const C = require('./common.js');
 
 const PERIODS = { day: { label: '日', noun: '天', visible: 30 }, week: { label: '周', noun: '周', visible: 20 }, month: { label: '月', noun: '月', visible: 12 } };
+const MODES = [{ key: 'bar', label: '柱形' }, { key: 'line', label: '折线' }, { key: 'box', label: '箱体' }];
+const AGGS = [{ key: 'avg', label: '日均' }, { key: 'sum', label: '总数' }];
 const UP = '#E25A4E';
 const DOWN = '#3A9F6E';
 
@@ -30,7 +33,12 @@ Page({
 
     period: 'day',
     periods: Object.keys(PERIODS).map(k => ({ key: k, label: PERIODS[k].label })),
-    mode: 'candle',
+    modes: MODES,
+    aggs: AGGS,
+    mode: 'bar',
+    agg: 'avg',
+    showAgg: false,         // 周 / 月 + 柱形或折线 + 步数 才出现
+    chartValue: 'main',     // 传给图表：main（平均）| sum（总数）
     showMA: true,
     legend: null,
     candles: [],
@@ -38,6 +46,7 @@ Page({
     goal: 0,
     goalPlot: 0,
     goalText: '',
+    showGoal: true,
     format: 'count',
 
     // 表头（选中的那一根，没选就是最新一根）
@@ -66,10 +75,13 @@ Page({
     const ts = C.themeState();
     this._modeKey = theme.id + 'ChartType';
     this._maKey = theme.id + 'ShowMA';
-    let mode = 'candle', showMA = true;
+    this._aggKey = theme.id + 'ChartAgg';
+    let mode = 'bar', showMA = true, agg = 'avg';
     try {
-      if (wx.getStorageSync(this._modeKey) === 'line') mode = 'line';
+      const m = wx.getStorageSync(this._modeKey);
+      if (MODES.some(x => x.key === m)) mode = m;
       if (wx.getStorageSync(this._maKey) === 'off') showMA = false;
+      if (wx.getStorageSync(this._aggKey) === 'sum') agg = 'sum';
     } catch (e) { /* ignore */ }
     const clock = theme.measure === 'bedtime';
     this.setData({
@@ -82,7 +94,8 @@ Page({
       format: clock ? 'clock' : 'count',
       today: C.todayOf(theme),
       mode,
-      showMA
+      showMA,
+      agg
     });
     this.fetch();
   },
@@ -124,30 +137,47 @@ Page({
     const p = this.data.period;
     this._candles = K.buildCandles(this._plot || {}, p);
     this.setData({ candles: this._candles, visible: PERIODS[p].visible });
-    this._renderFor(this._candles.length - 1);
+    this._applyOptions();
+  },
+
+  // 设置项一变：图表取哪个数、目标线要不要、表头、图例都跟着变
+  _applyOptions() {
+    const { period, mode, agg, format } = this.data;
+    const showAgg = period !== 'day' && mode !== 'box' && format === 'count';
+    const useSum = showAgg && agg === 'sum';
+    this.setData({
+      showAgg,
+      chartValue: useSum ? 'sum' : 'main',
+      // 看总数时每日目标线没有可比性，不画
+      showGoal: !useSum
+    });
+    this._renderFor(this._sel != null && this._sel >= 0 ? this._sel : this._candles.length - 1);
     this._renderLegend();
   },
 
-  // 图下的读图说明：日看柱子、周 / 月看箱体、折线看曲线，均线开着再补一句
+  // 图下的读图说明
   _renderLegend() {
-    const { period, mode, showMA, format } = this.data;
+    const { period, mode, showMA, format, chartValue } = this.data;
     const clock = format === 'clock';
     const noun = PERIODS[period].noun;
+    const day = period === 'day';
+    const what = day ? (clock ? '当天的入睡时间' : '当天步数')
+      : chartValue === 'sum' ? `每${noun}累计步数` : (clock ? `每${noun}的平均入睡` : `每${noun}的日均步数`);
     let legend;
-    if (mode === 'line') {
-      legend = { kind: 'text', text: period === 'day' ? `曲线 = 每天的${clock ? '入睡时间，越高越早' : '步数'}` : `曲线 = 每${noun}的${clock ? '平均入睡，越高越早' : '日均步数'}` };
-    } else if (period === 'day') {
-      legend = { kind: 'text', text: clock ? '柱子越高睡得越早；深色 = 早睡达标，浅色 = 没达标' : '柱高 = 当天步数；深色 = 达标，浅色 = 没达标' };
-    } else {
+    if (mode === 'box') {
       legend = {
         kind: 'box',
-        rows: [
-          { k: '竖线上端', v: clock ? `这${noun}入睡最早的一晚` : `这${noun}走得最多的一天` },
-          { k: '竖线下端', v: clock ? `这${noun}入睡最晚的一晚` : `这${noun}走得最少的一天` },
-          { k: '方块', v: clock ? '从第一晚连到最后一晚' : '从第一天连到最后一天' },
-          { k: '红 / 绿', v: clock ? '最后一晚比第一晚睡得早 / 晚' : '最后一天比第一天走得多 / 少' }
-        ]
+        rows: day
+          ? [{ k: '横线', v: clock ? '当天的入睡时间（一天只有一个数，没有竖线）' : '当天步数（一天只有一个数，没有竖线）' }]
+          : [
+            { k: '竖线上端', v: clock ? `这${noun}入睡最早的一晚` : `这${noun}走得最多的一天` },
+            { k: '竖线下端', v: clock ? `这${noun}入睡最晚的一晚` : `这${noun}走得最少的一天` },
+            { k: '横线', v: clock ? `这${noun}的平均入睡时间` : `这${noun}的日均步数` }
+          ]
       };
+    } else {
+      const shade = mode !== 'bar' || chartValue === 'sum' ? '' : (clock ? '；深色 = 早睡达标，浅色 = 没达标' : '；深色 = 达到每日目标，浅色 = 没达到');
+      legend = { kind: 'text', text: (mode === 'bar' ? '柱高' : '曲线') + ` = ${what}${clock ? '，越高越早' : ''}${shade}` };
     }
     legend.ma = showMA ? `均线：MA5 / MA10 = 最近 5 / 10 ${noun}的平均` : '';
     this.setData({ legend });
@@ -156,6 +186,7 @@ Page({
   onPeriod(e) {
     const period = e.currentTarget.dataset.key;
     if (period === this.data.period) return;
+    this._sel = -1;
     this.setData({ period });
     this._build();
   },
@@ -165,7 +196,15 @@ Page({
     if (mode === this.data.mode) return;
     try { wx.setStorageSync(this._modeKey, mode); } catch (err) { /* ignore */ }
     this.setData({ mode });
-    this._renderLegend();
+    this._applyOptions();
+  },
+
+  onAgg(e) {
+    const agg = e.currentTarget.dataset.agg;
+    if (agg === this.data.agg) return;
+    try { wx.setStorageSync(this._aggKey, agg); } catch (err) { /* ignore */ }
+    this.setData({ agg });
+    this._applyOptions();
   },
 
   onToggleMA() {
@@ -177,6 +216,7 @@ Page({
 
   onSelect(e) {
     const i = e.detail.index;
+    this._sel = i;
     this._renderFor(i >= 0 ? i : this._candles.length - 1);
   },
 
@@ -195,35 +235,34 @@ Page({
   _renderFor(i) {
     const c = this._candles[i];
     if (!c) return this.setData({ cap: '', big: '—', change: '', ohlc: [], kpi: [], monthDays: [] });
-    const { period, format, goal } = this.data;
+    const { period, format, goal, chartValue } = this.data;
     const clock = format === 'clock';
+    const useSum = chartValue === 'sum';
+    const valOf = x => (useSum ? x.sum : x.main);
     const prev = this._candles[i - 1];
 
     // 涨跌：步数按百分比，睡眠按早 / 晚了几分钟；红 = 好（多走了 / 睡早了）
     let change = '', changeColor = '';
     if (prev) {
-      const diff = c.main - prev.main;
+      const diff = valOf(c) - valOf(prev);
       const vs = period === 'day' ? `较 ${D.formatDateCN(prev.from)}` : period === 'week' ? '较上一周' : '较上一月';
       if (clock) change = Math.round(diff) === 0 ? `${vs} 持平` : `${vs} ${diff > 0 ? '早' : '晚'} ${T.formatDuration(Math.abs(Math.round(diff)))}`;
-      else change = `${vs} ${diff >= 0 ? '▲' : '▼'} ${Math.abs(K.changePct(this._candles, i)).toFixed(1)}%`;
+      else change = valOf(prev) ? `${vs} ${diff >= 0 ? '▲' : '▼'} ${Math.abs(diff / valOf(prev) * 100).toFixed(1)}%` : '';
       changeColor = diff > 0 ? UP : diff < 0 ? DOWN : '';
     }
 
+    // 周 / 月表头下面一行：最多、最少，再补上大字没显示的那个（看日均就补累计，看累计就补日均）
     let ohlc = [], note = '';
     if (period === 'day') {
       const doc = this._docs[c.from];
       if (clock) note = doc ? this.view.dayText(doc, this.theme) : '';
       else note = c.main >= goal ? `目标 ${M.formatNum(goal)} · 已达标` : `目标 ${M.formatNum(goal)} · 差 ${M.formatNum(goal - c.main)}`;
     } else {
-      // 不用「开收高低」这类股票术语，直接说是哪一天
-      ohlc = [
-        { k: clock ? '最早' : '最多', v: this._fmt(c.high) }, { k: clock ? '最晚' : '最少', v: this._fmt(c.low) },
-        { k: '首日', v: this._fmt(c.open) }, { k: '末日', v: this._fmt(c.close) }
-      ];
-      note = `${c.count} 天有记录`;
+      ohlc = [{ k: clock ? '最早' : '最多', v: this._fmt(c.high) }, { k: clock ? '最晚' : '最少', v: this._fmt(c.low) }];
+      if (!clock) ohlc.push(useSum ? { k: '日均', v: this._fmt(c.main) } : { k: '累计', v: M.formatShort(c.sum) });
     }
 
-    // 汇总：日K 看所在的那一周，周K / 月K 看这一根本身
+    // 汇总：日 看所在的那一周，周 / 月 看这一根本身
     const range = period === 'day' ? D.weekRange(c.from, 0) : { from: c.from, to: c.to };
     const s = M.summarize(this._map, range.from, range.to, goal, this.data.today, this.theme.measure);
     const docs = {};
@@ -236,8 +275,8 @@ Page({
     const monthDays = (this._allDays || []).filter(d => d.date >= mr.from && d.date <= mr.to);
 
     this.setData({
-      cap: this._periodLabel(c) + (period === 'day' ? '' : (clock ? ' · 平均入睡' : ' · 日均')),
-      big: this._fmt(c.main),
+      cap: this._periodLabel(c) + (period === 'day' ? '' : clock ? ' · 平均入睡' : useSum ? ' · 累计' : ' · 日均'),
+      big: this._fmt(valOf(c)),
       bigUnit: clock ? (period === 'day' ? '入睡' : '') : this.theme.unit,
       change,
       changeColor,

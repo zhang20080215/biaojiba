@@ -26,24 +26,27 @@
         </view>
         <view class="opts">
           <view class="opt-group">
-            <view class="opt {{mode === 'candle' ? 'is-on' : ''}}" data-mode="candle" bindtap="onMode">{{period === 'day' ? '柱形' : '箱体'}}</view>
-            <view class="opt {{mode === 'line' ? 'is-on' : ''}}" data-mode="line" bindtap="onMode">折线</view>
+            <view wx:for="{{modes}}" wx:key="key" class="opt {{mode === item.key ? 'is-on' : ''}}" data-mode="{{item.key}}" bindtap="onMode">{{item.label}}</view>
           </view>
           <view class="opt opt-single {{showMA ? 'is-on' : ''}}" bindtap="onToggleMA">均线</view>
         </view>
       </view>
-      <kline-chart wx:if="{{!empty}}" candles="{{candles}}" period="{{period}}" mode="{{mode}}" visible="{{visible}}"
-                   goal="{{goalPlot}}" showGoal="{{true}}" goalText="{{goalText}}" format="{{format}}" accent="{{accent}}" showMA="{{showMA}}"
+      <!-- 周 / 月的柱形、折线：看日均还是总数 -->
+      <view class="chart-sub" wx:if="{{showAgg}}">
+        <text class="chart-sub-label">每{{period === 'week' ? '周' : '月'}}看</text>
+        <view class="opt-group">
+          <view wx:for="{{aggs}}" wx:key="key" class="opt {{agg === item.key ? 'is-on' : ''}}" data-agg="{{item.key}}" bindtap="onAgg">{{item.label}}</view>
+        </view>
+      </view>
+      <kline-chart wx:if="{{!empty}}" candles="{{candles}}" period="{{period}}" mode="{{mode}}" value="{{chartValue}}" visible="{{visible}}"
+                   goal="{{goalPlot}}" showGoal="{{showGoal}}" goalText="{{goalText}}" format="{{format}}" accent="{{accent}}" showMA="{{showMA}}"
                    bind:select="onSelect" />
       <view class="empty-tip" wx:if="{{empty && !loading}}">还没有数据</view>
 
-      <!-- 读图说明：周 / 月箱体画一个小样，旁边逐条说清楚 -->
+      <!-- 读图说明：箱体画一个「十」字小样，旁边逐条说清楚 -->
       <view class="legend" wx:if="{{legend && !empty}}">
         <view wx:if="{{legend.kind === 'box'}}" class="legend-box">
-          <view class="legend-candles">
-            <view class="mini-candle is-up"><view class="mini-wick"></view><view class="mini-body"></view></view>
-            <view class="mini-candle is-down"><view class="mini-wick"></view><view class="mini-body"></view></view>
-          </view>
+          <view class="mini-cross"><view class="mini-v"></view><view class="mini-h"></view></view>
           <view class="legend-rows">
             <view wx:for="{{legend.rows}}" wx:key="k" class="legend-row"><text class="legend-k">{{item.k}}</text><text class="legend-v">{{item.v}}</text></view>
           </view>

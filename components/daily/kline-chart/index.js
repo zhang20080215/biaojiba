@@ -1,15 +1,18 @@
-// 每日主题 · 统计页 K 线图（canvas 2d）
+// 每日主题 · 统计页图表（canvas 2d）
 // 股票软件的看法：最新一根在最右边；左右拖动翻看更早的；点一下或长按拖动出十字线，抛 select 让页面换表头。
-// 画法：日 = 短柱（一天一个数，达标深色、没达标浅色）；周 / 月 = 箱体（蜡烛）；都可切折线。
-// MA5、MA10 两条均线可开关；每日目标虚线，目标值标在虚线右下角。
+// 三种画法，日 / 周 / 月都能用：
+//   bar  柱形 —— 从 0 长起（步数），达到每日目标深色、没到浅色
+//   line 折线 —— 平滑曲线 + 浅色面积
+//   box  箱体 —— 画成一个「十」：竖线从最少的一天到最多的一天，横线是平均（不画方块的上下沿）；
+//               日视图一天只有一个数，竖线长度为 0，只剩横线
+// value = 'main'（每根的平均 / 当天的值）或 'sum'（这一段的总数），柱形和折线按它取值；箱体固定看平均和高低。
+// MA5、MA10 两条均线可开关（跟着 value 算）；每日目标虚线，目标值标在虚线右下角。
 // 数值是「绘图值」（睡眠传的是 -bedOffset，越早越往上），format 决定轴上怎么写字。
 const M = require('../../../utils/daily/metric.js');
 const T = require('../../../utils/daily/clock.js');
 const K = require('../../../utils/daily/kline.js');
 const { monotoneControls } = require('../../../utils/daily/chart.js');
 
-const UP = '#E25A4E';       // 涨：红（国内股票习惯）
-const DOWN = '#3A9F6E';     // 跌：绿
 const MA_COLORS = ['#E3A23B', '#6A8CDB'];
 const MA_N = [5, 10];
 const PAD = { l: 6, r: 50, t: 24, b: 22 };
@@ -19,7 +22,8 @@ Component({
   properties: {
     candles: { type: Array, value: [] },
     period: { type: String, value: 'day' },     // day | week | month
-    mode: { type: String, value: 'candle' },    // candle | line
+    mode: { type: String, value: 'bar' },       // bar | line | box
+    value: { type: String, value: 'main' },     // main | sum（柱形 / 折线取哪个数）
     goal: { type: Number, value: 0 },
     showGoal: { type: Boolean, value: false },
     goalText: { type: String, value: '' },
@@ -34,7 +38,7 @@ Component({
       this._sel = -1;
       this._draw();
     },
-    'mode, goal, showGoal, accent, visible, showMA': function () { this._draw(); }
+    'mode, value, goal, showGoal, accent, visible, showMA': function () { this._draw(); }
   },
   lifetimes: {
     ready() {
@@ -71,6 +75,11 @@ Component({
       return { c, n, V, start, end, slot, xOf, plotW, maxOffset };
     },
 
+    // 每根要画的那个数：箱体看平均；柱形 / 折线看 value
+    _val(c) {
+      return this.data.mode !== 'box' && this.data.value === 'sum' ? c.sum : c.main;
+    },
+
     _fmt(v) {
       return this.data.format === 'clock' ? T.offsetToClock(-v) : M.formatShort(Math.round(v));
     },
@@ -94,26 +103,27 @@ Component({
       ctx.clearRect(0, 0, W, H);
       const v = this._view();
       if (!v.n) return;
+      const mode = this.data.mode;
+      const vals = v.c.map(c => this._val(c));
       const showMA = this.data.showMA;
-      const ma = showMA ? MA_N.map(n => K.movingAverage(v.c, n)) : [];
+      const ma = showMA ? MA_N.map(n => K.movingAverage(vals.map(x => ({ main: x })), n)) : [];
       const vis = v.c.slice(v.start, v.end);
-      const line = this.data.mode === 'line';
-      // 日视图不画蜡烛：一天只有一个数，「开盘」是借前一天的，读起来绕，直接画柱
-      const bars = !line && this.data.period === 'day';
+      const goal = this.data.goal;
 
-      // 纵轴范围：可见的高低 + 均线 + 目标线
+      // 纵轴范围：可见的值（箱体含高低）+ 均线 + 目标线
       let lo = Infinity, hi = -Infinity;
       vis.forEach((c, k) => {
-        lo = Math.min(lo, line ? c.main : c.low);
-        hi = Math.max(hi, line ? c.main : c.high);
-        ma.forEach(arr => { const x = arr[v.start + k]; if (x != null) { lo = Math.min(lo, x); hi = Math.max(hi, x); } });
+        const i = v.start + k;
+        lo = Math.min(lo, mode === 'box' ? c.low : vals[i]);
+        hi = Math.max(hi, mode === 'box' ? c.high : vals[i]);
+        ma.forEach(arr => { const x = arr[i]; if (x != null) { lo = Math.min(lo, x); hi = Math.max(hi, x); } });
       });
-      if (this.data.showGoal) { lo = Math.min(lo, this.data.goal); hi = Math.max(hi, this.data.goal); }
+      if (this.data.showGoal) { lo = Math.min(lo, goal); hi = Math.max(hi, goal); }
       if (hi === lo) { hi += 1; lo -= 1; }
       const padV = (hi - lo) * 0.08;
       hi += padV; lo -= padV;
       // 步数的柱子从 0 长起，柱高才和数值成正比
-      if (bars && this.data.format === 'count') lo = 0;
+      if (mode === 'bar' && this.data.format === 'count') lo = 0;
       const top = PAD.t, bottom = H - PAD.b, plotH = bottom - top;
       const yOf = val => top + (hi - val) / (hi - lo) * plotH;
 
@@ -130,8 +140,8 @@ Component({
         ctx.fillText(this._axisFmt(hi - (hi - lo) * g / 3), W - PAD.r + 6, y);
       }
 
-      // 每日目标虚线（文字最后画，免得被蜡烛盖住）
-      const gy = this.data.showGoal ? yOf(this.data.goal) : null;
+      // 每日目标虚线（文字最后画，免得被图形盖住）
+      const gy = this.data.showGoal ? yOf(goal) : null;
       if (gy != null) {
         ctx.save();
         ctx.setLineDash([4, 4]);
@@ -139,10 +149,11 @@ Component({
         ctx.beginPath(); ctx.moveTo(PAD.l, gy); ctx.lineTo(W - PAD.r, gy); ctx.stroke();
         ctx.restore();
       }
+      // 达标深色、没达标浅一档；没有目标线（看总数）时一律深色
+      const strong = val => !this.data.showGoal || val >= goal;
 
-      if (line) {
-        // 折线：主值连成平滑曲线 + 浅色面积
-        const pts = vis.map((c, k) => ({ x: v.xOf(v.start + k), y: yOf(c.main) }));
+      if (mode === 'line') {
+        const pts = vis.map((c, k) => ({ x: v.xOf(v.start + k), y: yOf(vals[v.start + k]) }));
         const segs = monotoneControls(pts);
         ctx.beginPath();
         ctx.moveTo(pts[0].x, pts[0].y);
@@ -157,30 +168,32 @@ Component({
         ctx.fillStyle = this.data.accent;
         ctx.fill();
         ctx.globalAlpha = 1;
-      } else if (bars) {
-        // 日：短柱，达标用主题色、没达标同色调浅一档（睡眠的绘图值取过反，同样是越大越好）
+      } else if (mode === 'bar') {
         const bw = Math.max(2, Math.min(14, v.slot * 0.5));
         vis.forEach((c, k) => {
-          const x = v.xOf(v.start + k);
-          const y = yOf(c.main);
-          ctx.globalAlpha = c.main >= this.data.goal ? 1 : 0.35;
+          const val = vals[v.start + k];
+          const x = v.xOf(v.start + k), y = yOf(val);
+          ctx.globalAlpha = strong(val) ? 1 : 0.35;
           ctx.fillStyle = this.data.accent;
           ctx.fillRect(x - bw / 2, y, bw, Math.max(1, bottom - y));
         });
         ctx.globalAlpha = 1;
       } else {
-        // 周 / 月：箱体（蜡烛）——竖线上下端 = 最多 / 最少的一天，方块 = 第一天到最后一天
-        const bw = Math.max(2, v.slot * 0.62);
-        vis.forEach((c, k) => {
-          const x = v.xOf(v.start + k);
-          const color = c.close >= c.open ? UP : DOWN;
-          ctx.strokeStyle = color;
-          ctx.fillStyle = color;
-          ctx.lineWidth = 1;
+        // 箱体：「十」字 —— 竖线 = 最少到最多的一天，横线 = 平均
+        const tw = Math.max(6, Math.min(16, v.slot * 0.6));
+        vis.forEach(c => {
+          const i = v.c.indexOf(c);
+          const x = v.xOf(i), y = yOf(c.main);
+          ctx.globalAlpha = strong(c.main) ? 1 : 0.4;
+          ctx.strokeStyle = this.data.accent;
+          ctx.lineCap = 'round';
+          ctx.lineWidth = 1.5;
           ctx.beginPath(); ctx.moveTo(x, yOf(c.high)); ctx.lineTo(x, yOf(c.low)); ctx.stroke();
-          const y1 = yOf(Math.max(c.open, c.close)), y2 = yOf(Math.min(c.open, c.close));
-          ctx.fillRect(x - bw / 2, y1, bw, Math.max(1, y2 - y1));
+          ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.moveTo(x - tw / 2, y); ctx.lineTo(x + tw / 2, y); ctx.stroke();
         });
+        ctx.globalAlpha = 1;
+        ctx.lineCap = 'butt';
       }
 
       // 均线
@@ -197,7 +210,7 @@ Component({
         ctx.stroke();
       });
 
-      // 目标值贴在虚线右下角，垫一块白底压在蜡烛上面；太靠底放不下就贴右上角
+      // 目标值贴在虚线右下角，垫一块白底压在图形上面；太靠底放不下就贴右上角
       if (gy != null && this.data.goalText) {
         ctx.font = '10px sans-serif';
         const tw = ctx.measureText(this.data.goalText).width;
@@ -237,8 +250,8 @@ Component({
 
       // 十字线
       if (this._sel >= v.start && this._sel < v.end) {
-        const c = v.c[this._sel];
-        const x = v.xOf(this._sel), y = yOf(line ? c.main : c.close);
+        const val = vals[this._sel];
+        const x = v.xOf(this._sel), y = yOf(val);
         ctx.save();
         ctx.setLineDash([3, 3]);
         ctx.strokeStyle = '#6F6F68';
@@ -250,7 +263,7 @@ Component({
         ctx.fillStyle = '#FFFFFF';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(this._fmt(line ? c.main : c.close), W - PAD.r + 4, y);
+        ctx.fillText(this._fmt(val), W - PAD.r + 4, y);
       }
     },
 
