@@ -229,6 +229,12 @@ WeChat subscribe-message framework — adding a new push topic is a config-row e
 
 This project uses **WeChat Developer Tools** (微信开发者工具) for building, previewing, and deploying. There are no npm scripts at the project root.
 
+### 预览
+- 当我说「预览」或「编译预览」时，运行项目根目录的 `preview.bat`（微信开发者工具命令行 `cli.bat auto-preview`，编译后直接推到已登录微信的手机上）
+- 改完代码后如果我要求预览，先确认没有语法错误再运行：改过的 `.js` 逐个 `node --check`，`.json` 用 `JSON.parse` 过一遍，再跑相关的 `tools/test-*.cjs`
+- 前提：开发者工具已打开并登录，「设置 → 安全设置 → 服务端口」已开启，端口与 `preview.bat` 里的 `--port 35422` 一致；`preview.bat` 已加入 `project.config.json` 的 `packOptions.ignore`，不进代码包
+- `auto-preview` 预览的是**当前工作区**（当前分支的代码），不是 master；推送失败时把命令输出原样告诉我
+
 **Cloud function deployment:** Right-click function folder in WeChat Developer Tools → upload and deploy. Install dependencies per-function: `cd cloudfunctions/<function-name> && npm install`.
 
 ⚠️ **`config.json` 里的 `timeout` 不一定是线上生效值。** 「上传并部署」在某些方式下只更新代码、

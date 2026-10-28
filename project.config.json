@@ -61,6 +61,7 @@
       { "type": "file", "value": "view_excel.py" },
       { "type": "file", "value": "coupon_creation.html" },
       { "type": "file", "value": "CLAUDE.md" },
+      { "type": "file", "value": "preview.bat" },
       { "type": "file", "value": "CHANGELOG.md" },
       { "type": "file", "value": "性能优化.md" },
       { "type": "file", "value": "Water Tracker _standalone_ (1).html" },
