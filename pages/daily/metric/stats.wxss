@@ -5,14 +5,23 @@
   margin: 32rpx 8rpx 24rpx;
 }
 .quote-cap {
+  display: block;
+  height: 34rpx;
+  line-height: 34rpx;
   font-size: 24rpx;
   color: var(--text-muted, #9C998F);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .quote-main {
   display: flex;
   align-items: baseline;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  height: 96rpx;
   margin-top: 6rpx;
+  white-space: nowrap;
+  overflow: hidden;
 }
 .quote-num {
   font-size: 72rpx;
@@ -33,9 +42,15 @@
   font-variant-numeric: tabular-nums;
   color: var(--text-muted, #9C998F);
 }
+.quote-sub {
+  height: 40rpx;
+  margin-top: 8rpx;
+  overflow: hidden;
+}
 .ohlc {
   display: flex;
-  margin-top: 12rpx;
+  align-items: center;
+  height: 40rpx;
 }
 .ohlc-item {
   flex: 1;
@@ -55,7 +70,10 @@
 }
 .quote-note {
   display: block;
-  margin-top: 10rpx;
+  line-height: 40rpx;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-size: 24rpx;
   color: var(--text-secondary, #6F6F68);
 }
@@ -113,8 +131,12 @@
   background: var(--brand-tint, #EEF2E5);
   font-weight: 600;
 }
+.chart-sub.is-hidden {
+  visibility: hidden;
+}
 .chart-sub {
   display: flex;
+  height: 48rpx;
   align-items: center;
   justify-content: flex-end;
   gap: 12rpx;
@@ -131,6 +153,8 @@
 
 /* 读图说明 */
 .legend {
+  min-height: 230rpx;
+  box-sizing: border-box;
   margin-top: 16rpx;
   padding-top: 16rpx;
   border-top: 2rpx solid var(--line-subtle, #EAEAE7);

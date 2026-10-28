@@ -4,7 +4,7 @@
 //   bar  柱形 —— 从 0 长起（步数），达到每日目标深色、没到浅色
 //   line 折线 —— 平滑曲线 + 浅色面积
 //   box  箱体 —— 画成一个「十」：竖线从最少的一天到最多的一天，横线是平均（不画方块的上下沿）；
-//               日视图一天只有一个数，竖线长度为 0，只剩横线
+//               日视图一天只有一个数，竖线画成和横线一样长，是个小「十」，中心就是当天的值
 // value = 'main'（每根的平均 / 当天的值）或 'sum'（这一段的总数），柱形和折线按它取值；箱体固定看平均和高低。
 // MA5、MA10 两条均线可开关（跟着 value 算）；每日目标虚线，目标值标在虚线右下角。
 // 数值是「绘图值」（睡眠传的是 -bedOffset，越早越往上），format 决定轴上怎么写字。
@@ -188,7 +188,10 @@ Component({
           ctx.strokeStyle = this.data.accent;
           ctx.lineCap = 'round';
           ctx.lineWidth = 1.5;
-          ctx.beginPath(); ctx.moveTo(x, yOf(c.high)); ctx.lineTo(x, yOf(c.low)); ctx.stroke();
+          // 一天只有一个数（高 = 低）时竖线和横线一样长，画成一个小「十」，不然只剩一道横杠
+          const y1 = c.high === c.low ? y - tw / 2 : yOf(c.high);
+          const y2 = c.high === c.low ? y + tw / 2 : yOf(c.low);
+          ctx.beginPath(); ctx.moveTo(x, y1); ctx.lineTo(x, y2); ctx.stroke();
           ctx.lineWidth = 3;
           ctx.beginPath(); ctx.moveTo(x - tw / 2, y); ctx.lineTo(x + tw / 2, y); ctx.stroke();
         });

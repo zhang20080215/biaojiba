@@ -12,10 +12,13 @@
         <text class="quote-num">{{big}}</text><text class="quote-unit" wx:if="{{bigUnit}}">{{bigUnit}}</text>
         <text class="quote-chg" wx:if="{{change}}" style="color: {{changeColor}};">{{change}}</text>
       </view>
-      <view class="ohlc" wx:if="{{ohlc.length}}">
-        <view wx:for="{{ohlc}}" wx:key="k" class="ohlc-item"><text class="ohlc-k">{{item.k}}</text><text class="ohlc-v">{{item.v}}</text></view>
+      <!-- 第三行固定一行高：周 / 月放 最多·最少·累计，日放 目标说明 —— 切换时下面的内容不跟着上下跳 -->
+      <view class="quote-sub">
+        <view class="ohlc" wx:if="{{ohlc.length}}">
+          <view wx:for="{{ohlc}}" wx:key="k" class="ohlc-item"><text class="ohlc-k">{{item.k}}</text><text class="ohlc-v">{{item.v}}</text></view>
+        </view>
+        <text class="quote-note" wx:elif="{{note}}">{{note}}</text>
       </view>
-      <text class="quote-note" wx:if="{{note}}">{{note}}</text>
     </view>
 
     <view class="card chart-card">
@@ -31,8 +34,8 @@
           <view class="opt opt-single {{showMA ? 'is-on' : ''}}" bindtap="onToggleMA">均线</view>
         </view>
       </view>
-      <!-- 周 / 月的柱形、折线：看日均还是总数 -->
-      <view class="chart-sub" wx:if="{{showAgg}}">
+      <!-- 周 / 月的柱形、折线：看日均还是总数。用不上时只隐藏、仍占位，图表不跟着上下跳 -->
+      <view class="chart-sub {{showAgg ? '' : 'is-hidden'}}">
         <text class="chart-sub-label">每{{period === 'week' ? '周' : '月'}}看</text>
         <view class="opt-group">
           <view wx:for="{{aggs}}" wx:key="key" class="opt {{agg === item.key ? 'is-on' : ''}}" data-agg="{{item.key}}" bindtap="onAgg">{{item.label}}</view>
@@ -68,7 +71,8 @@
       </view>
     </block>
 
-    <view class="card section" wx:if="{{monthDays.length}}">
+    <!-- 月历一直留着（没记录的月份就是一片虚线格），切换时页面底部不会忽长忽短 -->
+    <view class="card section" wx:if="{{!empty}}">
       <text class="cal-title">{{calYear}}年{{calMonth}}月</text>
       <month-heatmap year="{{calYear}}" month="{{calMonth}}" days="{{monthDays}}" goal="{{goal}}" measure="{{measure}}" today="{{today}}" heat="{{heat}}"
                      showNav="{{false}}" selected="{{selectedDay}}" bind:select="onSelectDay" />

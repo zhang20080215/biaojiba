@@ -168,7 +168,7 @@ Page({
       legend = {
         kind: 'box',
         rows: day
-          ? [{ k: '横线', v: clock ? '当天的入睡时间（一天只有一个数，没有竖线）' : '当天步数（一天只有一个数，没有竖线）' }]
+          ? [{ k: '十字中心', v: clock ? '当天的入睡时间' : '当天步数' }, { k: '', v: '一天只有一个数，所以竖线和横线一样长' }]
           : [
             { k: '竖线上端', v: clock ? `这${noun}入睡最早的一晚` : `这${noun}走得最多的一天` },
             { k: '竖线下端', v: clock ? `这${noun}入睡最晚的一晚` : `这${noun}走得最少的一天` },
@@ -269,8 +269,9 @@ Page({
     Object.keys(this._docs).forEach(d => { if (d >= range.from && d <= range.to && d in this._map) docs[d] = this._docs[d]; });
     const sv = this.view.stats(s, docs, this.theme, goal, '');
 
-    // 月历：这一根最后一天所在的月
-    const y = Number(c.to.slice(0, 4)), m = Number(c.to.slice(5, 7));
+    // 月历：这一根最后一天所在的月（本周跨到下个月时按今天算，免得翻到一个还没有数据的月份）
+    const last = c.to > this.data.today ? this.data.today : c.to;
+    const y = Number(last.slice(0, 4)), m = Number(last.slice(5, 7));
     const mr = D.monthRange(y, m);
     const monthDays = (this._allDays || []).filter(d => d.date >= mr.from && d.date <= mr.to);
 
