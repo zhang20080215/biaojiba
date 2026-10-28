@@ -4,6 +4,7 @@
   "backgroundColor": "#FAFAFA",
   "usingComponents": {
     "daily-nav": "/components/daily/daily-nav/index",
+    "kline-chart": "/components/daily/kline-chart/index",
     "month-heatmap": "/components/daily/month-heatmap/index"
   }
 }

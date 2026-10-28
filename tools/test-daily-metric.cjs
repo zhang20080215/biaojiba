@@ -288,20 +288,30 @@ test('home: goal line and mascots follow the theme colour', () => {
   assert.ok(!decodeURIComponent(Ms.moonSvg('ok', pink)).includes('<text'));   // 小程序 <image> 里 SVG 文字不可靠
 });
 
-// ───────── 统计页折线图 ─────────
-const { lineChartSvg } = require('../utils/daily/chart');
+// ───────── 统计页 K 线 / 平滑曲线 ─────────
+const K = require('../utils/daily/kline');
 
-test('line chart breaks at missing days and maps heights like the bars', () => {
-  const bars = [
-    { h: 50, color: '#111111' }, { h: 100, color: '#222222' }, { h: 0, missing: true },
-    { h: 25, color: '#333333' }, { h: 0, missing: true, future: true }
-  ];
-  const svg = decodeURIComponent(lineChartSvg(bars, { color: '#526631' }));
-  assert.equal((svg.match(/fill="none"/g) || []).length, 1);       // 只有前两天连成一段；第 4 天单独一个点，不连线
-  assert.equal((svg.match(/<circle/g) || []).length, 3);
-  assert.ok(svg.includes('d="M61.6,160 L184.8,0"'), svg);          // 616 宽 5 等分取中点；320 高按百分比；两点一段是直线
-  assert.ok(svg.includes('cy="240"'));
-  assert.ok(!svg.includes('<text'));
+test('day candles open at the previous recorded day', () => {
+  const c = K.buildCandles({ '2026-10-01': 8000, '2026-10-02': 6000, '2026-10-05': 9000 }, 'day');
+  assert.deepEqual(c.map(x => [x.open, x.close, x.high, x.low, x.main]), [
+    [8000, 8000, 8000, 8000, 8000],
+    [8000, 6000, 8000, 6000, 6000],
+    [6000, 9000, 9000, 6000, 9000]        // 10-03、10-04 没数据：开盘接 10-02 的收盘
+  ]);
+});
+
+test('week and month candles: open = first day, close = last day, high/low = extremes, main = average', () => {
+  const map = { '2026-10-26': 9000, '2026-10-27': 15000, '2026-10-29': 3000, '2026-10-30': 7000, '2026-11-02': 8000 };
+  const w = K.buildCandles(map, 'week');
+  assert.equal(w.length, 2);
+  assert.deepEqual([w[0].key, w[0].from, w[0].to], ['2026-10-26', '2026-10-26', '2026-11-01']);
+  assert.deepEqual([w[0].open, w[0].close, w[0].high, w[0].low, w[0].main, w[0].count], [9000, 7000, 15000, 3000, 8500, 4]);
+  const m = K.buildCandles(map, 'month');
+  assert.deepEqual(m.map(x => x.key), ['2026-10', '2026-11']);
+  assert.deepEqual([m[1].from, m[1].to, m[1].open, m[1].close], ['2026-11-01', '2026-11-30', 8000, 8000]);
+  assert.equal(Math.round(K.changePct(m, 1)), -6);                   // 8000 vs 8500
+  assert.equal(K.changePct(m, 0), null);
+  assert.deepEqual(K.movingAverage([{ main: 1 }, { main: 2 }, { main: 3 }, { main: 6 }], 3), [null, null, 2, 11 / 3]);
 });
 
 test('smooth line passes through every point and never overshoots', () => {

@@ -7,63 +7,51 @@
 
   <view class="content">
     <view class="seg">
-      <view class="seg-item {{range === 'week' ? 'is-on' : ''}}" data-range="week" bindtap="onRange">周</view>
-      <view class="seg-item {{range === 'month' ? 'is-on' : ''}}" data-range="month" bindtap="onRange">月</view>
-      <view class="seg-item {{range === 'year' ? 'is-on' : ''}}" data-range="year" bindtap="onRange">年</view>
+      <view wx:for="{{periods}}" wx:key="key" class="seg-item {{period === item.key ? 'is-on' : ''}}" data-key="{{item.key}}" bindtap="onPeriod">{{item.label}}</view>
     </view>
 
-    <view class="headline">
-      <text class="headline-cap">{{headlineCap}}</text>
-      <view><text class="headline-num">{{headline}}</text><text class="headline-unit" wx:if="{{headlineUnit}}">{{headlineUnit}}</text></view>
-      <text class="headline-sub">{{headlineSub}}</text>
+    <view class="quote">
+      <text class="quote-cap">{{cap}}</text>
+      <view class="quote-main">
+        <text class="quote-num">{{big}}</text><text class="quote-unit" wx:if="{{bigUnit}}">{{bigUnit}}</text>
+        <text class="quote-chg" wx:if="{{change}}" style="color: {{changeColor}};">{{change}}</text>
+      </view>
+      <view class="ohlc" wx:if="{{ohlc.length}}">
+        <view wx:for="{{ohlc}}" wx:key="k" class="ohlc-item"><text class="ohlc-k">{{item.k}}</text><text class="ohlc-v">{{item.v}}</text></view>
+      </view>
+      <text class="quote-note" wx:if="{{note}}">{{note}}</text>
     </view>
 
-    <view class="card">
-      <view class="period-nav">
-        <view class="period-arrow {{canPrev ? '' : 'is-off'}}" bindtap="onPrev">‹</view>
-        <text class="period-label">{{periodLabel}}</text>
-        <view class="period-arrow {{canNext ? '' : 'is-off'}}" bindtap="onNext">›</view>
-      </view>
-
-      <view class="chart-types">
-        <view class="chart-type {{chartType === 'bar' ? 'is-on' : ''}}" data-type="bar" bindtap="onChartType">柱形</view>
-        <view class="chart-type {{chartType === 'line' ? 'is-on' : ''}}" data-type="line" bindtap="onChartType">折线</view>
-      </view>
-
-      <view class="chart {{loading ? 'is-loading' : ''}}">
-        <view class="goal-line" wx:if="{{showGoalLine}}" style="bottom: {{goalLine}}%;">
-          <text class="goal-label {{goalLabelAbove ? 'is-above' : ''}}">{{goalLabel}}</text>
+    <view class="card chart-card">
+      <view class="chart-head">
+        <text class="chart-tip">左右拖动看更早 · 点一下看某一根</text>
+        <view class="modes">
+          <view class="mode {{mode === 'candle' ? 'is-on' : ''}}" data-mode="candle" bindtap="onMode">蜡烛</view>
+          <view class="mode {{mode === 'line' ? 'is-on' : ''}}" data-mode="line" bindtap="onMode">折线</view>
         </view>
-        <block wx:if="{{chartType === 'bar'}}">
-          <view wx:for="{{bars}}" wx:key="key" class="bar-col">
-            <view class="bar-track">
-              <view wx:if="{{!item.missing}}" class="bar" style="height: {{item.h}}%; background: {{item.color}};"></view>
-              <view wx:elif="{{!item.future}}" class="bar-missing"></view>
-            </view>
-          </view>
-        </block>
-        <image wx:elif="{{lineSrc}}" class="line-img" src="{{lineSrc}}" mode="scaleToFill" />
       </view>
-      <view class="bar-labels">
-        <text wx:for="{{bars}}" wx:key="key" class="bar-label">{{item.label}}</text>
-      </view>
-      <view class="chart-legend" wx:if="{{showGoalLine && range === 'year'}}"><text>年视图为每月的日均</text></view>
-      <view class="chart-legend" wx:if="{{chartNote && !empty}}"><text>{{chartNote}}{{range === 'year' ? '（年视图为当月平均）' : ''}}</text></view>
-      <view class="empty-tip" wx:if="{{empty && !loading}}">这段时间还没有数据</view>
+      <kline-chart wx:if="{{!empty}}" candles="{{candles}}" period="{{period}}" mode="{{mode}}" visible="{{visible}}"
+                   goal="{{goalPlot}}" showGoal="{{true}}" goalText="{{goalText}}" format="{{format}}" accent="{{accent}}"
+                   bind:select="onSelect" />
+      <view class="empty-tip" wx:if="{{empty && !loading}}">还没有数据</view>
     </view>
 
-    <view class="card section" wx:if="{{range === 'month' && monthDays.length}}">
+    <block wx:if="{{kpi.length}}">
+      <text class="sec-title">{{sumTitle}}</text>
+      <view class="kpi-grid">
+        <view class="kpi-tile" wx:for="{{kpi}}" wx:key="label">
+          <text class="kpi-label">{{item.label}}</text>
+          <view><text class="kpi-value">{{item.value}}</text><text class="kpi-unit">{{item.unit}}</text></view>
+          <text class="kpi-sub" wx:if="{{item.sub}}">{{item.sub}}</text>
+        </view>
+      </view>
+    </block>
+
+    <view class="card section" wx:if="{{monthDays.length}}">
+      <text class="cal-title">{{calYear}}年{{calMonth}}月</text>
       <month-heatmap year="{{calYear}}" month="{{calMonth}}" days="{{monthDays}}" goal="{{goal}}" measure="{{measure}}" today="{{today}}" heat="{{heat}}"
-                     showNav="{{false}}" selected="{{selected}}" bind:select="onSelectDay" />
+                     showNav="{{false}}" selected="{{selectedDay}}" bind:select="onSelectDay" />
       <view class="selected-line" wx:if="{{selectedText}}">{{selectedText}}</view>
-    </view>
-
-    <view class="kpi-grid">
-      <view class="kpi-tile" wx:for="{{kpi}}" wx:key="label">
-        <text class="kpi-label">{{item.label}}</text>
-        <view><text class="kpi-value">{{item.value}}</text><text class="kpi-unit">{{item.unit}}</text></view>
-        <text class="kpi-sub" wx:if="{{item.sub}}">{{item.sub}}</text>
-      </view>
     </view>
 
     <view class="links">
