@@ -6,10 +6,6 @@
   <daily-nav title="{{title}}" fallback="/pages/daily/metric/index?theme={{themeId}}" />
 
   <view class="content">
-    <view class="seg">
-      <view wx:for="{{periods}}" wx:key="key" class="seg-item {{period === item.key ? 'is-on' : ''}}" data-key="{{item.key}}" bindtap="onPeriod">{{item.label}}</view>
-    </view>
-
     <view class="quote">
       <text class="quote-cap">{{cap}}</text>
       <view class="quote-main">
@@ -23,17 +19,39 @@
     </view>
 
     <view class="card chart-card">
+      <!-- 左：日 / 周 / 月；右：这张图的设置 -->
       <view class="chart-head">
-        <text class="chart-tip">左右拖动看更早 · 点一下看某一根</text>
-        <view class="modes">
-          <view class="mode {{mode === 'candle' ? 'is-on' : ''}}" data-mode="candle" bindtap="onMode">蜡烛</view>
-          <view class="mode {{mode === 'line' ? 'is-on' : ''}}" data-mode="line" bindtap="onMode">折线</view>
+        <view class="periods">
+          <view wx:for="{{periods}}" wx:key="key" class="period {{period === item.key ? 'is-on' : ''}}" data-key="{{item.key}}" bindtap="onPeriod">{{item.label}}</view>
+        </view>
+        <view class="opts">
+          <view class="opt-group">
+            <view class="opt {{mode === 'candle' ? 'is-on' : ''}}" data-mode="candle" bindtap="onMode">{{period === 'day' ? '柱形' : '箱体'}}</view>
+            <view class="opt {{mode === 'line' ? 'is-on' : ''}}" data-mode="line" bindtap="onMode">折线</view>
+          </view>
+          <view class="opt opt-single {{showMA ? 'is-on' : ''}}" bindtap="onToggleMA">均线</view>
         </view>
       </view>
       <kline-chart wx:if="{{!empty}}" candles="{{candles}}" period="{{period}}" mode="{{mode}}" visible="{{visible}}"
-                   goal="{{goalPlot}}" showGoal="{{true}}" goalText="{{goalText}}" format="{{format}}" accent="{{accent}}"
+                   goal="{{goalPlot}}" showGoal="{{true}}" goalText="{{goalText}}" format="{{format}}" accent="{{accent}}" showMA="{{showMA}}"
                    bind:select="onSelect" />
       <view class="empty-tip" wx:if="{{empty && !loading}}">还没有数据</view>
+
+      <!-- 读图说明：周 / 月箱体画一个小样，旁边逐条说清楚 -->
+      <view class="legend" wx:if="{{legend && !empty}}">
+        <view wx:if="{{legend.kind === 'box'}}" class="legend-box">
+          <view class="legend-candles">
+            <view class="mini-candle is-up"><view class="mini-wick"></view><view class="mini-body"></view></view>
+            <view class="mini-candle is-down"><view class="mini-wick"></view><view class="mini-body"></view></view>
+          </view>
+          <view class="legend-rows">
+            <view wx:for="{{legend.rows}}" wx:key="k" class="legend-row"><text class="legend-k">{{item.k}}</text><text class="legend-v">{{item.v}}</text></view>
+          </view>
+        </view>
+        <text wx:else class="legend-text">{{legend.text}}</text>
+        <text class="legend-text" wx:if="{{legend.ma}}">{{legend.ma}}</text>
+        <text class="legend-tip">左右拖动看更早 · 点一下看某一{{period === 'day' ? '天' : period === 'week' ? '周' : '月'}}</text>
+      </view>
     </view>
 
     <block wx:if="{{kpi.length}}">

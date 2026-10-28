@@ -69,24 +69,132 @@
   justify-content: space-between;
   margin-bottom: 12rpx;
 }
-.chart-tip {
-  font-size: 20rpx;
-  color: var(--text-muted, #9C998F);
-}
-.modes {
+/* 日 / 周 / 月：图表左上，分段按钮 */
+.periods {
   display: flex;
-  gap: 8rpx;
-}
-.mode {
-  padding: 6rpx 20rpx;
+  background: var(--bg-section, #F5F5F4);
   border-radius: 99rpx;
+  padding: 4rpx;
+}
+.period {
+  min-width: 64rpx;
+  height: 52rpx;
+  line-height: 52rpx;
+  text-align: center;
+  border-radius: 99rpx;
+  font-size: 26rpx;
+  color: var(--text-secondary, #6F6F68);
+}
+.period.is-on {
+  background: var(--bg-card, #FFFFFF);
+  color: var(--text-primary, #2D2D2B);
+  font-weight: 700;
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.06);
+}
+/* 右侧设置：画法二选一 + 均线开关 */
+.opts {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+.opt-group {
+  display: flex;
+  border: 2rpx solid var(--line-subtle, #EAEAE7);
+  border-radius: 99rpx;
+  overflow: hidden;
+}
+.opt {
+  padding: 8rpx 16rpx;
   font-size: 22rpx;
   color: var(--text-muted, #9C998F);
 }
-.mode.is-on {
+.opt.is-on {
   color: var(--brand-accent, #526631);
   background: var(--brand-tint, #EEF2E5);
   font-weight: 600;
+}
+.opt-single {
+  border: 2rpx solid var(--line-subtle, #EAEAE7);
+  border-radius: 99rpx;
+}
+
+/* 读图说明 */
+.legend {
+  margin-top: 16rpx;
+  padding-top: 16rpx;
+  border-top: 2rpx solid var(--line-subtle, #EAEAE7);
+}
+.legend-box {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+}
+.legend-candles {
+  display: flex;
+  gap: 16rpx;
+  padding: 0 8rpx;
+}
+.mini-candle {
+  position: relative;
+  width: 24rpx;
+  height: 120rpx;
+}
+.mini-wick {
+  position: absolute;
+  left: 11rpx;
+  top: 0;
+  bottom: 0;
+  width: 2rpx;
+}
+.mini-body {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 30rpx;
+  height: 54rpx;
+  border-radius: 3rpx;
+}
+.mini-candle.is-up .mini-wick,
+.mini-candle.is-up .mini-body {
+  background: #E25A4E;
+}
+.mini-candle.is-down .mini-wick,
+.mini-candle.is-down .mini-body {
+  background: #3A9F6E;
+}
+.mini-candle.is-down .mini-body {
+  top: 44rpx;
+  height: 40rpx;
+}
+.legend-rows {
+  flex: 1;
+  min-width: 0;
+}
+.legend-row {
+  display: flex;
+  font-size: 22rpx;
+  line-height: 1.7;
+}
+.legend-k {
+  flex-shrink: 0;
+  width: 112rpx;
+  color: var(--text-primary, #2D2D2B);
+  font-weight: 600;
+}
+.legend-v {
+  color: var(--text-secondary, #6F6F68);
+}
+.legend-text {
+  display: block;
+  font-size: 22rpx;
+  line-height: 1.7;
+  color: var(--text-secondary, #6F6F68);
+}
+.legend-tip {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 20rpx;
+  color: var(--text-muted, #9C998F);
 }
 
 .sec-title {

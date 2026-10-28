@@ -1,6 +1,7 @@
 // 每日主题 · 统计页 K 线图（canvas 2d）
 // 股票软件的看法：最新一根在最右边；左右拖动翻看更早的；点一下或长按拖动出十字线，抛 select 让页面换表头。
-// 蜡烛 / 折线两种画法；MA5、MA10 两条均线；每日目标虚线，目标值标在虚线右下角。
+// 画法：日 = 短柱（一天一个数，达标深色、没达标浅色）；周 / 月 = 箱体（蜡烛）；都可切折线。
+// MA5、MA10 两条均线可开关；每日目标虚线，目标值标在虚线右下角。
 // 数值是「绘图值」（睡眠传的是 -bedOffset，越早越往上），format 决定轴上怎么写字。
 const M = require('../../../utils/daily/metric.js');
 const T = require('../../../utils/daily/clock.js');
@@ -24,7 +25,8 @@ Component({
     goalText: { type: String, value: '' },
     format: { type: String, value: 'count' },   // count | clock
     accent: { type: String, value: '#526631' },
-    visible: { type: Number, value: 30 }        // 一屏放几根
+    visible: { type: Number, value: 30 },       // 一屏放几根
+    showMA: { type: Boolean, value: true }
   },
   observers: {
     'candles, period': function () {
@@ -32,7 +34,7 @@ Component({
       this._sel = -1;
       this._draw();
     },
-    'mode, goal, showGoal, accent, visible': function () { this._draw(); }
+    'mode, goal, showGoal, accent, visible, showMA': function () { this._draw(); }
   },
   lifetimes: {
     ready() {
@@ -92,9 +94,12 @@ Component({
       ctx.clearRect(0, 0, W, H);
       const v = this._view();
       if (!v.n) return;
-      const ma = MA_N.map(n => K.movingAverage(v.c, n));
+      const showMA = this.data.showMA;
+      const ma = showMA ? MA_N.map(n => K.movingAverage(v.c, n)) : [];
       const vis = v.c.slice(v.start, v.end);
       const line = this.data.mode === 'line';
+      // 日视图不画蜡烛：一天只有一个数，「开盘」是借前一天的，读起来绕，直接画柱
+      const bars = !line && this.data.period === 'day';
 
       // 纵轴范围：可见的高低 + 均线 + 目标线
       let lo = Infinity, hi = -Infinity;
@@ -107,6 +112,8 @@ Component({
       if (hi === lo) { hi += 1; lo -= 1; }
       const padV = (hi - lo) * 0.08;
       hi += padV; lo -= padV;
+      // 步数的柱子从 0 长起，柱高才和数值成正比
+      if (bars && this.data.format === 'count') lo = 0;
       const top = PAD.t, bottom = H - PAD.b, plotH = bottom - top;
       const yOf = val => top + (hi - val) / (hi - lo) * plotH;
 
@@ -150,8 +157,19 @@ Component({
         ctx.fillStyle = this.data.accent;
         ctx.fill();
         ctx.globalAlpha = 1;
+      } else if (bars) {
+        // 日：短柱，达标用主题色、没达标同色调浅一档（睡眠的绘图值取过反，同样是越大越好）
+        const bw = Math.max(2, Math.min(14, v.slot * 0.5));
+        vis.forEach((c, k) => {
+          const x = v.xOf(v.start + k);
+          const y = yOf(c.main);
+          ctx.globalAlpha = c.main >= this.data.goal ? 1 : 0.35;
+          ctx.fillStyle = this.data.accent;
+          ctx.fillRect(x - bw / 2, y, bw, Math.max(1, bottom - y));
+        });
+        ctx.globalAlpha = 1;
       } else {
-        // 蜡烛：影线 = 高低，实体 = 开收
+        // 周 / 月：箱体（蜡烛）——竖线上下端 = 最多 / 最少的一天，方块 = 第一天到最后一天
         const bw = Math.max(2, v.slot * 0.62);
         vis.forEach((c, k) => {
           const x = v.xOf(v.start + k);
@@ -198,7 +216,7 @@ Component({
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
       let lx = PAD.l;
-      MA_N.forEach((n, j) => {
+      (showMA ? MA_N : []).forEach((n, j) => {
         const val = ma[j][at];
         const txt = `MA${n} ${val == null ? '--' : this._fmt(val)}`;
         ctx.fillStyle = MA_COLORS[j];

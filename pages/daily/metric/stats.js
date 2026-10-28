@@ -1,7 +1,8 @@
-// 数值型每日主题 · 统计（股票软件的看法：日K / 周K / 月K）
+// 数值型每日主题 · 统计（股票软件的看法：日 / 周 / 月）
 // 一次拉全部记录（getAll，一天一条，量很小），本地聚合成蜡烛；最新一根在最右，左右拖动翻历史，
-// 点一下 / 长按拖动选中某一根，表头、汇总、月历都跟着它走。蜡烛和折线可切换，选择按主题记在本地。
-// K 线的含义见 utils/daily/kline.js；睡眠画的是入睡时间，取反后越早越往上（红 = 比上一根早）。
+// 点一下 / 长按拖动选中某一根，表头、汇总、月历都跟着它走。
+// 日 = 短柱（达标深色）；周 / 月 = 箱体（含义见 utils/daily/kline.js，图下有图例说明）；都能切折线、开关均线，按主题记在本地。
+// 睡眠画的是入睡时间，取反后越早越往上（红 = 比上一根早）。
 const toast = require('../../../utils/dailyToast.js');
 const D = require('../../../utils/daily/date.js');
 const M = require('../../../utils/daily/metric.js');
@@ -10,7 +11,7 @@ const K = require('../../../utils/daily/kline.js');
 const V = require('../../../utils/daily/views.js');
 const C = require('./common.js');
 
-const PERIODS = { day: { label: '日K', visible: 30 }, week: { label: '周K', visible: 20 }, month: { label: '月K', visible: 12 } };
+const PERIODS = { day: { label: '日', noun: '天', visible: 30 }, week: { label: '周', noun: '周', visible: 20 }, month: { label: '月', noun: '月', visible: 12 } };
 const UP = '#E25A4E';
 const DOWN = '#3A9F6E';
 
@@ -30,6 +31,8 @@ Page({
     period: 'day',
     periods: Object.keys(PERIODS).map(k => ({ key: k, label: PERIODS[k].label })),
     mode: 'candle',
+    showMA: true,
+    legend: null,
     candles: [],
     visible: 30,
     goal: 0,
@@ -62,8 +65,12 @@ Page({
     this.view = V.viewOf(theme);
     const ts = C.themeState();
     this._modeKey = theme.id + 'ChartType';
-    let mode = 'candle';
-    try { if (wx.getStorageSync(this._modeKey) === 'line') mode = 'line'; } catch (e) { /* ignore */ }
+    this._maKey = theme.id + 'ShowMA';
+    let mode = 'candle', showMA = true;
+    try {
+      if (wx.getStorageSync(this._modeKey) === 'line') mode = 'line';
+      if (wx.getStorageSync(this._maKey) === 'off') showMA = false;
+    } catch (e) { /* ignore */ }
     const clock = theme.measure === 'bedtime';
     this.setData({
       themeClass: ts.themeClass,
@@ -74,7 +81,8 @@ Page({
       measure: theme.measure || 'count',
       format: clock ? 'clock' : 'count',
       today: C.todayOf(theme),
-      mode
+      mode,
+      showMA
     });
     this.fetch();
   },
@@ -117,6 +125,32 @@ Page({
     this._candles = K.buildCandles(this._plot || {}, p);
     this.setData({ candles: this._candles, visible: PERIODS[p].visible });
     this._renderFor(this._candles.length - 1);
+    this._renderLegend();
+  },
+
+  // 图下的读图说明：日看柱子、周 / 月看箱体、折线看曲线，均线开着再补一句
+  _renderLegend() {
+    const { period, mode, showMA, format } = this.data;
+    const clock = format === 'clock';
+    const noun = PERIODS[period].noun;
+    let legend;
+    if (mode === 'line') {
+      legend = { kind: 'text', text: period === 'day' ? `曲线 = 每天的${clock ? '入睡时间，越高越早' : '步数'}` : `曲线 = 每${noun}的${clock ? '平均入睡，越高越早' : '日均步数'}` };
+    } else if (period === 'day') {
+      legend = { kind: 'text', text: clock ? '柱子越高睡得越早；深色 = 早睡达标，浅色 = 没达标' : '柱高 = 当天步数；深色 = 达标，浅色 = 没达标' };
+    } else {
+      legend = {
+        kind: 'box',
+        rows: [
+          { k: '竖线上端', v: clock ? `这${noun}入睡最早的一晚` : `这${noun}走得最多的一天` },
+          { k: '竖线下端', v: clock ? `这${noun}入睡最晚的一晚` : `这${noun}走得最少的一天` },
+          { k: '方块', v: clock ? '从第一晚连到最后一晚' : '从第一天连到最后一天' },
+          { k: '红 / 绿', v: clock ? '最后一晚比第一晚睡得早 / 晚' : '最后一天比第一天走得多 / 少' }
+        ]
+      };
+    }
+    legend.ma = showMA ? `均线：MA5 / MA10 = 最近 5 / 10 ${noun}的平均` : '';
+    this.setData({ legend });
   },
 
   onPeriod(e) {
@@ -131,6 +165,14 @@ Page({
     if (mode === this.data.mode) return;
     try { wx.setStorageSync(this._modeKey, mode); } catch (err) { /* ignore */ }
     this.setData({ mode });
+    this._renderLegend();
+  },
+
+  onToggleMA() {
+    const showMA = !this.data.showMA;
+    try { wx.setStorageSync(this._maKey, showMA ? 'on' : 'off'); } catch (err) { /* ignore */ }
+    this.setData({ showMA });
+    this._renderLegend();
   },
 
   onSelect(e) {
@@ -173,9 +215,10 @@ Page({
       if (clock) note = doc ? this.view.dayText(doc, this.theme) : '';
       else note = c.main >= goal ? `目标 ${M.formatNum(goal)} · 已达标` : `目标 ${M.formatNum(goal)} · 差 ${M.formatNum(goal - c.main)}`;
     } else {
+      // 不用「开收高低」这类股票术语，直接说是哪一天
       ohlc = [
-        { k: '开', v: this._fmt(c.open) }, { k: '收', v: this._fmt(c.close) },
-        { k: '高', v: this._fmt(c.high) }, { k: '低', v: this._fmt(c.low) }
+        { k: clock ? '最早' : '最多', v: this._fmt(c.high) }, { k: clock ? '最晚' : '最少', v: this._fmt(c.low) },
+        { k: '首日', v: this._fmt(c.open) }, { k: '末日', v: this._fmt(c.close) }
       ];
       note = `${c.count} 天有记录`;
     }
