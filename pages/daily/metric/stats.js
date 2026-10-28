@@ -1,14 +1,18 @@
 // 数值型每日主题 · 统计（周 / 月 / 年，可前后翻）
 // 柱子颜色与月历同一套热力分档；无数据的日子不画柱、不进日均分母。
 // 显示哪个数、KPI 是哪几项由度量决定（utils/daily/views.js）：步数柱高 = 步数，睡眠柱高 = 时长、颜色 = 入睡早晚。
+// 图表可切柱形 / 折线（选择按主题记在本地），折线由 utils/daily/chart.js 画成 SVG，和柱子共用同一份高度数据。
 // 月视图下面多一张月历热力图（首页不放月历，学每日喝水一屏一个焦点）；底部是年度视图和海报的入口。
 const toast = require('../../../utils/dailyToast.js');
 const D = require('../../../utils/daily/date.js');
 const M = require('../../../utils/daily/metric.js');
 const V = require('../../../utils/daily/views.js');
+const { lineChartSvg } = require('../../../utils/daily/chart.js');
 const C = require('./common.js');
 
 const MAX_BACK = { week: 52, month: 36, year: 10 };
+// 纵轴留 8% 头部空间：最高的柱子 / 折线点不顶到图表上沿，折线的圆点也不会被裁掉一半
+const HEADROOM = 1.08;
 
 Page({
   data: {
@@ -32,7 +36,11 @@ Page({
     headlineSub: '',
     chartNote: '',
     bars: [],
+    chartType: 'bar',          // bar | line
+    lineSrc: '',
     goalLine: 0,
+    goalLabel: '',
+    goalLabelAbove: false,
     showGoalLine: false,
     kpi: [],
     empty: false,
@@ -51,7 +59,12 @@ Page({
     this.theme = theme;
     this.view = V.viewOf(theme);
     const ts = C.themeState();
+    this._palette = ts.palette;
+    this._chartKey = theme.id + 'ChartType';
+    let chartType = 'bar';
+    try { if (wx.getStorageSync(this._chartKey) === 'line') chartType = 'line'; } catch (e) { /* ignore */ }
     this.setData({
+      chartType,
       themeClass: ts.themeClass,
       heat: ts.heat,
       themeId: theme.id,
@@ -65,6 +78,17 @@ Page({
 
   onUnload() {
     this._destroyed = true;
+  },
+
+  onChartType(e) {
+    const chartType = e.currentTarget.dataset.type;
+    if (chartType === this.data.chartType) return;
+    try { wx.setStorageSync(this._chartKey, chartType); } catch (err) { /* ignore */ }
+    this.setData({ chartType, lineSrc: this._lineSrc(chartType) });
+  },
+
+  _lineSrc(chartType) {
+    return chartType === 'line' && this._bars ? lineChartSvg(this._bars, { color: this._palette.accent }) : '';
   },
 
   onRange(e) {
@@ -185,7 +209,7 @@ Page({
     }
     // 数量型的柱子要和目标线同一把尺；睡眠的柱子是时长，至少按 8 小时撑满
     const floor = view.showGoalLine ? goal : 480;
-    const max = Math.max(floor, ...items.map(it => it.value)) || 1;
+    const max = Math.max(floor, ...items.map(it => it.value)) * HEADROOM || 1;
     const bars = items.map(it => {
       const level = M.heatLevel(it.judged, goal, it.has, measure);
       return {
@@ -198,6 +222,8 @@ Page({
       };
     });
 
+    this._bars = bars;
+    const goalLine = Math.round(goal / max * 100);
     const sv = view.stats(s, docsIn(p.from, p.to), this.theme, goal, p.cap);
     this.setData({
       empty: s.dataDays === 0,
@@ -207,7 +233,11 @@ Page({
       headlineSub: sv.headlineSub,
       chartNote: view.chartNote,
       bars,
-      goalLine: Math.round(goal / max * 100),
+      lineSrc: this._lineSrc(this.data.chartType),
+      goalLine,
+      // 目标值标在虚线右下角；虚线太靠底时下面放不下，改标在右上角
+      goalLabel: view.goalText(goal, this.theme),
+      goalLabelAbove: goalLine < 14,
       showGoalLine: view.showGoalLine && s.dataDays > 0,
       kpi: sv.kpi
     });

@@ -287,3 +287,19 @@ test('home: goal line and mascots follow the theme colour', () => {
   assert.ok(!decodeURIComponent(Ms.shoeSvg(0, pink)).includes('<rect x="0"'));
   assert.ok(!decodeURIComponent(Ms.moonSvg('ok', pink)).includes('<text'));   // 小程序 <image> 里 SVG 文字不可靠
 });
+
+// ───────── 统计页折线图 ─────────
+const { lineChartSvg } = require('../utils/daily/chart');
+
+test('line chart breaks at missing days and maps heights like the bars', () => {
+  const bars = [
+    { h: 50, color: '#111111' }, { h: 100, color: '#222222' }, { h: 0, missing: true },
+    { h: 25, color: '#333333' }, { h: 0, missing: true, future: true }
+  ];
+  const svg = decodeURIComponent(lineChartSvg(bars, { color: '#526631' }));
+  assert.equal((svg.match(/<polyline/g) || []).length, 1);          // 第 4 天单独一个点，不连线
+  assert.equal((svg.match(/<circle/g) || []).length, 3);
+  assert.ok(svg.includes('points="61.6,160 184.8,0"'), svg);        // 616 宽 5 等分取中点；320 高按百分比
+  assert.ok(svg.includes('cy="240"'));
+  assert.ok(!svg.includes('<text'));
+});

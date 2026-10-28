@@ -25,22 +25,29 @@
         <view class="period-arrow {{canNext ? '' : 'is-off'}}" bindtap="onNext">›</view>
       </view>
 
+      <view class="chart-types">
+        <view class="chart-type {{chartType === 'bar' ? 'is-on' : ''}}" data-type="bar" bindtap="onChartType">柱形</view>
+        <view class="chart-type {{chartType === 'line' ? 'is-on' : ''}}" data-type="line" bindtap="onChartType">折线</view>
+      </view>
+
       <view class="chart {{loading ? 'is-loading' : ''}}">
-        <view class="goal-line" wx:if="{{showGoalLine}}" style="bottom: {{goalLine}}%;"></view>
-        <view wx:for="{{bars}}" wx:key="key" class="bar-col">
-          <view class="bar-track">
-            <view wx:if="{{!item.missing}}" class="bar" style="height: {{item.h}}%; background: {{item.color}};"></view>
-            <view wx:elif="{{!item.future}}" class="bar-missing"></view>
-          </view>
+        <view class="goal-line" wx:if="{{showGoalLine}}" style="bottom: {{goalLine}}%;">
+          <text class="goal-label {{goalLabelAbove ? 'is-above' : ''}}">{{goalLabel}}</text>
         </view>
+        <block wx:if="{{chartType === 'bar'}}">
+          <view wx:for="{{bars}}" wx:key="key" class="bar-col">
+            <view class="bar-track">
+              <view wx:if="{{!item.missing}}" class="bar" style="height: {{item.h}}%; background: {{item.color}};"></view>
+              <view wx:elif="{{!item.future}}" class="bar-missing"></view>
+            </view>
+          </view>
+        </block>
+        <image wx:elif="{{lineSrc}}" class="line-img" src="{{lineSrc}}" mode="scaleToFill" />
       </view>
       <view class="bar-labels">
         <text wx:for="{{bars}}" wx:key="key" class="bar-label">{{item.label}}</text>
       </view>
-      <view class="chart-legend" wx:if="{{showGoalLine}}">
-        <view class="legend-line"></view><text>每日目标</text>
-        <text wx:if="{{range === 'year'}}" class="legend-note">年视图柱高为当月日均</text>
-      </view>
+      <view class="chart-legend" wx:if="{{showGoalLine && range === 'year'}}"><text>年视图为每月的日均</text></view>
       <view class="chart-legend" wx:if="{{chartNote && !empty}}"><text>{{chartNote}}{{range === 'year' ? '（年视图为当月平均）' : ''}}</text></view>
       <view class="empty-tip" wx:if="{{empty && !loading}}">这段时间还没有数据</view>
     </view>
