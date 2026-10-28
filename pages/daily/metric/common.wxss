@@ -1,0 +1,141 @@
+/* 数值型每日主题页面的公共样式。颜色只用 styles/theme.wxss 的变量，四套主题色自动适配 */
+.page-root {
+  min-height: 100vh;
+  background: var(--bg-page, #FAFAFA);
+  color: var(--text-primary, #2D2D2B);
+}
+.content {
+  padding: 16rpx 32rpx calc(48rpx + env(safe-area-inset-bottom));
+}
+.card {
+  background: var(--bg-card, #FFFFFF);
+  border-radius: var(--radius-lg, 24rpx);
+  padding: 28rpx 32rpx;
+  box-shadow: var(--shadow-card, 0 4rpx 16rpx rgba(0, 0, 0, 0.08));
+}
+.section {
+  margin-top: 24rpx;
+}
+.btn-primary {
+  height: 84rpx;
+  line-height: 84rpx;
+  text-align: center;
+  border-radius: var(--radius-pill, 9999rpx);
+  background: var(--brand-button, #9AAB65);
+  color: var(--hero-ink, #1F2B12);
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+/* 顶部 toast（utils/dailyToast.js） */
+.top-toast {
+  position: fixed;
+  top: 22%;
+  left: 50%;
+  transform: translate(-50%, -8rpx);
+  z-index: 1000;
+  background: rgba(26, 26, 26, 0.88);
+  color: #fff;
+  padding: 18rpx 32rpx;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+.top-toast.is-show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.top-toast-icon {
+  margin-right: 10rpx;
+}
+
+/* 分段选择 */
+.seg {
+  display: flex;
+  background: var(--bg-section, #F5F5F4);
+  border-radius: var(--radius-pill, 9999rpx);
+  padding: 6rpx;
+}
+.seg-item {
+  flex: 1;
+  height: 64rpx;
+  line-height: 64rpx;
+  text-align: center;
+  border-radius: var(--radius-pill, 9999rpx);
+  font-size: 26rpx;
+  color: var(--text-secondary, #6F6F68);
+}
+.seg-item.is-on {
+  background: var(--bg-card, #FFFFFF);
+  color: var(--text-primary, #2D2D2B);
+  font-weight: 700;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+}
+
+/* 区间翻页 */
+.period-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.period-arrow {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+}
+.period-arrow.is-off {
+  color: var(--line-subtle, #EAEAE7);
+}
+.period-label {
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+/* KPI 宫格 */
+.kpi-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+.kpi-tile {
+  width: calc(50% - 10rpx);
+  margin-top: 20rpx;
+  background: var(--bg-card, #FFFFFF);
+  border-radius: var(--radius-md, 16rpx);
+  padding: 22rpx 24rpx;
+  box-sizing: border-box;
+  box-shadow: var(--shadow-card, 0 4rpx 16rpx rgba(0, 0, 0, 0.08));
+}
+.kpi-label {
+  display: block;
+  font-size: 22rpx;
+  color: var(--text-muted, #9C998F);
+}
+.kpi-value {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: var(--text-primary, #2D2D2B);
+}
+.kpi-unit {
+  font-size: 22rpx;
+  color: var(--text-secondary, #6F6F68);
+  margin-left: 6rpx;
+}
+.kpi-sub {
+  display: block;
+  font-size: 20rpx;
+  color: var(--text-muted, #9C998F);
+  margin-top: 4rpx;
+}
+.empty-tip {
+  text-align: center;
+  font-size: 24rpx;
+  color: var(--text-muted, #9C998F);
+  padding: 40rpx 0;
+}

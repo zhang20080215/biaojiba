@@ -1,0 +1,9 @@
+<view class="nav" style="height: {{navOffset}}px; padding-top: {{statusBarHeight}}px;">
+  <view class="bar" style="height: {{navBarHeight}}px;">
+    <view class="back" bindtap="onBack" hover-class="back-hover">
+      <text class="chev">‹</text>
+    </view>
+    <text class="title">{{title}}</text>
+  </view>
+</view>
+<view style="height: {{navOffset}}px;"></view>

@@ -1,0 +1,55 @@
+<view class="page-root {{themeClass}}">
+  <view class="top-toast {{toast.show ? 'is-show' : ''}}">
+    <text class="top-toast-text">{{toast.text}}</text>
+  </view>
+
+  <daily-nav title="{{title}}" fallback="/pages/daily/metric/index?theme={{themeId}}" />
+
+  <view class="content">
+    <view class="seg">
+      <view class="seg-item {{range === 'week' ? 'is-on' : ''}}" data-range="week" bindtap="onRange">周</view>
+      <view class="seg-item {{range === 'month' ? 'is-on' : ''}}" data-range="month" bindtap="onRange">月</view>
+      <view class="seg-item {{range === 'year' ? 'is-on' : ''}}" data-range="year" bindtap="onRange">年</view>
+    </view>
+
+    <view class="headline">
+      <text class="headline-cap">{{headlineCap}}</text>
+      <view><text class="headline-num">{{headline}}</text><text class="headline-unit">{{unit}}</text></view>
+      <text class="headline-sub">{{headlineSub}}</text>
+    </view>
+
+    <view class="card">
+      <view class="period-nav">
+        <view class="period-arrow {{canPrev ? '' : 'is-off'}}" bindtap="onPrev">‹</view>
+        <text class="period-label">{{periodLabel}}</text>
+        <view class="period-arrow {{canNext ? '' : 'is-off'}}" bindtap="onNext">›</view>
+      </view>
+
+      <view class="chart {{loading ? 'is-loading' : ''}}">
+        <view class="goal-line" wx:if="{{showGoalLine}}" style="bottom: {{goalLine}}%;"></view>
+        <view wx:for="{{bars}}" wx:key="key" class="bar-col">
+          <view class="bar-track">
+            <view wx:if="{{!item.missing}}" class="bar" style="height: {{item.h}}%; background: {{item.color}};"></view>
+            <view wx:elif="{{!item.future}}" class="bar-missing"></view>
+          </view>
+        </view>
+      </view>
+      <view class="bar-labels">
+        <text wx:for="{{bars}}" wx:key="key" class="bar-label">{{item.label}}</text>
+      </view>
+      <view class="chart-legend" wx:if="{{showGoalLine}}">
+        <view class="legend-line"></view><text>每日目标</text>
+        <text wx:if="{{range === 'year'}}" class="legend-note">年视图柱高为当月日均</text>
+      </view>
+      <view class="empty-tip" wx:if="{{empty && !loading}}">这段时间还没有数据</view>
+    </view>
+
+    <view class="kpi-grid">
+      <view class="kpi-tile" wx:for="{{kpi}}" wx:key="label">
+        <text class="kpi-label">{{item.label}}</text>
+        <view><text class="kpi-value">{{item.value}}</text><text class="kpi-unit">{{item.unit}}</text></view>
+        <text class="kpi-sub" wx:if="{{item.sub}}">{{item.sub}}</text>
+      </view>
+    </view>
+  </view>
+</view>

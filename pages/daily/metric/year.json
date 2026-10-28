@@ -1,0 +1,9 @@
+{
+  "navigationStyle": "custom",
+  "navigationBarTextStyle": "black",
+  "backgroundColor": "#FAFAFA",
+  "usingComponents": {
+    "daily-nav": "/components/daily/daily-nav/index",
+    "year-heatmap": "/components/daily/year-heatmap/index"
+  }
+}

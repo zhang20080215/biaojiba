@@ -22,7 +22,7 @@
 | `utils/daily/ring.js` | 进度环 SVG data URI |
 | `utils/dailyThemes.js` | 主题配置新增 `kind` / `source` / `vocab` / `deadlineGoal` 字段 |
 | `components/daily/*` | `daily-nav`、`month-heatmap`、`year-heatmap`、`deadline-goal-card`、`deadline-goal-sheet`；颜色只用 CSS 变量或 palette，四套主题色自动兼容 |
-| `utils/metricPosterDrawer.js` | 数值型海报绘制器，`withVocab` 换词表即换主题 |
+| `utils/metricPosterDrawer.js` | 数值型海报绘制器；文案词表从主题配置的 `vocab` 传入，换主题不改绘制器 |
 
 ## 后端（`syncDailyLog`，不新增云函数/集合）
 - `syncSource {theme, source:'werun', weRunData: CloudID}`：解密出最近 30 天步数，按日期 upsert 到 `DailyLogs`（`total_value` = 当天步数，`entries: []`）。只写有变化的天；列表开头连续的 0 步（用户开通微信运动之前）不写，避免把「无数据」变成「0 步」。

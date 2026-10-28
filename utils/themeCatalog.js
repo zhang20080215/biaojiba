@@ -457,6 +457,20 @@ module.exports = [
         url: '/pages/daily/index/index?theme=water'
       },
       {
+        id: 'daily_steps',
+        title: '每日步数',
+        description: '同步微信运动步数，看见每天走过的路',
+        image: '',
+        brand: ['#B7AEDB', '#6A5A9C'],
+        placeholderEmoji: '👟',
+        placeholderText: '每日步数',
+        userCount: 0,
+        tag: '每日',
+        category: 'daily',
+        isNew: true,
+        url: '/pages/daily/metric/index?theme=steps'
+      },
+      {
         id: 'weread_books',
         title: '微信读书 TOP200 总榜',
         description: '微信读书全平台热榜，记录你的阅读旅程',

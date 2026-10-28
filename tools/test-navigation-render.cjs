@@ -88,7 +88,7 @@ async function main() {
       if (kind === 'discover') {
         f.page.onDiscoverSection({currentTarget:{dataset:{section:'daily'}}});
         const dailyTree = render(f.page.data);
-        assert.equal(nodes(dailyTree).filter(n => n.attr && n.attr.class === 'hub-daily-card').length,4);
+        assert.equal(nodes(dailyTree).filter(n => n.attr && n.attr.class === 'hub-daily-card').length,require('../utils/themeCatalog').filter(t => t.category === 'daily' && !t.hidden).length);
         assert.equal(nodes(dailyTree).filter(n => n.attr && n.attr.class === 'hub-card exposure-card').length,0);
         if (process.env.HUB_PREVIEW_DIR && !options.offline) {
           fs.mkdirSync(process.env.HUB_PREVIEW_DIR,{recursive:true});

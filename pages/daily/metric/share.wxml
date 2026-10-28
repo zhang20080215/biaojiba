@@ -1,0 +1,41 @@
+<view class="page-root {{themeClass}}">
+  <view class="top-toast {{toast.show ? 'is-show' : ''}}">
+    <text class="top-toast-icon" wx:if="{{toast.icon === 'success'}}">✓</text>
+    <text class="top-toast-text">{{toast.text}}</text>
+  </view>
+
+  <daily-nav title="{{title}}" fallback="/pages/daily/metric/index?theme={{themeId}}" />
+
+  <view class="content">
+    <view class="options">
+      <view class="seg">
+        <view class="seg-item {{layout === 'day' ? 'is-on' : ''}}" data-layout="day" bindtap="onLayout">单日</view>
+        <view class="seg-item {{layout === 'month' ? 'is-on' : ''}}" data-layout="month" bindtap="onLayout">月度</view>
+      </view>
+      <view class="period-nav">
+        <view class="period-arrow {{canPrev ? '' : 'is-off'}}" bindtap="onPrev">‹</view>
+        <text class="period-label">{{periodLabel}}</text>
+        <view class="period-arrow {{canNext ? '' : 'is-off'}}" bindtap="onNext">›</view>
+      </view>
+      <view class="colors">
+        <text class="colors-label">配色</text>
+        <view wx:for="{{colors}}" wx:key="id" class="color-dot {{colorId === item.id ? 'is-on' : ''}}"
+              style="background: {{item.swatch}};" data-id="{{item.id}}" bindtap="onColor">
+          <text wx:if="{{colorId === item.id}}" class="color-check">✓</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="preview" style="width: {{previewW}}px; height: {{previewH}}px;">
+      <canvas type="2d" id="metricPoster" class="poster-canvas" style="width: {{previewW}}px; height: {{previewH}}px;"></canvas>
+    </view>
+    <text class="preview-tip">{{empty ? emptyText : (ready ? '保存后可以发到朋友圈或小红书' : '生成中…')}}</text>
+  </view>
+
+  <view class="action-bar">
+    <button class="save-btn" bindtap="saveImage" disabled="{{isGenerating || !ready || empty}}" loading="{{isGenerating}}">
+      {{isGenerating ? '保存中…' : '保存到相册'}}
+    </button>
+    <text wx:if="{{needRewardedAd && ready && !empty}}" class="save-sub">需观看广告后保存</text>
+  </view>
+</view>

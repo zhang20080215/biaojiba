@@ -1,0 +1,73 @@
+<view class="page-root {{themeClass}}">
+  <view class="top-toast {{toast.show ? 'is-show' : ''}}">
+    <text class="top-toast-icon" wx:if="{{toast.icon === 'success'}}">✓</text>
+    <text class="top-toast-text">{{toast.text}}</text>
+  </view>
+
+  <daily-nav title="{{title}}" />
+
+  <view class="content">
+    <!-- 没有授权：说明卡，历史数据照常展示 -->
+    <view class="card auth-card" wx:if="{{authDenied}}">
+      <text class="auth-title">还没有开启{{vocab.sourceName}}权限</text>
+      <text class="auth-sub">开启后自动同步最近 30 天的{{vocab.noun}}，不用手动记录</text>
+      <view class="btn-primary" bindtap="onOpenSetting">去开启</view>
+    </view>
+
+    <!-- 今日 -->
+    <view class="card today-card">
+      <view class="today-ring">
+        <image class="ring-img" src="{{ring}}" />
+        <view class="ring-center">
+          <text class="ring-cap">{{vocab.todayCap}}</text>
+          <text class="ring-num">{{todayMissing ? '—' : todayText}}</text>
+          <text class="ring-pct" wx:if="{{!todayMissing}}">{{pct}}%</text>
+        </view>
+      </view>
+      <view class="today-side">
+        <view class="goal-pill" bindtap="onOpenDailySheet" hover-class="pill-hover">
+          <text>每日目标 {{dailyGoalText}} {{unit}}</text><text class="goal-edit">✎</text>
+        </view>
+        <text class="today-cheer">{{cheer}}</text>
+        <text class="today-eq" wx:if="{{equivalent}}">{{equivalent}}</text>
+        <text class="today-sync {{syncFailed ? 'is-fail' : ''}}">{{syncing ? '正在同步' + vocab.sourceName + '…' : (syncFailed ? '同步失败，下拉重试' : syncText)}}</text>
+      </view>
+    </view>
+
+    <!-- 累计目标 -->
+    <view class="section">
+      <deadline-goal-card goal="{{deadlineGoal}}" walked="{{goalWalked}}" today="{{today}}" unit="{{unit}}" verb="{{vocab.verb}}"
+                          bind:create="onGoalCreate" bind:edit="onGoalEdit" bind:restart="onGoalRestart" />
+    </view>
+
+    <!-- 月历热力图 -->
+    <view class="card section">
+      <month-heatmap year="{{year}}" month="{{month}}" days="{{monthDays}}" goal="{{dailyGoal}}" today="{{today}}" heat="{{heat}}"
+                     selected="{{selected}}" canPrev="{{canPrev}}" canNext="{{canNext}}" loading="{{monthLoading}}"
+                     bind:prev="onPrevMonth" bind:next="onNextMonth" bind:select="onSelectDay" />
+      <view class="selected-line" wx:if="{{selectedText}}">{{selectedText}}</view>
+    </view>
+
+    <!-- 入口 -->
+    <view class="entries section">
+      <view class="entry" bindtap="onGoStats" hover-class="entry-hover"><text class="entry-icon">📊</text><text class="entry-text">统计</text></view>
+      <view class="entry" bindtap="onGoYear" hover-class="entry-hover"><text class="entry-icon">🗓</text><text class="entry-text">年度</text></view>
+      <view class="entry" bindtap="onGoShare" hover-class="entry-hover"><text class="entry-icon">🖼</text><text class="entry-text">海报</text></view>
+    </view>
+    <text class="foot-note" wx:if="{{vocab.equivalent}}">{{vocab.equivalent.label}}距离{{vocab.equivalent.note}}，仅供参考</text>
+  </view>
+
+  <!-- 每日目标面板 -->
+  <view wx:if="{{showDailySheet}}" class="sheet-mask" bindtap="onCloseDailySheet" catchtouchmove="noop">
+    <view class="sheet" catchtap="noop">
+      <text class="sheet-title">每日目标</text>
+      <view class="sheet-value"><text class="sheet-num">{{dailyDraft}}</text><text class="sheet-unit">{{unit}}</text></view>
+      <slider min="{{goalMin}}" max="{{goalMax}}" step="{{goalStep}}" value="{{dailyDraft}}" activeColor="{{heat[4]}}" block-size="24" bindchanging="onDailyDraft" bindchange="onDailyDraft" />
+      <view class="sheet-range"><text>{{goalMin}}</text><text>{{goalMax}}</text></view>
+      <view class="btn-primary" bindtap="onSaveDailyGoal">保存</view>
+    </view>
+  </view>
+
+  <deadline-goal-sheet show="{{showGoalSheet}}" goal="{{sheetGoal}}" config="{{goalConfig}}" today="{{today}}" unit="{{unit}}" verb="{{vocab.verb}}"
+                       bind:submit="onGoalSubmit" bind:close="onGoalSheetClose" bind:abandon="onGoalAbandon" />
+</view>

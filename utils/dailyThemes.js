@@ -250,6 +250,63 @@ const THEMES = {
     cheerForMonth: (achieved, total) =>
       `${total} 天里运动 ${achieved} 天`,
     formatTotal: v => `${v} 次`
+  },
+
+  // ── 数值型主题（kind: 'metric'）：每天一个数 + 每日目标，走 pages/daily/metric/* 共享页面，
+  //    颜色跟随全站主题色（utils/daily/palette.js），不用上面的 DESIGN_TOKENS / accent。
+  //    再加一个数值型主题 = 这里一行 + syncDailyLog THEME_DEFAULTS 一行 + themeCatalog 一张卡片。
+  steps: {
+    id: 'steps',
+    kind: 'metric',
+    // 数据来源：'werun' = 微信运动自动同步（syncDailyLog.syncSource）；不填 = 手动记录（暂未实现）
+    source: 'werun',
+    title: '每日步数',
+    description: '同步微信运动步数，看见每天走过的路',
+
+    unit: '步',
+    unitLabel: '步',
+    defaultGoal: 8000,
+    goalRange: [1000, 30000],
+    goalStep: 500,
+    defaultPresets: [],
+    inverseGoal: false,
+    coverEmoji: '👟',
+    tag: '每日',
+
+    // 页面与海报文案；换一个数值型主题就是换这份词表
+    vocab: {
+      noun: '步数',
+      verb: '走',
+      todayCap: '今日步数',
+      avgLabel: '日均步数',
+      totalLabel: '累计步数',
+      bestLabel: '最高一天',
+      dayUnit: '天',
+      emoji: '👟',
+      emptyText: '这段时间还没有步数记录',
+      signature: '标记吧 · 每日步数',
+      sourceName: '微信运动',
+      // 换算：步数 × 0.7 米 ≈ 距离。页面上标注是估算
+      equivalent: { label: '约合', unit: '公里', factor: 0.0007, digits: 1, note: '按每步 0.7 米估算' }
+    },
+
+    // 截止日期累计目标
+    deadlineGoal: {
+      presets: [100000, 500000, 1000000],
+      min: 10000,
+      max: 50000000,
+      // 开始日期最早能往前选几天：微信运动只给最近 30 天，再早补不回来
+      backfillDays: 30,
+      maxDays: 366
+    },
+
+    cheerFor: (progress, total) => {
+      if (progress >= 1) return '今日目标已达成，走得漂亮';
+      if (progress >= 0.75) return '只差一点点，饭后散个步吧';
+      if (progress >= 0.5) return '已经过半，继续走';
+      if (total > 0) return '每一步都算数';
+      return '今天还没开始走，出门转转吧';
+    }
   }
 
   // ============================================================

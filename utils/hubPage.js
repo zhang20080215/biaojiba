@@ -76,7 +76,8 @@ var DAILY_BLOCK_META = {
   daily_movie: { emoji: '🎬', color: '#F6DED5', label: '#B05B43' }, // 暖陶土
   daily_read:  { emoji: '📖', color: '#E5EAD2', label: '#6E7B45' }, // 橄榄绿（呼应主题色）
   daily_sport: { emoji: '🏋️', color: '#DEE7FF', label: '#3F6AD6' }, // 清新蓝（呼应每日运动页风格）
-  daily_water: { emoji: '💧', color: '#D8E7EC', label: '#3F7E93' }  // 雾蓝
+  daily_water: { emoji: '💧', color: '#D8E7EC', label: '#3F7E93' }, // 雾蓝
+  daily_steps: { emoji: '👟', color: '#E8E3F3', label: '#6A5A9C' }  // 淡紫
 };
 var DAILY_BLOCK_SOON = { emoji: '✨', color: '#EFE9DD', label: '#A89B85' };
 
