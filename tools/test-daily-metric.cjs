@@ -428,11 +428,7 @@ test('report poster redraws the stats page snapshot 1:1 (kline and goal) and onl
   R.draw(ctx, Object.assign({}, base, { period: 'goal', chart: { kind: 'goal', opts: { burnup: b, targetText: '目标 100万步' }, k0: null, kw: null, sel: -1, w: 320, h: 220 } }));
   ['实际累计', '理想进度', '预测', '目标 100万步', '今天'].forEach(t => assert.ok(texts.includes(t), t));
   assert.ok(!texts.includes('均线'), 'goal tab hides the chart settings');
-  assert.deepEqual(R.SIZE, { width: 1242, height: 1660 });
-  // 排版区等比缩进 3:4 画布：不超宽、不超高，居中
-  const at = R.placement(base);
-  assert.ok(R.WIDTH * at.k <= 1242 + 1e-9 && at.h * at.k <= 1660 + 1e-9);
-  assert.ok(Math.abs(at.x * 2 + R.WIDTH * at.k - 1242) < 1e-6);
+  assert.equal(R.WIDTH, 1080);
   // 高随内容：两行汇总格子比一行高
   assert.ok(R.heightOf(Object.assign({}, base, { kpi: base.kpi.concat(base.kpi, base.kpi) })) > R.heightOf(base));
 });

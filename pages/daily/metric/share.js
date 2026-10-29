@@ -1,6 +1,6 @@
 // 数值型每日主题 · 统计报表海报（?theme=steps）
 // 统计页点「生成海报」时把页面当前的样子拍成快照（stats.js _snapshot，放在 globalData.metricReport），
-// 这里按页面 1:1 画好、等比放进 1242×1660（小红书 3:4，utils/metricReportPoster.js，颜色跟当时的全站主题色），
+// 这里按页面 1:1 画成一张长图（utils/metricReportPoster.js：宽 1080、高随内容，颜色跟当时的全站主题色），
 // 只在底部加「标记吧小程序」水印。没有任何可调项：要换周期 / 画法 / 缩放，回统计页调好再生成。
 // canvas 是原生组件、藏不住，直接拿它当屏幕预览（CSS 缩放显示），导出的临时文件只给「保存到相册」用；
 // 保存前要看激励视频（rewardedSaveGate，slot save_image_rewarded）。
@@ -32,6 +32,7 @@ Page({
     const snap = app.globalData && app.globalData.metricReport;
     // 只认同一个主题的快照；没有（比如页面被系统回收后恢复）就提示回统计页重新生成
     this._snap = snap && snap.themeId === theme.id ? snap : null;
+    this._height = this._snap ? ReportPoster.heightOf(this._snap) : Math.round(ReportPoster.WIDTH * 4 / 3);
     const win = D.getWindowInfoCompat();
     const previewW = Math.min(Math.round((win.windowWidth || 375) * 0.84), 340);
     this.setData({
@@ -41,7 +42,7 @@ Page({
       empty: !this._snap,
       emptyText: '请回到统计页重新点「生成海报」',
       previewW,
-      previewH: Math.round(previewW * ReportPoster.SIZE.height / ReportPoster.SIZE.width)
+      previewH: Math.round(previewW * this._height / ReportPoster.WIDTH)
     });
     rewardedSaveGate.refreshHint(this);
   },
@@ -70,8 +71,8 @@ Page({
         });
       });
       if (this._destroyed) return;
-      canvas.width = ReportPoster.SIZE.width;
-      canvas.height = ReportPoster.SIZE.height;
+      canvas.width = ReportPoster.WIDTH;
+      canvas.height = this._height;
       ReportPoster.draw(canvas.getContext('2d'), this._snap);
       // 双帧让绘制提交到 bitmap，避免导出空白
       await new Promise(resolve => canvas.requestAnimationFrame(() => canvas.requestAnimationFrame(resolve)));
