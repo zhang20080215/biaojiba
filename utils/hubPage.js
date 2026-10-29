@@ -646,8 +646,15 @@ module.exports = function createHubPage(pageKind) {
   // 鍒嗙被Tab鍒囨崲
   onTabTap(e) {
     const tab = e.currentTarget.dataset.tab;
-    this.setData({ activeTab: tab });
+    this.setData({ activeTab: tab, searchQuery: this._queryWithoutKeyword() });
     this.filterThemes(tab);
+  },
+
+  // 换分类 / 换顶部分区时，已选的快捷标签要清掉（否则高亮还在、结果被旧标签继续过滤）；
+  // 手打的搜索词不算标签，保留
+  _queryWithoutKeyword() {
+    const q = this.data.searchQuery;
+    return SEARCH_QUICK_WORDS.indexOf(q) >= 0 ? '' : q;
   },
 
   onSearchInput(e) {
@@ -1071,7 +1078,10 @@ module.exports = function createHubPage(pageKind) {
   onHomeSearch(e) { hubStore.switchTo('discover', { query: (e.detail && e.detail.value) || this.data.searchQuery || '' }); },
   onDiscoverSection(e) {
     const section = e.currentTarget.dataset.section;
-    this.setData({ discoverSection: section });
+    const searchQuery = this._queryWithoutKeyword();
+    const cleared = searchQuery !== this.data.searchQuery;
+    this.setData({ discoverSection: section, searchQuery });
+    if (cleared) this.filterThemes(this.data.activeTab);
     if (section === 'custom') this.loadCustomLists();
   },
   // 首次读显示「读取中」，之后（从编辑页回来等）静默刷新，读失败也保留已有卡片

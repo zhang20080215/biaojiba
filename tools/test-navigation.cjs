@@ -722,3 +722,22 @@ test('custom tab bar hides while a hub sheet or modal is open (it is drawn above
   assert.deepEqual(hidden, [true, false, true, false, true, false]);
   f.page.onUnload();
 });
+test('discover: switching the left category or the top section clears the selected quick tag, but keeps typed search', async () => {
+  const f = fixture('discover');
+  f.page.onLoad(); f.page.onShow();
+  await new Promise(resolve => setImmediate(resolve));
+  const tag = id => ({ currentTarget: { dataset: { keyword: id } } });
+  f.page.onSearchKeywordTap(tag('豆瓣'));
+  assert.equal(f.page.data.searchQuery, '豆瓣');
+  f.page.onTabTap({ currentTarget: { dataset: { tab: 'movie' } } });
+  assert.equal(f.page.data.activeTab, 'movie');
+  assert.equal(f.page.data.searchQuery, '', 'left category clears the tag');
+  f.page.onSearchKeywordTap(tag('豆瓣'));
+  f.page.onDiscoverSection({ currentTarget: { dataset: { section: 'daily' } } });
+  assert.equal(f.page.data.searchQuery, '', 'top section clears the tag');
+  f.page.onDiscoverSection({ currentTarget: { dataset: { section: 'lists' } } });
+  f.page.onSearchInput({ detail: { value: '东野' } });
+  f.page.onTabTap({ currentTarget: { dataset: { tab: 'reading' } } });
+  assert.equal(f.page.data.searchQuery, '东野', 'typed search is not a tag and stays');
+  f.page.onUnload();
+});
