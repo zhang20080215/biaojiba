@@ -1,7 +1,7 @@
 // 数值型每日主题 · 统计报表海报（?theme=steps）
 // 统计页点「生成海报」时把页面当前的样子拍成快照（stats.js _snapshot，放在 globalData.metricReport），
 // 这里按页面 1:1 画成一张长图（utils/metricReportPoster.js：宽 1080、高随内容，颜色跟当时的全站主题色），
-// 只在底部加「搜索“标记吧”小程序，免费制作同款图」水印。没有任何可调项：要换周期 / 画法 / 缩放，回统计页调好再生成。
+// 只在底部加「搜索「标记吧」小程序，免费制作同款图」水印。没有任何可调项：要换周期 / 画法 / 缩放，回统计页调好再生成。
 // canvas 是原生组件、藏不住，直接拿它当屏幕预览（CSS 缩放显示），导出的临时文件只给「保存到相册」用；
 // 保存前要看激励视频（rewardedSaveGate，slot save_image_rewarded）。
 const toast = require('../../../utils/dailyToast.js');

@@ -419,7 +419,7 @@ test('report poster redraws the stats page snapshot 1:1 (kline and goal) and onl
   R.draw(ctx, Object.assign({}, base, {
     chart: { kind: 'kline', opts: { candles: K.buildCandles(map, 'week'), period: 'week', mode: 'candle', value: 'main', goal: 8000, showGoal: true, goalText: '目标 8,000', format: 'count', showMA: true }, V: 20, offset: 0, sel: 3 }
   }));
-  ['每日步数统计', '9,204', '较上一周 ▼ 3.1%', '开', 'K线', '均线', '目标 8,000', '达标天数', '搜索“标记吧”小程序，免费制作同款图'].forEach(t => assert.ok(texts.includes(t), t));
+  ['每日步数统计', '9,204', '较上一周 ▼ 3.1%', '开', 'K线', '均线', '目标 8,000', '达标天数', '搜索「标记吧」小程序，免费制作同款图'].forEach(t => assert.ok(texts.includes(t), t));
   assert.ok(!texts.includes('30天'), 'the day-range buttons only show on the day tab, as on the page');
   assert.ok(!texts.includes('生成海报'));
   assert.ok(texts.some(t => t.startsWith('MA5 ')));
