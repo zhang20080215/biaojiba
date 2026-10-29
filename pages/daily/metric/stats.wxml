@@ -22,12 +22,12 @@
     </view>
 
     <view class="card chart-card">
-      <!-- 左：日 / 周 / 月 / 年；右：这张图的设置 -->
+      <!-- 左：日 / 周 / 月 / 年（+ 有累计目标时的「目标」）；右：这张图的设置（目标页签用不上，只隐藏、仍占位） -->
       <view class="chart-head">
         <view class="periods">
           <view wx:for="{{periods}}" wx:key="key" class="period {{period === item.key ? 'is-on' : ''}}" data-key="{{item.key}}" bindtap="onPeriod">{{item.label}}</view>
         </view>
-        <view class="opts">
+        <view class="opts {{period === 'goal' ? 'is-hidden' : ''}}">
           <view class="opt-group">
             <view wx:for="{{modes}}" wx:key="key" class="opt {{mode === item.key ? 'is-on' : ''}}" data-mode="{{item.key}}" bindtap="onMode">{{item.label}}</view>
           </view>
@@ -41,10 +41,11 @@
           <view wx:for="{{aggs}}" wx:key="key" class="opt {{agg === item.key ? 'is-on' : ''}}" data-agg="{{item.key}}" bindtap="onAgg">{{item.label}}</view>
         </view>
       </view>
-      <kline-chart wx:if="{{!empty}}" candles="{{candles}}" period="{{period}}" mode="{{mode}}" value="{{chartValue}}" visible="{{visible}}"
+      <goal-chart wx:if="{{period === 'goal'}}" burnup="{{burnup}}" accent="{{accent}}" targetText="{{targetText}}" bind:select="onGoalSelect" />
+      <kline-chart wx:elif="{{!empty}}" candles="{{candles}}" period="{{period}}" mode="{{mode}}" value="{{chartValue}}" visible="{{visible}}"
                    goal="{{goalPlot}}" showGoal="{{showGoal}}" goalText="{{goalText}}" format="{{format}}" accent="{{accent}}" showMA="{{showMA}}"
                    bind:select="onSelect" />
-      <view class="empty-tip" wx:if="{{empty && !loading}}">还没有数据</view>
+      <view class="empty-tip" wx:if="{{empty && !loading && period !== 'goal'}}">还没有数据</view>
     </view>
 
     <block wx:if="{{kpi.length}}">

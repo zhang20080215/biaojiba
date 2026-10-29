@@ -5,12 +5,15 @@
 // 周 / 月 / 年的柱形和折线看「日均」还是「总数」（只有步数有；箱体固定看平均和高低）、均线开关；都按主题记在本地。
 // 年度原来是单独一页（全年热力格），2026-10-28 并进这里的「年」；图下的读图说明和月历也一并去掉了。
 // 睡眠画的是入睡时间，取反后越早越往上（红 = 比上一根早）。
+// 有进行中的截止日期累计目标时，周期后面多一个「目标」：累计进度图（components/daily/goal-chart，算法在 utils/daily/burnup.js），
+// 这时右边的画法 / 均线和「日均 / 总数」一行都用不上，只隐藏、仍占位。
 const toast = require('../../../utils/dailyToast.js');
 const D = require('../../../utils/daily/date.js');
 const M = require('../../../utils/daily/metric.js');
 const T = require('../../../utils/daily/clock.js');
 const K = require('../../../utils/daily/kline.js');
 const V = require('../../../utils/daily/views.js');
+const B = require('../../../utils/daily/burnup.js');
 const C = require('./common.js');
 
 const PERIODS = {
@@ -53,6 +56,8 @@ Page({
     goalText: '',
     showGoal: true,
     format: 'count',
+    burnup: null,           // 「目标」页签的数据（没有进行中的目标时为 null，页签不出现）
+    targetText: '',
 
     // 表头（选中的那一根，没选就是最新一根）
     cap: '',
@@ -119,7 +124,16 @@ Page({
       this._plot = {};
       Object.keys(this._map).forEach(d => { this._plot[d] = clock ? -this._map[d] : this._map[d]; });
       this._allDays = days;
+      const dg = r.settings && r.settings.deadlineGoal;
+      const burnup = dg ? B.buildBurnup(dg, this._map, goal, today, (this.theme.deadlineGoal || {}).mode || 'sum', this.theme.measure) : null;
+      this._burnup = burnup;
+      const keys = Object.keys(PERIODS).concat(burnup ? ['goal'] : []);
+      const unit = (this.theme.deadlineGoal || {}).unit || this.theme.unit;
       this.setData({
+        periods: keys.map(k => ({ key: k, label: k === 'goal' ? '目标' : PERIODS[k].label })),
+        // 函数字段过不了 setData，组件自己按 target / span 算理想值
+        burnup: burnup ? Object.assign({}, burnup, { idealAt: null }) : null,
+        targetText: burnup ? `目标 ${burnup.mode === 'days' ? burnup.target : M.formatShort(burnup.target)}${unit}` : '',
         goal,
         goalPlot: clock ? -goal : goal,
         goalText: '目标 ' + (clock ? T.offsetToClock(goal) : M.formatShort(goal)),
@@ -136,6 +150,7 @@ Page({
 
   _build() {
     const p = this.data.period;
+    if (p === 'goal') return this._renderGoal();
     this._candles = K.buildCandles(this._plot || {}, p);
     this.setData({ candles: this._candles, visible: PERIODS[p].visible });
     this._applyOptions();
@@ -144,6 +159,7 @@ Page({
   // 设置项一变：图表取哪个数、目标线要不要、表头、图例都跟着变
   _applyOptions() {
     const { period, mode, agg, format } = this.data;
+    if (period === 'goal') return;
     const showAgg = period !== 'day' && mode !== 'box' && format === 'count';
     const useSum = showAgg && agg === 'sum';
     this.setData({
@@ -183,6 +199,31 @@ Page({
     const showMA = !this.data.showMA;
     try { wx.setStorageSync(this._maKey, showMA ? 'on' : 'off'); } catch (err) { /* ignore */ }
     this.setData({ showMA });
+  },
+
+  // 「目标」页签：表头 / 汇总看整个目标，选中某一天就看那天为止的累计
+  _renderGoal(k) {
+    const b = this._burnup;
+    if (!b) return;
+    const v = B.goalView(b, this.theme, k);
+    const pt = k > 0 ? b.points[k] : null;
+    this.setData({
+      showAgg: false,
+      cap: v.cap,
+      big: v.big,
+      bigUnit: v.bigUnit,
+      change: v.change,
+      changeColor: v.tone === 'up' ? UP : v.tone === 'down' ? DOWN : '',
+      ohlc: v.ohlc,
+      note: '',
+      sumTitle: v.sumTitle,
+      kpi: v.kpi,
+      selectedDay: pt ? pt.date : ''
+    });
+  },
+
+  onGoalSelect(e) {
+    this._renderGoal(e.detail.index);
   },
 
   onSelect(e) {

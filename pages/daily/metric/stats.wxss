@@ -131,6 +131,7 @@
   background: var(--brand-tint, #EEF2E5);
   font-weight: 600;
 }
+.opts.is-hidden,
 .chart-sub.is-hidden {
   visibility: hidden;
 }

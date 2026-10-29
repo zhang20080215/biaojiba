@@ -323,3 +323,56 @@ test('smooth line passes through every point and never overshoots', () => {
   });
   assert.ok(d.includes('C23.3,100 26.7,100 30,100'), d);                       // 两天相同 → 平直，不鼓包
 });
+
+test('burnup: cumulative line, ideal pace, projection and header text', () => {
+  const B = require('../utils/daily/burnup');
+  const { THEMES } = require('../utils/dailyThemes');
+  const goal = { target: 1000000, startDate: '2026-10-01', endDate: '2026-12-31' };   // 92 天
+  const map = {};
+  for (let d = '2026-10-01'; d <= '2026-10-29'; d = D.addDays(d, 1)) map[d] = 9000;
+  delete map['2026-10-10'];                                    // 无数据：不加，但曲线不断
+  const b = B.buildBurnup(goal, map, 8000, '2026-10-29', 'sum', 'count');
+  assert.equal(b.span, 92);
+  assert.equal(b.elapsed, 29);
+  assert.equal(b.points.length, 30);
+  assert.deepEqual(b.points[0], { k: 0, date: '', add: null, cum: 0 });
+  assert.equal(b.points[10].add, null);
+  assert.equal(b.points[10].cum, b.points[9].cum);
+  assert.equal(b.walked, 28 * 9000);
+  assert.equal(Math.round(b.ideal), Math.round(1000000 * 29 / 92));
+  assert.ok(b.diff < 0);
+  assert.equal(b.finishDate, '');                              // 这个速度到不了
+  assert.equal(b.projected, Math.round(252000 + 252000 / 29 * 63));
+  assert.equal(b.projEndK, 92);
+  const v = B.goalView(b, THEMES.steps, -1);
+  assert.equal(v.cap, '12月31日前走满 100万步 · 已走');
+  assert.equal(v.big, '252,000');
+  assert.equal(v.tone, 'down');
+  assert.ok(v.change.startsWith('落后理想进度 '), v.change);
+  assert.deepEqual(v.ohlc.map(o => o.k), ['预计截止时', '每天还需']);
+  assert.equal(v.kpi.length, 4);
+  // 选中某一天：累计 + 当天 + 理想
+  const s = B.goalView(b, THEMES.steps, 10);
+  assert.equal(s.cap, '10月10日 · 累计');
+  assert.equal(s.ohlc[0].v, '无数据');
+
+  // 走得快：预测线停在到达那天
+  const fast = {};
+  for (let d = '2026-10-01'; d <= '2026-10-29'; d = D.addDays(d, 1)) fast[d] = 20000;
+  const f = B.buildBurnup(goal, fast, 8000, '2026-10-29', 'sum', 'count');
+  assert.equal(f.projEndK, 29 + Math.ceil((1000000 - 580000) / 20000));
+  assert.equal(f.finishDate, D.addDays('2026-10-01', f.projEndK - 1));
+  assert.equal(B.goalView(f, THEMES.steps).tone, 'up');
+  assert.equal(B.goalView(f, THEMES.steps).ohlc[0].v, D.formatDateCN(f.finishDate) + '达成');
+
+  // 睡眠：累计的是早睡天数
+  const sleep = { '2026-10-01': 640, '2026-10-02': 700, '2026-10-03': 650 };
+  const z = B.buildBurnup({ target: 30, startDate: '2026-10-01', endDate: '2026-10-30' }, sleep, 660, '2026-10-03', 'days', 'bedtime');
+  assert.equal(z.walked, 2);
+  assert.deepEqual(z.points.map(p => p.add), [null, 1, 0, 1]);
+  const zv = B.goalView(z, THEMES.sleep);
+  assert.equal(zv.cap, '10月30日前早睡满 30天 · 已早睡');
+  assert.equal(zv.kpi[2].label, '达标率');
+
+  assert.equal(B.buildBurnup(null, map, 8000, '2026-10-29', 'sum'), null);
+});

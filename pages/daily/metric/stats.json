@@ -4,6 +4,7 @@
   "backgroundColor": "#FAFAFA",
   "usingComponents": {
     "daily-nav": "/components/daily/daily-nav/index",
-    "kline-chart": "/components/daily/kline-chart/index"
+    "kline-chart": "/components/daily/kline-chart/index",
+    "goal-chart": "/components/daily/goal-chart/index"
   }
 }
