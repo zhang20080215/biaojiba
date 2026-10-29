@@ -1,21 +1,23 @@
 /**
  * 数值型每日主题 · 统计报表海报
  *
- * 就是统计页（pages/daily/metric/stats）此刻的样子，按页面的 rpx 尺寸、颜色、字号 1:1 画到 canvas 上，
- * 宽 1080（1rpx = 1.44px），高随内容；不加任何页面上没有的东西，只在最底下加一行「标记吧小程序」水印。
+ * 就是统计页（pages/daily/metric/stats）此刻的样子，按页面的 rpx 尺寸、颜色、字号 1:1 排好（排版宽 1080，1rpx = 1.44px，
+ * 高随内容，约 2200），再整体等比缩放、居中放进 1242×1660（小红书 3:4）的画布，左右空出来的地方是页面同色底。
+ * 不加任何页面上没有的东西，只在最底下加一行「标记吧小程序」水印。
  * 页面上的操作控件（左上返回、底部「生成海报」按钮）不画；按钮组（日周月年目标、画法、均线、日均总数、
  * 30/180/365 天）照页面的选中状态画，它们本身就是报表的一部分。
  * 图表直接调 utils/daily/klineDraw.js / goalDraw.js —— 和页面组件同一份绘制代码，按页面上的画布尺寸等比放大。
  * ⚠ 下面的 rpx 数字抄自 stats.wxss / common.wxss / daily-nav，改页面样式时这里要跟着改。
  *
- * 用法：const h = heightOf(snap); canvas.height = h; draw(ctx, snap)
+ * 用法：canvas.width = SIZE.width; canvas.height = SIZE.height; draw(ctx, snap)
  *   snap 由统计页 stats.js 的 _snapshot() 生成
  */
 const KD = require('./daily/klineDraw.js');
 const GD = require('./daily/goalDraw.js');
 const P = require('./daily/palette.js');
 
-const WIDTH = 1080;
+const WIDTH = 1080;                              // 排版宽（按页面 750rpx 等比）
+const SIZE = { width: 1242, height: 1660 };      // 出图尺寸：小红书 3:4
 const S = WIDTH / 750;                           // 1rpx 在海报上是几 px
 const FONT = '"PingFang SC", "Helvetica Neue", sans-serif';
 const LH = 1.4;                                  // 页面文字的 line-height: normal
@@ -304,12 +306,27 @@ function watermark(ctx, H) {
   text(ctx, WATERMARK, WIDTH / 2, H - r(MARK_H / 2), 24, C.inkMuted, 400, 'center');
 }
 
+// 排版区（WIDTH × heightOf）在出图画布上的缩放比例和位置：等比缩到放得下，水平垂直居中
+function placement(snap) {
+  const h = heightOf(snap);
+  const k = Math.min(SIZE.width / WIDTH, SIZE.height / h);
+  return { k, x: (SIZE.width - WIDTH * k) / 2, y: (SIZE.height - h * k) / 2, h };
+}
+
 function draw(ctx, snap) {
-  const H = heightOf(snap);
-  const p = P.get(P.idFromClass(snap.colorClass));
-  ctx.clearRect(0, 0, WIDTH, H);
+  ctx.clearRect(0, 0, SIZE.width, SIZE.height);
   ctx.fillStyle = C.page;
-  ctx.fillRect(0, 0, WIDTH, H);
+  ctx.fillRect(0, 0, SIZE.width, SIZE.height);
+  const at = placement(snap);
+  ctx.save();
+  ctx.translate(at.x, at.y);
+  ctx.scale(at.k, at.k);
+  drawPage(ctx, snap, at.h);
+  ctx.restore();
+}
+
+function drawPage(ctx, snap, H) {
+  const p = P.get(P.idFromClass(snap.colorClass));
   let y = nav(ctx, snap) + 16;
   y = quote(ctx, snap, y);
   y = chartCard(ctx, snap, y, p);
@@ -317,4 +334,4 @@ function draw(ctx, snap) {
   watermark(ctx, H);
 }
 
-module.exports = { WIDTH, heightOf, draw };
+module.exports = { SIZE, WIDTH, heightOf, placement, draw };
