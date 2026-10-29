@@ -376,3 +376,39 @@ test('burnup: cumulative line, ideal pace, projection and header text', () => {
 
   assert.equal(B.buildBurnup(null, map, 8000, '2026-10-29', 'sum'), null);
 });
+
+test('werun auto sync: once a day, only for users who already authorised, never pops a dialog', async () => {
+  const S = require('../utils/daily/werunAutoSync');
+  const store = {}, calls = [];
+  let auth = { 'scope.werun': true }, needPrivacy = false, cloudOk = true;
+  global.wx = {
+    getStorageSync: k => store[k], setStorageSync: (k, v) => { store[k] = v; },
+    getSetting: o => o.success({ authSetting: auth }),
+    getPrivacySetting: o => o.success({ needAuthorization: needPrivacy }),
+    getWeRunData: o => { calls.push('getWeRunData'); o.success({ cloudID: 'cid' }); },
+    cloud: {
+      CloudID: id => ({ cloudID: id }),
+      callFunction: async ({ name, data }) => { calls.push(name + ':' + data.action + ':' + data.theme); return { result: { success: cloudOk } }; }
+    }
+  };
+  const now = Date.parse('2026-10-29T02:00:00Z');
+  auth = {};
+  assert.equal(await S.maybeSync(now), 'no-auth');                      // 没用过步数：不调 getWeRunData，不弹授权
+  auth = { 'scope.werun': false };
+  assert.equal(await S.maybeSync(now), 'no-auth');                      // 拒绝过：同样不打扰
+  auth = { 'scope.werun': true }; needPrivacy = true;
+  assert.equal(await S.maybeSync(now), 'privacy');                      // 隐私协议待同意：不在首页弹隐私窗
+  assert.deepEqual(calls, []);
+  needPrivacy = false; cloudOk = false;
+  assert.equal(await S.maybeSync(now), 'fail');                         // 失败不记日期，下次再试
+  assert.equal(store[S.KEY], undefined);
+  cloudOk = true;
+  assert.equal(await S.maybeSync(now), 'synced');
+  assert.equal(store[S.KEY], '2026-10-29');
+  assert.deepEqual(calls.slice(-2), ['getWeRunData', 'syncDailyLog:syncSource:steps']);
+  assert.equal(await S.maybeSync(now + 3600e3), 'skip');               // 同一天不再同步
+  assert.equal(await S.maybeSync(now + 24 * 3600e3), 'synced');       // 第二天再来一次
+  S.markSynced(now + 48 * 3600e3);                                     // 步数页自己同步过，也算
+  assert.equal(await S.maybeSync(now + 48 * 3600e3), 'skip');
+  delete global.wx;
+});

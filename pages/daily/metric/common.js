@@ -2,6 +2,7 @@
 const { THEMES } = require('../../../utils/dailyThemes.js');
 const palette = require('../../../utils/daily/palette.js');
 const D = require('../../../utils/daily/date.js');
+const autoSync = require('../../../utils/daily/werunAutoSync.js');
 
 const DEFAULT_THEME = 'steps';
 
@@ -76,6 +77,8 @@ async function syncSource(theme) {
       source: 'werun',
       weRunData: wx.cloud.CloudID(res.cloudID)
     });
+    // 记下今天已同步，app.onShow 里的后台同步今天就不再跑（utils/daily/werunAutoSync.js）
+    autoSync.markSynced();
     return { ok: true, changed: (r.added || 0) + (r.updated || 0) > 0 };
   } catch (err) {
     console.warn('[metric] syncSource fail', err);
