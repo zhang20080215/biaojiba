@@ -135,7 +135,7 @@
 .chart-sub .is-hidden {
   visibility: hidden;
 }
-/* 第二行：左边区间 / 日均总数 / 图例，右边均线 */
+/* 第二行：目标页签左边是图例，周月年右边是日均 / 总数 */
 .chart-sub {
   display: flex;
   height: 52rpx;
@@ -143,10 +143,15 @@
   justify-content: space-between;
   margin: -4rpx 0 4rpx;
 }
-.sub-left {
+.sub-left,
+.sub-right {
   display: flex;
   align-items: center;
   gap: 12rpx;
+}
+/* 日均 / 总数 靠右，和上面一行的画法、均线右缘对齐 */
+.sub-right {
+  margin-left: auto;
 }
 .goal-legend {
   gap: 24rpx;

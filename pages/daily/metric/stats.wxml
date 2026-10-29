@@ -22,7 +22,7 @@
     </view>
 
     <view class="card chart-card">
-      <!-- 第一行 左：日 / 周 / 月 / 年（+ 有累计目标时的「目标」）；右：画法（目标页签用不上，只隐藏、仍占位） -->
+      <!-- 第一行 左：日 / 周 / 月 / 年（+ 有累计目标时的「目标」）；右：画法 + 均线（目标页签用不上，只隐藏、仍占位） -->
       <view class="chart-head">
         <view class="periods">
           <view wx:for="{{periods}}" wx:key="key" class="period {{period === item.key ? 'is-on' : ''}}" data-key="{{item.key}}" bindtap="onPeriod">{{item.label}}</view>
@@ -31,9 +31,10 @@
           <view class="opt-group">
             <view wx:for="{{modes}}" wx:key="key" class="opt {{mode === item.key ? 'is-on' : ''}}" data-mode="{{item.key}}" bindtap="onMode">{{item.label}}</view>
           </view>
+          <view class="opt opt-single {{showMA ? 'is-on' : ''}}" bindtap="onToggleMA">均线</view>
         </view>
       </view>
-      <!-- 第二行 左边随周期变：周月年 = 看日均还是总数；目标 = 三条线的图例；日 = 空着（近 N 天在下面汇总标题里选）。右边均线开关。
+      <!-- 第二行：目标 = 左边三条线的图例；周月年 = 右边「每X看 日均 / 总数」；日 = 空着（近 N 天在下面汇总标题里选）。
            这一行永远在，用不上的只隐藏、仍占位，切换时图表不上下跳 -->
       <view class="chart-sub">
         <view class="sub-left goal-legend" wx:if="{{period === 'goal'}}">
@@ -41,14 +42,13 @@
           <view class="lg"><view class="lg-line is-dash"></view><text>理想进度</text></view>
           <view class="lg"><view class="lg-line is-dot"></view><text>预测</text></view>
         </view>
-        <view class="sub-left {{showAgg ? '' : 'is-hidden'}}" wx:else>
-          <!-- 日视图也渲染这一组（showAgg 恒为 false → 隐藏占位），保证这一行的高度和左右排布不变 -->
+        <view class="sub-right {{showAgg ? '' : 'is-hidden'}}" wx:else>
+          <!-- 日视图也渲染这一组（showAgg 恒为 false → 隐藏占位），保证这一行的高度不变 -->
           <text class="chart-sub-label">每{{period === 'week' ? '周' : period === 'year' ? '年' : '月'}}看</text>
           <view class="opt-group">
             <view wx:for="{{aggs}}" wx:key="key" class="opt {{agg === item.key ? 'is-on' : ''}}" data-agg="{{item.key}}" bindtap="onAgg">{{item.label}}</view>
           </view>
         </view>
-        <view class="opt opt-single {{showMA ? 'is-on' : ''}} {{period === 'goal' ? 'is-hidden' : ''}}" bindtap="onToggleMA">均线</view>
       </view>
       <goal-chart wx:if="{{period === 'goal'}}" burnup="{{burnup}}" accent="{{accent}}" targetText="{{targetText}}" bind:select="onGoalSelect" />
       <kline-chart wx:elif="{{!empty}}" candles="{{candles}}" period="{{period}}" mode="{{mode}}" value="{{chartValue}}" visible="{{visible}}"
