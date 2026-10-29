@@ -1,0 +1,197 @@
+@import "./common.wxss";
+
+/* 表头学股票行情：时间段 → 大数字 + 涨跌 → 开收高低 */
+.quote {
+  margin: 32rpx 8rpx 24rpx;
+}
+.quote-cap {
+  display: block;
+  height: 34rpx;
+  line-height: 34rpx;
+  font-size: 24rpx;
+  color: var(--text-muted, #9C998F);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.quote-main {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: nowrap;
+  height: 96rpx;
+  margin-top: 6rpx;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.quote-num {
+  font-size: 72rpx;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary, #2D2D2B);
+}
+.quote-unit {
+  font-size: 26rpx;
+  color: var(--text-secondary, #6F6F68);
+  margin-left: 8rpx;
+}
+.quote-chg {
+  margin-left: 20rpx;
+  font-size: 26rpx;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted, #9C998F);
+}
+.quote-sub {
+  height: 40rpx;
+  margin-top: 8rpx;
+  overflow: hidden;
+}
+.ohlc {
+  display: flex;
+  align-items: center;
+  height: 40rpx;
+}
+.ohlc-item {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 8rpx;
+}
+.ohlc-k {
+  font-size: 22rpx;
+  color: var(--text-muted, #9C998F);
+}
+.ohlc-v {
+  font-size: 26rpx;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary, #2D2D2B);
+}
+.quote-note {
+  display: block;
+  line-height: 40rpx;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 24rpx;
+  color: var(--text-secondary, #6F6F68);
+}
+
+.chart-card {
+  padding: 20rpx 20rpx 16rpx;
+}
+.chart-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12rpx;
+}
+/* 日 / 周 / 月：图表左上，分段按钮 */
+.periods {
+  display: flex;
+  background: var(--bg-section, #F5F5F4);
+  border-radius: 99rpx;
+  padding: 4rpx;
+}
+.period {
+  min-width: 56rpx;
+  height: 52rpx;
+  line-height: 52rpx;
+  text-align: center;
+  border-radius: 99rpx;
+  font-size: 26rpx;
+  color: var(--text-secondary, #6F6F68);
+}
+.period.is-on {
+  background: var(--bg-card, #FFFFFF);
+  color: var(--text-primary, #2D2D2B);
+  font-weight: 700;
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.06);
+}
+/* 右侧设置：画法二选一 + 均线开关 */
+.opts {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+.opt-group {
+  display: flex;
+  border: 2rpx solid var(--line-subtle, #EAEAE7);
+  border-radius: 99rpx;
+  overflow: hidden;
+}
+.opt {
+  padding: 8rpx 14rpx;
+  font-size: 22rpx;
+  color: var(--text-muted, #9C998F);
+}
+.opt.is-on {
+  color: var(--brand-accent, #526631);
+  background: var(--brand-tint, #EEF2E5);
+  font-weight: 600;
+}
+.opts.is-hidden,
+.chart-sub .is-hidden {
+  visibility: hidden;
+}
+/* 第二行：目标页签左边是图例，周月年右边是日均 / 总数 */
+.chart-sub {
+  display: flex;
+  height: 52rpx;
+  align-items: center;
+  justify-content: space-between;
+  margin: -4rpx 0 4rpx;
+}
+.sub-left,
+.sub-right {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+/* 日均 / 总数 靠右，和上面一行的画法、均线右缘对齐 */
+.sub-right {
+  margin-left: auto;
+}
+.goal-legend {
+  gap: 24rpx;
+  padding-left: 8rpx;
+}
+.lg {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  font-size: 22rpx;
+  color: var(--text-secondary, #6F6F68);
+}
+.lg-line {
+  width: 28rpx;
+  border-top: 4rpx solid var(--brand-accent, #526631);
+}
+.lg-line.is-dash {
+  border-top: 3rpx dashed #A7A498;
+}
+.lg-line.is-dot {
+  border-top: 3rpx dotted var(--brand-accent, #526631);
+  opacity: 0.7;
+}
+.chart-sub-label {
+  font-size: 22rpx;
+  color: var(--text-muted, #9C998F);
+}
+.opt-single {
+  border: 2rpx solid var(--line-subtle, #EAEAE7);
+  border-radius: 99rpx;
+}
+
+.sec-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52rpx;
+  margin: 28rpx 8rpx 0;
+}
+.sec-title {
+  font-size: 24rpx;
+  color: var(--text-muted, #9C998F);
+}

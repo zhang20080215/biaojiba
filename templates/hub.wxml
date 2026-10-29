@@ -39,7 +39,8 @@
   <!-- 首页搜索行：跨在头图底边上（一半压头图、一半落正文），左右与标题、正文同一条 16px 边线 -->
   <view wx:if="{{pageKind === 'home'}}" class="hub-hero-search-row">
     <view class="hub-search hub-hero-search"><view class="hub-search-icon" aria-hidden="true"></view><input placeholder="片单、书单、旅行" aria-label="搜索主题" placeholder-class="hub-input-placeholder" value="{{searchQuery}}" bindinput="onSearchInput" bindconfirm="onHomeSearch" confirm-type="search" maxlength="80" /></view>
-    <button class="hub-feedback-btn" open-type="feedback" bindtap="onFeedbackTap" aria-label="意见反馈"><view class="hub-feedback-icon" aria-hidden="true"></view><text class="hub-feedback-text">反馈</text></button>
+    <!-- 2026-10-29 由「反馈」(open-type=feedback) 改成「客服」，进小程序客服会话；意见反馈仍在「我的」菜单里。样式类名沿用 hub-feedback-* -->
+    <button class="hub-feedback-btn" open-type="contact" bindtap="onFeedbackTap" aria-label="联系客服"><view class="hub-feedback-icon" aria-hidden="true"></view><text class="hub-feedback-text">客服</text></button>
   </view>
   <view wx:if="{{pageKind === 'home' && showAdFreeTip}}" class="hub-adfree-tip {{adFreePassUntilText ? 'hub-adfree-tip-on' : ''}}">
     <text wx:if="{{adFreePassUntilText}}" class="hub-adfree-text">页面广告已关闭至 {{adFreePassUntilText}}</text><button wx:if="{{adFreePassUntilText}}" class="hub-adfree-help" bindtap="onAdFreeHelp" aria-label="哪些广告不在 30 分钟范围内">?</button>
@@ -48,7 +49,7 @@
 
   <block wx:if="{{pageKind === 'home'}}">
     <view class="hub-section-top hub-section"><text class="hub-section-title">每日标记</text></view>
-    <view class="hub-daily"><view wx:for="{{dailyBlocks}}" wx:key="key" class="hub-daily-item" hover-class="hub-pressed" data-id="{{item.id}}" bindtap="onOpenTheme" role="button" aria-label="{{item.title}}"><view class="hub-daily-icon"><view class="hub-glyph icon-{{item.iconKey}}" aria-hidden="true"></view></view><text>{{item.title}}</text></view></view>
+    <view class="hub-daily"><view wx:for="{{dailyBlocks}}" wx:key="key" class="hub-daily-item" hover-class="hub-pressed" data-id="{{item.id}}" bindtap="onOpenTheme" role="button" aria-label="{{item.title}}"><view class="hub-daily-icon"><view class="hub-glyph icon-{{item.iconKey}}" aria-hidden="true"></view><text wx:if="{{item.isNew}}" class="hub-daily-new" aria-label="新上线">NEW</text></view><text>{{item.title}}</text></view></view>
     <view wx:if="{{showTopAd}}" class="ad-zone hub-ad-top"><ad-custom unit-id="{{adUnitIds.home_top_native}}" bindload="onTopAdLoad" binderror="onTopAdError" /></view>
     <block wx:if="{{newThemes.length}}"><view class="hub-section-top hub-section hub-latest-heading"><view class="hub-section-heading"><text class="hub-section-title">最新上线</text><button class="hub-link hub-wish-link" bindtap="onOpenRequestModal"><view class="hub-wish-icon hub-glyph hub-glyph-accent icon-wand" aria-hidden="true"></view><text>榜单许愿</text></button></view><button class="hub-link" bindtap="onGoDiscover" data-sort="latest">查看全部 ›</button></view><view class="hub-grid"><block wx:for="{{newThemes}}" wx:key="id"><template is="hub-card" data="{{item,module:'new'}}" /></block></view></block>
     <view class="hub-section-top hub-section"><text class="hub-section-title">{{hotThemes.length ? '最受欢迎' : '精选榜单'}}</text><button class="hub-link" bindtap="onGoDiscover" data-sort="popular">更多榜单 ›</button></view>

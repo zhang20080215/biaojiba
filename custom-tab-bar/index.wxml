@@ -1,4 +1,4 @@
-<view class="tab-bar">
+<view class="tab-bar" wx:if="{{!hidden}}">
   <view wx:for="{{tabs}}" wx:key="kind" class="tab-item" data-kind="{{item.kind}}" data-path="{{item.path}}" bindtap="onTap" role="button" aria-label="{{item.text}}">
     <image class="tab-icon" src="{{selected === item.kind ? item.activeIcon : item.icon}}" mode="aspectFit" />
     <text class="tab-text" style="color:{{selected === item.kind ? selectedColor : '#77776D'}}">{{item.text}}</text>

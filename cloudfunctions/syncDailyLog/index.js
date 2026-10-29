@@ -3,7 +3,9 @@
 //
 // 集合（所有每日主题共用）：
 //   DailyLogs     { _id, openid, theme, date(YYYY-MM-DD), total_value, unit, entries:[{ts, value, meta}], updated_at }
-//   DailySettings { _id, openid, theme, daily_goal, presets:[number], updated_at }
+//   DailySettings { _id, openid, theme, daily_goal, presets:[number], deadlineGoal?, pastGoals?, updated_at }
+//     deadlineGoal = { target, startDate, endDate, createdAt }  截止日期累计目标，同时只有一个进行中
+//     pastGoals    = [{ ...deadlineGoal, status: done|expired|cancelled, walked, endedAt }]  最多 20 条
 //
 // 索引建议（云控制台手动建）：
 //   DailyLogs:     openid + theme + date 复合索引（唯一）
@@ -11,6 +13,8 @@
 //
 // 入参约定（所有 action 都必填 theme）：
 //   action: 'getToday' | 'addEntry' | 'removeEntry' | 'updateEntry' | 'reorderEntries' | 'setGoal' | 'setPresets' | 'getRange' | 'getYear' | 'getAll'
+//         | 'syncSource' | 'getMetricOverview' | 'setDeadlineGoal' | 'endDeadlineGoal'   （数值型主题，如 steps）
+//         | 'setDayValue' | 'clearDay'   （数值型手动记录主题，如 sleep：按天整条覆盖 / 删除）
 //   另有运维动作 'stats'（各主题参与人数）/ 'fixBookPages'（修正某用户某本书的总页数），都不需要 openid，从云函数控制台跑
 //   theme:  'water' | 'milktea' | ...
 
@@ -22,6 +26,7 @@ const axios = require('axios');
 // 想升级清晰度：package.json 加 `"sharp": "^0.33"`、部署选云端安装依赖，下面的代码会自动改走原图 + 压缩。
 let sharp = null;
 try { sharp = require('sharp'); } catch (e) { /* 有意不装，静默 */ }
+const { SOURCES, planWrites } = require('./sources.js');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
 const db = cloud.database();
@@ -290,8 +295,16 @@ const THEME_DEFAULTS = {
     // read 里 daily_goal 复用为"每月目标本数"，用于月度进度。
     read:    { unit: '本', daily_goal: 5,    presets: [1] },
     // sport 里 daily_goal 复用为"每月目标训练次数"，用于月度进度。
-    sport:   { unit: '次', daily_goal: 20,   presets: [1] }
+    sport:   { unit: '次', daily_goal: 20,   presets: [1] },
+    // steps 是数值型主题：一天一个数（微信运动同步），没有快捷量
+    steps:   { unit: '步', daily_goal: 8000, presets: [] },
+    // sleep：total_value = 睡眠时长（分钟），meta.bedOffset = 入睡时刻（中午 12 点起算的分钟数）；
+    // daily_goal = 目标入睡的 bedOffset（660 = 23:00）。累计目标数的是「早睡天数」：bedOffset <= daily_goal 的晚上
+    sleep:   { unit: '分钟', daily_goal: 660, presets: [], goalCount: { field: 'meta.bedOffset', op: 'lte' } }
 };
+
+const MAX_PAST_GOALS = 20;
+const GOAL_STATUSES = ['done', 'expired', 'cancelled'];
 
 function todayStr() {
     // 北京时间 YYYY-MM-DD
@@ -312,10 +325,101 @@ async function getSettings(openid, theme) {
             theme,
             daily_goal: s.daily_goal != null ? s.daily_goal : def.daily_goal,
             presets: s.presets && s.presets.length ? s.presets : def.presets,
-            unit: def.unit
+            unit: def.unit,
+            deadlineGoal: s.deadlineGoal || null,
+            pastGoals: s.pastGoals || []
         };
     }
-    return { theme, daily_goal: def.daily_goal, presets: def.presets, unit: def.unit };
+    return { theme, daily_goal: def.daily_goal, presets: def.presets, unit: def.unit, deadlineGoal: null, pastGoals: [] };
+}
+
+// DailySettings 局部更新：没有设置文档就按主题默认值新建一条
+async function patchSettings(openid, theme, data) {
+    const now = new Date().toISOString();
+    const existing = await db.collection('DailySettings').where({ openid, theme }).limit(1).get();
+    if (existing.data.length) {
+        await db.collection('DailySettings').doc(existing.data[0]._id).update({ data: { ...data, updated_at: now } });
+        return;
+    }
+    const def = defaultsOf(theme);
+    await db.collection('DailySettings').add({
+        data: { openid, theme, daily_goal: def.daily_goal, presets: def.presets, ...data, updated_at: now, created_at: now }
+    });
+}
+
+// 区间内 total_value 求和（聚合，不受 getRange 100 天上限约束）
+async function sumRange(openid, theme, from, to) {
+    if (from > to) return 0;
+    const $ = db.command.aggregate;
+    const res = await db.collection('DailyLogs').aggregate()
+        .match({ openid, theme, date: _.gte(from).and(_.lte(to)) })
+        .group({ _id: null, total: $.sum('$total_value') })
+        .end();
+    return (res.list && res.list[0] && res.list[0].total) || 0;
+}
+
+// 数值型主题从外部数据源同步（目前只有微信运动）：只写新出现的日子和值有变化的日子
+async function syncSource(openid, theme, event) {
+    const src = SOURCES[event.source];
+    if (!src) return { success: false, error: '未知 source: ' + event.source };
+    const rows = src.parse(event[src.param]);
+    if (!rows) return { success: false, code: 'DECRYPT_FAIL', error: '数据源解密失败' };
+    const today = todayStr();
+    const valid = rows.filter(r => r.date <= today);
+    if (!valid.length) return { success: true, theme, source: event.source, days: 0, added: 0, updated: 0, syncedAt: Date.now() };
+
+    const from = valid[0].date;
+    const to = valid[valid.length - 1].date;
+    const existing = await db.collection('DailyLogs')
+        .where({ openid, theme, date: _.gte(from).and(_.lte(to)) })
+        .limit(100)
+        .get();
+    const plan = planWrites(valid, existing.data);
+    const now = new Date().toISOString();
+    const unit = defaultsOf(theme).unit;
+    await Promise.all([
+        ...plan.updates.map(u => db.collection('DailyLogs').doc(u._id).update({ data: { total_value: u.value, updated_at: now } })),
+        ...plan.adds.map(a => db.collection('DailyLogs').add({
+            data: { openid, theme, date: a.date, unit, entries: [], total_value: a.value, source: event.source, updated_at: now, created_at: now }
+        }).catch(err => {
+            // 两次同步并发、撞了 openid+theme+date 唯一索引：对方已经建好，改成覆盖值
+            console.warn('syncSource add 冲突，回退 update：', err.message);
+            return db.collection('DailyLogs').where({ openid, theme, date: a.date }).update({ data: { total_value: a.value, updated_at: now } });
+        }))
+    ]);
+    return { success: true, theme, source: event.source, days: valid.length, added: plan.adds.length, updated: plan.updates.length, syncedAt: Date.now() };
+}
+
+// 累计目标的已完成量：默认是区间内数值之和；主题配了 goalCount 时数的是达标天数（按当前 daily_goal 判）
+async function goalWalked(openid, theme, settings, from, to) {
+    const gc = defaultsOf(theme).goalCount;
+    if (!gc) return sumRange(openid, theme, from, to);
+    if (from > to) return 0;
+    const res = await db.collection('DailyLogs')
+        .where({ openid, theme, date: _.gte(from).and(_.lte(to)), [gc.field]: _[gc.op](settings.daily_goal) })
+        .count();
+    return res.total || 0;
+}
+
+// 手动记录的 meta：只收扁平的数字 / 短字符串，挡住任意大对象写库
+function cleanMeta(meta) {
+    if (!meta || typeof meta !== 'object' || Array.isArray(meta)) return null;
+    const out = {};
+    Object.keys(meta).slice(0, 12).forEach(k => {
+        const v = meta[k];
+        if (typeof v === 'number' && Number.isFinite(v)) out[k] = v;
+        else if (typeof v === 'string' && v.length <= 40) out[k] = v;
+        else if (typeof v === 'boolean') out[k] = v;
+    });
+    return out;
+}
+
+function isDateStr(v) {
+    return typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
+}
+
+function spanOf(from, to) {
+    return Math.round((new Date(to + 'T00:00:00Z') - new Date(from + 'T00:00:00Z')) / 86400000) + 1;
 }
 
 async function getDay(openid, theme, date) {
@@ -782,7 +886,8 @@ exports.main = async (event, context) => {
             const end = new Date(to + 'T00:00:00Z');
             for (let d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
                 const k = d.toISOString().slice(0, 10);
-                days.push(map[k] || { theme, date: k, total_value: 0, entries: [] });
+                // 补出来的空日子带 missing，数值型主题据此区分「无数据」和「0」
+                days.push(map[k] || { theme, date: k, total_value: 0, entries: [], missing: true });
             }
             return { success: true, theme, from, to, days, settings };
         }
@@ -807,6 +912,88 @@ exports.main = async (event, context) => {
                 getSettings(openid, theme)
             ]);
             return { success: true, theme, days, settings };
+        }
+
+        if (action === 'syncSource') {
+            return await syncSource(openid, theme, event);
+        }
+
+        // 数值型主题首页：今日 + 设置（含累计目标）+ 累计目标区间内已累计的量
+        if (action === 'getMetricOverview') {
+            const date = event.date || todayStr();
+            const [settings, today] = await Promise.all([getSettings(openid, theme), getDay(openid, theme, date)]);
+            const g = settings.deadlineGoal;
+            const walked = g ? await goalWalked(openid, theme, settings, g.startDate, g.endDate < date ? g.endDate : date) : null;
+            return {
+                success: true,
+                theme,
+                date,
+                today: today || { theme, date, total_value: 0, entries: [], unit: settings.unit, missing: true },
+                settings,
+                goalWalked: walked
+            };
+        }
+
+        // 手动记录：这一天整条覆盖（value → total_value，meta 原样存）
+        if (action === 'setDayValue') {
+            const { date } = event;
+            const value = Number(event.value);
+            if (!isDateStr(date) || date > todayStr()) return { success: false, error: 'date 无效' };
+            if (!Number.isFinite(value) || value < 0 || value > 1e7) return { success: false, error: 'value 无效' };
+            const meta = cleanMeta(event.meta);
+            const now = new Date().toISOString();
+            const data = { total_value: value, meta, updated_at: now };
+            const existing = await getDay(openid, theme, date);
+            if (existing) {
+                await db.collection('DailyLogs').doc(existing._id).update({ data });
+            } else {
+                try {
+                    await db.collection('DailyLogs').add({
+                        data: { openid, theme, date, unit: defaultsOf(theme).unit, entries: [], source: 'manual', ...data, created_at: now }
+                    });
+                } catch (err) {
+                    console.warn('setDayValue add 冲突，回退 update：', err.message);
+                    await db.collection('DailyLogs').where({ openid, theme, date }).update({ data });
+                }
+            }
+            return { success: true, theme, date, day: await getDay(openid, theme, date) };
+        }
+
+        // 手动记录：删掉这一天（回到「无数据」）
+        if (action === 'clearDay') {
+            const { date } = event;
+            if (!isDateStr(date)) return { success: false, error: 'date 无效' };
+            const res = await db.collection('DailyLogs').where({ openid, theme, date }).remove();
+            return { success: true, theme, date, removed: (res.stats && res.stats.removed) || 0 };
+        }
+
+        if (action === 'setDeadlineGoal') {
+            const target = Number(event.target);
+            const { startDate, endDate } = event;
+            const today = todayStr();
+            if (!Number.isInteger(target) || target <= 0 || target > 1e9) return { success: false, error: 'target 必须是正整数' };
+            if (!isDateStr(startDate) || !isDateStr(endDate)) return { success: false, error: 'startDate / endDate 格式应为 YYYY-MM-DD' };
+            if (startDate > today) return { success: false, error: '开始日期不能晚于今天' };
+            if (endDate < today) return { success: false, error: '截止日期不能早于今天' };
+            if (spanOf(startDate, endDate) > 400) return { success: false, error: '目标跨度不能超过 400 天' };
+            const deadlineGoal = { target, startDate, endDate, createdAt: new Date().toISOString() };
+            await patchSettings(openid, theme, { deadlineGoal });
+            return { success: true, theme, deadlineGoal };
+        }
+
+        // 结束当前累计目标并归档（达成 / 到期 / 放弃）
+        if (action === 'endDeadlineGoal') {
+            const status = GOAL_STATUSES.includes(event.status) ? event.status : 'cancelled';
+            const settings = await getSettings(openid, theme);
+            const g = settings.deadlineGoal;
+            if (!g) return { success: true, theme, pastGoals: settings.pastGoals };
+            const today = todayStr();
+            const walked = await goalWalked(openid, theme, settings, g.startDate, g.endDate < today ? g.endDate : today);
+            const pastGoals = [{ ...g, status, walked, endedAt: new Date().toISOString() }]
+                .concat(settings.pastGoals || [])
+                .slice(0, MAX_PAST_GOALS);
+            await patchSettings(openid, theme, { deadlineGoal: null, pastGoals });
+            return { success: true, theme, pastGoals };
         }
 
         return { success: false, error: '未知 action: ' + action };

@@ -66,7 +66,7 @@ test('cloud save uses caller identity, rejects spoofing, and ignores stale revis
 test('classification separates daily entries and personal progress stays in profile', async () => {
   const fixture = require('./navigation-fixture.cjs');
   const f=fixture('discover'); f.page.onLoad(); f.page.onShow(); await new Promise(setImmediate);
-  assert.equal(f.page.data.dailyThemes.length,4);
+  assert.equal(f.page.data.dailyThemes.length,require('../utils/themeCatalog').filter(t => t.category === 'daily' && !t.hidden).length);
   f.page.onDiscoverSection({currentTarget:{dataset:{section:'daily'}}}); assert.equal(f.page.data.discoverSection,'daily');
   assert.ok(f.page.data.filteredThemes.every(t => t.category !== 'daily'));
   const p=fixture('profile'); p.page.onLoad(); p.page.onShow(); await new Promise(setImmediate);

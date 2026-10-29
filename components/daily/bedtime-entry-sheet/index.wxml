@@ -1,0 +1,38 @@
+<view wx:if="{{show}}" class="bs-mask" bindtap="onClose" catchtouchmove="noop">
+  <view class="bs-panel" catchtap="noop">
+    <view class="bs-head">
+      <text class="bs-title">记录睡眠</text>
+      <text class="bs-close" bindtap="onClose">✕</text>
+    </view>
+
+    <picker mode="date" end="{{maxDate}}" value="{{d}}" bindchange="onDate">
+      <view class="bs-row">
+        <text class="bs-label">哪一晚</text>
+        <text class="bs-value">{{dateLabel}}</text>
+        <text class="bs-arrow">›</text>
+      </view>
+    </picker>
+    <picker mode="time" value="{{bed}}" bindchange="onBed">
+      <view class="bs-row">
+        <text class="bs-label">入睡</text>
+        <text class="bs-value bs-big">{{bed}}</text>
+        <text class="bs-arrow">›</text>
+      </view>
+    </picker>
+    <view class="bs-row">
+      <picker class="bs-grow" mode="time" value="{{wake || '07:00'}}" bindchange="onWake">
+        <view class="bs-inline">
+          <text class="bs-label">起床</text>
+          <text class="bs-value bs-big {{wake ? '' : 'is-empty'}}">{{wake || '未填'}}</text>
+        </view>
+      </picker>
+      <text wx:if="{{wake}}" class="bs-clear" bindtap="onClearWake">清除</text>
+    </view>
+    <text class="bs-hint">{{durationText}}</text>
+
+    <view class="bs-actions">
+      <view wx:if="{{canDelete}}" class="bs-delete" bindtap="onRemove">删除</view>
+      <view class="bs-save" bindtap="onSubmit" hover-class="bs-save-hover">保存</view>
+    </view>
+  </view>
+</view>

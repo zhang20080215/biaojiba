@@ -1,0 +1,43 @@
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: var(--bg-page, #FAFAFA);
+  /* height 已含状态栏（navOffset = 状态栏 + 导航条），padding-top 必须算在 height 里，
+     否则导航栏比下面的占位多出一截状态栏高度，压住页面顶部（统计页的周/月/年曾被挡住） */
+  box-sizing: border-box;
+}
+.bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.back {
+  position: absolute;
+  left: 12rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.back-hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+.chev {
+  font-size: 56rpx;
+  line-height: 1;
+  margin-top: -6rpx;
+  color: var(--text-primary, #2D2D2B);
+}
+.title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--text-primary, #2D2D2B);
+}

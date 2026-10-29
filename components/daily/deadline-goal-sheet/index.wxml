@@ -1,0 +1,37 @@
+<view wx:if="{{show}}" class="gs-mask" bindtap="onClose" catchtouchmove="noop">
+  <view class="gs-panel" catchtap="noop">
+    <view class="gs-head">
+      <text class="gs-title">{{editing ? '调整累计目标' : '设一个累计目标'}}</text>
+      <text class="gs-close" bindtap="onClose">✕</text>
+    </view>
+
+    <text class="gs-label">目标（{{unit}}）</text>
+    <view class="gs-chips">
+      <view wx:for="{{presets}}" wx:key="value"
+            class="gs-chip {{!targetInput && target === item.value ? 'is-on' : ''}}"
+            data-value="{{item.value}}" bindtap="onPreset">{{item.text}}</view>
+    </view>
+    <input class="gs-input" type="number" maxlength="9" placeholder="或输入自定义目标" value="{{targetInput}}" bindinput="onInput" />
+
+    <view class="gs-dates">
+      <picker class="gs-date" mode="date" start="{{startMin}}" end="{{today}}" value="{{startDate}}" bindchange="onStart">
+        <text class="gs-label">开始</text>
+        <text class="gs-date-value">{{startDate}}</text>
+      </picker>
+      <text class="gs-dash">→</text>
+      <picker class="gs-date" mode="date" start="{{endMin}}" end="{{endMax}}" value="{{endDate}}" bindchange="onEnd">
+        <text class="gs-label">截止</text>
+        <text class="gs-date-value">{{endDate}}</text>
+      </picker>
+    </view>
+    <text class="gs-hint" wx:if="{{config.backfillDays}}">开始日期最早可选 {{config.backfillDays}} 天前</text>
+
+    <view class="gs-summary" wx:if="{{summary}}">{{summary}}</view>
+    <view class="gs-error" wx:if="{{error}}">{{error}}</view>
+
+    <view class="gs-actions">
+      <view wx:if="{{editing}}" class="gs-abandon" bindtap="onAbandon">放弃目标</view>
+      <view class="gs-save" bindtap="onSubmit" hover-class="gs-save-hover">保存</view>
+    </view>
+  </view>
+</view>

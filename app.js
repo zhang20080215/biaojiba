@@ -25,6 +25,13 @@ App({
       adConfig.fetchRemoteConfig()
       adConfig.refreshAdFree()
     }, 0)
+
+    // 授权过微信运动的用户顺手同步一次步数（每天最多一次，没授权的不弹窗）。
+    // 微信只给最近 30 天，不在这里同步的话，用户隔一个多月才进步数页，中间就断档了。
+    // 晚 2 秒，避开首屏的请求高峰。
+    setTimeout(function () {
+      require('./utils/daily/werunAutoSync').maybeSync()
+    }, 2000)
   },
 
   onLaunch() {

@@ -1,0 +1,117 @@
+.dg {
+  background: var(--bg-card, #FFFFFF);
+  border-radius: var(--radius-lg, 24rpx);
+  padding: 28rpx 32rpx;
+  box-shadow: var(--shadow-card, 0 4rpx 16rpx rgba(0, 0, 0, 0.08));
+}
+.dg-hover {
+  opacity: 0.85;
+}
+.dg-empty {
+  display: flex;
+  align-items: center;
+  border: 2rpx dashed var(--brand-accent, #526631);
+  box-shadow: none;
+  background: var(--brand-tint, #EEF2E5);
+}
+.dg-empty-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.dg-empty-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--brand-accent, #526631);
+}
+.dg-empty-sub {
+  font-size: 24rpx;
+  color: var(--text-secondary, #6F6F68);
+  margin-top: 6rpx;
+}
+.dg-plus {
+  font-size: 48rpx;
+  color: var(--brand-accent, #526631);
+}
+.dg-head {
+  display: flex;
+  align-items: flex-start;
+}
+.dg-head-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.dg-cap {
+  font-size: 22rpx;
+  color: var(--text-muted, #9C998F);
+}
+.dg-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--text-primary, #2D2D2B);
+  margin-top: 6rpx;
+}
+.dg-link {
+  font-size: 24rpx;
+  color: var(--brand-accent, #526631);
+  padding: 6rpx 0 6rpx 24rpx;
+}
+.dg-bar {
+  height: 16rpx;
+  border-radius: 8rpx;
+  background: var(--brand-tint, #EEF2E5);
+  margin: 24rpx 0 16rpx;
+  overflow: hidden;
+}
+.dg-bar-fill {
+  height: 100%;
+  border-radius: 8rpx;
+  background: var(--brand-accent, #526631);
+}
+.dg-row {
+  display: flex;
+  align-items: baseline;
+}
+.dg-strong {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: var(--text-primary, #2D2D2B);
+}
+.dg-muted {
+  font-size: 24rpx;
+  color: var(--text-secondary, #6F6F68);
+}
+.dg-right {
+  margin-left: auto;
+}
+.dg-tip {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: var(--text-secondary, #6F6F68);
+}
+.dg-accent {
+  color: var(--brand-accent, #526631);
+  font-weight: 700;
+}
+.dg-result {
+  display: flex;
+  flex-direction: column;
+}
+.dg-result-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--text-primary, #2D2D2B);
+  margin-bottom: 6rpx;
+}
+.dg-btn {
+  margin-top: 20rpx;
+  height: 72rpx;
+  line-height: 72rpx;
+  text-align: center;
+  border-radius: var(--radius-pill, 9999rpx);
+  background: var(--brand-button, #9AAB65);
+  color: var(--hero-ink, #1F2B12);
+  font-size: 28rpx;
+  font-weight: 600;
+}

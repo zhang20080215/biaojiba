@@ -1,0 +1,2 @@
+<canvas type="2d" id="gc" class="kc" disable-scroll="{{true}}"
+        bindtouchstart="onTouchStart" bindtouchmove="onTouchMove" bindtouchend="onTouchEnd" bindtouchcancel="onTouchEnd"></canvas>

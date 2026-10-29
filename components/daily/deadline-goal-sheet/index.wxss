@@ -1,0 +1,131 @@
+.gs-mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: flex-end;
+}
+.gs-panel {
+  width: 100%;
+  background: var(--bg-card, #FFFFFF);
+  border-radius: var(--radius-xl, 32rpx) var(--radius-xl, 32rpx) 0 0;
+  padding: 32rpx 32rpx calc(32rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+.gs-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+}
+.gs-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: var(--text-primary, #2D2D2B);
+}
+.gs-close {
+  font-size: 32rpx;
+  color: var(--text-muted, #9C998F);
+  padding: 8rpx;
+}
+.gs-label {
+  display: block;
+  font-size: 24rpx;
+  color: var(--text-muted, #9C998F);
+  margin-bottom: 12rpx;
+}
+.gs-chips {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 16rpx;
+}
+.gs-chip {
+  flex: 1;
+  height: 72rpx;
+  line-height: 72rpx;
+  text-align: center;
+  border-radius: var(--radius-md, 16rpx);
+  background: var(--bg-section, #F5F5F4);
+  font-size: 28rpx;
+  color: var(--text-primary, #2D2D2B);
+}
+.gs-chip.is-on {
+  background: var(--brand-tint, #EEF2E5);
+  color: var(--brand-accent, #526631);
+  font-weight: 700;
+  box-shadow: inset 0 0 0 2rpx var(--brand-accent, #526631);
+}
+.gs-input {
+  height: 80rpx;
+  padding: 0 24rpx;
+  border-radius: var(--radius-md, 16rpx);
+  background: var(--bg-section, #F5F5F4);
+  font-size: 28rpx;
+  margin-bottom: 28rpx;
+}
+.gs-dates {
+  display: flex;
+  align-items: flex-end;
+}
+.gs-date {
+  flex: 1;
+  background: var(--bg-section, #F5F5F4);
+  border-radius: var(--radius-md, 16rpx);
+  padding: 16rpx 24rpx;
+}
+.gs-date-value {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--text-primary, #2D2D2B);
+}
+.gs-dash {
+  margin: 0 16rpx 28rpx;
+  color: var(--text-muted, #9C998F);
+}
+.gs-hint {
+  display: block;
+  font-size: 22rpx;
+  color: var(--text-muted, #9C998F);
+  margin-top: 12rpx;
+}
+.gs-summary {
+  margin-top: 24rpx;
+  padding: 20rpx 24rpx;
+  border-radius: var(--radius-md, 16rpx);
+  background: var(--brand-tint, #EEF2E5);
+  color: var(--brand-accent, #526631);
+  font-size: 26rpx;
+}
+.gs-error {
+  margin-top: 16rpx;
+  font-size: 24rpx;
+  color: #C0392B;
+}
+.gs-actions {
+  display: flex;
+  align-items: center;
+  margin-top: 32rpx;
+}
+.gs-abandon {
+  font-size: 26rpx;
+  color: var(--text-secondary, #6F6F68);
+  padding: 20rpx 32rpx 20rpx 0;
+}
+.gs-save {
+  flex: 1;
+  height: 88rpx;
+  line-height: 88rpx;
+  text-align: center;
+  border-radius: var(--radius-pill, 9999rpx);
+  background: var(--brand-button, #9AAB65);
+  color: var(--hero-ink, #1F2B12);
+  font-size: 30rpx;
+  font-weight: 700;
+}
+.gs-save-hover {
+  opacity: 0.85;
+}

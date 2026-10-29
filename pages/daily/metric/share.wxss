@@ -1,0 +1,59 @@
+@import "./common.wxss";
+
+.content {
+  padding-bottom: calc(220rpx + env(safe-area-inset-bottom));
+}
+.preview {
+  margin: 12rpx auto 0;
+  border-radius: 16rpx;
+  overflow: hidden;
+  box-shadow: var(--shadow-float, 0 6rpx 20rpx rgba(0, 0, 0, 0.10));
+}
+.poster-canvas {
+  display: block;
+}
+.preview-tip {
+  display: block;
+  text-align: center;
+  font-size: 22rpx;
+  color: var(--text-muted, #9C998F);
+  margin-top: 16rpx;
+}
+.action-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  padding: 16rpx 32rpx calc(16rpx + env(safe-area-inset-bottom));
+  background: var(--bg-page, #FAFAFA);
+  box-shadow: 0 -8rpx 24rpx rgba(0, 0, 0, 0.05);
+}
+/* button 在 style v2 下自带上下内边距和固定宽度，再配 line-height: 92rpx 文字会被挤偏；
+   改成 flex 居中 + 去掉内边距、宽度撑满（同每日电影海报页的做法） */
+.save-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100% !important;
+  height: 92rpx;
+  padding: 0;
+  line-height: 1;
+  border-radius: var(--radius-pill, 9999rpx);
+  background: var(--brand-button, #9AAB65);
+  color: var(--hero-ink, #1F2B12);
+  font-size: 30rpx;
+  font-weight: 800;
+}
+.save-btn[disabled] {
+  opacity: 0.5;
+  background: var(--brand-button, #9AAB65);
+  color: var(--hero-ink, #1F2B12);
+}
+.save-sub {
+  display: block;
+  margin-top: 12rpx;
+  text-align: center;
+  font-size: 22rpx;
+  color: var(--text-muted, #9C998F);
+}

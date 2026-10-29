@@ -1,0 +1,8 @@
+{
+  "navigationStyle": "custom",
+  "navigationBarTextStyle": "black",
+  "backgroundColor": "#FAFAFA",
+  "usingComponents": {
+    "daily-nav": "/components/daily/daily-nav/index"
+  }
+}

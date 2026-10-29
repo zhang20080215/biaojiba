@@ -1,0 +1,22 @@
+<view class="page-root {{themeClass}}">
+  <view class="top-toast {{toast.show ? 'is-show' : ''}}">
+    <text class="top-toast-icon" wx:if="{{toast.icon === 'success'}}">✓</text>
+    <text class="top-toast-text">{{toast.text}}</text>
+  </view>
+
+  <daily-nav title="{{title}}" fallback="/pages/daily/metric/index?theme={{themeId}}" />
+
+  <view class="content">
+    <!-- 内容就是统计页当前的样子（周期 / 画法 / 缩放都在统计页调好再来），这里没有可调项 -->
+    <view class="preview" style="width: {{previewW}}px; height: {{previewH}}px;">
+      <canvas type="2d" id="metricPoster" class="poster-canvas" style="width: {{previewW}}px; height: {{previewH}}px;"></canvas>
+    </view>
+    <text class="preview-tip">{{empty ? emptyText : (ready ? '保存后可以发到朋友圈或小红书' : '生成中…')}}</text>
+  </view>
+
+  <view class="action-bar">
+    <!-- 文字紧贴标签写：换行缩进会变成按钮里的空白，把文字往右挤 -->
+    <button class="save-btn" bindtap="saveImage" disabled="{{isGenerating || !ready || empty}}" loading="{{isGenerating}}">{{isGenerating ? '保存中…' : '保存到相册'}}</button>
+    <text wx:if="{{needRewardedAd && ready && !empty}}" class="save-sub">需观看广告后保存</text>
+  </view>
+</view>

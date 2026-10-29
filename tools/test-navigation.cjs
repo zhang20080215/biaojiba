@@ -228,7 +228,8 @@ test('root page lifecycles preserve pins and profile avoids statistics/content r
   for (const kind of ['home','discover','records','profile']) {
     const f = fixture(kind); f.page.onLoad(); f.page.onShow();
     await new Promise(resolve => setImmediate(resolve));
-    assert.equal(f.page.data.dailyBlocks.length, 4);
+    assert.equal(f.page.data.dailyBlocks.length, 6);
+    assert.deepEqual(f.page.data.dailyBlocks.slice(4).map(b => b.title), ['每日步数', '每日早睡']);
     assert.deepEqual(Array.from(f.page.data.commonThemes, t => t.id), ['douban_movies','daily_read']);
     assert.equal(f.page.data.commonThemes[1].progressText, '已收藏 · 点击打开');
     if (kind === 'profile') { assert.ok(f.calls.includes('summary')); assert.ok(!f.calls.includes('getThemeHub')); }
@@ -703,4 +704,21 @@ test('tab pages leave room for the fixed custom tab bar so the last content can 
   const padding = rootRule.match(/padding:\s*([^;]+);/)[1];
   assert.ok(padding.includes('var(--hub-tabbar-h)') && padding.includes('env(safe-area-inset-bottom)'), padding);
   assert.match(bar, /padding-bottom:\s*env\(safe-area-inset-bottom\)/);
+});
+test('custom tab bar hides while a hub sheet or modal is open (it is drawn above the page)', async () => {
+  const f = fixture('profile');
+  const hidden = [];
+  f.page.getTabBar = () => ({ sync() {}, setHidden: h => hidden.push(h) });
+  f.page.onLoad(); f.page.onShow();
+  await new Promise(resolve => setImmediate(resolve));
+  hidden.length = 0;
+  f.page.syncMemberCode = () => {};                      // 打开主题面板会顺手刷会员码，夹具里没有这条云调用
+  f.page.onToggleThemePicker();
+  f.page.onToggleThemePicker();
+  f.page.onOpenPinManager();
+  f.page.onClosePinManager();
+  f.page.onOpenRequestModal();
+  f.page.onCloseRequestModal();
+  assert.deepEqual(hidden, [true, false, true, false, true, false]);
+  f.page.onUnload();
 });
