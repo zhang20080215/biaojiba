@@ -24,6 +24,8 @@ const PERIODS = {
 };
 const MODES = [{ key: 'bar', label: '柱形' }, { key: 'line', label: '折线' }, { key: 'candle', label: 'K线' }];
 const AGGS = [{ key: 'avg', label: '日均' }, { key: 'sum', label: '总数' }];
+// 日视图看最近多少天：图表一屏放这么多天，图下的汇总也统计这么多天（以前汇总的是选中那天所在的一周，看着怪）
+const RANGES = [{ key: 30, label: '30天' }, { key: 180, label: '180天' }, { key: 365, label: '365天' }];
 const UP = '#E25A4E';
 const DOWN = '#3A9F6E';
 
@@ -44,6 +46,8 @@ Page({
     periods: Object.keys(PERIODS).map(k => ({ key: k, label: PERIODS[k].label })),
     modes: MODES,
     aggs: AGGS,
+    ranges: RANGES,
+    dayRange: 30,
     mode: 'bar',
     agg: 'avg',
     showAgg: false,         // 周 / 月 / 年 + 柱形或折线 + 步数 才出现
@@ -82,13 +86,16 @@ Page({
     this._modeKey = theme.id + 'ChartType';
     this._maKey = theme.id + 'ShowMA';
     this._aggKey = theme.id + 'ChartAgg';
-    let mode = 'bar', showMA = true, agg = 'avg';
+    this._rangeKey = theme.id + 'DayRange';
+    let mode = 'bar', showMA = true, agg = 'avg', dayRange = 30;
     try {
       let m = wx.getStorageSync(this._modeKey);
       if (m === 'box') m = 'candle';            // 10-28 那版叫「箱体」，存的还是 box
       if (MODES.some(x => x.key === m)) mode = m;
       if (wx.getStorageSync(this._maKey) === 'off') showMA = false;
       if (wx.getStorageSync(this._aggKey) === 'sum') agg = 'sum';
+      const r = Number(wx.getStorageSync(this._rangeKey));
+      if (RANGES.some(x => x.key === r)) dayRange = r;
     } catch (e) { /* ignore */ }
     const clock = theme.measure === 'bedtime';
     this.setData({
@@ -102,7 +109,8 @@ Page({
       today: C.todayOf(theme),
       mode,
       showMA,
-      agg
+      agg,
+      dayRange
     });
     this.fetch();
   },
@@ -153,7 +161,9 @@ Page({
     const p = this.data.period;
     if (p === 'goal') return this._renderGoal();
     this._candles = K.buildCandles(this._plot || {}, p);
-    this.setData({ candles: this._candles, visible: PERIODS[p].visible });
+    // 日视图一屏放「近 N 天」；记录还没这么多天时按实有的放（至少 30 格），免得几十根挤在最右边一小条
+    const visible = p === 'day' ? Math.min(this.data.dayRange, Math.max(this._candles.length, 30)) : PERIODS[p].visible;
+    this.setData({ candles: this._candles, visible });
     this._applyOptions();
   },
 
@@ -194,6 +204,15 @@ Page({
     try { wx.setStorageSync(this._aggKey, agg); } catch (err) { /* ignore */ }
     this.setData({ agg });
     this._applyOptions();
+  },
+
+  onRange(e) {
+    const dayRange = Number(e.currentTarget.dataset.range);
+    if (dayRange === this.data.dayRange) return;
+    try { wx.setStorageSync(this._rangeKey, dayRange); } catch (err) { /* ignore */ }
+    this._sel = -1;
+    this.setData({ dayRange });
+    this._build();
   },
 
   onToggleMA() {
@@ -259,7 +278,9 @@ Page({
     let change = '', changeColor = '';
     if (prev) {
       const diff = valOf(c) - valOf(prev);
-      const vs = period === 'day' ? `较 ${D.formatDateCN(prev.from)}` : `较上一${PERIODS[period].noun}`;
+      // 日视图和前一天比就写「较昨日」（睡眠是「较昨晚」）；中间断了几天没数据时写出比的是哪天，免得把三天前说成昨日
+      const dayVs = prev.from === D.addDays(c.from, -1) ? (clock ? '较昨晚' : '较昨日') : `较 ${D.formatDateCN(prev.from)}`;
+      const vs = period === 'day' ? dayVs : `较上一${PERIODS[period].noun}`;
       if (clock) change = Math.round(diff) === 0 ? `${vs} 持平` : `${vs} ${diff > 0 ? '早' : '晚'} ${T.formatDuration(Math.abs(Math.round(diff)))}`;
       else change = valOf(prev) ? `${vs} ${diff >= 0 ? '▲' : '▼'} ${Math.abs(diff / valOf(prev) * 100).toFixed(1)}%` : '';
       changeColor = diff > 0 ? UP : diff < 0 ? DOWN : '';
@@ -279,8 +300,9 @@ Page({
       if (!clock) ohlc.push(useSum ? { k: '日均', v: this._fmt(c.main) } : { k: '累计', v: M.formatShort(c.sum) });
     }
 
-    // 汇总：日 看所在的那一周，周 / 月 / 年 看这一根本身
-    const range = period === 'day' ? D.weekRange(c.from, 0) : { from: c.from, to: c.to };
+    // 汇总：日 看「近 N 天」（到今天，不随选中的那天变），周 / 月 / 年 看这一根本身
+    const today = this.data.today;
+    const range = period === 'day' ? { from: D.addDays(today, 1 - this.data.dayRange), to: today } : { from: c.from, to: c.to };
     const s = M.summarize(this._map, range.from, range.to, goal, this.data.today, this.theme.measure);
     const docs = {};
     Object.keys(this._docs).forEach(d => { if (d >= range.from && d <= range.to && d in this._map) docs[d] = this._docs[d]; });
@@ -294,7 +316,7 @@ Page({
       changeColor,
       ohlc,
       note,
-      sumTitle: (period === 'day' ? `${D.formatDateCN(range.from)} - ${D.formatDateCN(range.to)}` : this._periodLabel(c)) + ' 汇总',
+      sumTitle: (period === 'day' ? `近 ${this.data.dayRange} 天（${D.formatDateCN(range.from)} - ${D.formatDateCN(range.to)}）` : this._periodLabel(c)) + ' 汇总',
       kpi: sv.kpi,
       selectedDay: period === 'day' ? c.from : ''
     });

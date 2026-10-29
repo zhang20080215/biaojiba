@@ -132,16 +132,43 @@
   font-weight: 600;
 }
 .opts.is-hidden,
-.chart-sub.is-hidden {
+.chart-sub .is-hidden {
   visibility: hidden;
 }
+/* 第二行：左边区间 / 日均总数 / 图例，右边均线 */
 .chart-sub {
   display: flex;
-  height: 48rpx;
+  height: 52rpx;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
+  margin: -4rpx 0 4rpx;
+}
+.sub-left {
+  display: flex;
+  align-items: center;
   gap: 12rpx;
-  margin: -4rpx 0 8rpx;
+}
+.goal-legend {
+  gap: 24rpx;
+  padding-left: 8rpx;
+}
+.lg {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  font-size: 22rpx;
+  color: var(--text-secondary, #6F6F68);
+}
+.lg-line {
+  width: 28rpx;
+  border-top: 4rpx solid var(--brand-accent, #526631);
+}
+.lg-line.is-dash {
+  border-top: 3rpx dashed #A7A498;
+}
+.lg-line.is-dot {
+  border-top: 3rpx dotted var(--brand-accent, #526631);
+  opacity: 0.7;
 }
 .chart-sub-label {
   font-size: 22rpx;

@@ -9,7 +9,8 @@
 const M = require('../../../utils/daily/metric.js');
 const { monotoneControls } = require('../../../utils/daily/chart.js');
 
-const PAD = { l: 6, r: 50, t: 24, b: 22 };
+// 顶部不用给均线读数留位置（K 线图要），只留目标值那行字的余量
+const PAD = { l: 6, r: 50, t: 8, b: 22 };
 const LONG_PRESS_MS = 300;
 const GRID = '#EFEEEA';
 const MUTED = '#A7A498';

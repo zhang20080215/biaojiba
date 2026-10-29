@@ -176,7 +176,8 @@ Component({
         ctx.fill();
         ctx.globalAlpha = 1;
       } else if (mode === 'bar') {
-        const bw = Math.max(2, Math.min(14, v.slot * 0.5));
+        // 近 180 / 365 天时一格不到 2px，柱子按格宽收窄，最细 1px
+        const bw = Math.min(14, Math.max(1, v.slot * (v.slot < 4 ? 0.7 : 0.5)));
         vis.forEach((c, k) => {
           const val = vals[v.start + k];
           const x = v.xOf(v.start + k), y = yOf(val);
@@ -187,7 +188,7 @@ Component({
         ctx.globalAlpha = 1;
       } else {
         // K线：影线 = 最高到最低，实体 = 开到收；实心红涨绿跌，持平画一道灰横线
-        const bw = Math.max(3, Math.min(12, v.slot * 0.62));
+        const bw = Math.max(1, Math.min(12, v.slot * 0.62));
         vis.forEach((c, k) => {
           const x = Math.round(v.xOf(v.start + k)) + 0.5;
           const color = c.close > c.open ? UP : c.close < c.open ? DOWN : FLAT;
