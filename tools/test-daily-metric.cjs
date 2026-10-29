@@ -70,19 +70,6 @@ test('deadline goal progress', () => {
   assert.equal(M.goalProgress(goal, 0, '2026-12-31').daysLeft, 1);
 });
 
-test('month cells start on Monday and mark today / future / missing', () => {
-  const cells = M.buildMonthCells(2026, 10, { '2026-10-01': 8000, '2026-10-02': 100 }, 8000, '2026-10-02');
-  assert.equal(cells.filter(c => c.empty).length, 3);   // 2026-10-01 是周四
-  const days = cells.filter(c => !c.empty);
-  assert.equal(days.length, 31);
-  assert.equal(days[0].level, 4);
-  assert.equal(days[1].level, 1);
-  assert.ok(days[1].isToday);
-  assert.equal(days[2].level, -2);
-  const before = M.buildMonthCells(2026, 9, {}, 8000, '2026-10-02').filter(c => !c.empty);
-  assert.ok(before.every(c => c.level === -1));
-});
-
 test('number formatting', () => {
   assert.equal(M.formatNum(1234567), '1,234,567');
   assert.equal(M.formatShort(9999), '9,999');
@@ -183,7 +170,6 @@ test('bedtime measure: earlier is better, missing bedOffset is no data', () => {
   assert.equal(M.heatLevel(690, 660, true, 'bedtime'), 3);
   assert.equal(M.heatLevel(720, 660, true, 'bedtime'), 2);
   assert.equal(M.heatLevel(721, 660, true, 'bedtime'), 1);
-  assert.equal(M.buildMonthCells(2026, 10, map, 660, '2026-10-05', 'bedtime').find(c => c.date === '2026-10-01').achieved, true);
 });
 
 test('deadline goal counted in days', () => {
@@ -222,14 +208,10 @@ test('views render both measures', () => {
   const sd = { date: '2026-10-27', ...T.sleepEntry('22:40', '06:50') };
   sd.total_value = sd.value;
   assert.equal(V.viewOf(sleep).dayText(sd, sleep), '22:40 入睡 · 06:50 起床 · 睡了 8小时10分');
-  const pd = V.viewOf(sleep).posterDay(sd, 660, sleep, 't');
-  assert.equal(pd.statusText, '早睡达标');
-  assert.equal(pd.ratio, 1);
   const s = M.summarize({ '2026-10-27': 620 }, '2026-10-01', '2026-10-31', 660, '2026-10-28', 'bedtime');
   const st = V.viewOf(sleep).stats(s, { '2026-10-27': sd }, sleep, 660, '本月');
   assert.equal(st.headline, '22:20');
   assert.equal(st.kpi[3].value, '06:50');
-  assert.equal(V.viewOf(steps).posterMonth(M.summarize({ '2026-10-27': 9000 }, '2026-10-01', '2026-10-31', 8000, '2026-10-28'), [], {}, steps, 't').tiles.length, 3);
 });
 
 // ───────── 首页视图模型 / 主角插画 ─────────
@@ -411,4 +393,38 @@ test('werun auto sync: once a day, only for users who already authorised, never 
   S.markSynced(now + 48 * 3600e3);                                     // 步数页自己同步过，也算
   assert.equal(await S.maybeSync(now + 48 * 3600e3), 'skip');
   delete global.wx;
+});
+
+test('report poster draws the stats page snapshot (kline and goal) with header, chart and signature', () => {
+  const R = require('../utils/metricReportPoster');
+  const K = require('../utils/daily/kline');
+  const B = require('../utils/daily/burnup');
+  const texts = [];
+  const ctx = new Proxy({}, {
+    get: (t, k) => (k in t ? t[k] : k === 'measureText' ? s => ({ width: String(s).length * 10 })
+      : k === 'createLinearGradient' ? () => ({ addColorStop() {} })
+      : k === 'fillText' ? s => texts.push(String(s)) : () => {}),
+    set: (t, k, v) => { t[k] = v; return true; }
+  });
+  const map = {};
+  for (let d = '2026-09-01'; d <= '2026-10-29'; d = D.addDays(d, 1)) map[d] = 7000 + (d.charCodeAt(9) % 4) * 1000;
+  const base = {
+    title: '每日步数', subtitle: '周视图 · K线', signature: '标记吧 · 每日步数', dateText: '2026年10月29日',
+    periods: [{ key: 'day', label: '日' }, { key: 'week', label: '周' }], period: 'week',
+    modes: [{ key: 'bar', label: '柱形' }, { key: 'candle', label: 'K线' }], mode: 'candle', showMA: true,
+    aggs: [{ key: 'avg', label: '日均' }, { key: 'sum', label: '总数' }], agg: 'avg', showAgg: false, aggLabel: '每周看',
+    header: { cap: '10月13日 - 10月19日 · 日均', big: '9,204', bigUnit: '步', change: '较上一周 ▼ 3.1%', changeColor: '#3A9F6E', ohlc: [{ k: '开', v: '8,812' }] },
+    sumTitle: '10月13日 - 10月19日 汇总', kpi: [{ label: '达标天数', value: 4, unit: '/ 7 天', sub: '' }]
+  };
+  R.draw(ctx, Object.assign({}, base, {
+    chart: { kind: 'kline', opts: { candles: K.buildCandles(map, 'week'), period: 'week', mode: 'candle', value: 'main', goal: 8000, showGoal: true, goalText: '目标 8,000', format: 'count', showMA: true }, V: 20, offset: 0, sel: 3 }
+  }), P.get('green'));
+  ['每日步数', '9,204', '较上一周 ▼ 3.1%', '开', 'K线', '均线', '目标 8,000', '达标天数', '标记吧 · 每日步数', '2026年10月29日'].forEach(t => assert.ok(texts.includes(t), t));
+  assert.ok(texts.some(t => t.startsWith('MA5 ')));
+  texts.length = 0;
+  const b = B.buildBurnup({ target: 1000000, startDate: '2026-10-01', endDate: '2026-12-31' }, map, 8000, '2026-10-29', 'sum');
+  R.draw(ctx, Object.assign({}, base, { period: 'goal', chart: { kind: 'goal', opts: { burnup: b, targetText: '目标 100万步' }, k0: null, kw: null, sel: -1 } }), P.get('pink'));
+  ['实际累计', '理想进度', '预测', '目标 100万步', '今天'].forEach(t => assert.ok(texts.includes(t), t));
+  assert.ok(!texts.includes('均线'), 'goal tab hides the chart settings');
+  assert.deepEqual(R.SIZE, { width: 1080, height: 1440 });
 });

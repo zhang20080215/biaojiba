@@ -144,24 +144,6 @@ function goalProgress(goal, walked, today, mode) {
   };
 }
 
-// 月历格子（周一开头，前面补空位）
-function buildMonthCells(year, month, dayMap, goal, today, measure) {
-  const ms = measureOf(measure);
-  const r = D.monthRange(year, month);
-  const lead = D.dayOfWeekMon(D.parseDate(r.from));
-  const cells = [];
-  for (let i = 0; i < lead; i++) cells.push({ empty: true, key: 'e' + i });
-  for (let day = 1; day <= r.lastDay; day++) {
-    const date = D.ymd(year, month, day);
-    const isFuture = date > today;
-    const has = !isFuture && date in dayMap;
-    const value = has ? dayMap[date] : 0;
-    const level = isFuture ? -2 : heatLevel(value, goal, has, ms);
-    cells.push({ empty: false, key: date, day, date, value, has, level, achieved: has && ms.achieved(value, goal), isToday: date === today, isFuture });
-  }
-  return cells;
-}
-
 
 // 12345 → '12,345'
 function formatNum(n) {
@@ -194,7 +176,6 @@ module.exports = {
   heatLevel,
   summarize,
   goalProgress,
-  buildMonthCells,
   formatNum,
   formatShort,
   equivalentOf

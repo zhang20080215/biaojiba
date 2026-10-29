@@ -1,17 +1,16 @@
-// 数值型每日主题 · 分享海报（?theme=steps&date=YYYY-MM-DD）
-// 版式：单日 / 月度；配色：四套全站主题色，默认跟随当前主题，选过的本地记住。
-// canvas 是原生组件、藏不住，直接拿它当屏幕预览（backing 1080×1440，CSS 缩放显示），导出的临时文件只给「保存到相册」用。
+// 数值型每日主题 · 统计报表海报（?theme=steps）
+// 统计页点「生成海报」时把页面当前的样子拍成快照（stats.js _snapshot，放在 globalData.metricReport），
+// 这里照着画成一张 3:4 海报（utils/metricReportPoster.js），图表和页面同一份绘制代码。只能换配色，内容以页面为准。
+// canvas 是原生组件、藏不住，直接拿它当屏幕预览（backing 1080×1440，CSS 缩放显示），导出的临时文件只给「保存到相册」用；
+// 保存前要看激励视频（rewardedSaveGate，slot save_image_rewarded）。
 const toast = require('../../../utils/dailyToast.js');
 const rewardedSaveGate = require('../../../utils/rewardedSaveGate.js');
-const MetricPosterDrawer = require('../../../utils/metricPosterDrawer.js');
+const ReportPoster = require('../../../utils/metricReportPoster.js');
 const palette = require('../../../utils/daily/palette.js');
 const D = require('../../../utils/daily/date.js');
-const M = require('../../../utils/daily/metric.js');
-const V = require('../../../utils/daily/views.js');
 const C = require('./common.js');
 
-const { width: CANVAS_W, height: CANVAS_H } = MetricPosterDrawer.SIZE;
-const MAX_DAY_BACK = 400;
+const { width: CANVAS_W, height: CANVAS_H } = ReportPoster.SIZE;
 
 Page({
   data: {
@@ -19,12 +18,6 @@ Page({
     themeClass: '',
     themeId: 'steps',
     title: '',
-    today: '',
-    layout: 'day',
-    date: '',
-    periodLabel: '',
-    canPrev: true,
-    canNext: false,
     previewW: 300,
     previewH: 400,
     ready: false,
@@ -40,11 +33,14 @@ Page({
     const theme = C.resolveTheme(options && options.theme);
     this.theme = theme;
     this._storageKey = theme.id + 'ShareTheme';
-    const today = C.todayOf(theme);
-    const date = options && options.date && options.date <= today ? options.date : today;
+    const app = getApp();
+    const snap = app.globalData && app.globalData.metricReport;
+    // 只认同一个主题的快照；没有（比如页面被系统回收后恢复）就提示回统计页重新生成
+    this._snap = snap && snap.themeId === theme.id ? snap : null;
     const win = D.getWindowInfoCompat();
     const previewW = Math.min(Math.round((win.windowWidth || 375) * 0.84), 340);
-    let colorId = palette.idFromClass(palette.currentClass());
+    // 配色默认跟统计页当时的全站主题色，用户在这里换过就记住
+    let colorId = palette.idFromClass(this._snap ? this._snap.colorClass : palette.currentClass());
     try {
       const saved = wx.getStorageSync(this._storageKey);
       if (saved && palette.THEMES[saved]) colorId = saved;
@@ -52,16 +48,14 @@ Page({
     this.setData({
       themeClass: C.themeState().themeClass,
       themeId: theme.id,
-      title: '分享' + theme.title,
-      emptyText: theme.vocab.emptyText,
-      today,
-      date,
+      title: theme.title + '海报',
+      empty: !this._snap,
+      emptyText: '请回到统计页重新点「生成海报」',
       previewW,
       previewH: Math.round(previewW * CANVAS_H / CANVAS_W),
       colorId
     });
     rewardedSaveGate.refreshHint(this);
-    this.fetch();
   },
 
   onReady() {
@@ -77,33 +71,6 @@ Page({
     return { title: `我的${this.theme.title}`, path: `/pages/daily/metric/index?theme=${this.data.themeId}` };
   },
 
-  // ========= 选项 =========
-  onLayout(e) {
-    const layout = e.currentTarget.dataset.layout;
-    if (layout === this.data.layout) return;
-    this.setData({ layout });
-    this.fetch();
-  },
-  onPrev() {
-    if (!this.data.canPrev) return;
-    this._shift(-1);
-  },
-  onNext() {
-    if (!this.data.canNext) return;
-    this._shift(1);
-  },
-  _shift(delta) {
-    const { layout, date, today } = this.data;
-    let next;
-    if (layout === 'day') {
-      next = D.addDays(date, delta);
-    } else {
-      const n = D.addMonths(Number(date.slice(0, 4)), Number(date.slice(5, 7)), delta);
-      next = D.ymd(n.year, n.month, 1);
-    }
-    this.setData({ date: next > today ? today : next });
-    this.fetch();
-  },
   onColor(e) {
     const id = e.currentTarget.dataset.id;
     if (id === this.data.colorId) return;
@@ -112,53 +79,12 @@ Page({
     this.render();
   },
 
-  // ========= 数据 =========
-  async fetch() {
-    const { layout, date, today, themeId } = this.data;
-    const isDay = layout === 'day';
-    const y = Number(date.slice(0, 4)), m = Number(date.slice(5, 7));
-    const range = isDay ? { from: date, to: date } : D.monthRange(y, m);
-    this.setData({
-      ready: false,
-      periodLabel: isDay ? `${D.formatDateCN(date)} ${D.weekdayCN(date)}` : D.formatMonthLabel(y, m),
-      canPrev: isDay ? D.daysBetween(date, today) < MAX_DAY_BACK : D.daysBetween(range.from, today) < MAX_DAY_BACK,
-      canNext: isDay ? date < today : range.to < today
-    });
-    const seq = (this._seq || 0) + 1;
-    this._seq = seq;
-    try {
-      const r = await C.callDaily({ action: 'getRange', theme: themeId, from: range.from, to: range.to });
-      if (this._destroyed || seq !== this._seq) return;
-      const goal = (r.settings && r.settings.daily_goal) || this.theme.defaultGoal;
-      const measure = this.theme.measure;
-      const view = V.viewOf(this.theme);
-      const map = M.toDayMap(r.days, measure);
-      const docs = M.toDocMap(r.days);
-      Object.keys(docs).forEach(d => { if (!(d in map) || d > today) delete docs[d]; });
-      if (isDay) {
-        const title = `${date.slice(0, 4)}年${D.formatDateCN(date)} ${D.weekdayCN(date)}`;
-        this._poster = docs[date] ? view.posterDay(docs[date], goal, this.theme, title) : { layout: 'empty', title };
-      } else {
-        const title = D.formatMonthLabel(y, m);
-        const summary = M.summarize(map, range.from, range.to, goal, today, measure);
-        this._poster = summary.dataDays
-          ? view.posterMonth(summary, M.buildMonthCells(y, m, map, goal, today, measure), docs, this.theme, title)
-          : { layout: 'empty', title };
-      }
-      this.setData({ empty: this._poster.layout === 'empty' });
-      this.render();
-    } catch (err) {
-      if (seq !== this._seq) return;
-      console.warn('[metric share] fetch fail', err);
-      toast.show(this, '加载失败');
-    }
-  },
-
   // ========= 出图 =========
   async render() {
-    if (!this._ready || this._destroyed || !this._poster) return;
+    if (!this._ready || this._destroyed || !this._snap) return;
     const seq = (this._renderSeq || 0) + 1;
     this._renderSeq = seq;
+    this.setData({ ready: false });
     try {
       const canvas = await new Promise((resolve, reject) => {
         wx.createSelectorQuery().in(this).select('#metricPoster').fields({ node: true }).exec(res => {
@@ -170,7 +96,7 @@ Page({
       canvas.width = CANVAS_W;
       canvas.height = CANVAS_H;
       const ctx = canvas.getContext('2d');
-      new MetricPosterDrawer(canvas, ctx).draw(this._poster, palette.get(this.data.colorId), this.theme.vocab);
+      ReportPoster.draw(ctx, this._snap, palette.get(this.data.colorId));
       // 双帧让绘制提交到 bitmap，避免导出空白
       await new Promise(resolve => canvas.requestAnimationFrame(() => canvas.requestAnimationFrame(resolve)));
       if (this._destroyed || seq !== this._renderSeq) return;

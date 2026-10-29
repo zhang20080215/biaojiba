@@ -9,13 +9,9 @@
   border-radius: 36rpx;
   padding: 20rpx 24rpx;
 }
-.options .period-nav {
-  margin-top: 12rpx;
-}
 .colors {
   display: flex;
   align-items: center;
-  margin-top: 12rpx;
 }
 .colors-label {
   font-size: 24rpx;

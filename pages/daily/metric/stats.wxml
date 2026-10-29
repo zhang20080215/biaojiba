@@ -50,8 +50,8 @@
           </view>
         </view>
       </view>
-      <goal-chart wx:if="{{period === 'goal'}}" burnup="{{burnup}}" accent="{{accent}}" targetText="{{targetText}}" bind:select="onGoalSelect" />
-      <kline-chart wx:elif="{{!empty}}" candles="{{candles}}" period="{{period}}" mode="{{mode}}" value="{{chartValue}}" visible="{{visible}}"
+      <goal-chart wx:if="{{period === 'goal'}}" id="goalChart" burnup="{{burnup}}" accent="{{accent}}" targetText="{{targetText}}" bind:select="onGoalSelect" />
+      <kline-chart wx:elif="{{!empty}}" id="kline" candles="{{candles}}" period="{{period}}" mode="{{mode}}" value="{{chartValue}}" visible="{{visible}}"
                    goal="{{goalPlot}}" showGoal="{{showGoal}}" goalText="{{goalText}}" format="{{format}}" accent="{{accent}}" showMA="{{showMA}}"
                    bind:select="onSelect" />
       <view class="empty-tip" wx:if="{{empty && !loading && period !== 'goal'}}">还没有数据</view>

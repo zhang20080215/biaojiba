@@ -7,16 +7,8 @@
   <daily-nav title="{{title}}" fallback="/pages/daily/metric/index?theme={{themeId}}" />
 
   <view class="content">
+    <!-- 内容就是统计页当前的样子（周期 / 画法 / 缩放都在统计页调好再来），这里只换配色 -->
     <view class="options">
-      <view class="seg">
-        <view class="seg-item {{layout === 'day' ? 'is-on' : ''}}" data-layout="day" bindtap="onLayout">单日</view>
-        <view class="seg-item {{layout === 'month' ? 'is-on' : ''}}" data-layout="month" bindtap="onLayout">月度</view>
-      </view>
-      <view class="period-nav">
-        <view class="period-arrow {{canPrev ? '' : 'is-off'}}" bindtap="onPrev">‹</view>
-        <text class="period-label">{{periodLabel}}</text>
-        <view class="period-arrow {{canNext ? '' : 'is-off'}}" bindtap="onNext">›</view>
-      </view>
       <view class="colors">
         <text class="colors-label">配色</text>
         <view wx:for="{{colors}}" wx:key="id" class="color-dot {{colorId === item.id ? 'is-on' : ''}}"

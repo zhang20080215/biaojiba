@@ -1,7 +1,7 @@
 /**
  * 每日主题公共层 · 各度量的展示文案（统计页 / 海报 / 日详情）
  *
- * 页面只调这里，不写 if (睡眠)：步数（count）和睡眠（bedtime）在「显示什么数、KPI 是哪几项、海报写什么」上
+ * 页面只调这里，不写 if (睡眠)：步数（count）和睡眠（bedtime）在「显示什么数、KPI 是哪几项」上
  * 的差别全收在这一个文件里。加一种新度量 = 这里加一组 + metric.MEASURES 加一个。
  *
  * 入参约定：s = metric.summarize(...) 的结果；docs = 区间内有数据的文档（{date: doc}）；theme = dailyThemes 配置
@@ -56,37 +56,6 @@ const VIEWS = {
       };
     },
 
-
-    posterDay(doc, goal, theme, title) {
-      const value = Number(doc.total_value) || 0;
-      const ratio = goal > 0 ? value / goal : 0;
-      return {
-        layout: 'day',
-        title,
-        cap: theme.vocab.todayCap,
-        bigText: M.formatNum(value),
-        bigUnit: theme.unit,
-        ratio,
-        statusText: `完成 ${Math.round(ratio * 100)}%`,
-        subLine: `每日目标 ${M.formatNum(goal)} ${theme.unit}${eqText(theme, value) ? ' · ' + eqText(theme, value) : ''}`,
-        cheer: theme.cheerFor ? theme.cheerFor(ratio, value, goal) : ''
-      };
-    },
-
-    posterMonth(s, cells, docs, theme, title) {
-      const v = theme.vocab;
-      return {
-        layout: 'month',
-        title,
-        subtitle: `${v.noun}月报`,
-        cells,
-        tiles: [
-          { label: v.totalLabel, value: M.formatShort(s.total), sub: eqText(theme, s.total) || theme.unit },
-          { label: v.avgLabel, value: M.formatNum(s.avg), sub: theme.unit },
-          { label: '达标天数', value: String(s.achieved), sub: `/ ${s.dataDays} 天` }
-        ]
-      };
-    }
   },
 
   bedtime: {
@@ -118,39 +87,6 @@ const VIEWS = {
       };
     },
 
-
-    posterDay(doc, goal, theme, title) {
-      const meta = doc.meta || {};
-      const late = Number(meta.bedOffset) - goal;
-      // 环表示「离目标有多近」：准时是满圈，每晚 1 分钟少一点，晚 2 小时以上只剩一小截
-      const ratio = late <= 0 ? 1 : Math.max(0.08, 1 - late / 120);
-      return {
-        layout: 'day',
-        title,
-        cap: theme.vocab.todayCap,
-        bigText: meta.bedTime,
-        bigUnit: '入睡',
-        ratio,
-        statusText: late <= 0 ? '早睡达标' : `比目标晚 ${T.formatDuration(late)}`,
-        subLine: `目标 ${T.offsetToClock(goal)} 前入睡${meta.wakeTime ? ` · ${meta.wakeTime} 起床 · 睡了 ${T.formatDuration(meta.duration)}` : ''}`,
-        cheer: theme.cheerFor ? theme.cheerFor(late) : ''
-      };
-    },
-
-    posterMonth(s, cells, docs, theme, title) {
-      const x = sleepExtras(docs);
-      return {
-        layout: 'month',
-        title,
-        subtitle: `${theme.vocab.noun}月报`,
-        cells,
-        tiles: [
-          { label: '早睡天数', value: String(s.achieved), sub: `/ ${s.dataDays} 晚` },
-          { label: theme.vocab.avgLabel, value: s.dataDays ? T.offsetToClock(s.avg) : '—', sub: '' },
-          { label: '平均睡眠', value: x.avgDuration, sub: `平均 ${x.avgWake} 起床` }
-        ]
-      };
-    }
   }
 };
 
