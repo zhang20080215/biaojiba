@@ -179,9 +179,14 @@
   border-radius: 99rpx;
 }
 
+.sec-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52rpx;
+  margin: 28rpx 8rpx 0;
+}
 .sec-title {
-  display: block;
-  margin: 32rpx 8rpx 0;
   font-size: 24rpx;
   color: var(--text-muted, #9C998F);
 }

@@ -1,5 +1,6 @@
 // 每日主题 · 统计页图表（canvas 2d）
-// 股票软件的看法：最新一根在最右边；左右拖动翻看更早的；点一下或长按拖动出十字线，抛 select 让页面换表头。
+// 股票软件的看法：最新一根在最右边；左右拖动翻看更早的；点一下或长按拖动出十字线，抛 select 让页面换表头；
+// 双指捏合横向缩放（一屏 5 ~ 400 根，两指中间那根保持在原处），换周期 / 换 visible 时回到默认根数。
 // 三种画法，日 / 周 / 月 / 年都能用：
 //   bar    柱形 —— 从 0 长起（步数），达到每日目标深色、没到浅色
 //   line   折线 —— 平滑曲线 + 浅色面积
@@ -21,6 +22,8 @@ const FLAT = '#A7A498';
 const MA_N = [5, 10];
 const PAD = { l: 6, r: 50, t: 24, b: 22 };
 const LONG_PRESS_MS = 300;
+const MIN_VISIBLE = 5;
+const MAX_VISIBLE = 400;                         // 再多一根就不到 1px 了
 
 Component({
   properties: {
@@ -33,16 +36,21 @@ Component({
     goalText: { type: String, value: '' },
     format: { type: String, value: 'count' },   // count | clock
     accent: { type: String, value: '#526631' },
-    visible: { type: Number, value: 30 },       // 一屏放几根
+    visible: { type: Number, value: 30 },       // 一屏默认放几根（捏合缩放后以 this._vis 为准）
     showMA: { type: Boolean, value: true }
   },
   observers: {
     'candles, period': function () {
       this._offset = 0;
       this._sel = -1;
+      this._vis = 0;
       this._draw();
     },
-    'mode, value, goal, showGoal, accent, visible, showMA': function () { this._draw(); }
+    visible() {
+      this._vis = 0;
+      this._draw();
+    },
+    'mode, value, goal, showGoal, accent, showMA': function () { this._draw(); }
   },
   lifetimes: {
     ready() {
@@ -67,7 +75,7 @@ Component({
     _view() {
       const c = this.data.candles || [];
       const n = c.length;
-      const V = Math.max(1, this.data.visible);
+      const V = Math.max(1, this._vis || this.data.visible);
       const maxOffset = Math.max(0, n - V);
       this._offset = Math.min(Math.max(0, this._offset || 0), maxOffset);
       const end = n - this._offset;
@@ -274,7 +282,33 @@ Component({
       }
     },
 
-    // ───────── 手势：拖动翻历史；点一下 / 长按拖动出十字线 ─────────
+    // ───────── 手势：拖动翻历史；点一下 / 长按拖动出十字线；双指捏合缩放 ─────────
+    _startPinch(t) {
+      clearTimeout(this._lpTimer);
+      this._scrub = false;
+      this._moved = true;                        // 捏完松手不算轻点
+      const v = this._view();
+      const cx = (t[0].x + t[1].x) / 2;
+      // 两指中点落在第几根（可以是小数；不满一屏时左边空着的那几格也算进去）
+      const anchor = v.start - (v.V - (v.end - v.start)) + (cx - PAD.l) / v.slot - 0.5;
+      this._pinch = { d0: Math.max(1, Math.hypot(t[0].x - t[1].x, t[0].y - t[1].y)), V0: v.V, cx, anchor };
+    },
+    _doPinch(t) {
+      const P = this._pinch;
+      const n = (this.data.candles || []).length;
+      const d = Math.max(1, Math.hypot(t[0].x - t[1].x, t[0].y - t[1].y));
+      // 两指张开 = 放大 = 一屏放更少根；最多放到「全部」或默认根数里大的那个
+      const maxV = Math.max(this.data.visible, Math.min(n, MAX_VISIBLE));
+      const V = Math.min(maxV, Math.max(MIN_VISIBLE, Math.round(P.V0 * P.d0 / d)));
+      if (V === (this._vis || this.data.visible) && this._pinchApplied) return;
+      this._pinchApplied = true;
+      // 让 anchor 那根留在两指中点下：反推最左一格是第几根，再换成离最右的偏移
+      const slot = (this._w - PAD.l - PAD.r) / V;
+      const left = P.anchor - ((P.cx - PAD.l) / slot - 0.5);
+      this._vis = V;
+      this._offset = Math.min(Math.max(0, n - V), Math.max(0, Math.round(n - (left + V))));
+      this._draw();
+    },
     _indexAt(x) {
       const v = this._view();
       const k = Math.floor((x - PAD.l) / v.slot) - (v.V - (v.end - v.start));
@@ -286,15 +320,24 @@ Component({
       this.triggerEvent('select', { index: i });
     },
     onTouchStart(e) {
+      if (e.touches.length >= 2) { this._startPinch(e.touches); return; }
       const t = e.touches[0];
       this._x0 = t.x;
       this._off0 = this._offset || 0;
       this._moved = false;
       this._scrub = false;
+      this._pinch = null;
+      this._pinchApplied = false;
       clearTimeout(this._lpTimer);
       this._lpTimer = setTimeout(() => { this._scrub = true; this._select(this._indexAt(this._x0)); }, LONG_PRESS_MS);
     },
     onTouchMove(e) {
+      if (e.touches.length >= 2) {
+        if (!this._pinch) this._startPinch(e.touches);
+        this._doPinch(e.touches);
+        return;
+      }
+      if (this._pinch) return;                   // 捏合时先抬起一根手指：剩下那根不拖动，等全抬起
       const t = e.touches[0];
       const dx = t.x - this._x0;
       if (this._scrub) { this._select(this._indexAt(t.x)); return; }
@@ -309,8 +352,12 @@ Component({
         this._draw();
       }
     },
-    onTouchEnd() {
+    onTouchEnd(e) {
       clearTimeout(this._lpTimer);
+      if (this._pinch) {
+        if (!e || !e.touches || !e.touches.length) this._pinch = null;
+        return;
+      }
       if (this._moved || this._scrub) return;
       // 轻点：选中那一根；再点同一根取消
       const i = this._indexAt(this._x0);

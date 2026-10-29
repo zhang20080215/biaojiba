@@ -33,21 +33,16 @@
           </view>
         </view>
       </view>
-      <!-- 第二行 左边随周期变：日 = 近 30 / 180 / 365 天；周月年 = 看日均还是总数；目标 = 三条线的图例。右边均线开关。
+      <!-- 第二行 左边随周期变：周月年 = 看日均还是总数；目标 = 三条线的图例；日 = 空着（近 N 天在下面汇总标题里选）。右边均线开关。
            这一行永远在，用不上的只隐藏、仍占位，切换时图表不上下跳 -->
       <view class="chart-sub">
-        <view class="sub-left" wx:if="{{period === 'day'}}">
-          <text class="chart-sub-label">近</text>
-          <view class="opt-group">
-            <view wx:for="{{ranges}}" wx:key="key" class="opt {{dayRange === item.key ? 'is-on' : ''}}" data-range="{{item.key}}" bindtap="onRange">{{item.label}}</view>
-          </view>
-        </view>
-        <view class="sub-left goal-legend" wx:elif="{{period === 'goal'}}">
+        <view class="sub-left goal-legend" wx:if="{{period === 'goal'}}">
           <view class="lg"><view class="lg-line"></view><text>实际累计</text></view>
           <view class="lg"><view class="lg-line is-dash"></view><text>理想进度</text></view>
           <view class="lg"><view class="lg-line is-dot"></view><text>预测</text></view>
         </view>
         <view class="sub-left {{showAgg ? '' : 'is-hidden'}}" wx:else>
+          <!-- 日视图也渲染这一组（showAgg 恒为 false → 隐藏占位），保证这一行的高度和左右排布不变 -->
           <text class="chart-sub-label">每{{period === 'week' ? '周' : period === 'year' ? '年' : '月'}}看</text>
           <view class="opt-group">
             <view wx:for="{{aggs}}" wx:key="key" class="opt {{agg === item.key ? 'is-on' : ''}}" data-agg="{{item.key}}" bindtap="onAgg">{{item.label}}</view>
@@ -63,7 +58,13 @@
     </view>
 
     <block wx:if="{{kpi.length}}">
-      <text class="sec-title">{{sumTitle}}</text>
+      <!-- 汇总标题行：日视图在右边选统计近 30 / 180 / 365 天；其它周期只有标题（行高固定，切换不跳） -->
+      <view class="sec-row">
+        <text class="sec-title">{{sumTitle}}</text>
+        <view class="opt-group" wx:if="{{period === 'day'}}">
+          <view wx:for="{{ranges}}" wx:key="key" class="opt {{dayRange === item.key ? 'is-on' : ''}}" data-range="{{item.key}}" bindtap="onRange">{{item.label}}</view>
+        </view>
+      </view>
       <view class="kpi-grid">
         <view class="kpi-tile" wx:for="{{kpi}}" wx:key="label">
           <text class="kpi-label">{{item.label}}</text>

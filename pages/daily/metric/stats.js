@@ -24,7 +24,8 @@ const PERIODS = {
 };
 const MODES = [{ key: 'bar', label: '柱形' }, { key: 'line', label: '折线' }, { key: 'candle', label: 'K线' }];
 const AGGS = [{ key: 'avg', label: '日均' }, { key: 'sum', label: '总数' }];
-// 日视图看最近多少天：图表一屏放这么多天，图下的汇总也统计这么多天（以前汇总的是选中那天所在的一周，看着怪）
+// 日视图下面的汇总统计最近多少天，在汇总标题行右边选（以前汇总的是选中那天所在的一周，看着怪）；
+// 只管汇总，图表一屏放几天靠双指缩放
 const RANGES = [{ key: 30, label: '30天' }, { key: 180, label: '180天' }, { key: 365, label: '365天' }];
 const UP = '#E25A4E';
 const DOWN = '#3A9F6E';
@@ -161,9 +162,8 @@ Page({
     const p = this.data.period;
     if (p === 'goal') return this._renderGoal();
     this._candles = K.buildCandles(this._plot || {}, p);
-    // 日视图一屏放「近 N 天」；记录还没这么多天时按实有的放（至少 30 格），免得几十根挤在最右边一小条
-    const visible = p === 'day' ? Math.min(this.data.dayRange, Math.max(this._candles.length, 30)) : PERIODS[p].visible;
-    this.setData({ candles: this._candles, visible });
+    // 一屏默认放几根；之后用户双指捏合横向缩放，由图表组件自己管（换周期回到默认）
+    this.setData({ candles: this._candles, visible: PERIODS[p].visible });
     this._applyOptions();
   },
 
@@ -210,9 +210,9 @@ Page({
     const dayRange = Number(e.currentTarget.dataset.range);
     if (dayRange === this.data.dayRange) return;
     try { wx.setStorageSync(this._rangeKey, dayRange); } catch (err) { /* ignore */ }
-    this._sel = -1;
+    // 只换下面汇总统计的天数，图表和表头不动
     this.setData({ dayRange });
-    this._build();
+    this._renderFor(this._sel != null && this._sel >= 0 ? this._sel : this._candles.length - 1);
   },
 
   onToggleMA() {
@@ -316,7 +316,8 @@ Page({
       changeColor,
       ohlc,
       note,
-      sumTitle: (period === 'day' ? `近 ${this.data.dayRange} 天（${D.formatDateCN(range.from)} - ${D.formatDateCN(range.to)}）` : this._periodLabel(c)) + ' 汇总',
+      // 日视图右边已经有「30天 / 180天 / 365天」，标题只写起止日期，免得挤
+      sumTitle: (period === 'day' ? `${D.formatDateCN(range.from)} - ${D.formatDateCN(range.to)}` : this._periodLabel(c)) + ' 汇总',
       kpi: sv.kpi,
       selectedDay: period === 'day' ? c.from : ''
     });

@@ -1,5 +1,6 @@
 // 每日主题 · 统计页「目标」页签的累计进度图（canvas 2d）
-// 横轴固定是累计目标的整个区间（开始日 → 截止日），一屏放下，不拖动翻页。
+// 横轴默认是累计目标的整个区间（开始日 → 截止日），一屏放下；双指捏合可以横向放大（最少看 7 天），
+// 放大后单指左右拖动平移，换目标时回到全程。
 //   实际累计 —— 平滑曲线 + 浅色面积，画到今天，今天打一个点
 //   理想进度 —— 灰色虚线，0 → 目标值的直线；曲线在它上面就是超前
 //   预测     —— 从今天按目前日均往后延的虚线；能提前到就停在到达那天，末端写「预计 …」
@@ -7,11 +8,13 @@
 // 点一下 / 长按拖动出十字线，抛 select { index: k }（k = 第几天，-1 = 取消），页面换表头。
 // burnup 是 utils/daily/burnup.js buildBurnup 的结果（经 setData 传进来，函数字段会丢，这里自己算理想值）。
 const M = require('../../../utils/daily/metric.js');
+const D = require('../../../utils/daily/date.js');
 const { monotoneControls } = require('../../../utils/daily/chart.js');
 
 // 顶部不用给均线读数留位置（K 线图要），只留目标值那行字的余量
 const PAD = { l: 6, r: 50, t: 8, b: 22 };
 const LONG_PRESS_MS = 300;
+const MIN_DAYS = 7;                              // 放大到最多一屏 7 天
 const GRID = '#EFEEEA';
 const MUTED = '#A7A498';
 
@@ -24,6 +27,7 @@ Component({
   observers: {
     burnup() {
       this._sel = -1;
+      this._k0 = null;                           // 回到全程
       this._draw();
     },
     accent() { this._draw(); }
@@ -55,15 +59,33 @@ Component({
       return date ? date.slice(5).replace('-', '/').replace(/^0/, '').replace('/0', '/') : '';
     },
 
+    // 当前看的横轴窗口 [k0, k1]（天，可以是小数）；没缩放过就是整个区间
+    _win() {
+      const span = this.data.burnup.span;
+      if (this._k0 == null) return { k0: 0, k1: span, w: span };
+      const w = Math.min(span, Math.max(Math.min(MIN_DAYS, span), this._kw));
+      const k0 = Math.min(span - w, Math.max(0, this._k0));
+      this._k0 = k0;
+      this._kw = w;
+      return { k0, k1: k0 + w, w };
+    },
+
+    // 第 k 天结束时对应的日期（k=0 记作开始日）
+    _dateAt(k) {
+      const b = this.data.burnup;
+      return D.addDays(b.startDate, Math.max(0, Math.round(k) - 1));
+    },
+
     _geo() {
       const b = this.data.burnup;
       const W = this._w, H = this._h;
       const top = PAD.t, bottom = H - PAD.b;
       const plotW = W - PAD.l - PAD.r;
       const hi = Math.max(b.target, b.walked, b.projected || 0, 1) * 1.06;
+      const win = this._win();
       return {
-        b, W, H, top, bottom, plotW,
-        xOf: k => PAD.l + k / b.span * plotW,
+        b, W, H, top, bottom, plotW, win,
+        xOf: k => PAD.l + (k - win.k0) / win.w * plotW,
         yOf: v => bottom - v / hi * (bottom - top),
         hi
       };
@@ -76,7 +98,8 @@ Component({
       const b = this.data.burnup;
       if (!b || !b.span) return;
       const g = this._geo();
-      const { W, top, bottom, xOf, yOf, hi } = g;
+      const { W, H, top, bottom, xOf, yOf, win } = g;
+      const inPlot = x => x >= PAD.l - 0.5 && x <= W - PAD.r + 0.5;
       const accent = this.data.accent;
       const pts = b.points.map(p => ({ x: xOf(p.k), y: yOf(p.cum) }));
       const now = pts[pts.length - 1];
@@ -104,6 +127,12 @@ Component({
       ctx.strokeStyle = accent;
       ctx.beginPath(); ctx.moveTo(PAD.l, ty); ctx.lineTo(W - PAD.r, ty); ctx.stroke();
       ctx.globalAlpha = 1;
+
+      // 三条线裁在绘图区里：放大后窗口外的部分不画到刻度栏上
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(PAD.l, 0, W - PAD.l - PAD.r, H);
+      ctx.clip();
 
       // 理想进度
       ctx.save();
@@ -145,8 +174,9 @@ Component({
         ctx.fillStyle = accent;
         ctx.beginPath(); ctx.arc(px, py, 3, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
-        projLabel = { x: px, y: py, text: b.finishDate ? `预计 ${this._md(b.finishDate)} 达成` : `预计 ${this._fmt(b.projected)}` };
+        if (inPlot(px)) projLabel = { x: px, y: py, text: b.finishDate ? `预计 ${this._md(b.finishDate)} 达成` : `预计 ${this._fmt(b.projected)}` };
       }
+      ctx.restore();                             // 结束裁剪
 
       // 文字最后画，垫白底免得被线盖住；右对齐到 x，返回占的矩形
       ctx.font = '10px sans-serif';
@@ -171,8 +201,8 @@ Component({
         chip(projLabel.text, box, accent);
       }
 
-      // 今天的点（白圈压在线上，画在文字之后，不被说明盖住）
-      if (pts.length > 1) {
+      // 今天的点（白圈压在线上，画在文字之后，不被说明盖住；放大后不在窗口里就不画）
+      if (pts.length > 1 && inPlot(now.x)) {
         ctx.fillStyle = '#FFFFFF';
         ctx.beginPath(); ctx.arc(now.x, now.y, 5, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = accent;
@@ -180,14 +210,14 @@ Component({
       }
 
 
-      // 底部日期：开始、今天、截止
+      // 底部日期：窗口两端（没缩放就是开始、截止）+ 今天
       ctx.font = '10px sans-serif';
       ctx.textBaseline = 'top';
       ctx.fillStyle = MUTED;
       ctx.textAlign = 'left';
-      ctx.fillText(this._md(b.startDate), PAD.l, bottom + 6);
+      ctx.fillText(this._md(this._dateAt(win.k0)), PAD.l, bottom + 6);
       ctx.textAlign = 'right';
-      ctx.fillText(this._md(b.endDate), W - PAD.r, bottom + 6);
+      ctx.fillText(this._md(win.k1 >= b.span ? b.endDate : this._dateAt(win.k1)), W - PAD.r, bottom + 6);
       if (b.elapsed > 0 && b.elapsed < b.span && now.x - PAD.l > 36 && W - PAD.r - now.x > 36) {
         ctx.textAlign = 'center';
         ctx.fillStyle = '#6F6F68';
@@ -196,7 +226,7 @@ Component({
 
       // 十字线
       const sel = this._sel;
-      if (sel > 0 && sel < pts.length) {
+      if (sel > 0 && sel < pts.length && inPlot(pts[sel].x)) {
         const p = pts[sel];
         ctx.save();
         ctx.setLineDash([3, 3]);
@@ -213,11 +243,15 @@ Component({
       }
     },
 
-    // ───────── 手势：点一下 / 长按拖动出十字线（只能落在开始日到今天之间）─────────
+    // ───────── 手势：点一下 / 长按拖动出十字线（只能落在开始日到今天之间）；双指捏合缩放；放大后单指拖动平移 ─────────
+    _plotW() {
+      return this._w - PAD.l - PAD.r;
+    },
     _indexAt(x) {
       const b = this.data.burnup;
       if (!b || b.elapsed < 1) return -1;
-      const k = Math.round((x - PAD.l) / (this._w - PAD.l - PAD.r) * b.span);
+      const win = this._win();
+      const k = Math.round(win.k0 + (x - PAD.l) / this._plotW() * win.w);
       return Math.min(b.elapsed, Math.max(1, k));
     },
     _select(i) {
@@ -225,19 +259,67 @@ Component({
       this._draw();
       this.triggerEvent('select', { index: i });
     },
+    _startPinch(t) {
+      clearTimeout(this._lpTimer);
+      this._scrub = false;
+      this._moved = true;                        // 捏完松手不算轻点
+      const win = this._win();
+      const cx = (t[0].x + t[1].x) / 2;
+      this._pinch = {
+        d0: Math.max(1, Math.hypot(t[0].x - t[1].x, t[0].y - t[1].y)),
+        w0: win.w,
+        cx,
+        anchor: win.k0 + (cx - PAD.l) / this._plotW() * win.w   // 两指中点对着第几天
+      };
+    },
+    _doPinch(t) {
+      const b = this.data.burnup;
+      if (!b || !b.span) return;
+      const P = this._pinch;
+      const d = Math.max(1, Math.hypot(t[0].x - t[1].x, t[0].y - t[1].y));
+      const w = Math.min(b.span, Math.max(Math.min(MIN_DAYS, b.span), P.w0 * P.d0 / d));
+      this._kw = w;
+      this._k0 = P.anchor - (P.cx - PAD.l) / this._plotW() * w;  // _win() 负责夹回区间内
+      this._draw();
+    },
     onTouchStart(e) {
+      if (!this.data.burnup) return;
+      if (e.touches.length >= 2) { this._startPinch(e.touches); return; }
       const t = e.touches[0];
       this._x0 = t.x;
+      this._k00 = this._win().k0;
+      this._moved = false;
       this._scrub = false;
+      this._pinch = null;
       clearTimeout(this._lpTimer);
       this._lpTimer = setTimeout(() => { this._scrub = true; this._select(this._indexAt(this._x0)); }, LONG_PRESS_MS);
     },
     onTouchMove(e) {
-      if (this._scrub) this._select(this._indexAt(e.touches[0].x));
-    },
-    onTouchEnd() {
+      if (!this.data.burnup) return;
+      if (e.touches.length >= 2) {
+        if (!this._pinch) this._startPinch(e.touches);
+        this._doPinch(e.touches);
+        return;
+      }
+      if (this._pinch) return;                   // 捏合时先抬起一根手指：剩下那根不拖动
+      const x = e.touches[0].x;
+      if (this._scrub) { this._select(this._indexAt(x)); return; }
+      const dx = x - this._x0;
+      if (Math.abs(dx) < 4) return;
+      this._moved = true;
       clearTimeout(this._lpTimer);
-      if (this._scrub) return;
+      const win = this._win();
+      if (win.w >= this.data.burnup.span) return; // 没放大就没得平移
+      this._k0 = this._k00 - dx / this._plotW() * win.w;
+      this._draw();
+    },
+    onTouchEnd(e) {
+      clearTimeout(this._lpTimer);
+      if (this._pinch) {
+        if (!e || !e.touches || !e.touches.length) this._pinch = null;
+        return;
+      }
+      if (this._scrub || this._moved) return;
       const i = this._indexAt(this._x0);
       this._select(i === this._sel ? -1 : i);
     }
