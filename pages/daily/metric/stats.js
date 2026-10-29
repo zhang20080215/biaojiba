@@ -1,8 +1,8 @@
 // 数值型每日主题 · 统计（股票软件的看法：日 / 周 / 月 / 年）
 // 一次拉全部记录（getAll，一天一条，量很小），本地聚合成每天 / 每周 / 每月一根（utils/daily/kline.js）；
 // 最新一根在最右，左右拖动翻历史，点一下 / 长按拖动选中某一根，表头和汇总跟着它走。
-// 图表上方：左边 日 / 周 / 月 / 年，右边设置 —— 画法 柱形 / 折线 / 箱体（四个周期都能用）、
-// 周 / 月 / 年的柱形和折线看「日均」还是「总数」（只有步数有；箱体固定看平均和高低）、均线开关；都按主题记在本地。
+// 图表上方：左边 日 / 周 / 月 / 年，右边设置 —— 画法 柱形 / 折线 / K线（四个周期都能用）、
+// 周 / 月 / 年的柱形和折线看「日均」还是「总数」（只有步数有；K线固定画开高低收）、均线开关；都按主题记在本地。
 // 年度原来是单独一页（全年热力格），2026-10-28 并进这里的「年」；图下的读图说明和月历也一并去掉了。
 // 睡眠画的是入睡时间，取反后越早越往上（红 = 比上一根早）。
 // 有进行中的截止日期累计目标时，周期后面多一个「目标」：累计进度图（components/daily/goal-chart，算法在 utils/daily/burnup.js），
@@ -22,7 +22,7 @@ const PERIODS = {
   month: { label: '月', noun: '月', visible: 12 },
   year: { label: '年', noun: '年', visible: 6 }
 };
-const MODES = [{ key: 'bar', label: '柱形' }, { key: 'line', label: '折线' }, { key: 'box', label: '箱体' }];
+const MODES = [{ key: 'bar', label: '柱形' }, { key: 'line', label: '折线' }, { key: 'candle', label: 'K线' }];
 const AGGS = [{ key: 'avg', label: '日均' }, { key: 'sum', label: '总数' }];
 const UP = '#E25A4E';
 const DOWN = '#3A9F6E';
@@ -84,7 +84,8 @@ Page({
     this._aggKey = theme.id + 'ChartAgg';
     let mode = 'bar', showMA = true, agg = 'avg';
     try {
-      const m = wx.getStorageSync(this._modeKey);
+      let m = wx.getStorageSync(this._modeKey);
+      if (m === 'box') m = 'candle';            // 10-28 那版叫「箱体」，存的还是 box
       if (MODES.some(x => x.key === m)) mode = m;
       if (wx.getStorageSync(this._maKey) === 'off') showMA = false;
       if (wx.getStorageSync(this._aggKey) === 'sum') agg = 'sum';
@@ -160,7 +161,7 @@ Page({
   _applyOptions() {
     const { period, mode, agg, format } = this.data;
     if (period === 'goal') return;
-    const showAgg = period !== 'day' && mode !== 'box' && format === 'count';
+    const showAgg = period !== 'day' && mode !== 'candle' && format === 'count';
     const useSum = showAgg && agg === 'sum';
     this.setData({
       showAgg,
@@ -264,12 +265,15 @@ Page({
       changeColor = diff > 0 ? UP : diff < 0 ? DOWN : '';
     }
 
-    // 周 / 月表头下面一行：最多、最少，再补上大字没显示的那个（看日均就补累计，看累计就补日均）
+    // 周 / 月 / 年表头下面一行：K线时是股票的「开 高 低 收」；
+    // 柱形 / 折线时是最多、最少，再补上大字没显示的那个（看日均就补累计，看累计就补日均）
     let ohlc = [], note = '';
     if (period === 'day') {
       const doc = this._docs[c.from];
       if (clock) note = doc ? this.view.dayText(doc, this.theme) : '';
       else note = c.main >= goal ? `目标 ${M.formatNum(goal)} · 已达标` : `目标 ${M.formatNum(goal)} · 差 ${M.formatNum(goal - c.main)}`;
+    } else if (this.data.mode === 'candle') {
+      ohlc = [{ k: '开', v: this._fmt(c.open) }, { k: clock ? '早' : '高', v: this._fmt(c.high) }, { k: clock ? '晚' : '低', v: this._fmt(c.low) }, { k: '收', v: this._fmt(c.close) }];
     } else {
       ohlc = [{ k: clock ? '最早' : '最多', v: this._fmt(c.high) }, { k: clock ? '最晚' : '最少', v: this._fmt(c.low) }];
       if (!clock) ohlc.push(useSum ? { k: '日均', v: this._fmt(c.main) } : { k: '累计', v: M.formatShort(c.sum) });

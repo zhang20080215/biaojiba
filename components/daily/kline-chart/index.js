@@ -1,11 +1,12 @@
 // 每日主题 · 统计页图表（canvas 2d）
 // 股票软件的看法：最新一根在最右边；左右拖动翻看更早的；点一下或长按拖动出十字线，抛 select 让页面换表头。
-// 三种画法，日 / 周 / 月都能用：
-//   bar  柱形 —— 从 0 长起（步数），达到每日目标深色、没到浅色
-//   line 折线 —— 平滑曲线 + 浅色面积
-//   box  箱体 —— 画成一个「十」：竖线从最少的一天到最多的一天，横线是平均（不画方块的上下沿）；
-//               日视图一天只有一个数，竖线画成和横线一样长，是个小「十」，中心就是当天的值
-// value = 'main'（每根的平均 / 当天的值）或 'sum'（这一段的总数），柱形和折线按它取值；箱体固定看平均和高低。
+// 三种画法，日 / 周 / 月 / 年都能用：
+//   bar    柱形 —— 从 0 长起（步数），达到每日目标深色、没到浅色
+//   line   折线 —— 平滑曲线 + 浅色面积
+//   candle K线 —— 股票蜡烛：实体从开到收，影线到这一段的最高 / 最低；收比开高红色、低绿色、持平灰色。
+//                 周 / 月 / 年：开 = 第一个有数据的日子，收 = 最后一个；日：开 = 上一天，收 = 当天（没有影线）
+//   （2026-10-28 试过画成「十」字的箱体，2026-10-29 用户觉得没意思，回到蜡烛）
+// value = 'main'（每根的平均 / 当天的值）或 'sum'（这一段的总数），柱形和折线按它取值；K线固定画开高低收。
 // MA5、MA10 两条均线可开关（跟着 value 算）；每日目标虚线，目标值标在虚线右下角。
 // 数值是「绘图值」（睡眠传的是 -bedOffset，越早越往上），format 决定轴上怎么写字。
 const M = require('../../../utils/daily/metric.js');
@@ -14,6 +15,9 @@ const K = require('../../../utils/daily/kline.js');
 const { monotoneControls } = require('../../../utils/daily/chart.js');
 
 const MA_COLORS = ['#E3A23B', '#6A8CDB'];
+const UP = '#E25A4E';
+const DOWN = '#3A9F6E';
+const FLAT = '#A7A498';
 const MA_N = [5, 10];
 const PAD = { l: 6, r: 50, t: 24, b: 22 };
 const LONG_PRESS_MS = 300;
@@ -22,7 +26,7 @@ Component({
   properties: {
     candles: { type: Array, value: [] },
     period: { type: String, value: 'day' },     // day | week | month | year
-    mode: { type: String, value: 'bar' },       // bar | line | box
+    mode: { type: String, value: 'bar' },       // bar | line | candle
     value: { type: String, value: 'main' },     // main | sum（柱形 / 折线取哪个数）
     goal: { type: Number, value: 0 },
     showGoal: { type: Boolean, value: false },
@@ -75,9 +79,10 @@ Component({
       return { c, n, V, start, end, slot, xOf, plotW, maxOffset };
     },
 
-    // 每根要画的那个数：箱体看平均；柱形 / 折线看 value
+    // 每根要画的那个数：K线看收；柱形 / 折线看 value
     _val(c) {
-      return this.data.mode !== 'box' && this.data.value === 'sum' ? c.sum : c.main;
+      if (this.data.mode === 'candle') return c.close;
+      return this.data.value === 'sum' ? c.sum : c.main;
     },
 
     _fmt(v) {
@@ -107,16 +112,17 @@ Component({
       const mode = this.data.mode;
       const vals = v.c.map(c => this._val(c));
       const showMA = this.data.showMA;
+      // 均线：K线按收盘价算（股票软件的口径），柱形 / 折线按画出来的那个数
       const ma = showMA ? MA_N.map(n => K.movingAverage(vals.map(x => ({ main: x })), n)) : [];
       const vis = v.c.slice(v.start, v.end);
       const goal = this.data.goal;
 
-      // 纵轴范围：可见的值（箱体含高低）+ 均线 + 目标线
+      // 纵轴范围：可见的值（K线含开高低收：日K 的开是上一天，可能在高低之外）+ 均线 + 目标线
       let lo = Infinity, hi = -Infinity;
       vis.forEach((c, k) => {
         const i = v.start + k;
-        lo = Math.min(lo, mode === 'box' ? c.low : vals[i]);
-        hi = Math.max(hi, mode === 'box' ? c.high : vals[i]);
+        lo = Math.min(lo, mode === 'candle' ? Math.min(c.low, c.open) : vals[i]);
+        hi = Math.max(hi, mode === 'candle' ? Math.max(c.high, c.open) : vals[i]);
         ma.forEach(arr => { const x = arr[i]; if (x != null) { lo = Math.min(lo, x); hi = Math.max(hi, x); } });
       });
       if (this.data.showGoal) { lo = Math.min(lo, goal); hi = Math.max(hi, goal); }
@@ -180,24 +186,20 @@ Component({
         });
         ctx.globalAlpha = 1;
       } else {
-        // 箱体：「十」字 —— 竖线 = 最少到最多的一天，横线 = 平均
-        const tw = Math.max(6, Math.min(16, v.slot * 0.6));
-        vis.forEach(c => {
-          const i = v.c.indexOf(c);
-          const x = v.xOf(i), y = yOf(c.main);
-          ctx.globalAlpha = strong(c.main) ? 1 : 0.4;
-          ctx.strokeStyle = this.data.accent;
-          ctx.lineCap = 'round';
-          ctx.lineWidth = 1.5;
-          // 一天只有一个数（高 = 低）时竖线和横线一样长，画成一个小「十」，不然只剩一道横杠
-          const y1 = c.high === c.low ? y - tw / 2 : yOf(c.high);
-          const y2 = c.high === c.low ? y + tw / 2 : yOf(c.low);
-          ctx.beginPath(); ctx.moveTo(x, y1); ctx.lineTo(x, y2); ctx.stroke();
-          ctx.lineWidth = 3;
-          ctx.beginPath(); ctx.moveTo(x - tw / 2, y); ctx.lineTo(x + tw / 2, y); ctx.stroke();
+        // K线：影线 = 最高到最低，实体 = 开到收；实心红涨绿跌，持平画一道灰横线
+        const bw = Math.max(3, Math.min(12, v.slot * 0.62));
+        vis.forEach((c, k) => {
+          const x = Math.round(v.xOf(v.start + k)) + 0.5;
+          const color = c.close > c.open ? UP : c.close < c.open ? DOWN : FLAT;
+          const top2 = Math.max(c.high, c.open, c.close), bot2 = Math.min(c.low, c.open, c.close);
+          ctx.strokeStyle = color;
+          ctx.fillStyle = color;
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(x, yOf(top2)); ctx.lineTo(x, yOf(bot2)); ctx.stroke();
+          const yo = yOf(c.open), yc = yOf(c.close);
+          const y = Math.min(yo, yc), h = Math.max(1, Math.abs(yo - yc));
+          ctx.fillRect(x - bw / 2, y, bw, h);
         });
-        ctx.globalAlpha = 1;
-        ctx.lineCap = 'butt';
       }
 
       // 均线

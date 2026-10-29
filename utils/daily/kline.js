@@ -4,7 +4,7 @@
  * 每根 = 一段时间（日 / 周 / 月 / 年）：
  *   周K / 月K —— 高 / 低 = 这段里最多 / 最少的一天，开 = 第一个有数据的日子，收 = 最后一个；
  *   日 —— 一天只有一个总数：高 = 低 = 收 = 当天的值，开 = 上一个有数据的日子的值（第一天开 = 收）。
- * 统计页现在不画蜡烛实体（柱形 / 折线 / 箱体「十」字，见 components/daily/kline-chart），开 / 收只是保留下来的数据。
+ * 统计页的「K线」画法按股票蜡烛画开高低收（见 components/daily/kline-chart）；柱形 / 折线只用 main / sum。
  * 主值 main：日K 是当天的值，周K / 月K 是这段的平均（区间日均 / 平均入睡），表头和涨跌幅都用它。
  *
  * 入参 map 是「绘图值」：步数就是步数；睡眠传 -bedOffset（越早越大，往上画），由页面负责取反和格式化。
@@ -41,7 +41,7 @@ function buildCandles(map, period) {
     const v = map[d];
     if (period === 'day') {
       const open = prevClose == null ? v : prevClose;
-      // 高低就是这一天自己（箱体画出来只剩横线）；开 = 上一天只留给涨跌参考
+      // 高低就是这一天自己；开 = 上一天，所以日K 的实体是「昨天 → 今天」、没有影线
       out.push({ key: d, from: d, to: d, open, close: v, high: v, low: v, main: v, count: 1, sum: v });
       prevClose = v;
       return;
