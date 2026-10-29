@@ -487,10 +487,12 @@ module.exports = function createHubPage(pageKind) {
   // ── 片单/书单需求收集 ──
   onOpenRequestModal() {
     this.setData({ showRequestModal: true });
+    this._syncTabBar();
   },
 
   onCloseRequestModal() {
     this.setData({ showRequestModal: false });
+    this._syncTabBar();
   },
 
   onRequestTypeTap(e) {
@@ -519,6 +521,7 @@ module.exports = function createHubPage(pageKind) {
       const result = res && res.result;
       if (result && result.success) {
         this.setData({ showRequestModal: false, requestContent: '' });
+        this._syncTabBar();
         // 带 icon 的 toast 标题最多显示 7 个字符，超出会被截断
         wx.showToast({ title: '许愿已收到', icon: 'success' });
       } else {
@@ -544,6 +547,7 @@ module.exports = function createHubPage(pageKind) {
     this._mergeCloudThemes(themeRegistry.readAll());
     this.setData({ themeClass: getApp().globalData.theme == null ? 'theme-green' : getApp().globalData.theme });
     hubStore.applyTabStyle(this.data.themeClass, this, pageKind);
+    this._syncTabBar();
     this.initAds();
     const intent = hubStore.takeIntent(pageKind);
     if (intent) this.setData({ discoverSection: 'lists', activeTab: intent.category || 'all', searchQuery: intent.query || '', sortMode: intent.sort || 'popular' });
@@ -570,9 +574,20 @@ module.exports = function createHubPage(pageKind) {
     if (this._cardObserver) this._cardObserver.disconnect();
   },
 
+  // 底部 tab 是自定义组件，微信把它画在页面之上，页面里的弹窗再高的 z-index 也盖不住它，
+  // 底部弹窗（主题色 / 管理收藏）的按钮会被挡住。所以任何弹窗开着时把 tab 栏收起来，全关了再放回。
+  // 改这四个开关的地方，setData 之后都要调一下这里。
+  _syncTabBar() {
+    const d = this.data;
+    const open = !!(d.showThemePicker || d.showPinManager || d.showRequestModal || d.showAuthModal);
+    const bar = typeof this.getTabBar === 'function' ? this.getTabBar() : null;
+    if (bar && bar.setHidden) bar.setHidden(open);
+  },
+
   onToggleThemePicker() {
     const opening = !this.data.showThemePicker;
     this.setData({ showThemePicker: opening });
+    this._syncTabBar();
     // 面板打开时才去取会员码，平时不为它花一次 openid 等待
     if (opening) this.syncMemberCode();
   },
@@ -624,6 +639,7 @@ module.exports = function createHubPage(pageKind) {
     app.globalData.theme = theme;
     wx.setStorageSync('appTheme', theme);
     this.setData({ themeClass: theme, showThemePicker: false });
+    this._syncTabBar();
     hubStore.applyTabStyle(theme, this, pageKind);
   },
 
@@ -737,10 +753,12 @@ module.exports = function createHubPage(pageKind) {
       id: t.id, title: t.title, tag: t.tag, pinned: pinnedSet.has(t.id)
     }));
     this.setData({ showPinManager: true, pinManagerList: list });
+    this._syncTabBar();
   },
 
   onClosePinManager() {
     this.setData({ showPinManager: false });
+    this._syncTabBar();
   },
 
   // 置顶面板打开时拦截 touchmove，防止手势穿透带动整页滚动（内部 scroll-view 照常滚动）
@@ -763,6 +781,7 @@ module.exports = function createHubPage(pageKind) {
     const pinnedIds = Array.from(new Set(retained.concat(this.data.pinManagerList.filter(it => it.pinned).map(it => it.id))));
     wx.setStorageSync(PIN_STORAGE_KEY, pinnedIds);
     this.setData({ pinnedIds, showPinManager: false });
+    this._syncTabBar();
     this.filterThemes(this.data.activeTab);
     wx.showToast({ title: '收藏已更新', icon: 'success' });
   },
@@ -820,6 +839,7 @@ module.exports = function createHubPage(pageKind) {
           tempAvatar: (this.data.userInfo && this.data.userInfo.avatarUrl) || '',
           tempNickname: (this.data.userInfo && this.data.userInfo.nickName) || ''
         });
+        this._syncTabBar();
       },
       fail: err => {
         console.error('获取 openid 失败:', err);
@@ -832,6 +852,7 @@ module.exports = function createHubPage(pageKind) {
 
   onCancelAuth() {
     this.setData({ showAuthModal: false, pendingOpenid: '' });
+    this._syncTabBar();
   },
 
   onChooseAvatar(e) {
@@ -907,6 +928,7 @@ module.exports = function createHubPage(pageKind) {
         pendingOpenid: '',
         showAuthModal: false
       });
+      this._syncTabBar();
       wx.hideLoading();
       wx.showToast({ title: '登录成功', icon: 'success' });
     } catch (err) {
@@ -1113,7 +1135,8 @@ module.exports = function createHubPage(pageKind) {
     return timeline.present(raw, themes).map(row => ({ ...row, themeIconKey: hubIcons.keyFor(byId.get(row.themeId)) }));
   },
   // 首页搜索框旁的「反馈」：页面由 open-type="feedback" 原生打开，这里只记点击量
-  onFeedbackTap() { track('hub_click', { page: pageKind, theme: 'feedback', module: 'feedback', version: 'v1' }); },
+  // 首页搜索行右边的「客服」按钮（原来是反馈，埋点 theme 跟着改成 contact，好和旧数据区分）
+  onFeedbackTap() { track('hub_click', { page: pageKind, theme: 'contact', module: 'contact', version: 'v1' }); },
   // 「期待上线」点赞：每点一次爱心弹一下 + 迸出一圈小爱心和 +1（类小红书点赞），次数本地累计并上报埋点
   // 屏幕上的总数 = 云端总数 + 本地还没报上去的次数，取整到百展示
   _renderWishLikes() {

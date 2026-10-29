@@ -39,7 +39,8 @@
   <!-- 首页搜索行：跨在头图底边上（一半压头图、一半落正文），左右与标题、正文同一条 16px 边线 -->
   <view wx:if="{{pageKind === 'home'}}" class="hub-hero-search-row">
     <view class="hub-search hub-hero-search"><view class="hub-search-icon" aria-hidden="true"></view><input placeholder="片单、书单、旅行" aria-label="搜索主题" placeholder-class="hub-input-placeholder" value="{{searchQuery}}" bindinput="onSearchInput" bindconfirm="onHomeSearch" confirm-type="search" maxlength="80" /></view>
-    <button class="hub-feedback-btn" open-type="feedback" bindtap="onFeedbackTap" aria-label="意见反馈"><view class="hub-feedback-icon" aria-hidden="true"></view><text class="hub-feedback-text">反馈</text></button>
+    <!-- 2026-10-29 由「反馈」(open-type=feedback) 改成「客服」，进小程序客服会话；意见反馈仍在「我的」菜单里。样式类名沿用 hub-feedback-* -->
+    <button class="hub-feedback-btn" open-type="contact" bindtap="onFeedbackTap" aria-label="联系客服"><view class="hub-feedback-icon" aria-hidden="true"></view><text class="hub-feedback-text">客服</text></button>
   </view>
   <view wx:if="{{pageKind === 'home' && showAdFreeTip}}" class="hub-adfree-tip {{adFreePassUntilText ? 'hub-adfree-tip-on' : ''}}">
     <text wx:if="{{adFreePassUntilText}}" class="hub-adfree-text">页面广告已关闭至 {{adFreePassUntilText}}</text><button wx:if="{{adFreePassUntilText}}" class="hub-adfree-help" bindtap="onAdFreeHelp" aria-label="哪些广告不在 30 分钟范围内">?</button>

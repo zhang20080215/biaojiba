@@ -25,7 +25,7 @@ function buildTabs(theme) {
 }
 
 Component({
-  data: { tabs: [], selected: '', theme: 'theme-green', selectedColor: SELECTED_COLOR['theme-green'] },
+  data: { tabs: [], selected: '', theme: 'theme-green', selectedColor: SELECTED_COLOR['theme-green'], hidden: false },
   lifetimes: {
     attached() {
       const app = getApp();
@@ -39,6 +39,8 @@ Component({
   },
   methods: {
     sync(kind, theme) { this._render(kind, theme == null ? 'theme-green' : theme); },
+    // 页面开着底部弹窗时收起（见 hubPage._syncTabBar）：tab 栏画在页面之上，弹窗盖不住它
+    setHidden(hidden) { if (!!hidden !== this.data.hidden) this.setData({ hidden: !!hidden }); },
     _render(kind, theme) {
       this.setData({
         tabs: buildTabs(theme),
