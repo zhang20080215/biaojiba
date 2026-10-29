@@ -15,9 +15,8 @@
   </view>
 
   <view class="action-bar">
-    <button class="save-btn" bindtap="saveImage" disabled="{{isGenerating || !ready || empty}}" loading="{{isGenerating}}">
-      {{isGenerating ? '保存中…' : '保存到相册'}}
-    </button>
+    <!-- 文字紧贴标签写：换行缩进会变成按钮里的空白，把文字往右挤 -->
+    <button class="save-btn" bindtap="saveImage" disabled="{{isGenerating || !ready || empty}}" loading="{{isGenerating}}">{{isGenerating ? '保存中…' : '保存到相册'}}</button>
     <text wx:if="{{needRewardedAd && ready && !empty}}" class="save-sub">需观看广告后保存</text>
   </view>
 </view>
