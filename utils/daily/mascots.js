@@ -4,7 +4,7 @@
  * 学每日喝水的水瓶（utils/dailyBottle.js）：粗描边 + 白底 + 随进度变化的填色和表情，
  * 让首页有一个会给情绪反馈的焦点。填色取当前全站主题色（palette），四套主题各自成色。
  *   shoeSvg(pct, p)   每日步数：鞋身按完成度从后跟往前染色，表情 4 档（同水瓶）
- *   moonSvg(state, p) 每日睡眠：pending 还没睡（睁眼）/ ok 早睡（闭眼微笑）/ late 晚睡（闭眼皱眉）
+ *   moonSvg(state, p) 每日早睡：pending 还没睡（睁眼）/ ok 早睡（闭眼微笑）/ late 晚睡（闭眼皱眉）
  */
 const P = require('./palette.js');
 

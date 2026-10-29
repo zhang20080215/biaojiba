@@ -317,7 +317,7 @@ const THEMES = {
     }
   },
 
-  // 每日睡眠：主攻早睡。达标看入睡时刻（不晚于目标），时长只做参考。
+  // 每日早睡：主攻早睡。达标看入睡时刻（不晚于目标），时长只做参考。
   // 一晚记在「那一晚」的日期上（中午 12 点前打开算昨晚），见 utils/daily/clock.js
   sleep: {
     id: 'sleep',
@@ -326,7 +326,7 @@ const THEMES = {
     source: 'manual',
     // 「今天」往前挪 12 小时：凌晨 1 点、早上 8 点打开都还是昨晚
     dayOffsetHours: 12,
-    title: '每日睡眠',
+    title: '每日早睡',
     description: '记录入睡和起床时间，养成早睡习惯',
 
     unit: '分钟',
@@ -350,7 +350,7 @@ const THEMES = {
       dayUnit: '晚',
       emoji: '🌙',
       emptyText: '这段时间还没有睡眠记录',
-      signature: '标记吧 · 每日睡眠',
+      signature: '标记吧 · 每日早睡',
       sourceName: ''
     },
 

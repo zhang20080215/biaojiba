@@ -146,7 +146,7 @@ test('sync only writes new or changed days', () => {
   assert.deepEqual(plan.updates, [{ _id: 'b', date: '2026-10-28', value: 300 }]);
 });
 
-// ───────── 每日睡眠：时刻工具 / bedtime 度量 / 首页卡片 ─────────
+// ───────── 每日早睡：时刻工具 / bedtime 度量 / 首页卡片 ─────────
 const T = require('../utils/daily/clock');
 const V = require('../utils/daily/views');
 const { THEMES } = require('../utils/dailyThemes');

@@ -105,7 +105,9 @@
 .hub-record-list .hub-record + .hub-record { border-top: 1rpx solid var(--line-subtle); }
 .hub-daily { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12rpx; }
 .hub-daily-item { min-width: 0; text-align: center; font-size: 24rpx; line-height: 1.5; padding: 8rpx 0 12rpx; }
-.hub-daily-icon { display: flex; width: 88rpx; height: 88rpx; margin: 0 auto 14rpx; align-items: center; justify-content: center; border-radius: 26rpx; font-size: 38rpx; background: var(--hub-soft); border: 1rpx solid var(--line-subtle); }
+.hub-daily-icon { position: relative; display: flex; width: 88rpx; height: 88rpx; margin: 0 auto 14rpx; align-items: center; justify-content: center; border-radius: 26rpx; font-size: 38rpx; background: var(--hub-soft); border: 1rpx solid var(--line-subtle); }
+/* 新上线的每日主题：图标右上角的「NEW」角标，主题强调色底白字，白描边把它和图标底块隔开 */
+.hub-daily-new { position: absolute; top: -12rpx; right: -22rpx; padding: 0 9rpx; height: 28rpx; line-height: 28rpx; border-radius: 14rpx; font-size: 18rpx; font-weight: 700; letter-spacing: 1rpx; color: #FFFFFF; background: var(--hub-accent); border: 2rpx solid var(--bg-card, #FFFFFF); }
 .hub-tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18rpx; margin-top: 24rpx; }
 .hub-tool { background: var(--category-meta-bg); padding: 24rpx 20rpx; border-radius: 20rpx; }
 .hub-filters { display: inline-flex; flex-wrap: nowrap; gap: 8rpx; padding: 18rpx 0 8rpx; }

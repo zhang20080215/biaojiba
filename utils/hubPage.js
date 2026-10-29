@@ -57,6 +57,7 @@ var SEARCH_QUICK_WORDS = [
 ];
 var SEARCH_ALIASES = {
   douban_movies: ['豆瓣250', '豆瓣电影250', '电影TOP250'],
+  daily_sleep: ['睡眠', '每日睡眠', '作息'],   // 2026-10-29 改名「每日早睡」，搜「睡眠」仍要能找到
   douban_books: ['豆瓣图书', '书单', '图书TOP250'],
   douban_tv_cn: ['国剧', '国产剧', '华语剧'],
   douban_tv_foreign: ['外语剧集', '海外剧', '美剧', '英剧', '韩剧', '日剧'],
@@ -77,8 +78,9 @@ var DAILY_BLOCK_META = {
   daily_read:  { emoji: '📖', color: '#E5EAD2', label: '#6E7B45' }, // 橄榄绿（呼应主题色）
   daily_sport: { emoji: '🏋️', color: '#DEE7FF', label: '#3F6AD6' }, // 清新蓝（呼应每日运动页风格）
   daily_water: { emoji: '💧', color: '#D8E7EC', label: '#3F7E93' }, // 雾蓝
-  daily_steps: { emoji: '👟', color: '#E8E3F3', label: '#6A5A9C' }, // 淡紫
-  daily_sleep: { emoji: '🌙', color: '#DFE3F0', label: '#4A5785', title: '每日早睡' }  // 夜蓝；首页块上叫「每日早睡」（这个主题主攻早睡）
+  // isNew：首页块图标右上角挂「NEW」角标（2026-10-29 随步数 / 早睡上线加的，过一两个版本删掉这两个字段即可）
+  daily_steps: { emoji: '👟', color: '#E8E3F3', label: '#6A5A9C', isNew: true }, // 淡紫
+  daily_sleep: { emoji: '🌙', color: '#DFE3F0', label: '#4A5785', isNew: true }  // 夜蓝
 };
 var DAILY_BLOCK_SOON = { emoji: '✨', color: '#EFE9DD', label: '#A89B85' };
 
@@ -669,7 +671,7 @@ module.exports = function createHubPage(pageKind) {
     const daily = (this.data.themes || []).filter(t => t.category === 'daily').slice(0, 6);
     const blocks = daily.map(t => {
       const meta = DAILY_BLOCK_META[t.id] || DAILY_BLOCK_SOON;
-      return { key: t.id, id: t.id, title: meta.title || t.title, url: t.url, iconKey: hubIcons.keyFor(t), emoji: meta.emoji, color: meta.color, label: meta.label, userCountText: t.userCountText || '', placeholder: false };
+      return { key: t.id, id: t.id, title: t.title, isNew: !!meta.isNew, url: t.url, iconKey: hubIcons.keyFor(t), emoji: meta.emoji, color: meta.color, label: meta.label, userCountText: t.userCountText || '', placeholder: false };
     });
     if (blocks.length < 4) {
       blocks.push({ key: 'soon', title: '敬请期待', iconKey: 'sparkle', emoji: DAILY_BLOCK_SOON.emoji, color: DAILY_BLOCK_SOON.color, label: DAILY_BLOCK_SOON.label, placeholder: true });
