@@ -10,7 +10,7 @@ const uri = s => `url('data:image/svg+xml,${encodeURIComponent(s).replace(/'/g, 
 const INK = '#2D2D2B';
 // 与 styles/theme.wxss 的 --brand-accent 同值
 const ACCENTS = { '': '#93415E', 'theme-gold': '#7B5918', 'theme-green': '#526631', 'theme-sand': '#756044' };
-const DAILY = ['clapper', 'reading', 'dumbbell', 'droplet', 'sparkle'];
+const DAILY = ['clapper', 'reading', 'dumbbell', 'droplet', 'footprints', 'moon', 'sparkle'];
 // 跟随强调色的独立图标（如首页「榜单许愿」链接），类名 .hub-glyph-accent
 const ACCENT_ICONS = ['wand'];
 

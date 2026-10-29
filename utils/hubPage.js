@@ -78,7 +78,7 @@ var DAILY_BLOCK_META = {
   daily_sport: { emoji: '🏋️', color: '#DEE7FF', label: '#3F6AD6' }, // 清新蓝（呼应每日运动页风格）
   daily_water: { emoji: '💧', color: '#D8E7EC', label: '#3F7E93' }, // 雾蓝
   daily_steps: { emoji: '👟', color: '#E8E3F3', label: '#6A5A9C' }, // 淡紫
-  daily_sleep: { emoji: '🌙', color: '#DFE3F0', label: '#4A5785' }  // 夜蓝
+  daily_sleep: { emoji: '🌙', color: '#DFE3F0', label: '#4A5785', title: '每日早睡' }  // 夜蓝；首页块上叫「每日早睡」（这个主题主攻早睡）
 };
 var DAILY_BLOCK_SOON = { emoji: '✨', color: '#EFE9DD', label: '#A89B85' };
 
@@ -664,12 +664,12 @@ module.exports = function createHubPage(pageKind) {
       .filter(value => typeof value === 'string' && value.trim());
   },
 
-  // 每日主题独立成顶部横排块（最多 4 个真实；不足 4 个时补「敬请期待」），不进下方卡片网格
+  // 每日主题独立成顶部横排块（一行 4 个，最多 6 个：第二行是每日步数、每日早睡；不足 4 个时补「敬请期待」），不进下方卡片网格
   buildDailyBlocks() {
-    const daily = (this.data.themes || []).filter(t => t.category === 'daily').slice(0, 4);
+    const daily = (this.data.themes || []).filter(t => t.category === 'daily').slice(0, 6);
     const blocks = daily.map(t => {
       const meta = DAILY_BLOCK_META[t.id] || DAILY_BLOCK_SOON;
-      return { key: t.id, id: t.id, title: t.title, url: t.url, iconKey: hubIcons.keyFor(t), emoji: meta.emoji, color: meta.color, label: meta.label, userCountText: t.userCountText || '', placeholder: false };
+      return { key: t.id, id: t.id, title: meta.title || t.title, url: t.url, iconKey: hubIcons.keyFor(t), emoji: meta.emoji, color: meta.color, label: meta.label, userCountText: t.userCountText || '', placeholder: false };
     });
     if (blocks.length < 4) {
       blocks.push({ key: 'soon', title: '敬请期待', iconKey: 'sparkle', emoji: DAILY_BLOCK_SOON.emoji, color: DAILY_BLOCK_SOON.color, label: DAILY_BLOCK_SOON.label, placeholder: true });

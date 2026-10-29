@@ -228,7 +228,8 @@ test('root page lifecycles preserve pins and profile avoids statistics/content r
   for (const kind of ['home','discover','records','profile']) {
     const f = fixture(kind); f.page.onLoad(); f.page.onShow();
     await new Promise(resolve => setImmediate(resolve));
-    assert.equal(f.page.data.dailyBlocks.length, 4);
+    assert.equal(f.page.data.dailyBlocks.length, 6);
+    assert.deepEqual(f.page.data.dailyBlocks.slice(4).map(b => b.title), ['每日步数', '每日早睡']);
     assert.deepEqual(Array.from(f.page.data.commonThemes, t => t.id), ['douban_movies','daily_read']);
     assert.equal(f.page.data.commonThemes[1].progressText, '已收藏 · 点击打开');
     if (kind === 'profile') { assert.ok(f.calls.includes('summary')); assert.ok(!f.calls.includes('getThemeHub')); }
