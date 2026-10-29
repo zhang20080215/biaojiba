@@ -1,16 +1,14 @@
 // 数值型每日主题 · 统计报表海报（?theme=steps）
 // 统计页点「生成海报」时把页面当前的样子拍成快照（stats.js _snapshot，放在 globalData.metricReport），
-// 这里照着画成一张 3:4 海报（utils/metricReportPoster.js），图表和页面同一份绘制代码。只能换配色，内容以页面为准。
-// canvas 是原生组件、藏不住，直接拿它当屏幕预览（backing 1080×1440，CSS 缩放显示），导出的临时文件只给「保存到相册」用；
+// 这里按页面 1:1 画成一张长图（utils/metricReportPoster.js：宽 1080、高随内容，颜色跟当时的全站主题色），
+// 只在底部加「标记吧小程序」水印。没有任何可调项：要换周期 / 画法 / 缩放，回统计页调好再生成。
+// canvas 是原生组件、藏不住，直接拿它当屏幕预览（CSS 缩放显示），导出的临时文件只给「保存到相册」用；
 // 保存前要看激励视频（rewardedSaveGate，slot save_image_rewarded）。
 const toast = require('../../../utils/dailyToast.js');
 const rewardedSaveGate = require('../../../utils/rewardedSaveGate.js');
 const ReportPoster = require('../../../utils/metricReportPoster.js');
-const palette = require('../../../utils/daily/palette.js');
 const D = require('../../../utils/daily/date.js');
 const C = require('./common.js');
-
-const { width: CANVAS_W, height: CANVAS_H } = ReportPoster.SIZE;
 
 Page({
   data: {
@@ -24,27 +22,19 @@ Page({
     empty: false,
     emptyText: '',
     isGenerating: false,
-    needRewardedAd: false,
-    colors: palette.LIST,
-    colorId: palette.DEFAULT_ID
+    needRewardedAd: false
   },
 
   onLoad(options) {
     const theme = C.resolveTheme(options && options.theme);
     this.theme = theme;
-    this._storageKey = theme.id + 'ShareTheme';
     const app = getApp();
     const snap = app.globalData && app.globalData.metricReport;
     // 只认同一个主题的快照；没有（比如页面被系统回收后恢复）就提示回统计页重新生成
     this._snap = snap && snap.themeId === theme.id ? snap : null;
+    this._height = this._snap ? ReportPoster.heightOf(this._snap) : Math.round(ReportPoster.WIDTH * 4 / 3);
     const win = D.getWindowInfoCompat();
     const previewW = Math.min(Math.round((win.windowWidth || 375) * 0.84), 340);
-    // 配色默认跟统计页当时的全站主题色，用户在这里换过就记住
-    let colorId = palette.idFromClass(this._snap ? this._snap.colorClass : palette.currentClass());
-    try {
-      const saved = wx.getStorageSync(this._storageKey);
-      if (saved && palette.THEMES[saved]) colorId = saved;
-    } catch (e) { /* ignore */ }
     this.setData({
       themeClass: C.themeState().themeClass,
       themeId: theme.id,
@@ -52,8 +42,7 @@ Page({
       empty: !this._snap,
       emptyText: '请回到统计页重新点「生成海报」',
       previewW,
-      previewH: Math.round(previewW * CANVAS_H / CANVAS_W),
-      colorId
+      previewH: Math.round(previewW * this._height / ReportPoster.WIDTH)
     });
     rewardedSaveGate.refreshHint(this);
   },
@@ -71,20 +60,9 @@ Page({
     return { title: `我的${this.theme.title}`, path: `/pages/daily/metric/index?theme=${this.data.themeId}` };
   },
 
-  onColor(e) {
-    const id = e.currentTarget.dataset.id;
-    if (id === this.data.colorId) return;
-    try { wx.setStorageSync(this._storageKey, id); } catch (err) { /* ignore */ }
-    this.setData({ colorId: id });
-    this.render();
-  },
-
   // ========= 出图 =========
   async render() {
     if (!this._ready || this._destroyed || !this._snap) return;
-    const seq = (this._renderSeq || 0) + 1;
-    this._renderSeq = seq;
-    this.setData({ ready: false });
     try {
       const canvas = await new Promise((resolve, reject) => {
         wx.createSelectorQuery().in(this).select('#metricPoster').fields({ node: true }).exec(res => {
@@ -92,16 +70,15 @@ Page({
           else reject(new Error('Canvas 节点获取失败'));
         });
       });
-      if (this._destroyed || seq !== this._renderSeq) return;
-      canvas.width = CANVAS_W;
-      canvas.height = CANVAS_H;
-      const ctx = canvas.getContext('2d');
-      ReportPoster.draw(ctx, this._snap, palette.get(this.data.colorId));
+      if (this._destroyed) return;
+      canvas.width = ReportPoster.WIDTH;
+      canvas.height = this._height;
+      ReportPoster.draw(canvas.getContext('2d'), this._snap);
       // 双帧让绘制提交到 bitmap，避免导出空白
       await new Promise(resolve => canvas.requestAnimationFrame(() => canvas.requestAnimationFrame(resolve)));
-      if (this._destroyed || seq !== this._renderSeq) return;
+      if (this._destroyed) return;
       const out = await wx.canvasToTempFilePath({ canvas, fileType: 'png', quality: 1 });
-      if (this._destroyed || seq !== this._renderSeq) return;
+      if (this._destroyed) return;
       this._tempPath = out.tempFilePath;
       this.setData({ ready: true });
     } catch (err) {

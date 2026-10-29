@@ -1,300 +1,320 @@
 /**
- * 数值型每日主题 · 统计报表海报（小红书 3:4，1080×1440）
+ * 数值型每日主题 · 统计报表海报
  *
- * 照着统计页「当前的样子」画一张：标题 → 表头（选中的那一段 / 大数字 / 涨跌 / 开高低收或最多最少）
- * → 图表卡（日周月年目标页签、画法 / 均线 / 日均总数 的选中状态、图表本身）→ 汇总四格 → 署名。
- * 图表直接调 utils/daily/klineDraw.js / goalDraw.js —— 和页面组件同一份绘制代码，周期、画法、均线、
- * 缩放窗口、十字线都和页面一致，只是按海报尺寸放大。
- * 纯 ctx 绘制，不加载图片；底部只有文字署名，没有二维码 / 小程序码（推广合规）。
+ * 就是统计页（pages/daily/metric/stats）此刻的样子，按页面的 rpx 尺寸、颜色、字号 1:1 画到 canvas 上，
+ * 宽 1080（1rpx = 1.44px），高随内容；不加任何页面上没有的东西，只在最底下加一行「标记吧小程序」水印。
+ * 页面上的操作控件（左上返回、底部「生成海报」按钮）不画；按钮组（日周月年目标、画法、均线、日均总数、
+ * 30/180/365 天）照页面的选中状态画，它们本身就是报表的一部分。
+ * 图表直接调 utils/daily/klineDraw.js / goalDraw.js —— 和页面组件同一份绘制代码，按页面上的画布尺寸等比放大。
+ * ⚠ 下面的 rpx 数字抄自 stats.wxss / common.wxss / daily-nav，改页面样式时这里要跟着改。
  *
- * 用法：draw(ctx, snap, palette)
- *   snap 由统计页 stats.js 的 _snapshot() 生成，palette 是 utils/daily/palette.js 的一套主题色（海报页可换）
+ * 用法：const h = heightOf(snap); canvas.height = h; draw(ctx, snap)
+ *   snap 由统计页 stats.js 的 _snapshot() 生成
  */
 const KD = require('./daily/klineDraw.js');
 const GD = require('./daily/goalDraw.js');
+const P = require('./daily/palette.js');
 
-const W = 1080;
-const H = 1440;
-const M = 60;                                    // 左右留白
-const CW = W - M * 2;                            // 内容宽
+const WIDTH = 1080;
+const S = WIDTH / 750;                           // 1rpx 在海报上是几 px
 const FONT = '"PingFang SC", "Helvetica Neue", sans-serif';
-const INK = '#2D2D2B';
-const INK_SOFT = '#6F6F68';
-const INK_MUTED = '#9C998F';
-const LINE = '#EAEAE7';
+const LH = 1.4;                                  // 页面文字的 line-height: normal
+const C = {                                      // styles/theme.wxss 的中性色（四套主题相同）
+  page: P.NEUTRAL.page,
+  card: P.NEUTRAL.card,
+  section: '#F5F5F4',
+  ink: P.NEUTRAL.ink,
+  inkSoft: P.NEUTRAL.inkSoft,
+  inkMuted: P.NEUTRAL.inkMuted,
+  line: P.NEUTRAL.line
+};
+const WATERMARK = '标记吧小程序';
 
-// 图表在海报上的逻辑尺寸：宽度和手机上一样按 343 算，字号、线宽跟着一起放大；高度比页面略扁，给汇总留位置
-const CHART_LW = 343;
-const CHART_BOX = { x: M + 30, w: CW - 60, h: 400 };
+// 页面骨架（rpx）
+const NAV_H = 88;                                // 导航条（不含状态栏），标题居中
+const CONTENT_X = 32;                            // .content 左右内边距
+const CONTENT_W = 750 - CONTENT_X * 2;           // 卡片宽 686
+const QUOTE_H = 32 + 34 + 6 + 96 + 8 + 40 + 24;  // .quote 上外边距 + 时间段 + 大数字行 + 第三行 + 下外边距
+const CARD_PAD = { t: 20, x: 20, b: 16 };
+const BORDER = 3;
+const HEAD_H = 60;                               // .chart-head：日周月年分段（52 + 上下 4）
+const SUB_H = 52;                                // .chart-sub 第二行
+const CHART_H = 440;                             // .kc 画布高
+const CARD_H = BORDER * 2 + CARD_PAD.t + HEAD_H + 12 + SUB_H - 4 + 4 + CHART_H + CARD_PAD.b;
+const SEC_TOP = 28, SEC_H = 52;
+const TILE = { top: 20, padY: 22, padX: 24, label: 22, value: 40, sub: 20, radius: 28 };
+const MARK_H = 120;                              // 底部水印区
 
-function font(size, weight) {
-  return `${weight || 400} ${size}px ${FONT}`;
-}
+const r = v => v * S;
+const font = (size, weight) => `${weight || 400} ${r(size)}px ${FONT}`;
 
-function roundRect(ctx, x, y, w, h, r) {
+function roundRect(ctx, x, y, w, h, rad) {
+  const k = Math.min(rad, h / 2, w / 2);
   ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
+  ctx.moveTo(x + k, y);
+  ctx.arcTo(x + w, y, x + w, y + h, k);
+  ctx.arcTo(x + w, y + h, x, y + h, k);
+  ctx.arcTo(x, y + h, x, y, k);
+  ctx.arcTo(x, y, x + w, y, k);
   ctx.closePath();
 }
 
-function card(ctx, x, y, w, h) {
-  ctx.fillStyle = '#FFFFFF';
-  roundRect(ctx, x, y, w, h, 32);
-  ctx.fill();
-  ctx.strokeStyle = LINE;
-  ctx.lineWidth = 2;
-  ctx.stroke();
+// 边框画在盒子里面（页面 box-sizing 是 border-box 的效果）
+function box(ctx, x, y, w, h, rad, fill, stroke, bw) {
+  if (fill) { ctx.fillStyle = fill; roundRect(ctx, x, y, w, h, rad); ctx.fill(); }
+  if (stroke) {
+    const half = bw / 2;
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = bw;
+    roundRect(ctx, x + half, y + half, w - bw, h - bw, rad - half);
+    ctx.stroke();
+  }
 }
 
-// 文字截断到 maxW 以内（末尾加 …）
-function fit(ctx, text, maxW) {
-  let t = String(text || '');
+function text(ctx, s, x, y, size, color, weight, align) {
+  ctx.font = font(size, weight);
+  ctx.fillStyle = color;
+  ctx.textAlign = align || 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(s, x, y);
+  return ctx.measureText(s).width;
+}
+
+function fit(ctx, s, maxW) {
+  let t = String(s == null ? '' : s);
   if (ctx.measureText(t).width <= maxW) return t;
   while (t.length > 1 && ctx.measureText(t + '…').width > maxW) t = t.slice(0, -1);
   return t + '…';
 }
 
-function background(ctx, p) {
-  const g = ctx.createLinearGradient(0, 0, 0, H);
-  g.addColorStop(0, p.tint);
-  g.addColorStop(1, '#FFFFFF');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, W, H);
-  ctx.globalAlpha = 0.35;
-  ctx.fillStyle = p.soft;
-  ctx.beginPath(); ctx.arc(W - 70, 90, 210, 0, Math.PI * 2); ctx.fill();
-  ctx.globalAlpha = 0.16;
-  ctx.fillStyle = p.accent;
-  ctx.beginPath(); ctx.arc(W - 250, 250, 60, 0, Math.PI * 2); ctx.fill();
-  ctx.globalAlpha = 1;
+// ───────── 汇总格子的高度（和页面一样：一行两格，行高取这一行里高的那个；没有 sub 的格子矮一截）─────────
+function tileH(t) {
+  return TILE.padY * 2 + BORDER * 2 + TILE.label * LH + TILE.value * LH + (t.sub ? 4 + TILE.sub * LH : 0);
+}
+function tileRows(kpi) {
+  const rows = [];
+  for (let i = 0; i < (kpi || []).length; i += 2) rows.push(kpi.slice(i, i + 2));
+  return rows.map(row => ({ row, h: Math.max.apply(null, row.map(tileH)) }));
 }
 
-function title(ctx, snap, p) {
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'alphabetic';
-  ctx.fillStyle = INK;
-  ctx.font = font(58, 700);
-  ctx.fillText(snap.title, M, 128);
-  ctx.fillStyle = INK_SOFT;
-  ctx.font = font(28);
-  ctx.fillText(snap.subtitle, M, 180);
-  // 标题下的短强调线
-  ctx.fillStyle = p.accent;
-  roundRect(ctx, M, 202, 64, 8, 4);
-  ctx.fill();
+function heightOf(snap) {
+  const tiles = tileRows(snap.kpi).reduce((a, x) => a + TILE.top + x.h, 0);
+  return Math.ceil(r(NAV_H + 16 + QUOTE_H + CARD_H + SEC_TOP + SEC_H + tiles + MARK_H));
 }
 
-// 表头：页面 quote 区的放大版
-function header(ctx, snap, y) {
+// ───────── 各块 ─────────
+function nav(ctx, snap) {
+  text(ctx, snap.title, WIDTH / 2, r(NAV_H / 2), 32, C.ink, 700, 'center');
+  return NAV_H;
+}
+
+function quote(ctx, snap, top) {
   const h = snap.header;
-  const x = M + 40;
-  card(ctx, M, y, CW, 220);
-  ctx.textAlign = 'left';
+  const x = r(CONTENT_X + 8), maxW = r(CONTENT_W - 16);
+  let y = top + 32;
+  ctx.font = font(24);
+  text(ctx, fit(ctx, h.cap, maxW), x, r(y + 17), 24, C.inkMuted);
+  y += 34 + 6;
+  // 大数字行：数字 / 单位 / 涨跌共用一条基线
+  const base = r(y + 74);
   ctx.textBaseline = 'alphabetic';
-  ctx.fillStyle = INK_MUTED;
-  ctx.font = font(28);
-  ctx.fillText(fit(ctx, h.cap, CW - 80), x, y + 54);
-
-  ctx.fillStyle = INK;
-  ctx.font = font(96, 700);
-  const big = String(h.big);
-  ctx.fillText(big, x, y + 148);
-  let cx = x + ctx.measureText(big).width + 12;
+  ctx.textAlign = 'left';
+  ctx.font = font(72, 800);
+  ctx.fillStyle = C.ink;
+  ctx.fillText(String(h.big), x, base);
+  let cx = x + ctx.measureText(String(h.big)).width;
   if (h.bigUnit) {
-    ctx.fillStyle = INK_MUTED;
-    ctx.font = font(32, 600);
-    ctx.fillText(h.bigUnit, cx, y + 148);
-    cx += ctx.measureText(h.bigUnit).width + 24;
+    cx += r(8);
+    ctx.font = font(26);
+    ctx.fillStyle = C.inkSoft;
+    ctx.fillText(h.bigUnit, cx, base);
+    cx += ctx.measureText(h.bigUnit).width;
   }
   if (h.change) {
-    ctx.fillStyle = h.changeColor || INK_SOFT;
-    ctx.font = font(30, 600);
-    ctx.fillText(fit(ctx, h.change, M + CW - 40 - cx), cx, y + 146);
+    cx += r(20);
+    ctx.font = font(26, 600);
+    ctx.fillStyle = h.changeColor || C.inkMuted;
+    ctx.fillText(fit(ctx, h.change, x + maxW - cx), cx, base);
   }
-
-  // 第三行：开高低收 / 最多最少累计，或日视图的目标说明
-  const ly = y + 194;
+  y += 96 + 8;
+  // 第三行：开高低收 / 最多最少累计（等分），或日视图的目标说明
+  const mid = r(y + 20);
   if (h.ohlc && h.ohlc.length) {
-    const colW = (CW - 80) / Math.max(3, h.ohlc.length);
+    const colW = maxW / h.ohlc.length;
     h.ohlc.forEach((it, i) => {
       const ix = x + colW * i;
-      ctx.fillStyle = INK_MUTED;
-      ctx.font = font(26);
-      ctx.fillText(it.k, ix, ly);
-      const kw = ctx.measureText(it.k).width + 12;
-      ctx.fillStyle = INK;
-      ctx.font = font(30, 600);
-      ctx.fillText(fit(ctx, it.v, colW - kw - 12), ix + kw, ly);
+      ctx.textBaseline = 'alphabetic';
+      ctx.textAlign = 'left';
+      ctx.font = font(22);
+      ctx.fillStyle = C.inkMuted;
+      ctx.fillText(it.k, ix, mid + r(9));
+      const kw = ctx.measureText(it.k).width + r(8);
+      ctx.font = font(26, 600);
+      ctx.fillStyle = C.ink;
+      ctx.fillText(fit(ctx, it.v, colW - kw - r(8)), ix + kw, mid + r(9));
     });
   } else if (h.note) {
-    ctx.fillStyle = INK_SOFT;
-    ctx.font = font(28);
-    ctx.fillText(fit(ctx, h.note, CW - 80), x, ly);
+    ctx.font = font(24);
+    text(ctx, fit(ctx, h.note, maxW), x, mid, 24, C.inkSoft);
   }
-  return y + 220;
+  return top + QUOTE_H;
 }
 
-// 分段按钮（页签 / 画法 / 日均总数）：on 的那个高亮，和页面上同一个意思
-function segs(ctx, items, onKey, x, y, opt) {
-  const h = 52, padX = opt.padX || 22;
-  ctx.font = font(26, 600);
-  const widths = items.map(it => Math.max(opt.minW || 0, ctx.measureText(it.label).width + padX * 2));
-  const total = widths.reduce((a, b) => a + b, 0) + 8;
-  let left = opt.alignRight ? x - total : x;
-  ctx.fillStyle = opt.bg;
-  roundRect(ctx, left, y, total, h, h / 2);
-  ctx.fill();
-  if (opt.border) { ctx.strokeStyle = LINE; ctx.lineWidth = 2; ctx.stroke(); }
-  let cx = left + 4;
+// .opt-group：细边框胶囊，选中的那格 tint 底 + accent 字；right = 右边缘（右对齐），返回左边缘
+function optGroup(ctx, items, isOn, right, cy, p) {
+  ctx.font = font(22);
+  const ws = items.map(it => ctx.measureText(it.label).width + r(28));
+  const w = ws.reduce((a, b) => a + b, 0) + r(4);
+  const h = r(22 * LH + 16 + 4);
+  const left = right - w;
+  const top = cy - h / 2;
+  ctx.save();
+  roundRect(ctx, left, top, w, h, h / 2);
+  ctx.clip();
+  let x = left + r(2);
   items.forEach((it, i) => {
-    const on = it.key === onKey || (opt.onAll && it.on);
-    if (on) {
-      ctx.fillStyle = opt.onBg;
-      roundRect(ctx, cx, y + 4, widths[i], h - 8, (h - 8) / 2);
-      ctx.fill();
-    }
-    ctx.fillStyle = on ? opt.onInk : INK_MUTED;
-    ctx.font = font(26, on ? 700 : 400);
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(it.label, cx + widths[i] / 2, y + h / 2 + 1);
-    cx += widths[i];
+    if (isOn(it)) { ctx.fillStyle = p.tint; ctx.fillRect(x, top, ws[i], h); }
+    text(ctx, it.label, x + ws[i] / 2, cy, 22, isOn(it) ? p.accent : C.inkMuted, isOn(it) ? 600 : 400, 'center');
+    x += ws[i];
   });
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'alphabetic';
-  return { left, right: left + total };
+  ctx.restore();
+  box(ctx, left, top, w, h, h / 2, null, C.line, r(2));
+  return left;
 }
 
-function chartCard(ctx, snap, p, y) {
-  const top = y;
+function chartCard(ctx, snap, top, p) {
+  const innerX = r(CONTENT_X + BORDER + CARD_PAD.x), innerW = r(CONTENT_W - BORDER * 2 - CARD_PAD.x * 2);
+  box(ctx, r(CONTENT_X), r(top), r(CONTENT_W), r(CARD_H), r(36), C.card, C.line, r(BORDER));
   const goal = snap.chart.kind === 'goal';
-  const sub = goal || snap.showAgg;
-  const chartTop = top + (sub ? 156 : 104);
-  // 没有第二行（日均总数 / 图例）时把省下的高度给图表，汇总和署名的位置就不随页签变
-  const chartH = CHART_BOX.h + (sub ? 0 : 52);
-  const h = chartTop - top + chartH + 24;
-  card(ctx, M, top, CW, h);
 
-  // 第一行：页签（左）+ 画法 / 均线（右，目标页签不画）
-  segs(ctx, snap.periods, snap.period, M + 30, top + 30, { bg: '#F5F5F4', onBg: '#FFFFFF', onInk: INK, minW: 76, padX: 18 });
+  // 第一行左：日周月年（目标）分段
+  const headY = top + BORDER + CARD_PAD.t;
+  const cy = r(headY + HEAD_H / 2);
+  const segW = r(56);
+  const pw = segW * snap.periods.length + r(8);
+  box(ctx, innerX, r(headY), pw, r(HEAD_H), r(HEAD_H / 2), C.section);
+  snap.periods.forEach((it, i) => {
+    const sx = innerX + r(4) + segW * i;
+    const on = it.key === snap.period;
+    if (on) {
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,0.06)';
+      ctx.shadowBlur = r(6);
+      ctx.shadowOffsetY = r(2);
+      box(ctx, sx, r(headY + 4), segW, r(52), r(26), C.card);
+      ctx.restore();
+    }
+    text(ctx, it.label, sx + segW / 2, cy, 26, on ? C.ink : C.inkSoft, on ? 700 : 400, 'center');
+  });
+
+  // 第一行右：画法 + 均线（目标页签隐藏）
   if (!goal) {
-    const ma = segs(ctx, [{ key: 'ma', label: '均线', on: snap.showMA }], '', M + CW - 30, top + 30,
-      { bg: '#FFFFFF', border: true, onBg: p.tint, onInk: p.accent, onAll: true, alignRight: true });
-    segs(ctx, snap.modes, snap.mode, ma.left - 14, top + 30,
-      { bg: '#FFFFFF', border: true, onBg: p.tint, onInk: p.accent, alignRight: true });
+    const right = innerX + innerW;
+    const maLeft = optGroup(ctx, [{ key: 'ma', label: '均线' }], () => snap.showMA, right, cy, p);
+    optGroup(ctx, snap.modes, it => it.key === snap.mode, maLeft - r(12), cy, p);
   }
 
   // 第二行：目标 = 图例；周月年 = 每X看 日均 / 总数（靠右）
+  const subY = headY + HEAD_H + 12 - 4;
+  const sy = r(subY + SUB_H / 2);
   if (goal) {
-    const ly = top + 104;
-    let lx = M + 40;
+    let lx = innerX + r(8);
     [['实际累计', 'solid'], ['理想进度', 'dash'], ['预测', 'dot']].forEach(([label, kind]) => {
+      ctx.save();
       ctx.strokeStyle = kind === 'dash' ? '#A7A498' : p.accent;
       ctx.globalAlpha = kind === 'dot' ? 0.7 : 1;
-      ctx.lineWidth = kind === 'solid' ? 5 : 4;
-      ctx.setLineDash(kind === 'dash' ? [8, 6] : kind === 'dot' ? [3, 6] : []);
-      ctx.beginPath(); ctx.moveTo(lx, ly + 26); ctx.lineTo(lx + 40, ly + 26); ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = INK_SOFT;
-      ctx.font = font(26);
-      ctx.textBaseline = 'middle';
-      ctx.fillText(label, lx + 52, ly + 27);
-      ctx.textBaseline = 'alphabetic';
-      lx += 52 + ctx.measureText(label).width + 40;
+      ctx.lineWidth = r(kind === 'solid' ? 4 : 3);
+      ctx.setLineDash(kind === 'dash' ? [r(6), r(4)] : kind === 'dot' ? [r(3), r(3)] : []);
+      ctx.beginPath(); ctx.moveTo(lx, sy); ctx.lineTo(lx + r(28), sy); ctx.stroke();
+      ctx.restore();
+      const tw = text(ctx, label, lx + r(36), sy, 22, C.inkSoft);
+      lx += r(36) + tw + r(24);
     });
   } else if (snap.showAgg) {
-    const s = segs(ctx, snap.aggs, snap.agg, M + CW - 30, top + 92,
-      { bg: '#FFFFFF', border: true, onBg: p.tint, onInk: p.accent, alignRight: true });
-    ctx.fillStyle = INK_MUTED;
-    ctx.font = font(26);
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(snap.aggLabel, s.left - 14, top + 119);
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'alphabetic';
+    const left = optGroup(ctx, snap.aggs, it => it.key === snap.agg, innerX + innerW, sy, p);
+    text(ctx, snap.aggLabel, left - r(12), sy, 22, C.inkMuted, 400, 'right');
   }
 
-  // 图表：逻辑宽 343，放大到 CHART_BOX.w
-  const k = CHART_BOX.w / CHART_LW;
-  const lh = chartH / k;
-  ctx.save();
-  ctx.translate(CHART_BOX.x, chartTop);
-  ctx.scale(k, k);
+  // 图表：页面上的画布是 innerW × 440rpx，按它的 CSS 像素尺寸画，再等比放大
+  const chartY = subY + SUB_H + 4;
   const c = snap.chart;
+  const cw = c.w || 320, ch = c.h || 220;
+  const k = innerW / cw;
+  ctx.save();
+  ctx.translate(innerX, r(chartY));
+  ctx.scale(k, k);
   if (c.kind === 'goal') {
-    GD.draw(ctx, CHART_LW, lh, Object.assign({}, c.opts, { accent: p.accent }), { k0: c.k0, kw: c.kw, sel: c.sel });
+    GD.draw(ctx, cw, ch, Object.assign({}, c.opts, { accent: p.accent }), { k0: c.k0, kw: c.kw, sel: c.sel });
   } else {
-    KD.draw(ctx, CHART_LW, lh, Object.assign({}, c.opts, { accent: p.accent }), { V: c.V, offset: c.offset, sel: c.sel });
+    KD.draw(ctx, cw, ch, Object.assign({}, c.opts, { accent: p.accent }), { V: c.V, offset: c.offset, sel: c.sel });
   }
   ctx.restore();
-  return top + h;
+  return top + CARD_H;
 }
 
-function summary(ctx, snap, y) {
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'alphabetic';
-  ctx.fillStyle = INK_MUTED;
-  ctx.font = font(28);
-  ctx.fillText(fit(ctx, snap.sumTitle, CW - 20), M + 10, y + 30);
-  const tiles = (snap.kpi || []).slice(0, 4);
-  if (!tiles.length) return y + 40;
-  const gap = 18;
-  const tw = (CW - gap * (tiles.length - 1)) / tiles.length;
-  const ty = y + 52, th = 176;
-  tiles.forEach((t, i) => {
-    const x = M + (tw + gap) * i;
-    card(ctx, x, ty, tw, th);
-    const ix = x + 24;
-    ctx.fillStyle = INK_MUTED;
-    ctx.font = font(24);
-    ctx.fillText(fit(ctx, t.label, tw - 48), ix, ty + 46);
-    ctx.fillStyle = INK;
-    ctx.font = font(48, 700);
-    const v = String(t.value);
-    ctx.fillText(fit(ctx, v, tw - 48), ix, ty + 110);
-    const vw = Math.min(ctx.measureText(v).width, tw - 48);
-    if (t.unit) {
-      ctx.fillStyle = INK_SOFT;
-      ctx.font = font(22);
-      ctx.fillText(fit(ctx, t.unit, tw - 48 - vw - 8), ix + vw + 8, ty + 110);
-    }
-    if (t.sub) {
-      ctx.fillStyle = INK_MUTED;
-      ctx.font = font(20);
-      ctx.fillText(fit(ctx, t.sub, tw - 48), ix, ty + 150);
-    }
+function summary(ctx, snap, top, p) {
+  const x = r(CONTENT_X + 8), right = r(CONTENT_X + CONTENT_W - 8);
+  const y = top + SEC_TOP;
+  const cy = r(y + SEC_H / 2);
+  let titleMax = right - x;
+  if (snap.period === 'day' && snap.ranges) {
+    const left = optGroup(ctx, snap.ranges, it => it.key === snap.dayRange, right, cy, p);
+    titleMax = left - x - r(16);
+  }
+  ctx.font = font(24);
+  text(ctx, fit(ctx, snap.sumTitle, titleMax), x, cy, 24, C.inkMuted);
+
+  let ty = y + SEC_H;
+  const tw = (CONTENT_W - 20) / 2;
+  tileRows(snap.kpi).forEach(({ row, h }) => {
+    ty += TILE.top;
+    row.forEach((t, i) => {
+      const tx = CONTENT_X + (tw + 20) * i;
+      box(ctx, r(tx), r(ty), r(tw), r(h), r(TILE.radius), C.card, C.line, r(BORDER));
+      const ix = r(tx + BORDER + TILE.padX), maxW = r(tw - BORDER * 2 - TILE.padX * 2);
+      let ly = ty + BORDER + TILE.padY;
+      ctx.font = font(TILE.label);
+      text(ctx, fit(ctx, t.label, maxW), ix, r(ly + TILE.label * LH / 2), TILE.label, C.inkMuted);
+      ly += TILE.label * LH;
+      const base = r(ly + TILE.value * 1.05);
+      ctx.textBaseline = 'alphabetic';
+      ctx.textAlign = 'left';
+      ctx.font = font(TILE.value, 700);
+      ctx.fillStyle = C.ink;
+      const v = String(t.value);
+      ctx.fillText(v, ix, base);
+      const vw = ctx.measureText(v).width;
+      if (t.unit) {
+        ctx.font = font(22);
+        ctx.fillStyle = C.inkSoft;
+        ctx.fillText(fit(ctx, t.unit, maxW - vw - r(6)), ix + vw + r(6), base);
+      }
+      ly += TILE.value * LH;
+      if (t.sub) {
+        ctx.font = font(TILE.sub);
+        text(ctx, fit(ctx, t.sub, maxW), ix, r(ly + 4 + TILE.sub * LH / 2), TILE.sub, C.inkMuted);
+      }
+    });
+    ty += h;
   });
-  return ty + th;
+  return ty;
 }
 
-function footer(ctx, snap) {
-  ctx.strokeStyle = LINE;
-  ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(M, H - 92); ctx.lineTo(W - M, H - 92); ctx.stroke();
-  ctx.fillStyle = INK_MUTED;
-  ctx.font = font(26);
-  ctx.textBaseline = 'middle';
-  ctx.textAlign = 'left';
-  ctx.fillText(snap.signature, M, H - 50);
-  ctx.textAlign = 'right';
-  ctx.fillText(snap.dateText, W - M, H - 50);
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'alphabetic';
+function watermark(ctx, H) {
+  text(ctx, WATERMARK, WIDTH / 2, H - r(MARK_H / 2), 24, C.inkMuted, 400, 'center');
 }
 
-function draw(ctx, snap, palette) {
-  ctx.clearRect(0, 0, W, H);
-  background(ctx, palette);
-  title(ctx, snap, palette);
-  let y = header(ctx, snap, 232);
-  y = chartCard(ctx, snap, palette, y + 24);
-  summary(ctx, snap, y + 24);
-  footer(ctx, snap);
+function draw(ctx, snap) {
+  const H = heightOf(snap);
+  const p = P.get(P.idFromClass(snap.colorClass));
+  ctx.clearRect(0, 0, WIDTH, H);
+  ctx.fillStyle = C.page;
+  ctx.fillRect(0, 0, WIDTH, H);
+  let y = nav(ctx, snap) + 16;
+  y = quote(ctx, snap, y);
+  y = chartCard(ctx, snap, y, p);
+  summary(ctx, snap, y, p);
+  watermark(ctx, H);
 }
 
-module.exports = { SIZE: { width: W, height: H }, draw };
+module.exports = { WIDTH, heightOf, draw };

@@ -7,17 +7,7 @@
   <daily-nav title="{{title}}" fallback="/pages/daily/metric/index?theme={{themeId}}" />
 
   <view class="content">
-    <!-- 内容就是统计页当前的样子（周期 / 画法 / 缩放都在统计页调好再来），这里只换配色 -->
-    <view class="options">
-      <view class="colors">
-        <text class="colors-label">配色</text>
-        <view wx:for="{{colors}}" wx:key="id" class="color-dot {{colorId === item.id ? 'is-on' : ''}}"
-              style="background: {{item.swatch}};" data-id="{{item.id}}" bindtap="onColor">
-          <text wx:if="{{colorId === item.id}}" class="color-check">✓</text>
-        </view>
-      </view>
-    </view>
-
+    <!-- 内容就是统计页当前的样子（周期 / 画法 / 缩放都在统计页调好再来），这里没有可调项 -->
     <view class="preview" style="width: {{previewW}}px; height: {{previewH}}px;">
       <canvas type="2d" id="metricPoster" class="poster-canvas" style="width: {{previewW}}px; height: {{previewH}}px;"></canvas>
     </view>

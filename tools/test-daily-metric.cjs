@@ -395,7 +395,7 @@ test('werun auto sync: once a day, only for users who already authorised, never 
   delete global.wx;
 });
 
-test('report poster draws the stats page snapshot (kline and goal) with header, chart and signature', () => {
+test('report poster redraws the stats page snapshot 1:1 (kline and goal) and only adds the watermark', () => {
   const R = require('../utils/metricReportPoster');
   const K = require('../utils/daily/kline');
   const B = require('../utils/daily/burnup');
@@ -409,7 +409,7 @@ test('report poster draws the stats page snapshot (kline and goal) with header, 
   const map = {};
   for (let d = '2026-09-01'; d <= '2026-10-29'; d = D.addDays(d, 1)) map[d] = 7000 + (d.charCodeAt(9) % 4) * 1000;
   const base = {
-    title: '每日步数', subtitle: '周视图 · K线', signature: '标记吧 · 每日步数', dateText: '2026年10月29日',
+    title: '每日步数统计', colorClass: 'theme-green', ranges: [{ key: 30, label: '30天' }], dayRange: 30,
     periods: [{ key: 'day', label: '日' }, { key: 'week', label: '周' }], period: 'week',
     modes: [{ key: 'bar', label: '柱形' }, { key: 'candle', label: 'K线' }], mode: 'candle', showMA: true,
     aggs: [{ key: 'avg', label: '日均' }, { key: 'sum', label: '总数' }], agg: 'avg', showAgg: false, aggLabel: '每周看',
@@ -418,13 +418,17 @@ test('report poster draws the stats page snapshot (kline and goal) with header, 
   };
   R.draw(ctx, Object.assign({}, base, {
     chart: { kind: 'kline', opts: { candles: K.buildCandles(map, 'week'), period: 'week', mode: 'candle', value: 'main', goal: 8000, showGoal: true, goalText: '目标 8,000', format: 'count', showMA: true }, V: 20, offset: 0, sel: 3 }
-  }), P.get('green'));
-  ['每日步数', '9,204', '较上一周 ▼ 3.1%', '开', 'K线', '均线', '目标 8,000', '达标天数', '标记吧 · 每日步数', '2026年10月29日'].forEach(t => assert.ok(texts.includes(t), t));
+  }));
+  ['每日步数统计', '9,204', '较上一周 ▼ 3.1%', '开', 'K线', '均线', '目标 8,000', '达标天数', '标记吧小程序'].forEach(t => assert.ok(texts.includes(t), t));
+  assert.ok(!texts.includes('30天'), 'the day-range buttons only show on the day tab, as on the page');
+  assert.ok(!texts.includes('生成海报'));
   assert.ok(texts.some(t => t.startsWith('MA5 ')));
   texts.length = 0;
   const b = B.buildBurnup({ target: 1000000, startDate: '2026-10-01', endDate: '2026-12-31' }, map, 8000, '2026-10-29', 'sum');
-  R.draw(ctx, Object.assign({}, base, { period: 'goal', chart: { kind: 'goal', opts: { burnup: b, targetText: '目标 100万步' }, k0: null, kw: null, sel: -1 } }), P.get('pink'));
+  R.draw(ctx, Object.assign({}, base, { period: 'goal', chart: { kind: 'goal', opts: { burnup: b, targetText: '目标 100万步' }, k0: null, kw: null, sel: -1, w: 320, h: 220 } }));
   ['实际累计', '理想进度', '预测', '目标 100万步', '今天'].forEach(t => assert.ok(texts.includes(t), t));
   assert.ok(!texts.includes('均线'), 'goal tab hides the chart settings');
-  assert.deepEqual(R.SIZE, { width: 1080, height: 1440 });
+  assert.equal(R.WIDTH, 1080);
+  // 高随内容：两行汇总格子比一行高
+  assert.ok(R.heightOf(Object.assign({}, base, { kpi: base.kpi.concat(base.kpi, base.kpi) })) > R.heightOf(base));
 });

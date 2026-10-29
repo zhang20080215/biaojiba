@@ -3,40 +3,8 @@
 .content {
   padding-bottom: calc(220rpx + env(safe-area-inset-bottom));
 }
-.options {
-  background: var(--bg-card, #FFFFFF);
-  border: 3rpx solid var(--line-subtle, #EAEAE7);
-  border-radius: 36rpx;
-  padding: 20rpx 24rpx;
-}
-.colors {
-  display: flex;
-  align-items: center;
-}
-.colors-label {
-  font-size: 24rpx;
-  color: var(--text-muted, #9C998F);
-  margin-right: 20rpx;
-}
-.color-dot {
-  width: 52rpx;
-  height: 52rpx;
-  border-radius: 50%;
-  margin-right: 24rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.color-dot.is-on {
-  box-shadow: 0 0 0 4rpx var(--bg-card, #FFFFFF), 0 0 0 7rpx var(--text-primary, #2D2D2B);
-}
-.color-check {
-  color: #FFFFFF;
-  font-size: 26rpx;
-  font-weight: 700;
-}
 .preview {
-  margin: 28rpx auto 0;
+  margin: 12rpx auto 0;
   border-radius: 16rpx;
   overflow: hidden;
   box-shadow: var(--shadow-float, 0 6rpx 20rpx rgba(0, 0, 0, 0.10));

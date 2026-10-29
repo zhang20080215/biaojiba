@@ -323,8 +323,8 @@ Page({
     });
   },
 
-  // 生成海报：把页面「现在的样子」拍成一份快照交给海报页（utils/metricReportPoster.js 照着画）——
-  // 表头、页签与画法的选中状态、图表的缩放窗口和十字线、汇总四格，全都按当前状态
+  // 生成海报：把页面「现在的样子」拍成一份快照交给海报页（utils/metricReportPoster.js 按页面 1:1 照着画）——
+  // 标题、表头、页签与画法的选中状态、图表的缩放窗口和十字线、汇总标题与四格、全站主题色，全都按当前状态
   onGoShare() {
     const snap = this._snapshot();
     if (!snap) {
@@ -341,18 +341,14 @@ Page({
     const comp = this.selectComponent(goal ? '#goalChart' : '#kline');
     if (!comp || !comp.snapshot) return null;
     const c = comp.snapshot();
+    // w / h = 页面上画布的 CSS 像素尺寸，海报按它等比放大，图表的比例和页面一致
     const chart = goal
-      ? { kind: 'goal', opts: c.opts, k0: c.k0, kw: c.kw, sel: c.sel }
-      : { kind: 'kline', opts: c.opts, V: c.V, offset: c.offset, sel: c.sel };
+      ? { kind: 'goal', opts: c.opts, k0: c.k0, kw: c.kw, sel: c.sel, w: c.w, h: c.h }
+      : { kind: 'kline', opts: c.opts, V: c.V, offset: c.offset, sel: c.sel, w: c.w, h: c.h };
     const noun = PERIODS[d.period] ? PERIODS[d.period].noun : '';
-    const modeLabel = (MODES.find(m => m.key === d.mode) || MODES[0]).label;
-    const subtitle = goal ? '累计目标进度'
-      : `${PERIODS[d.period].label}视图 · ${modeLabel}${d.showAgg ? (d.agg === 'sum' ? ' · 看总数' : ' · 看日均') : ''}`;
-    const today = d.today;
     return {
       themeId: d.themeId,
-      title: this.theme.title,
-      subtitle,
+      title: d.title,
       header: { cap: d.cap, big: d.big, bigUnit: d.bigUnit, change: d.change, changeColor: d.changeColor, ohlc: d.ohlc, note: d.note },
       periods: d.periods,
       period: d.period,
@@ -364,11 +360,10 @@ Page({
       agg: d.agg,
       aggLabel: `每${noun}看`,
       chart,
-      // 日视图的汇总标题只写了起止日期（30/180/365 是页面上的按钮），海报上把「近 N 天」补回去
-      sumTitle: d.period === 'day' ? `近 ${d.dayRange} 天 · ${d.sumTitle}` : d.sumTitle,
+      sumTitle: d.sumTitle,
+      ranges: RANGES,
+      dayRange: d.dayRange,
       kpi: d.kpi,
-      signature: this.theme.vocab.signature,
-      dateText: `${today.slice(0, 4)}年${D.formatDateCN(today)}`,
       colorClass: d.themeClass
     };
   }

@@ -205,9 +205,10 @@ function draw(ctx, W, H, o, st) {
   ctx.textBaseline = 'top';
   const idx = [v.start, Math.floor((v.start + v.end - 1) / 2), v.end - 1];
   ['left', 'center', 'right'].forEach((align, j) => {
-    if (j === 1 && v.end - v.start < 5) return;
-    ctx.textAlign = align;
     const x = j === 0 ? PAD.l : j === 2 ? W - PAD.r : v.xOf(idx[1]);
+    // 中间那个日期离两头太近就不写（根数少、整体靠右时会和右边的日期叠在一起）
+    if (j === 1 && (v.end - v.start < 5 || x - PAD.l < 44 || W - PAD.r - x < 44)) return;
+    ctx.textAlign = align;
     ctx.fillText(dateLabel(v.c[idx[j]], o), x, bottom + 6);
   });
 
