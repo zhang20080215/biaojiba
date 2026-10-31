@@ -42,6 +42,9 @@
  *   adfree_pass  { result:字符串 }                              —— 首页 tips 条「看视频换 30 分钟无页面广告」的结果
  *                 result ∈ watched(看完,发放) | abandoned(中途关,不发) | failed(无视频/加载失败,不发)
  *                 同一次观看另有一条 ad_rewarded（route=首页），两者不要相加
+ *   ── 第五版（feature/guess-optimize）──
+ *   daily_pick_spin { theme:字符串, scope:字符串 }              —— 每日选片转一次；theme = 榜单 id（自建影单为 customMovie），
+ *                 scope ∈ unwatched|all
  *
  * 参数值只支持 number / string。
  */
