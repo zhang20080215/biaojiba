@@ -49,3 +49,7 @@ tools/bangumi-seed/.cache/
 
 # 云数据库控制台导出（含用户 openid/昵称），不进仓库、不进代码包
 database_export-*.json
+
+# 本地拉数：小程序 AppSecret 与拉回来的数据
+tools/wx-analytics/secret.json
+tools/wx-analytics/out/
