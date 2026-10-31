@@ -26,7 +26,7 @@ const https = require('https');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
 const CN_TZ_OFFSET_MS = 8 * 60 * 60 * 1000;
-const CONCURRENCY = 6;
+const CONCURRENCY = 3;
 const DEFAULT_APPID = 'wx52ad9bb6303e6af1';
 const ALL_PARTS = ['trend', 'retain', 'weekly', 'monthly', 'pages', 'distribution', 'portrait'];
 
@@ -106,13 +106,23 @@ async function pool(items, worker) {
     return out;
 }
 
+// 61504 = 微信侧限流「system busy」，并发一高就会冒，退避重试即可
+const RETRY_CODES = [61504, -1, 45009];
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
 function makeCaller(errors) {
     return async function call(api, params) {
-        try {
-            return await cloud.openapi.analysis[api](params);
-        } catch (err) {
-            errors.push({ api, params, code: err.errCode, msg: String(err.errMsg || err.message).slice(0, 160) });
-            return null;
+        for (let attempt = 0; ; attempt++) {
+            try {
+                return await cloud.openapi.analysis[api](params);
+            } catch (err) {
+                if (attempt < 4 && RETRY_CODES.indexOf(err.errCode) >= 0 && err.errCode !== 45009) {
+                    await sleep(600 * (attempt + 1) + Math.random() * 400);
+                    continue;
+                }
+                errors.push({ api, params, code: err.errCode, msg: String(err.errMsg || err.message).slice(0, 160) });
+                return null;
+            }
         }
     };
 }

@@ -10,6 +10,7 @@
 //   node tools/wx-analytics/pull.cjs stats '{"days":14}'
 //   node tools/wx-analytics/pull.cjs invoke analyzeGuess '{}'      调任意已部署云函数
 //   node tools/wx-analytics/pull.cjs wedata charts.json           We分析图表（[{chart_id,target_id,time_unit}]）
+//   node tools/wx-analytics/pull.cjs publisher [{"start":"2026-10-01","end":"2026-10-30"}]   流量主广告收入
 //   node tools/wx-analytics/pull.cjs db "db.collection('x').where({}).limit(10).get()"
 //
 // 结果写到 tools/wx-analytics/out/<命令>-<时间>.json（已 gitignore），终端只打印摘要。
@@ -138,6 +139,19 @@ async function dbQuery(query) {
     return { pager: r.pager, data: (r.data || []).map(s => { try { return JSON.parse(s); } catch (e) { return s; } }) };
 }
 
+// 聚合 / 计数：query 是完整的链式表达式，如 db.collection('x').aggregate().group({...}).end()
+async function dbAggregate(query) {
+    const r = await post('https://api.weixin.qq.com/tcb/databaseaggregate?access_token=' + await token(), { env: ENV, query });
+    if (r.errcode) throw new Error('databaseaggregate 失败 ' + r.errcode + ' ' + r.errmsg);
+    return (r.data || []).map(s => { try { return JSON.parse(s); } catch (e) { return s; } });
+}
+
+async function dbCount(query) {
+    const r = await post('https://api.weixin.qq.com/tcb/databasecount?access_token=' + await token(), { env: ENV, query });
+    if (r.errcode) throw new Error('databasecount 失败 ' + r.errcode + ' ' + r.errmsg);
+    return r.count;
+}
+
 async function wedata(charts) {
     const url = 'https://api.weixin.qq.com/wedata/wedata_get_data?access_token=' + await token();
     const out = [];
@@ -148,9 +162,46 @@ async function wedata(charts) {
     return out;
 }
 
+// 流量主：广告位汇总 / 结算（GET，日期 YYYY-MM-DD）
+function get(url) {
+    return new Promise((resolve, reject) => {
+        https.get(url, { timeout: 60000 }, res => {
+            let buf = '';
+            res.on('data', c => { buf += c; });
+            res.on('end', () => { try { resolve(JSON.parse(buf)); } catch (e) { reject(new Error('非 JSON 返回: ' + buf.slice(0, 200))); } });
+        }).on('error', reject);
+    });
+}
+
+async function publisher(opts) {
+    const end = opts.end || new Date(Date.now() + 8 * 3600e3 - 86400e3).toISOString().slice(0, 10);
+    const start = opts.start || new Date(Date.parse(end) - 29 * 86400e3).toISOString().slice(0, 10);
+    const base = 'https://api.weixin.qq.com/publisher/stat?access_token=' + await token();
+    const out = { start, end };
+    for (const action of ['publisher_adpos_general', 'publisher_settlement']) {
+        const rows = [];
+        let total = null;
+        for (let page = 1; page <= 20; page++) {
+            const q = '&action=' + action + '&page=' + page + '&page_size=90&start_date=' + start + '&end_date=' + end;
+            const r = await get(base + q);
+            if (r.base_resp && r.base_resp.ret) { out[action] = { error: r.base_resp }; break; }
+            if (r.errcode) { out[action] = { error: { errcode: r.errcode, errmsg: r.errmsg } }; break; }
+            const list = r.list || r.settlement_list || [];
+            rows.push(...list);
+            total = r;
+            if (list.length < 90 || rows.length >= (r.total_num || 0)) break;
+        }
+        if (!out[action]) {
+            const { list, settlement_list, ...rest } = total || {};
+            out[action] = Object.assign(rest, { list: rows });
+        }
+    }
+    return out;
+}
+
 function save(tag, data) {
     fs.mkdirSync(OUT, { recursive: true });
-    const stamp = new Date().toISOString().replace(/[-:]/g, '').slice(0, 13);
+    const stamp = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15);
     const file = path.join(OUT, tag + '-' + stamp + '.json');
     fs.writeFileSync(file, JSON.stringify(data, null, 1));
     console.log('已写入 ' + file + '（' + Math.round(fs.statSync(file).size / 1024) + ' KB）');
@@ -175,6 +226,13 @@ async function main() {
         save('invoke-' + a, await invoke(a, parseArg(b, {})));
     } else if (cmd === 'wedata') {
         save('wedata', await wedata(parseArg(a, [])));
+    } else if (cmd === 'publisher') {
+        save('publisher', await publisher(parseArg(a, {})));
+    } else if (cmd === 'agg') {
+        const rows = await dbAggregate(a);
+        if (b) save('agg-' + b, rows); else console.log(JSON.stringify(rows));
+    } else if (cmd === 'count') {
+        console.log(await dbCount(a));
     } else if (cmd === 'db') {
         save('db', await dbQuery(a));
     } else {
