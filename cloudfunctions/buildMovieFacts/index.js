@@ -47,6 +47,19 @@ const FACTS_VERSION = 1;
 // （与 buildMovieAlias 同一处取舍，等二期补 doubanId↔imdbId 映射再并进来）。
 const SOURCES = ['movies', 'oscar_movies', 'oscar_anime_movies', 'boxoffice_movies', 'generic_theme_movies'];
 
+// 填字扩片源（2026-10-30）：榜单只收经典和获奖片，可用片名只有 626 部，题目反复出同一批片。
+// 这批是从豆瓣「选电影」抓的大众电影（采集脚本 tools/guess-film-seed/，只收电影、纯汉字 2~7 字片名、
+// 评分人数 ≥2 万），随函数一起部署的快照文件，不进任何榜单集合：
+//   · memberOf / movieIds 为空 —— 它们不属于任何榜单，交叉填格的「入选榜单」谓词也就不会算到它们；
+//   · 已经在某个榜单里的片照常按榜单那一行建，这里只补榜单里没有的；
+//   · buildMovieAlias 的 SOURCES 不动（同名映射只管榜单之间）。
+// 文件缺失时当空，函数照常跑。
+let GUESS_EXTRA_FILMS = [];
+try { GUESS_EXTRA_FILMS = require('./guessExtraFilms.json'); } catch (e) { /* 没有快照 */ }
+// 快照收到评分人数 2 万，但默认只建 5 万以上的（和填字出题的默认门槛 minVotes 一致）：
+// 2~5 万那 1900 部进了库也出不了题，白拉一遍豆瓣详情。想放宽时传 { extraMinVotes: 20000 }
+const EXTRA_MIN_VOTES = 50000;
+
 // 两张老表整表没有 doubanId 字段，只能从 _id 反推。**必须卡位数**：
 // 这两张表的 _id 现在是新老混着的（新的是届数 oscar_1~97 / oscar_anime_74~98，
 // 老的是 oscar_{doubanId}），不卡位数会把届数 74 当成豆瓣条目 74 去拉详情，
@@ -166,7 +179,7 @@ async function readAll(collection) {
  * 扫全部榜单集合，按 doubanId 归并出「一部电影」的骨架。
  * @returns {{ movies: Array, noDoubanId: Array }}
  */
-async function collectSkeletons() {
+async function collectSkeletons(extraMinVotes) {
     const byGid = new Map();
     const noDoubanId = [];
 
@@ -201,10 +214,20 @@ async function collectSkeletons() {
         }
     }
 
+    // 填字扩片源：榜单里没有的才补，memberOf / movieIds 留空
+    let extraAdded = 0;
+    const minVotes = extraMinVotes == null ? EXTRA_MIN_VOTES : Number(extraMinVotes);
+    GUESS_EXTRA_FILMS.forEach(x => {
+        const gid = String((x && x.doubanId) || '').trim();
+        if (!gid || byGid.has(gid) || (Number(x.ratingCount) || 0) < minVotes) return;
+        byGid.set(gid, { doubanId: gid, memberOf: [], movieIds: [], cover: '', title: x.title || '', year: x.year || null });
+        extraAdded++;
+    });
+
     // 按 doubanId 字典序固定顺序，保证 startFrom 续跑指向同一批
     const movies = Array.from(byGid.values())
         .sort((a, b) => (a.doubanId < b.doubanId ? -1 : a.doubanId > b.doubanId ? 1 : 0));
-    return { movies, noDoubanId };
+    return { movies, noDoubanId, extraAdded };
 }
 
 /** 读 movie_facts 里已有的 doubanId → factsVersion（只取两个字段，负载很小） */
@@ -277,7 +300,7 @@ exports.main = async (event) => {
     // 删掉后它们仍在骨架里，下次增量跑又会被重新拉回来，白费一次豆瓣配额。
     // { prune: true, dryRun: true } 先看要删什么，{ prune: true } 才真删。
     if (ev.prune === true) {
-        const { movies } = await collectSkeletons();
+        const { movies } = await collectSkeletons(ev.extraMinVotes);
         const keep = new Set(movies.map(m => m.doubanId));
         const existingIds = Array.from((await readExistingIds()).keys());
         const orphans = existingIds.filter(id => !keep.has(String(id)));
@@ -383,7 +406,7 @@ exports.main = async (event) => {
         }
     }
 
-    const { movies, noDoubanId } = await collectSkeletons();
+    const { movies, noDoubanId, extraAdded } = await collectSkeletons(ev.extraMinVotes);
     const existing = await readExistingIds();
 
     const forceRefresh = ev.forceRefresh === true;
@@ -397,6 +420,10 @@ exports.main = async (event) => {
             success: true, mode: 'dryRun',
             sourcesScanned: SOURCES,
             uniqueMovies: movies.length,
+            // 填字扩片源快照里有多少条、其中榜单里没有、要新补的多少条
+            guessExtraFilms: GUESS_EXTRA_FILMS.length,
+            guessExtraAdded: extraAdded,
+            extraMinVotes: ev.extraMinVotes == null ? EXTRA_MIN_VOTES : Number(ev.extraMinVotes),
             alreadyBuilt: existing.size,
             toBuild: targets.length,
             noDoubanIdCount: noDoubanId.length,

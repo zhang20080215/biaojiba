@@ -197,3 +197,19 @@ test('concurrent theme counts still finish when overlapping transactions conflic
  for(const id of ['douban_movies','imdb_movies','boxoffice_movies'])assert.equal(r.rows[id].users,4,id);
  assert.equal(r.rows.oscar_movies.users,5);
 });
+
+test('recent popularity: 8-day history per list, 7-day gain from daily snapshots', () => {
+  const sc = require(path.join(functionRoot, 'statsCache.js'));
+  // history keeps only the latest 8 days, today overwrites
+  let row = { users: 100 };
+  for (let d = 1; d <= 10; d++) row = sc.withHistory({ users: 100 + d * 3 }, row, '2026-11-' + String(d).padStart(2, '0'));
+  assert.deepEqual(Object.keys(row.hist), ['2026-11-03', '2026-11-04', '2026-11-05', '2026-11-06', '2026-11-07', '2026-11-08', '2026-11-09', '2026-11-10']);
+  // 7 days back from 11-10 is 11-03: gain = 130 - 109
+  assert.deepEqual(sc.recentOf(row.hist), { recent: 21, recentDays: 7 });
+  // fewer than 7 days of history: uses the earliest day and says so
+  assert.deepEqual(sc.recentOf({ '2026-11-01': 50, '2026-11-03': 58 }), { recent: 8, recentDays: 2 });
+  // a single day (or nothing) gives no gain yet; a drop (unmarks) clamps to 0
+  assert.deepEqual(sc.recentOf({ '2026-11-01': 50 }), {});
+  assert.deepEqual(sc.recentOf(undefined), {});
+  assert.deepEqual(sc.recentOf({ '2026-11-01': 50, '2026-11-02': 40 }), { recent: 0, recentDays: 1 });
+});

@@ -99,6 +99,6 @@
        用 hidden 而不是 wx:if：节点常驻，避免与 canvas 同页反复增删节点。 -->
   <view class="busy-pill" hidden="{{!(loading || !ready)}}" style="top: {{navOffset + 12}}px;">
     <view class="busy-spin"></view>
-    <text>{{loading ? '加载记录中…' : '生成海报中…'}}</text>
+    <text>{{loading ? '加载记录中…' : (coverText || '生成海报中…')}}</text>
   </view>
 </view>

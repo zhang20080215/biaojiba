@@ -21,7 +21,8 @@
 // 调用：
 //   { mode: 'grid' }                  —— 取今天的格子题（没有就现出一道并落库）
 //   { mode: 'cross' }                 —— 取今天的纵横填字题
-//   { crossStats: true }              —— 填字词库体检（出题前先确认词库够不够）
+//   { crossStats: true }              —— 填字词库体检（出题前先确认词库够不够），附线索体检样本
+//   { crossStress: true, days: 365 }  —— 填字压测：按新规则连出 N 个虚构日期，只算不写
 //   { prepare: true, days: 30, mode: 'cross' } —— 批量备 30 天填字
 //   { mode: 'clue' }                  —— 取今天的线索题
 //   { mode: 'grid', date: '2026-08-26' } —— 取指定日期（「昨天」入口用）
@@ -29,12 +30,20 @@
 //   { inspect: true, mode, date }        —— 带答案的完整视图，仅供控制台排查，不走前端
 
 const cloud = require('wx-server-sdk');
+const cross = require('./cross.js');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
 const db = cloud.database();
+const _ = db.command;
 
 const FACTS_COLLECTION = 'movie_facts';
 const PUZZLE_COLLECTION = 'guess_puzzles';
+// 填字出题的两份辅助数据，都可以不存在（不存在就当空）：
+//   guess_film_stats    —— analyzeGuess {writeFilmStats:true} 写的单片实测答对率，难度预算用
+//   guess_clue_overrides —— 手工改过的线索 { _id: 片 id, clue }，比自动加工的优先
+const FILM_STATS_COLLECTION = 'guess_film_stats';
+const CLUE_OVERRIDE_COLLECTION = 'guess_clue_overrides';
+const CROSS_HISTORY_DAYS = 60;      // 读最近多少天的已出题，算跨批次冷却和出场次数
 
 const READ_LIMIT = 1000;
 const CN_TZ_OFFSET_MS = 8 * 60 * 60 * 1000;
@@ -74,34 +83,8 @@ function cnDateStr(ms) {
     return d.getUTCFullYear() + '-' + p(d.getUTCMonth() + 1) + '-' + p(d.getUTCDate());
 }
 
-/**
- * 固定种子的伪随机数（mulberry32）。
- * 用日期做种子——两个用户同时打开、谁先触发生成都得到同一道题，
- * 不必依赖「谁先写库谁说了算」的竞态。
- */
-function seededRandom(seedStr) {
-    let h = 1779033703 ^ seedStr.length;
-    for (let i = 0; i < seedStr.length; i++) {
-        h = Math.imul(h ^ seedStr.charCodeAt(i), 3432918353);
-        h = (h << 13) | (h >>> 19);
-    }
-    let a = h >>> 0;
-    return function () {
-        a |= 0; a = (a + 0x6D2B79F5) | 0;
-        let t = Math.imul(a ^ (a >>> 15), 1 | a);
-        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-}
-
-function shuffled(arr, rnd) {
-    const a = arr.slice();
-    for (let i = a.length - 1; i > 0; i--) {
-        const j = Math.floor(rnd() * (i + 1));
-        const t = a[i]; a[i] = a[j]; a[j] = t;
-    }
-    return a;
-}
+// seededRandom / shuffled 三个玩法共用，和填字出题逻辑一起放在 cross.js（纯函数，方便单测）
+const { seededRandom, shuffled } = cross;
 
 /**
  * 从 doc(id).get() 的返回里取出那一份文档，取不到给 null。
@@ -118,7 +101,7 @@ function oneDoc(res) {
 
 /** 按玩法挑下发视图。三个玩法的答案藏法不同，收在一处免得漏掉哪一路。 */
 function sanitizeFor(mode, doc, ev) {
-    if (mode === 'cross') return sanitizeCross(doc);
+    if (mode === 'cross') return cross.sanitizeCross(doc);
     if (mode === 'clue') return sanitizeClue(doc, ev.revealed);
     return sanitizeGrid(doc);
 }
@@ -130,7 +113,8 @@ async function readPool() {
     for (;;) {
         const res = await db.collection(FACTS_COLLECTION)
             .field({
-                _id: true, title: true, year: true, subtype: true, genres: true, actors: true,
+                // originalTitle 填字线索打码要用（外文原名也算泄露），原先漏读了
+                _id: true, title: true, originalTitle: true, year: true, subtype: true, genres: true, actors: true,
                 directors: true, countries: true, durationMin: true, rating: true,
                 ratingCount: true, cover: true, memberOf: true, tags: true, intro: true,
                 movieIds: true
@@ -142,6 +126,84 @@ async function readPool() {
         skip += rows.length;
     }
     return out;
+}
+
+/** 读一个小集合的全部文档；集合不存在就当空 */
+async function readAllSafe(collection) {
+    const out = [];
+    try {
+        for (let skip = 0; ; skip += READ_LIMIT) {
+            const res = await db.collection(collection).skip(skip).limit(READ_LIMIT).get();
+            const rows = (res && res.data) || [];
+            out.push.apply(out, rows);
+            if (rows.length < READ_LIMIT) break;
+        }
+    } catch (e) { /* 集合不存在 */ }
+    return out;
+}
+
+/** 控制台可覆盖的填字出题参数：一次调用试一档，不用改代码重部署 */
+function pickCrossOpts(ev) {
+    const o = {};
+    ['minVotes', 'filmCooldown', 'minDistractors', 'maxCold', 'minHot', 'maxTwoChar', 'targetWords'].forEach(function (k) {
+        if (ev[k] != null && !isNaN(Number(ev[k]))) o[k] = Number(ev[k]);
+    });
+    return o;
+}
+
+/**
+ * 填字出题上下文：全量片库 + 手工线索 + 实测难度。
+ * prepare / crossStress / crossStats / 按天现出题四条路径都从这里拿，规则只有 cross.js 一份。
+ */
+async function loadCrossContext(ev) {
+    const res = await Promise.all([
+        readPool(), readAllSafe(FILM_STATS_COLLECTION), readAllSafe(CLUE_OVERRIDE_COLLECTION)
+    ]);
+    const pool = res[0];
+    const overrides = new Map(res[2].filter(function (o) { return o.clue; })
+        .map(function (o) { return [String(o._id), String(o.clue)]; }));
+    pool.forEach(function (f) {
+        const c = overrides.get(String(f._id));
+        if (c) f.clueOverride = c;
+    });
+    const stats = new Map(res[1].map(function (s) { return [String(s._id), s]; }));
+    const opts = Object.assign(pickCrossOpts(ev), { stats: stats });
+    return { pool: pool, ctx: cross.buildCrossContext(pool, opts), overrides: overrides.size, stats: stats.size };
+}
+
+/**
+ * 把 beforeDate 之前 60 天里已经出过的填字题灌进出场记录 ——
+ * 冷却和降权要跨批次才有用：原先冷却只在单次 prepare 内生效，
+ * 两批题的接缝处同一部片隔二十天就又出来（10-09 和 10-29 都有《霸王别姬》）。
+ */
+async function loadCrossHistory(ctx, beforeDate) {
+    const start = new Date(Date.parse(beforeDate + 'T00:00:00Z') - CROSS_HISTORY_DAYS * 86400000)
+        .toISOString().slice(0, 10);
+    let n = 0;
+    try {
+        for (let skip = 0; ; skip += READ_LIMIT) {
+            const res = await db.collection(PUZZLE_COLLECTION)
+                .where({ mode: 'cross', date: _.gte(start).and(_.lt(beforeDate)) })
+                .field({ date: true, entries: true })
+                .skip(skip).limit(READ_LIMIT).get();
+            const rows = (res && res.data) || [];
+            rows.forEach(function (r) {
+                cross.recordUsage(ctx, (r.entries || []).map(function (e) { return e.id; }), cross.dayNum(r.date));
+            });
+            n += rows.length;
+            if (rows.length < READ_LIMIT) break;
+        }
+    } catch (e) { /* 集合不存在：没有历史 */ }
+    return n;
+}
+
+/** 落库的填字题文档 */
+function crossDoc(date, g, poolSize) {
+    return {
+        mode: 'cross', date: date, n: cross.N, grid: g.grid, entries: g.entries,
+        charPool: g.charPool, filledCells: g.filledCells, quality: g.quality,
+        poolSize: poolSize, createdAt: db.serverDate()
+    };
 }
 
 // —— 榜单 id → 给玩家看的名字。memberOf 里存的是主题 id，直接显示玩家看不懂。
@@ -427,275 +489,6 @@ function sanitizeClue(doc, revealed) {
 }
 
 
-// ============================================================================
-// 纵横填字（mode: 'cross'）
-//
-// 和 grid/clue 两个玩法共用片库，但用的是**片名的汉字**而不是谓词：
-// 若干部电影的中文片名在 7×7 网格里横竖交叉、共用汉字，玩家看剧情线索、
-// 从候选字池里点字填格。
-//
-// 词库比想象中窄，三道过滤缺一不可：
-//   1. 必须是**纯汉字 2~7 字**。带数字/冒号/英文的填不进格子
-//      （《指环王3：王者无敌》《007：大战皇家赌场》），实测只有约三分之一的片名合格。
-//   2. 必须**足够有名**（ratingCount 门槛）。填字里一条冷门或错误的片名会让整天的题无解，
-//      因为它还占着交叉点 —— 这比 3×3 里出现一部怪片严重得多，那里它只是九个答案之一。
-//      顺带挡掉种子数据里的脏标题（palmeDor 种子里就躺着一条「疯狂富作用」）。
-//   3. 还得有 intro，否则没线索可给。
-// ============================================================================
-
-const CROSS_N = 7;                  // 网格边长
-const CROSS_TARGET_WORDS = 5;       // 每天放几部片
-const CROSS_MIN_VOTES = 50000;      // 片名要够有名，见上面第 2 条
-// 字池尺寸：必须是 8 的倍数且不少于 24 —— 前端每行排 8 个，凑整才不会出现
-// 最后一行只剩两三个字的豁口。答案字（一格一份）之外的都用干扰字补齐，
-// 但至少要留 CROSS_MIN_DISTRACTORS 个干扰字，否则字池刚好等于答案，等于没难度。
-const CROSS_POOL_STEP = 8;
-const CROSS_POOL_MIN = 24;
-const CROSS_MIN_DISTRACTORS = 4;
-const CROSS_CLUE_MAXLEN = 44;       // 一句剧情的字数上限
-const CROSS_COOLDOWN_DAYS = 20;     // 同一部片多少天内不重复出现
-
-/** 能进填字的片名：纯汉字 2~7 字 */
-function crossUsableTitle(t) {
-    return typeof t === 'string' && /^[一-龥]{2,7}$/.test(t);
-}
-
-/** 词库：纯汉字片名 + 有简介 + 够有名 */
-function crossWordPool(pool, opts) {
-    const o = opts || {};
-    const minVotes = o.minVotes == null ? CROSS_MIN_VOTES : Number(o.minVotes);
-    return pool.filter(function (f) {
-        return f.subtype !== 'tv'
-            && crossUsableTitle(f.title)
-            && String(f.intro || '').length >= 20
-            && Number(f.ratingCount) >= minVotes
-            && crossClueOk(crossClue(f));
-    });
-}
-
-/**
- * 把一句简介加工成填字线索。比 grid/clue 玩法的打码严格得多，原因是这里泄露的
- * 是**要填的那几个字本身**，不是「哪部片」——漏一点点就等于白送格子。
- *
- * 实测（2026-08-29 那道题）暴露的三个泄露源，缺一道都不行：
- *   ① 片名子串。maskSpoilers 只替换完整片名，而中文片名的片段极常出现在简介里：
- *      《柏林苍穹下》的简介第一句就是「柏林由两位天使守护着」，答案前两字直接白送；
- *      《奇幻森林》的「茂密的原始森林中」同理。所以要按片名的**所有 2 字以上子串**打码。
- *   ② 括号里的演职员。「（███ Scarlett Johansson 饰）」中文名打了码、拉丁原名还在，
- *      等于点名。而这段对线索本身毫无价值，整段删掉最干净，顺带省出字数。
- *   ③ 兜底：剩下的长串拉丁字母一律去掉（简介里偶尔直接写外文原名）。
- */
-function crossClue(fact) {
-    let s = String(fact.intro || '');
-    // ② 括号连内容一起删（中英文括号都有）
-    s = s.replace(/[（(][^）)]*[）)]/g, '');
-    // ① 片名 / 原名 / 人名，以及片名的所有 2 字以上子串
-    const secrets = [];
-    const pushWord = function (w) {
-        if (w && String(w).length >= 2) secrets.push(String(w));
-    };
-    [fact.title, fact.originalTitle].forEach(function (t) {
-        const str = String(t || '');
-        for (let len = str.length; len >= 2; len--) {
-            for (let i = 0; i + len <= str.length; i++) pushWord(str.slice(i, i + len));
-        }
-    });
-    (fact.actors || []).forEach(pushWord);
-    (fact.directors || []).forEach(pushWord);
-    // 长的先替换，否则短子串会先把长串打散
-    secrets.sort(function (a, b) { return b.length - a.length; });
-    secrets.forEach(function (w) {
-        const parts = s.split(w);
-        if (parts.length > 1) s = parts.join('███');
-    });
-    // ③ 残留的拉丁字母串
-    s = s.replace(/[A-Za-z][A-Za-z.'\- ]{2,}/g, '');
-    // 连续的码合并，免得出现 ██████████ 这种长条
-    s = s.replace(/(?:███)+/g, '███').replace(/\s+/g, ' ');
-
-    const parts = s.split(/[。！？；\n]/).map(function (x) { return x.trim(); }).filter(Boolean);
-    let out = '';
-    for (let i = 0; i < parts.length && out.length < 16; i++) out += (out ? '，' : '') + parts[i];
-    if (!out) out = s.trim();
-    if (out.length > CROSS_CLUE_MAXLEN) out = out.slice(0, CROSS_CLUE_MAXLEN) + '…';
-    return out;
-}
-
-/**
- * 线索可用吗。打完码后可能只剩一堆 ███ 或者短得毫无信息，
- * 这种片直接不进词库 —— 填字里一条没法推的线索会卡死整盘。
- */
-function crossClueOk(clue) {
-    const s = String(clue || '');
-    if (s.length < 14) return false;
-    const masked = (s.match(/███/g) || []).length * 3;
-    return masked / s.length < 0.35;
-}
-
-
-/** 汉字 -> [{ id, title, pos }]，交叉点从这里找 */
-function crossCharIndex(words) {
-    const m = new Map();
-    words.forEach(function (w) {
-        for (let i = 0; i < w.title.length; i++) {
-            const c = w.title[i];
-            if (!m.has(c)) m.set(c, []);
-            m.get(c).push({ id: w._id, title: w.title, pos: i });
-        }
-    });
-    return m;
-}
-
-/**
- * 能否把 word 放在 (r,c) 起始、dir 方向。返回交叉数，放不下给 -1。
- * 稀疏式填字的规矩：词与词只允许在交叉点接触。
- *   - 词的首尾外侧必须留白，否则会和相邻的词连成一串读不断
- *   - 非交叉格的两侧必须留白，否则会在垂直方向拼出一个没有定义的「词」
- */
-function crossCanPlace(g, word, r, c, dir) {
-    const L = word.length;
-    const dr = dir === 'V' ? 1 : 0, dc = dir === 'H' ? 1 : 0;
-    if (r < 0 || c < 0 || r + dr * (L - 1) >= CROSS_N || c + dc * (L - 1) >= CROSS_N) return -1;
-    const br = r - dr, bc = c - dc, ar = r + dr * L, ac = c + dc * L;
-    if (br >= 0 && bc >= 0 && g[br][bc]) return -1;
-    if (ar < CROSS_N && ac < CROSS_N && g[ar][ac]) return -1;
-    let cross = 0;
-    for (let i = 0; i < L; i++) {
-        const rr = r + dr * i, cc = c + dc * i, ch = word[i], cur = g[rr][cc];
-        if (cur) {
-            if (cur !== ch) return -1;
-            cross++;
-            continue;
-        }
-        const sr = dir === 'H' ? 1 : 0, sc = dir === 'H' ? 0 : 1;
-        if (rr - sr >= 0 && cc - sc >= 0 && g[rr - sr][cc - sc]) return -1;
-        if (rr + sr < CROSS_N && cc + sc < CROSS_N && g[rr + sr][cc + sc]) return -1;
-    }
-    return cross;
-}
-
-function crossPut(g, word, r, c, dir) {
-    const dr = dir === 'V' ? 1 : 0, dc = dir === 'H' ? 1 : 0;
-    for (let i = 0; i < word.length; i++) g[r + dr * i][c + dc * i] = word[i];
-}
-
-/**
- * 出一道填字。策略：先横放一个种子词，然后反复「挑一个已放的词 → 挑它的一个字 →
- * 找另一部片名里有这个字 → 垂直放上去」，直到放够 target 部。
- * 放不满就整盘重来（很便宜：真实片名下实测毫秒级、60/60 天都能成）。
- */
-function generateCross(pool, rnd, opts) {
-    const o = opts || {};
-    const target = o.targetWords || CROSS_TARGET_WORDS;
-    const words = o.words || crossWordPool(pool, o);
-    if (words.length < 40) {
-        return { error: '可用片名只有 ' + words.length + ' 条（需纯汉字 2~7 字 + 有简介 + 评分人数达标），词库太小' };
-    }
-    const byChar = o.byChar || crossCharIndex(words);
-    const byTitle = new Map(words.map(function (w) { return [w.title, w]; }));
-    const pick = function (a) { return a[Math.floor(rnd() * a.length)]; };
-    const seeds = words.filter(function (w) { return w.title.length >= 4 && w.title.length <= 6; });
-    if (!seeds.length) return { error: '没有 4~6 字的种子片名' };
-
-    for (let attempt = 0; attempt < 300; attempt++) {
-        const g = Array.from({ length: CROSS_N }, function () { return Array(CROSS_N).fill(''); });
-        const placed = [];
-        const seed = pick(seeds);
-        const r0 = Math.floor(rnd() * CROSS_N);
-        const c0 = Math.floor(rnd() * (CROSS_N - seed.title.length + 1));
-        if (crossCanPlace(g, seed.title, r0, c0, 'H') < 0) continue;
-        crossPut(g, seed.title, r0, c0, 'H');
-        placed.push({ id: seed._id, word: seed.title, r: r0, c: c0, dir: 'H' });
-
-        for (let round = 0; round < 500 && placed.length < target; round++) {
-            const base = pick(placed);
-            const bi = Math.floor(rnd() * base.word.length);
-            const cands = byChar.get(base.word[bi]) || [];
-            if (!cands.length) continue;
-            const cand = pick(cands);
-            if (placed.some(function (p) { return p.word === cand.title; })) continue;
-            const dir = base.dir === 'H' ? 'V' : 'H';
-            const br = base.dir === 'H' ? base.r : base.r + bi;
-            const bc = base.dir === 'H' ? base.c + bi : base.c;
-            const r = dir === 'V' ? br - cand.pos : br;
-            const c = dir === 'H' ? bc - cand.pos : bc;
-            if (crossCanPlace(g, cand.title, r, c, dir) > 0) {
-                crossPut(g, cand.title, r, c, dir);
-                placed.push({ id: cand.id, word: cand.title, r: r, c: c, dir: dir });
-            }
-        }
-        if (placed.length < target) continue;
-
-        const entries = placed.map(function (p, i) {
-            const f = byTitle.get(p.word);
-            return {
-                no: i + 1, id: p.id, word: p.word, r: p.r, c: p.c, dir: p.dir, len: p.word.length,
-                clue: crossClue(f), year: f.year || null, cover: f.cover || '',
-                // 答对后「顺手标记」要用：这部片在各榜单里的文档 id。
-                // 存进 puzzle 而不是作答时现查，和 grid 把 answerIds 存进去是同一个理由 ——
-                // 校验只读这一份文档就够，不必再回 movie_facts。
-                movieIds: f.movieIds || []
-            };
-        });
-        // 字池**按格子逐个给**，不是按不同的字给：每个字只能用一次，
-        // 所以《虫虫危机》那种重复字的片名要给两个「虫」才填得满。
-        // 交叉格只算一次（它本来就只有一个格子），这一点由「遍历格子」天然保证。
-        const poolChars = [];
-        g.forEach(function (row) { row.forEach(function (ch) { if (ch) poolChars.push(ch); }); });
-        const solutionChars = new Set(poolChars);
-        // 目标尺寸：答案份数 + 至少几个干扰字，再向上取到 8 的倍数，且不低于 24。
-        // ⚠ 不能叫 target —— 函数顶上已经有个 target 是「目标片数」，同名会在这个块里
-        // 造成 TDZ，让上面 placed.length < target 那句直接抛错。
-        const poolTarget = Math.max(
-            CROSS_POOL_MIN,
-            Math.ceil((poolChars.length + CROSS_MIN_DISTRACTORS) / CROSS_POOL_STEP) * CROSS_POOL_STEP
-        );
-        // 干扰字从别的片名里取，且不能和答案里的字重复 —— 否则玩家拿它去填反而是对的，
-        // 就不是干扰而是多给了一份
-        const distract = [];
-        const allChars = Array.from(byChar.keys());
-        const need = poolTarget - poolChars.length;
-        for (let i = 0; i < need * 60 && distract.length < need; i++) {
-            const ch = pick(allChars);
-            if (!solutionChars.has(ch) && distract.indexOf(ch) < 0) distract.push(ch);
-        }
-        // 极端情况下不同的干扰字凑不够（片库字数有限），允许重复 —— 重复的干扰字
-        // 照样是错的，但尺寸必须凑够 8 的倍数，否则前端最后一行会缺口
-        while (distract.length < need && allChars.length) {
-            const ch = pick(allChars);
-            if (!solutionChars.has(ch)) distract.push(ch);
-        }
-        const charPool = shuffled(poolChars.concat(distract), rnd);
-
-        return {
-            grid: g.map(function (row) { return row.slice(); }),
-            entries: entries,
-            charPool: charPool,
-            filledCells: g.reduce(function (n, row) { return n + row.filter(Boolean).length; }, 0),
-            attempt: attempt
-        };
-    }
-    return { error: '试了 300 盘都没排满 ' + target + ' 部片，词库或网格尺寸有问题' };
-}
-
-/**
- * 下发给前端的视图：只给「哪些格子要填」和线索，**不给答案字**。
- * charPool 里含全部答案字，这是点选输入这个玩法本身要求的；
- * 但绝不能同时下发 entries[].word —— 那等于直接把答案送出去。
- */
-function sanitizeCross(doc) {
-    return {
-        mode: 'cross', date: doc.date,
-        n: doc.n,
-        // 1 = 要填的格子，0 = 空白
-        mask: (doc.grid || []).map(function (row) { return row.map(function (ch) { return ch ? 1 : 0; }); }),
-        entries: (doc.entries || []).map(function (e) {
-            return { no: e.no, r: e.r, c: e.c, dir: e.dir, len: e.len, clue: e.clue };
-        }),
-        charPool: doc.charPool,
-        poolSize: doc.poolSize
-    };
-}
 
 exports.main = async (event) => {
     const startedAt = Date.now();
@@ -711,13 +504,13 @@ exports.main = async (event) => {
         // { crossStats: true }                  —— 按默认门槛体检
         // { crossStats: true, minVotes: 20000 } —— 试试放宽门槛能多出多少条
         if (ev.crossStats === true) {
-            const pool0 = await readPool();
-            const mp0 = pool0.filter(function (f) { return f.subtype !== 'tv'; });
-            const pureTitle = mp0.filter(function (f) { return crossUsableTitle(f.title); });
+            const loaded = await loadCrossContext(ev);
+            const mp0 = loaded.pool.filter(function (f) { return f.subtype !== 'tv'; });
+            const pureTitle = mp0.filter(function (f) { return cross.usableTitle(f.title); });
             const withIntro = pureTitle.filter(function (f) { return String(f.intro || '').length >= 20; });
-            const minV = ev.minVotes == null ? CROSS_MIN_VOTES : Number(ev.minVotes);
+            const minV = ev.minVotes == null ? cross.MIN_VOTES : Number(ev.minVotes);
             const afterVotes = withIntro.filter(function (f) { return Number(f.ratingCount) >= minV; });
-            const words = crossWordPool(mp0, ev);
+            const words = loaded.ctx.words;
             const byLen = {};
             words.forEach(function (w) { byLen[w.title.length] = (byLen[w.title.length] || 0) + 1; });
             const cf = new Map();
@@ -725,9 +518,17 @@ exports.main = async (event) => {
                 new Set(w.title.split('')).forEach(function (c) { cf.set(c, (cf.get(c) || 0) + 1); });
             });
             const crossable = Array.from(cf.values()).filter(function (v) { return v >= 2; }).length;
+            const tiers = words.map(function (w) { return cross.tierOf(w, loaded.ctx.stats); });
+            // 线索体检：最短的、打码最多的、开头还是时间地点的，各给 10 条人工过目。
+            // 不满意的在 guess_clue_overrides 里手改（{ _id: 片 id, clue: '...' }）
+            const clued = words.map(function (w) {
+                const c = cross.crossClue(w);
+                return { id: String(w._id), title: w.title, clue: c, masked: (c.match(/███/g) || []).length * 3 / c.length };
+            });
+            const brief = function (x) { return x.id + ' ' + x.title + ' → ' + x.clue; };
             return {
                 success: true, mode: 'crossStats',
-                minVotes: ev.minVotes == null ? CROSS_MIN_VOTES : Number(ev.minVotes),
+                minVotes: minV,
                 moviePool: mp0.length,
                 afterPureTitle: pureTitle.length,      // 纯汉字 2~7 字
                 afterIntro: withIntro.length,          // 再要求有简介
@@ -736,17 +537,59 @@ exports.main = async (event) => {
                 droppedByClue: afterVotes.length - words.length,
                 lenDist: byLen,
                 seeds: words.filter(function (w) { return w.title.length >= 4 && w.title.length <= 6; }).length,
+                // 难度分档：冷门 / 大热门各多少部，实测数据覆盖了多少部
+                cold: tiers.filter(function (t) { return t.cold; }).length,
+                hot: tiers.filter(function (t) { return t.hot; }).length,
+                measured: tiers.filter(function (t) { return t.measured; }).length,
+                clueOverrides: loaded.overrides,
                 distinctChars: cf.size,
                 crossableChars: crossable,             // 出现在 ≥2 部片名里，能当交叉点
                 topChars: Array.from(cf.entries()).sort(function (a, b) { return b[1] - a[1]; })
                     .slice(0, 12).map(function (e) { return e[0] + ':' + e[1]; }),
                 sampleTitles: words.slice(0, 12).map(function (w) { return w.title; }),
                 // 打完码的线索长什么样，直接在这看，不用再单独 inspect
-                sampleClues: words.slice(0, 5).map(function (w) { return w.title + ' → ' + crossClue(w); }),
+                sampleClues: words.slice(0, 5).map(function (w) {
+                    return w.title + ' → ' + cross.crossInfo(w) + '｜' + cross.crossClue(w);
+                }),
+                clueAudit: {
+                    shortest: clued.slice().sort(function (a, b) { return a.clue.length - b.clue.length; }).slice(0, 10).map(brief),
+                    mostMasked: clued.slice().sort(function (a, b) { return b.masked - a.masked; }).slice(0, 10).map(brief),
+                    startsWithTime: clued.filter(function (x) { return /^(\d{2,4}|[一二三四五六七八九十〇零]{2,4})(年|世纪)/.test(x.clue); })
+                        .slice(0, 10).map(brief)
+                },
                 // 被闸门刷掉的样本：确认刷的是该刷的（简介太短/全是码）
-                droppedSamples: afterVotes.filter(function (f) { return !crossClueOk(crossClue(f)); })
-                    .slice(0, 5).map(function (w) { return w.title + ' → ' + crossClue(w); })
+                droppedSamples: afterVotes.filter(function (f) { return !cross.crossClueOk(cross.crossClue(f)); })
+                    .slice(0, 5).map(function (w) { return w.title + ' → ' + cross.crossClue(w); })
             };
+        }
+
+        // —— 填字压测：只算不写，按真实片库连着出 N 个虚构日期，看新规则下的题长什么样。
+        //   { crossStress: true, days: 365 }                    —— 从零开始备
+        //   { crossStress: true, days: 365, withHistory: true } —— 先灌最近 60 天真实出场记录，模拟接着现有题库往后备
+        // 同样认 minVotes / filmCooldown / minDistractors / maxCold / minHot / maxTwoChar / targetWords，一次调用试一档。
+        // 看：failed 必须是 0；similarPairs、traps 应为 0；relaxedLevel 里 >0 的天数越多说明规则越紧；
+        // maxRepeat / topRepeated 看重复；samples 是前三天的「片名｜元信息｜线索」
+        if (ev.crossStress === true) {
+            const loaded = await loadCrossContext(ev);
+            if (!loaded.pool.length) return { success: false, error: 'movie_facts 是空的，先跑 buildMovieFacts' };
+            const days = Math.max(1, Math.min(Number(ev.days) || 365, 400));
+            let history = 0;
+            if (ev.withHistory === true) {
+                // 压测的天序号是虚构的 0..N，把真实历史平移到 0 之前，保持相对间隔
+                const real = cross.buildCrossContext([], {});
+                history = await loadCrossHistory(real, cnDateStr());
+                const offset = cross.dayNum(cnDateStr());
+                real.usage.forEach(function (u, id) {
+                    loaded.ctx.usage.set(id, { count: u.count, last: u.last - offset });
+                });
+            }
+            const r = cross.stressCross(loaded.ctx, days, 'stress', startedAt + PREPARE_BUDGET_MS);
+            return Object.assign({
+                success: true, mode: 'crossStress',
+                opts: pickCrossOpts(ev), wordPool: loaded.ctx.words.length,
+                filmStats: loaded.stats, clueOverrides: loaded.overrides, historyPuzzles: history,
+                note: r.days < days ? '超时前只跑了 ' + r.days + ' 天' : ''
+            }, r);
         }
 
         // —— 批量备题：一次备好未来 N 天，写进 guess_puzzles。
@@ -761,10 +604,12 @@ exports.main = async (event) => {
         // { prepare: true, days: 30, from: '2026-09-01' } —— 指定起始日
         // { prepare: true, days: 30, overwrite: true }    —— 连已有的一起重出
         if (ev.prepare === true) {
-            const pool = await readPool();
+            const pmode = ev.mode === 'cross' ? 'cross' : 'grid';
+            // 填字的词库、实测难度、手工线索一次读好；grid 只要片库
+            const loaded = pmode === 'cross' ? await loadCrossContext(ev) : null;
+            const pool = loaded ? loaded.pool : await readPool();
             if (!pool.length) return { success: false, error: 'movie_facts 是空的，先跑 buildMovieFacts' };
             const mp = pool.filter(f => f.subtype !== 'tv');
-            const pmode = ev.mode === 'cross' ? 'cross' : 'grid';
             const days = Math.max(1, Math.min(Number(ev.days) || 30, 60));
             const from = /^\d{4}-\d{2}-\d{2}$/.test(ev.from || '') ? ev.from : cnDateStr();
             const overwrite = ev.overwrite === true;
@@ -773,16 +618,16 @@ exports.main = async (event) => {
 
             // 两个玩法各自的候选集只建一次，30 天复用
             const axes = pmode === 'grid' ? buildPredicates(mp) : null;
-            const crossWords = pmode === 'cross' ? crossWordPool(mp, ev) : null;
-            if (pmode === 'cross' && crossWords.length < 120) {
-                return { success: false, mode: 'prepare', error: '填字词库只有 ' + crossWords.length + ' 条，太小。放宽 minVotes 再试' };
+            const crossCtx = loaded ? loaded.ctx : null;
+            if (crossCtx && crossCtx.words.length < cross.MIN_USABLE) {
+                return { success: false, mode: 'prepare', error: '填字词库只有 ' + crossCtx.words.length + ' 条，太小。放宽 minVotes 再试' };
             }
-            const filmCool = ev.filmCooldown == null ? CROSS_COOLDOWN_DAYS : Number(ev.filmCooldown);
             try { await db.createCollection(PUZZLE_COLLECTION); } catch (e) { /* 已存在 */ }
+            // 填字的冷却和降权跨批次：先把 from 之前 60 天已出的题灌进出场记录
+            const historyPuzzles = crossCtx ? await loadCrossHistory(crossCtx, from) : 0;
 
             const fromMs = Date.parse(from + 'T00:00:00Z');
             const lastPerson = new Map();   // key -> 上次用它的天序号
-            const lastFilm = new Map();     // cross 用：片 id -> 上次用它的天序号
             const lastAttr = new Map();
             const made = [], skipped = [], failedDays = [];
             let stoppedEarly = false;
@@ -793,35 +638,30 @@ exports.main = async (event) => {
                 const docId = pmode + '_' + date;
 
                 if (!overwrite) {
-                    let exists = false;
-                    try { exists = !!oneDoc(await db.collection(PUZZLE_COLLECTION).doc(docId).get()); }
+                    let existing = null;
+                    try { existing = oneDoc(await db.collection(PUZZLE_COLLECTION).doc(docId).get()); }
                     catch (e) { /* 不存在 */ }
-                    if (exists) { skipped.push(date); continue; }
+                    if (existing) {
+                        // 跳过的那天照样算出场，后面的天才不会和它撞片
+                        if (crossCtx) {
+                            cross.recordUsage(crossCtx, (existing.entries || []).map(function (e) { return e.id; }), cross.dayNum(date));
+                        }
+                        skipped.push(date);
+                        continue;
+                    }
                 }
 
                 let g = null, doc = null;
 
                 if (pmode === 'cross') {
-                    // 冷却：同一部片 20 天内不再出现。词库本来就窄（纯汉字 + 够有名），
-                    // 不去重的话热门片名会反复出现在格子里。
-                    const usableWords = crossWords.filter(function (w) {
-                        return !(lastFilm.has(w._id) && i - lastFilm.get(w._id) < filmCool);
-                    });
-                    // 削太狠就退回全量：宁可重复，也不能这天没题
-                    const wset = usableWords.length >= 120 ? usableWords : crossWords;
-                    const xopts = { words: wset, byChar: crossCharIndex(wset) };
-                    for (let salt = 0; salt < 8 && !g; salt++) {
-                        const cand = generateCross(mp, seededRandom('cross|' + date + (salt ? '|p' + salt : '')), xopts);
-                        if (!cand.error) g = cand;
-                    }
+                    // 冷却、降权、难度预算、干扰字、线索都在 cross.planCrossDay 里（见 cross.js 文件头）
+                    g = cross.planCrossDay(crossCtx, cross.dayNum(date), 'cross|' + date);
                     if (!g) { failedDays.push(date); continue; }
-                    g.entries.forEach(function (e) { lastFilm.set(e.id, i); });
-                    doc = {
-                        mode: 'cross', date: date, n: CROSS_N, grid: g.grid, entries: g.entries,
-                        charPool: g.charPool, filledCells: g.filledCells,
-                        poolSize: mp.length, createdAt: db.serverDate()
-                    };
-                    made.push({ date: date, words: g.entries.map(function (e) { return e.word; }) });
+                    doc = crossDoc(date, g, mp.length);
+                    made.push({
+                        date: date, words: g.entries.map(function (e) { return e.word; }),
+                        relaxed: g.relaxed, cooldownUsed: g.cooldownUsed
+                    });
                 } else {
                     // 冷却期内用过的人物/属性直接不进候选
                     const usable = {
@@ -867,7 +707,12 @@ exports.main = async (event) => {
                 made.forEach(function (m) {
                     m.words.forEach(function (w) { films.set(w, (films.get(w) || 0) + 1); });
                 });
-                base.wordPoolSize = crossWords.length;
+                base.wordPoolSize = crossCtx.words.length;
+                base.historyPuzzles = historyPuzzles;
+                base.filmStats = loaded.stats;
+                base.clueOverrides = loaded.overrides;
+                // 规则放松过的天（日期:档位）。档位见 cross.planCrossDay 的 relax 表，正常应为空
+                base.relaxedDays = made.filter(function (m) { return m.relaxed > 0; }).map(function (m) { return m.date + ':' + m.relaxed; });
                 base.distinctFilms = films.size;
                 base.repeatedFilms = Array.from(films.entries()).filter(function (e) { return e[1] > 1; })
                     .sort(function (a, b) { return b[1] - a[1]; }).slice(0, 8)
@@ -995,15 +840,14 @@ exports.main = async (event) => {
                 poolSize: moviePool.length
             };
         } else if (mode === 'cross') {
-            let x = generateCross(moviePool, rnd);
-            for (let salt = 1; x.error && salt <= 5; salt++) {
-                x = generateCross(moviePool, seededRandom(mode + '|' + date + seedSalt + '|retry' + salt));
-            }
-            if (x.error) return { success: false, error: x.error };
-            doc = {
-                mode, date, n: CROSS_N, grid: x.grid, entries: x.entries,
-                charPool: x.charPool, filledCells: x.filledCells, poolSize: moviePool.length
-            };
+            // 和 prepare 同一套规则；这里多读一遍片库没关系，兜底路径一天最多走一次。
+            // 冷却只看这天之前 60 天的题（这条路径本来就是题库断档时才走）
+            const loaded = await loadCrossContext(ev);
+            await loadCrossHistory(loaded.ctx, date);
+            const x = cross.planCrossDay(loaded.ctx, cross.dayNum(date), mode + '|' + date + seedSalt);
+            if (!x) return { success: false, error: '填字出题失败，先跑 { crossStress: true } 看看词库和规则' };
+            doc = crossDoc(date, x, moviePool.length);
+            delete doc.createdAt;   // 下面统一补
         } else {
             const c = generateClue(moviePool, rnd);
             if (c.error) return { success: false, error: c.error };

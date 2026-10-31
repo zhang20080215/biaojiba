@@ -2,6 +2,7 @@ const toast = require('../../../utils/dailyToast.js');
 const rewardedSaveGate = require('../../../utils/rewardedSaveGate.js');
 const BookPosterDrawer = require('../../../utils/bookPosterDrawer.js');
 const CanvasHelper = require('../../../utils/canvasHelper.js');
+const { ensureCoverNodes } = require('../../../utils/posterCovers.js');
 const { getNavMetrics, getWindowInfoCompat, formatDateCN, todayStr, flattenBooks, dedupeBooks } = require('./common.js');
 
 // 每日电影分享页（pages/daily/movie/share）的读书版：版式、选项面板、取数/筛选/出图流程逐行对应，
@@ -14,7 +15,6 @@ const THEME_STORAGE_KEY = 'readShareTheme';
 const MODE_STORAGE_KEY = 'readPosterMode';   // 'xhs'(小红书 3:4) | 'raw'(原始封面比例)
 const HIDE_RATINGS_KEY = 'readPosterHideRatings';   // 单本海报是否隐藏豆瓣评分
 const LAYOUT_STORAGE_KEY = 'readPosterLayout';       // 范围版式：'whole' | 'month' | 'rating' | 'calendar'(仅月度)
-const RANGE_STORAGE_KEY = 'readPosterRange';         // 范围粒度：'year' | 'month'
 const LAYOUTS = ['whole', 'month', 'rating', 'calendar'];
 const TITLE_MAX = 20;                                  // 自定义标题字数上限
 const MAX_BOOKS = 300;                                 // 绘制器上限：超出按日期取前 300 本，统计仍按全量、海报页脚注明
@@ -38,6 +38,7 @@ function pad2(n) { return String(n).padStart(2, '0'); }
 Page({
   data: {
     toast: { show: false, text: '', icon: '' },
+    coverText: '',      // 忙碌提示里的封面加载进度「加载封面 32/120」
     statusBarHeight: 20,
     navBarHeight: 48,
     navOffset: 68,
@@ -61,7 +62,7 @@ Page({
     hideRatings: false,  // 单本书是否隐藏豆瓣评分
 
     // 范围海报
-    rangeMode: 'year',   // 'year' | 'month'
+    rangeMode: 'month',  // 'year' | 'month'；每次进来都是月度，年度封面多、出图慢，要的人自己切
     rangeYear: 0,
     rangeMonth: 0,
     rangeLabel: '',
@@ -93,7 +94,6 @@ Page({
     let themeId = BookPosterDrawer.DEFAULT_THEME;
     let posterMode = 'xhs';
     let posterLayout = 'whole';
-    let rangeMode = 'year';
     let hideRatings = false;
     try {
       const saved = wx.getStorageSync(THEME_STORAGE_KEY);
@@ -102,8 +102,6 @@ Page({
       if (savedMode === 'xhs' || savedMode === 'raw') posterMode = savedMode;
       const savedLayout = wx.getStorageSync(LAYOUT_STORAGE_KEY);
       if (LAYOUTS.indexOf(savedLayout) >= 0) posterLayout = savedLayout;
-      const savedRange = wx.getStorageSync(RANGE_STORAGE_KEY);
-      if (savedRange === 'year' || savedRange === 'month') rangeMode = savedRange;
       hideRatings = !!wx.getStorageSync(HIDE_RATINGS_KEY);
     } catch (e) {}
     this._hideRatings = hideRatings;
@@ -118,7 +116,7 @@ Page({
       themeId,
       posterMode,
       posterLayout,
-      rangeMode,
+      rangeMode: 'month',
       hideRatings
     };
 
@@ -131,13 +129,13 @@ Page({
       return;
     }
 
-    // ---- 范围：默认当前年度（日历页传来的年份），拉全量后再筛 ----
+    // ---- 范围：默认当前月度（日历页正在看的那个月），拉全量后再筛 ----
     this._isSingle = false;
     const today = todayStr();
     const y = Number(options && options.year) || Number(today.slice(0, 4));
     const m = Number(options && options.month) || Number(today.slice(5, 7));
     this._today = today;
-    Object.assign(patch, { rangeYear: y, rangeMonth: m }, this._rangePatch(rangeMode, y, m));
+    Object.assign(patch, { rangeYear: y, rangeMonth: m }, this._rangePatch('month', y, m));
     if (patch.posterLayout === 'calendar' && !patch.calendarOk) patch.posterLayout = 'whole';
     this.setData(patch);
     rewardedSaveGate.refreshHint(this);
@@ -216,7 +214,6 @@ Page({
   onRangeMode(e) {
     const mode = e.currentTarget.dataset.mode;
     if (!mode || mode === this.data.rangeMode || !this.data.ready) return;
-    try { wx.setStorageSync(RANGE_STORAGE_KEY, mode); } catch (err) {}
     const patch = this._rangePatch(mode, this.data.rangeYear, this.data.rangeMonth);
     // 年度下没有「日历」：退回整体
     if (!patch.calendarOk && this.data.posterLayout === 'calendar') patch.posterLayout = 'whole';
@@ -449,7 +446,7 @@ Page({
         canvas.requestAnimationFrame(() => canvas.requestAnimationFrame(resolve));
       });
       if (this._destroyed) return;
-      const res = await wx.canvasToTempFilePath({ canvas, fileType: 'png', quality: 1 });
+      const res = await wx.canvasToTempFilePath({ canvas, fileType: 'jpg', quality: 0.92 });
       if (this._destroyed) return;
       this._previewTemp = res.tempFilePath;
       this.safeSetData({ ready: true });
@@ -464,45 +461,22 @@ Page({
     }
   },
 
-  // 加载缺失的封面为 image 节点。仅信任云存储（cloud://）封面：换成临时链接后加载；
-  // 豆瓣等直链一律占位——canvas 不做 downloadFile，避免依赖域名白名单（syncDailyLog 写入时已把 meta.cover 镜像成 cloud://）。
+  // 加载缺失的封面为 image 节点（并发加载、只认 cloud:// 封面，见 utils/posterCovers.js）；
+  // 要加载的多于 12 张时，忙碌提示显示进度，年度海报不至于干等。
   async _ensureCovers(canvas, ctx, movies) {
-    const nodes = this._coverNodes;
-    const pending = movies.filter(m => !(m.key in nodes));
-    if (!pending.length) return;
-    // 1. 收集 cloud:// 封面，映射 key→fileID
-    const idByKey = {};
-    const cloudIds = [];
-    pending.forEach(m => {
-      const raw = m.poster || '';
-      if (raw && raw.indexOf('cloud://') === 0) {
-        idByKey[m.key] = raw;
-        if (cloudIds.indexOf(raw) < 0) cloudIds.push(raw);
+    const helper = new CanvasHelper(canvas, ctx, { width: this._canvasW, height: this._canvasH });
+    await ensureCoverNodes({
+      movies,
+      nodes: this._coverNodes,
+      getTempFileURL: fileList => wx.cloud.getTempFileURL({ fileList }),
+      load: url => helper.loadImage(url, 2),
+      isCancelled: () => this._destroyed,
+      onProgress: (done, total) => {
+        if (total <= 12) return;
+        if (done === total) this.safeSetData({ coverText: '' });
+        else if (done === 1 || done % 4 === 0) this.safeSetData({ coverText: `加载封面 ${done}/${total}` });
       }
     });
-    // 2. 批量换取临时链接（getTempFileURL 单次上限 50）
-    const tempMap = {};
-    for (let i = 0; i < cloudIds.length; i += 50) {
-      try {
-        const r = await wx.cloud.getTempFileURL({ fileList: cloudIds.slice(i, i + 50) });
-        (r.fileList || []).forEach(f => { if (f.fileID && f.tempFileURL) tempMap[f.fileID] = f.tempFileURL; });
-      } catch (e) {
-        console.warn('getTempFileURL fail', e);
-      }
-    }
-    // 3. 逐张加载（无 cloud 封面 / 换链失败 / 加载失败 → null，绘制器画占位）
-    const helper = new CanvasHelper(canvas, ctx, { width: this._canvasW, height: this._canvasH });
-    for (const m of pending) {
-      if (this._destroyed) break;
-      const fileId = idByKey[m.key];
-      const url = fileId && tempMap[fileId];
-      if (!url) { nodes[m.key] = null; continue; }
-      try {
-        nodes[m.key] = await helper.loadImage(url, 3);
-      } catch (e) {
-        nodes[m.key] = null;
-      }
-    }
   },
 
   async saveImage() {

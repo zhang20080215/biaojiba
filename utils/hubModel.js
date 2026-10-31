@@ -29,7 +29,9 @@ function decorate(themes, snapshot) {
       // Apply the released page's +100 display rule once; keep stored counts
       // and ranking values unchanged when re-decorating after a refresh.
       userCount: known ? stat.users : null, userCountText: known ? formatCount(stat.users + 100) : '',
-      contentCount: known ? stat.total : null };
+      contentCount: known ? stat.total : null,
+      // 近 7 日新增标记人数（getThemeHub 用每日快照相减算的），只用来排「最近热门」，不展示
+      recentGain: known && Number.isFinite(stat.recent) ? stat.recent : null };
   });
 }
 function comparePopular(a, b) {
@@ -40,12 +42,22 @@ function selectHot(themes) {
   return themes.filter(t => isList(t) && t.countKnown && t.contentCount !== 0)
     .sort(comparePopular).slice(0, 10).map((t, index) => ({ ...t, popularityRank: index + 1 }));
 }
+/**
+ * 首页「最近热门」：按近 7 日新增标记人数排，前 6 个。
+ * 云端还没攒出历史（上线头一天）时谁都没有 recentGain，退回按总人数排，不至于空着
+ */
+function selectRecentHot(themes) {
+  const lists = themes.filter(t => isList(t) && t.countKnown && t.contentCount !== 0);
+  const hasRecent = lists.some(t => Number.isFinite(t.recentGain));
+  const gain = t => (Number.isFinite(t.recentGain) ? t.recentGain : -1);
+  return lists.slice().sort((a, b) => (hasRecent ? gain(b) - gain(a) : 0) || comparePopular(a, b)).slice(0, 6);
+}
 function selectNew(themes, now = Date.now()) {
   // Historical lists without dates retain catalog order after dated launches.
   // Latest and popular are independent sections, so overlap is allowed.
   return themes.filter(t => isList(t) && dateMs(t) <= now && !(t.countKnown && t.contentCount === 0))
     .map((t, index) => ({ t, index }))
-    .sort((a, b) => dateMs(b.t) - dateMs(a.t) || a.index - b.index).slice(0, 4).map(row => row.t);
+    .sort((a, b) => dateMs(b.t) - dateMs(a.t) || a.index - b.index).slice(0, 6).map(row => row.t);
 }
 function filter(themes, category, query, sort, keywords) {
   const q = normalize(query);
@@ -60,4 +72,4 @@ function withProgress(t, row) {
   return { ...t, progressText: `${verb} ${row.done} / ${row.total}${row.wish ? ' · 待完成 ' + row.wish : ''}`,
     progressPercent: row.total ? Math.min(100, Math.round(row.done / row.total * 100)) : 0 };
 }
-module.exports = { routeKey, isTool, isList, formatCount, dateMs, decorate, comparePopular, selectHot, selectNew, filter, withProgress };
+module.exports = { routeKey, isTool, isList, formatCount, dateMs, decorate, comparePopular, selectHot, selectRecentHot, selectNew, filter, withProgress };

@@ -24,7 +24,7 @@ async function main() {
       const all = nodes(tree);
       assert.ok(all.some(n => n.attr && n.attr.class === 'hub-brand'), kind + ' title');
       if (kind === 'home') {
-        assert.equal(all.filter(n => n.attr && n.attr.class === 'hub-card exposure-card').length,options.offline ? 14 : 4, 'latest plus offline fallback cards');
+        assert.equal(all.filter(n => n.attr && n.attr.class === 'hub-card exposure-card').length,options.offline ? 16 : 6, 'latest (6) plus offline fallback cards');
         const popular = all.filter(n => n.attr && n.attr.class === 'hub-popular-row exposure-card');
         assert.equal(popular.length, options.offline ? 0 : options.partial ? 12 : 10, 'partial rankings retain two unranked entrances');
         if (options.partial) {

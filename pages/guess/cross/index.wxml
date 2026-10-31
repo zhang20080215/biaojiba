@@ -15,20 +15,24 @@
         <text class="m-day">{{dayOffset === 0 ? '今天' : (dayOffset > 0 ? dayOffset + '天后' : (0 - dayOffset) + '天前')}}</text>
         <text class="m-dot">·</text>
         <view class="hearts">
-          <text wx:for="{{lifeIcons}}" wx:key="index" class="heart {{item ? 'on' : ''}}">{{item ? '♥' : '♡'}}</text>
+          <image wx:for="{{lifeIcons}}" wx:key="index" class="heart" src="{{item ? heartOn : heartOff}}" />
+
         </view>
         <text class="m-dot">·</text>
-        <text class="m-seg"><text class="m-num">{{solvedCount}}/{{entries.length}}</text></text>
-        <text class="m-dot">·</text>
-        <text class="m-seg">{{hintsLeft > 0 ? '提示 ' : '提示已用完'}}<text wx:if="{{hintsLeft > 0}}" class="m-num">{{hintsLeft}}</text></text>
-        <text class="m-dot">·</text>
-        <text class="m-seg"><text class="m-num">{{score}}</text> 分</text>
+        <!-- 提示次数在底部按钮上已经有了、分数放到结束面板，这里只留进度，不再挤成一串 -->
+        <text class="m-seg">答出 <text class="m-num">{{solvedCount}}/{{entries.length}}</text></text>
+        <!-- 作答计时：只在还没做完时走，告诉玩家「正在计时」；停在本页才算，切走就停 -->
+        <block wx:if="{{!finished && timerText}}">
+          <text class="m-dot">·</text>
+          <image class="m-clock" src="{{clockIcon}}" />
+          <text class="m-timer">{{timerText}}</text>
+        </block>
       </view>
       <!-- 已经是今天时压暗，但仍可点——点了走订阅弹窗，而不是死按钮 -->
       <view class="nav {{dayOffset >= 0 ? 'nav-off' : ''}}" bindtap="nextDay">›</view>
     </view>
 
-    <!-- 条目切换 -->
+    <!-- 条目切换：一行小胶囊「1 横4」。8 条时两行字的标签太高，挤掉棋盘的高度 -->
     <view class="tabs">
       <view
         wx:for="{{entries}}" wx:key="no"
@@ -39,13 +43,15 @@
       </view>
     </view>
 
-    <!-- 只在还没答出任何一条时出现，占一行，答出第一条就让位给网格 -->
-    <view wx:if="{{solvedCount === 0}}" class="howto">选一条线索 → 从下方选字填格 → 填满后提交</view>
+    <!-- 只在第一次玩、还没答出任何一条时出现；答出一条就记下「看懂了」，以后不再占这一行 -->
+    <view wx:if="{{showHowto && solvedCount === 0}}" class="howto">选线索 → 点字填格 → 填满提交 · 停在本页才计时</view>
 
     <!-- 线索放在网格**上面**：底部字池是浮层，放下面容易被盖住 -->
     <view wx:if="{{current}}" class="clue-cur">
       <view class="clue-head">
         <text class="clue-meta">第 {{current.no}} 条 · {{current.dir === 'H' ? '横' : '竖'}}向 {{current.len}} 字</text>
+        <!-- 年份 · 国家 · 类型：认片的抓手。答出后让位给片名 -->
+        <text wx:if="{{current.info && !current.solved}}" class="clue-info">{{current.info}}</text>
         <text wx:if="{{current.solved}}" class="clue-answer">{{current.word}}</text>
       </view>
       <view class="clue-text">{{current.clue}}</view>
@@ -59,28 +65,71 @@
       <view class="board-row" wx:for="{{viewRows}}" wx:for-item="r" wx:key="*this">
         <view
           wx:for="{{board[r]}}" wx:for-item="cell" wx:for-index="c" wx:key="c"
-          class="bcell {{cell.on ? 'on' : 'off'}} {{cell.locked ? 'locked' : ''}} {{cell.active ? 'active' : ''}} {{cell.focus ? 'focus' : ''}} {{cell.flash ? 'flash' : ''}}"
+          class="bcell {{cell.on ? 'on' : 'off'}} {{cell.locked ? 'locked' : ''}} {{cell.missed ? 'missed' : ''}} {{cell.active ? 'active' : ''}} {{cell.focus ? 'focus' : ''}} {{cell.flash ? 'flash' : ''}}"
+          style="width:{{cell}}rpx;height:{{cell}}rpx;font-size:{{cellFont}}rpx"
           data-r="{{r}}" data-c="{{c}}" bindtap="onTapCell">
           <text wx:if="{{cell.on && cell.ch}}">{{cell.ch}}</text>
-          <text wx:if="{{cell.no}}" class="bcell-no">{{cell.no}}</text>
+          <text wx:if="{{cell.no}}" class="bcell-no" style="font-size:{{cellNoFont}}rpx">{{cell.no}}</text>
         </view>
       </view>
     </view>
     </view>
 
     <view wx:if="{{finished}}" class="over">
-      <view class="over-title">{{solvedCount === entries.length ? '全部答出' : '♥ 用完了'}}</view>
-      <view class="over-sub">答出 {{solvedCount}}/{{entries.length}} 条 · 得分 {{score}}</view>
-      <!-- 做完或做砸都把五部片列出来，这是这一局的交代 -->
-      <view wx:if="{{answers.length}}" class="answers">
-        <view wx:for="{{answers}}" wx:key="no" class="ans">
-          <text class="ans-no">{{item.no}}</text>
-          <text class="ans-word">{{item.word}}</text>
-          <text wx:if="{{item.year}}" class="ans-year">{{item.year}}</text>
+      <!-- 档位比分数好懂；分数留着，排行榜按它排 -->
+      <view class="over-grade grade-{{grade.key}}">{{grade.label}}</view>
+      <!-- 全答出时档位已经说明了，「答出 8/8」不再重复；只有没做完才写答出几条 -->
+      <view class="over-sub">
+        <block wx:if="{{solvedCount < entries.length}}">答出 {{solvedCount}}/{{entries.length}} · </block>{{score}} 分<block wx:if="{{wrongCount}}"> · 错 {{wrongCount}} 次</block><block wx:if="{{hintCount}}"> · 提示 {{hintCount}} 次</block><block wx:if="{{summary.duration}}"> · 用时 {{summary.duration}}</block>
+      </view>
+      <!-- 复活不限次数，只要没做完就一直给这个入口；没做完时它是最要紧的那个按钮，放最上面 -->
+      <view wx:if="{{solvedCount < entries.length}}" class="over-btn" bindtap="onRevive">看视频补回一颗心</view>
+
+      <view wx:if="{{summary}}" class="stats">
+        <view class="stat"><text class="stat-num">{{summary.streak}}</text><text class="stat-label">连续天数</text></view>
+        <view class="stat"><text class="stat-num">{{summary.totalDays}}</text><text class="stat-label">累计天数</text></view>
+        <view class="stat"><text class="stat-num">{{summary.perfectDays}}</text><text class="stat-label">完美通关</text></view>
+      </view>
+
+      <view class="over-ops">
+        <view class="op-btn primary" bindtap="onShareCard">生成答题卡</view>
+        <view class="op-btn" bindtap="onSubscribe">明早 10 点提醒我</view>
+      </view>
+
+      <!-- 当天排行：分数高的在前，同分先做完的在前，只排做完的局，只列前 10。
+           头像和打码昵称来自「我的」页设置的资料，没设过的显示默认头像 +「影迷 #四位数」。
+           自己没进前 10 时，末尾补一行「我 · 未上榜」，不报具体名次 -->
+      <view wx:if="{{summary}}" class="rank">
+        <view class="rank-title">{{dayOffset === 0 ? '今日排行' : dateShort + ' 排行'}}</view>
+        <view wx:if="{{!summary.top.length}}" class="rank-empty">还没有人上榜</view>
+        <block wx:else>
+          <!-- 表头：「做完」是做完这一局的时刻，同分时先做完的排前面 -->
+          <view class="rank-cols">
+            <text class="c-no">名次</text>
+            <text class="c-player">玩家</text>
+            <text class="c-time">做完</text>
+            <text class="c-score">得分</text>
+          </view>
+          <view wx:for="{{summary.top}}" wx:key="rank" class="rank-row {{item.me ? 'me' : ''}}">
+            <view class="c-no"><text class="badge badge-{{item.rank}}">{{item.rank}}</text></view>
+            <view class="c-player">
+              <image class="rank-avatar" src="{{item.avatar || '/images/default-avatar.svg'}}" mode="aspectFill" lazy-load />
+              <text class="rank-name">{{item.me ? '我' : item.name}}</text>
+            </view>
+            <text class="c-time">{{item.time}}</text>
+            <text class="c-score">{{item.score}}</text>
+          </view>
+        </block>
+        <view wx:if="{{!summary.myRank}}" class="rank-row me off">
+          <view class="c-no"><text class="badge">—</text></view>
+          <view class="c-player">
+            <image class="rank-avatar" src="{{summary.meAvatar || '/images/default-avatar.svg'}}" mode="aspectFill" />
+            <text class="rank-name">我</text>
+          </view>
+          <text class="c-off">未上榜</text>
         </view>
       </view>
-      <!-- 复活不限次数，只要没做完就一直给这个入口 -->
-      <view wx:if="{{solvedCount < entries.length}}" class="over-btn" bindtap="onRevive">看视频补回一颗♥</view>
+
     </view>
   </block>
 

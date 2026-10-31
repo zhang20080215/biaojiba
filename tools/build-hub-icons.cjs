@@ -12,7 +12,7 @@ const INK = '#2D2D2B';
 const ACCENTS = { '': '#93415E', 'theme-gold': '#7B5918', 'theme-green': '#526631', 'theme-sand': '#756044' };
 const DAILY = ['clapper', 'reading', 'dumbbell', 'droplet', 'footprints', 'moon', 'sparkle'];
 // 跟随强调色的独立图标（如首页「榜单许愿」链接），类名 .hub-glyph-accent
-const ACCENT_ICONS = ['wand'];
+const ACCENT_ICONS = ['wand', 'crossword', 'wheel'];
 
 const lines = [
   '/* 由 tools/build-hub-icons.cjs 从 utils/hubIcons.js 生成，勿手改；改图标后重跑该脚本 */',

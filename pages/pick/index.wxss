@@ -1,0 +1,256 @@
+/* 每日选片 · 转盘
+   颜色只用 styles/theme.wxss 的变量（page-root + 主题 class），四套主题色自动适配。
+   一屏：头部一句话 → 来源胶囊 → 转盘（主角）→ 换一批 → 今日选片条；
+   转完弹票根卡（截图 / 分享用），榜单和范围收在底部面板里 */
+
+.page-root {
+  min-height: 100vh;
+  background: var(--bg-page, #FAFAFA);
+  color: var(--text-primary, #2D2D2B);
+}
+.pk { padding: 8rpx 40rpx calc(40rpx + env(safe-area-inset-bottom)); }
+.pk-press { opacity: 0.7; }
+
+/* —— 头部 */
+.pk-head { margin-top: 16rpx; text-align: center; }
+.pk-date { font-size: 24rpx; letter-spacing: 2rpx; color: var(--text-muted, #9C998F); }
+.pk-h1 { margin-top: 6rpx; font-size: 50rpx; font-weight: 800; letter-spacing: 4rpx; }
+
+/* —— 来源胶囊 */
+.pk-source {
+  display: flex; align-items: center; width: fit-content; max-width: 100%;
+  margin: 24rpx auto 0; height: 64rpx; padding: 0 28rpx; box-sizing: border-box;
+  border-radius: 9999rpx; background: var(--bg-card, #FFFFFF);
+  border: 2rpx solid var(--line-subtle, #EAEAE7); font-size: 26rpx;
+}
+.pk-source.off { opacity: 0.5; }
+.pk-source-name {
+  max-width: 320rpx; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pk-source-sep { width: 2rpx; height: 24rpx; margin: 0 16rpx; background: var(--line-subtle, #EAEAE7); }
+.pk-source-scope { flex: 0 0 auto; font-weight: 600; color: var(--brand-accent, #93415E); }
+.pk-caret {
+  flex: 0 0 auto; width: 10rpx; height: 10rpx; margin: -6rpx 0 0 16rpx;
+  border-right: 3rpx solid var(--text-secondary, #6F6F68);
+  border-bottom: 3rpx solid var(--text-secondary, #6F6F68);
+  transform: rotate(45deg);
+}
+
+/* —— 转盘：外圈 640rpx（深色边 + 24 颗灯珠）→ 8rpx 白缝 → 536rpx 扇区盘 → 132rpx 中心钮
+   指针固定在外圈正上方、尖朝下（白色大三角垫底 + 主题色小三角，深浅扇区上都看得清）；
+   .pk-wheel 的 transition 时长与 index.js 的 SPIN_MS 一致 */
+.pk-stage {
+  position: relative; height: 700rpx; margin-top: 20rpx;
+  display: flex; align-items: center; justify-content: center;
+}
+.pk-glow {
+  /* 不能比屏幕宽（750rpx），否则页面能左右晃 */
+  position: absolute; left: 50%; top: 50%; width: 700rpx; height: 700rpx; margin: -350rpx 0 0 -350rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--brand-tint, #F9EDF1) 0%, rgba(250, 250, 250, 0) 70%);
+}
+.pk-ring {
+  position: relative; width: 640rpx; height: 640rpx; border-radius: 50%;
+  background: var(--hero-ink, #5E2539);
+  box-shadow: 0 24rpx 60rpx rgba(0, 0, 0, 0.18);
+}
+.pk-pointer {
+  position: absolute; left: 50%; top: -14rpx; z-index: 4; width: 0; height: 0; margin-left: -26rpx;
+  border-left: 26rpx solid transparent; border-right: 26rpx solid transparent;
+  border-top: 76rpx solid #FFFFFF;
+  filter: drop-shadow(0 4rpx 6rpx rgba(0, 0, 0, 0.3));
+}
+.pk-pointer::after {
+  content: ''; position: absolute; left: -17rpx; top: -70rpx;
+  border-left: 17rpx solid transparent; border-right: 17rpx solid transparent;
+  border-top: 52rpx solid var(--brand-accent, #93415E);
+}
+.pk-bulb {
+  position: absolute; left: 50%; top: 50%; z-index: 1;
+  width: 16rpx; height: 16rpx; margin: -8rpx 0 0 -8rpx; border-radius: 50%;
+  background: #FFF6D9; box-shadow: 0 0 10rpx rgba(255, 236, 170, 0.9);
+  animation: pk-blink 1.6s ease-in-out infinite;
+}
+.pk-bulb.b { animation-delay: -0.8s; }
+.pk-ring.spinning .pk-bulb { animation-duration: 0.36s; }
+.pk-ring.spinning .pk-bulb.b { animation-delay: -0.18s; }
+@keyframes pk-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.pk-wheel {
+  position: absolute; left: 52rpx; top: 52rpx; width: 536rpx; height: 536rpx;
+  border-radius: 50%; overflow: hidden;
+  box-shadow: 0 0 0 8rpx #FFFFFF;
+  transition: transform 4.2s cubic-bezier(0.15, 0.6, 0.12, 1);
+}
+/* 扇区和片名是 canvas 画好导出的一张图（片池有多少部就画多少格，dailyPick.drawWheel），
+   整张图跟着 .pk-wheel 转；图没出来前露出 .pk-wheel 的 conic-gradient 占位底 */
+.pk-wheel-img { display: block; width: 100%; height: 100%; }
+.pk-canvas { position: fixed; left: -2000px; top: 0; width: 536px; height: 536px; }
+
+/* 中心钮：主题色实心钮 + 白色放映机；高光叠在主题色上，不依赖 color-mix */
+.pk-hub {
+  position: absolute; left: 50%; top: 50%; z-index: 3;
+  width: 132rpx; height: 132rpx; margin: -66rpx 0 0 -66rpx; border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0) 58%), var(--brand-accent, #93415E);
+  border: 8rpx solid #FFFFFF; box-sizing: border-box;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.28), inset 0 -6rpx 12rpx rgba(0, 0, 0, 0.18);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.12s;
+}
+.pk-hub-press { transform: scale(0.94); }
+.pk-proj { position: relative; width: 88rpx; height: 88rpx; margin-top: -4rpx; }
+.pk-hub.busy .pk-proj { opacity: 0.5; }
+.pk-proj-body, .pk-proj-reel { position: absolute; background-repeat: no-repeat; background-position: center; background-size: contain; }
+/* 机身 + 两根支架 + 镜头（100×100 网格，白色） */
+.pk-proj-body {
+  left: 0; top: 0; width: 100%; height: 100%;
+  background-image: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cg%20fill%3D%22%23fff%22%3E%3Crect%20x%3D%2231%22%20y%3D%2248%22%20width%3D%225%22%20height%3D%2210%22%2F%3E%3Crect%20x%3D%2264%22%20y%3D%2246%22%20width%3D%225%22%20height%3D%2212%22%2F%3E%3Crect%20x%3D%2216%22%20y%3D%2256%22%20width%3D%2252%22%20height%3D%2228%22%20rx%3D%226%22%2F%3E%3Cpath%20d%3D%22M70%2063%20L86%2056%20Q88%2055.2%2088%2057.4%20L88%2082.6%20Q88%2084.8%2086%2084%20L70%2077%20Z%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E');
+}
+/* 胶片盘：实心圆挖三个孔 + 轴孔，单独一个节点才能自己转 */
+.pk-proj-reel {
+  background-image: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cpath%20fill%3D%22%23fff%22%20fill-rule%3D%22evenodd%22%20d%3D%22M2.00%2050.00a48%2048%200%201%200%2096%200a48%2048%200%201%200%20-96%200zM37.00%2025.00a13%2013%200%201%200%2026%200a13%2013%200%201%200%20-26%200zM58.65%2062.50a13%2013%200%201%200%2026%200a13%2013%200%201%200%20-26%200zM15.35%2062.50a13%2013%200%201%200%2026%200a13%2013%200%201%200%20-26%200zM44.00%2050.00a6%206%200%201%200%2012%200a6%206%200%201%200%20-12%200z%22%2F%3E%3C%2Fsvg%3E');
+}
+.pk-proj-reel.big { left: 16%; top: 14%; width: 36%; height: 36%; }
+.pk-proj-reel.small { left: 52%; top: 20%; width: 28%; height: 28%; }
+.pk-hub.spinning .pk-proj-reel { animation: pk-reel 0.5s linear infinite; }
+.pk-hub.spinning .pk-proj-reel.small { animation-duration: 0.38s; }
+@keyframes pk-reel { to { transform: rotate(360deg); } }
+
+/* —— 转盘下方一行 */
+.pk-under { height: 72rpx; margin-top: 4rpx; display: flex; align-items: center; justify-content: center; }
+.pk-tip { font-size: 24rpx; color: var(--text-muted, #9C998F); }
+.pk-tip.err { color: #C0603F; }
+.pk-tip.link { color: var(--brand-accent, #93415E); font-weight: 600; }
+
+/* —— 今日选片条 */
+.pk-strip {
+  display: flex; align-items: center; margin-top: 24rpx; padding: 20rpx 28rpx 20rpx 20rpx;
+  background: var(--bg-card, #FFFFFF); border: 3rpx solid var(--line-subtle, #EAEAE7);
+  border-radius: 32rpx;
+}
+.pk-strip-cover { flex: 0 0 auto; width: 72rpx; height: 100rpx; border-radius: 10rpx; background: var(--brand-tint, #F9EDF1); }
+.pk-strip-cover.empty { display: flex; align-items: center; justify-content: center; font-size: 36rpx; }
+.pk-strip-info { flex: 1; min-width: 0; margin-left: 20rpx; }
+.pk-strip-tag { font-size: 22rpx; font-weight: 600; color: var(--brand-accent, #93415E); }
+.pk-strip-title {
+  margin-top: 4rpx; font-size: 30rpx; font-weight: 700;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pk-strip-go { flex: 0 0 auto; margin-left: 16rpx; font-size: 24rpx; color: var(--text-secondary, #6F6F68); }
+
+/* —— 揭晓：票根卡。卡本身透明，上下两块各自带底色，中间齿孔那一条用径向渐变挖出两个半圆缺口 */
+.pk-mask {
+  position: fixed; left: 0; top: 0; right: 0; bottom: 0; z-index: 100;
+  background: rgba(20, 16, 14, 0.62);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  animation: pk-fade 0.2s ease-out;
+}
+@keyframes pk-fade { from { opacity: 0; } to { opacity: 1; } }
+.pk-ticket { width: 600rpx; border-radius: 32rpx; overflow: hidden; }
+.pk-ticket.pop { animation: pk-pop 0.42s cubic-bezier(0.2, 0.9, 0.3, 1.2); }
+@keyframes pk-pop {
+  0% { transform: scale(0.82); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.pk-t-top { position: relative; height: 420rpx; overflow: hidden; background: var(--brand-tint, #F9EDF1); }
+.pk-t-blur {
+  position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+  filter: blur(18px); transform: scale(1.3); opacity: 0.9;
+}
+.pk-t-shade { position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: linear-gradient(180deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.22)); }
+.pk-t-cover {
+  position: absolute; left: 50%; top: 48rpx; width: 236rpx; height: 336rpx; margin-left: -118rpx;
+  border-radius: 14rpx; background: var(--bg-card, #FFFFFF);
+  box-shadow: 0 16rpx 40rpx rgba(0, 0, 0, 0.35);
+}
+.pk-t-cover.empty { display: flex; align-items: center; justify-content: center; font-size: 80rpx; }
+.pk-t-stamp {
+  position: absolute; left: 28rpx; top: 28rpx; z-index: 1;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 10rpx 16rpx; border-radius: 12rpx;
+  background: rgba(255, 255, 255, 0.92); transform: rotate(-6deg);
+}
+.pk-t-stamp-a { font-size: 20rpx; font-weight: 800; letter-spacing: 2rpx; color: var(--brand-accent, #93415E); }
+.pk-t-stamp-b { margin-top: 2rpx; font-size: 22rpx; font-weight: 700; color: var(--text-primary, #2D2D2B); }
+
+.pk-t-perf {
+  position: relative; height: 40rpx;
+  background:
+    radial-gradient(circle at left center, rgba(0, 0, 0, 0) 20rpx, var(--bg-card, #FFFFFF) 21rpx) left / 51% 100% no-repeat,
+    radial-gradient(circle at right center, rgba(0, 0, 0, 0) 20rpx, var(--bg-card, #FFFFFF) 21rpx) right / 51% 100% no-repeat;
+}
+.pk-t-dash { position: absolute; left: 36rpx; right: 36rpx; top: 19rpx; border-top: 3rpx dashed var(--line-subtle, #EAEAE7); }
+
+.pk-t-body { padding: 4rpx 40rpx 28rpx; background: var(--bg-card, #FFFFFF); text-align: center; }
+.pk-t-title {
+  font-size: 40rpx; font-weight: 800; line-height: 1.3;
+  overflow: hidden; text-overflow: ellipsis; display: -webkit-box;
+  -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.pk-t-meta { margin-top: 8rpx; font-size: 24rpx; color: var(--text-secondary, #6F6F68); }
+.pk-t-row { display: flex; align-items: baseline; justify-content: center; margin-top: 16rpx; }
+.pk-t-score { flex: 0 0 auto; margin-right: 20rpx; }
+.pk-t-score-num { font-size: 44rpx; font-weight: 800; color: var(--brand-accent, #93415E); }
+.pk-t-score-label { margin-left: 6rpx; font-size: 22rpx; color: var(--text-secondary, #6F6F68); }
+.pk-t-from {
+  min-width: 0; font-size: 24rpx; color: var(--text-secondary, #6F6F68);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pk-t-marks { display: flex; margin-top: 28rpx; }
+.pk-t-mark {
+  flex: 1; height: 72rpx; line-height: 68rpx; box-sizing: border-box;
+  border-radius: 9999rpx; border: 2rpx solid var(--brand-accent, #93415E);
+  color: var(--brand-accent, #93415E); font-size: 28rpx; font-weight: 700;
+}
+.pk-t-mark + .pk-t-mark { margin-left: 20rpx; }
+.pk-t-mark.on { background: var(--brand-tint, #F9EDF1); }
+.pk-t-share {
+  margin: 20rpx 0 0; padding: 0; width: 100%; height: 84rpx; line-height: 84rpx;
+  border-radius: 9999rpx; background: var(--brand-accent, #93415E); color: #FFFFFF;
+  font-size: 30rpx; font-weight: 700;
+}
+.pk-t-share::after { border: none; }
+.pk-t-share-press { opacity: 0.85; }
+.pk-t-sign { margin-top: 22rpx; font-size: 20rpx; letter-spacing: 4rpx; color: var(--text-muted, #9C998F); }
+
+.pk-again {
+  margin-top: 32rpx; padding: 14rpx 44rpx; border-radius: 9999rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.55); color: rgba(255, 255, 255, 0.92); font-size: 28rpx;
+}
+
+/* —— 从哪抽：底部面板 */
+.pk-sheet-mask {
+  position: fixed; left: 0; top: 0; right: 0; bottom: 0; z-index: 100;
+  background: rgba(0, 0, 0, 0.4); animation: pk-fade 0.2s ease-out;
+}
+.pk-sheet {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  padding: 36rpx 32rpx calc(32rpx + env(safe-area-inset-bottom));
+  border-radius: 36rpx 36rpx 0 0; background: var(--bg-card, #FFFFFF);
+  animation: pk-up 0.24s ease-out;
+}
+@keyframes pk-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.pk-sheet-head { display: flex; align-items: center; justify-content: space-between; }
+.pk-sheet-title { font-size: 32rpx; font-weight: 700; }
+.pk-seg { display: flex; padding: 6rpx; border-radius: 9999rpx; background: var(--bg-section, #F5F5F4); }
+.pk-seg-item {
+  height: 52rpx; line-height: 52rpx; padding: 0 28rpx; border-radius: 9999rpx;
+  font-size: 26rpx; color: var(--text-secondary, #6F6F68);
+}
+.pk-seg-item.on { background: var(--brand-accent, #93415E); color: #FFFFFF; font-weight: 600; }
+.pk-sheet-list { max-height: 56vh; margin-top: 28rpx; }
+.pk-chips { display: flex; flex-wrap: wrap; }
+.pk-chip {
+  margin: 0 16rpx 16rpx 0; height: 64rpx; line-height: 60rpx; padding: 0 26rpx; box-sizing: border-box;
+  border-radius: 9999rpx; border: 2rpx solid var(--line-subtle, #EAEAE7);
+  font-size: 26rpx; color: var(--text-primary, #2D2D2B);
+}
+.pk-chip.on {
+  border-color: var(--brand-accent, #93415E);
+  background: var(--brand-tint, #F9EDF1); color: var(--brand-accent, #93415E); font-weight: 600;
+}
