@@ -95,9 +95,10 @@ function cloudFnForTheme(theme) {
  * @param {string|null} openid
  * @param {boolean} forceRefresh - 是否强制忽略缓存
  * @param {object} queryOptions - 走 getThemeMovies 的通用主题可传 { orderByField, orderDirection }
+ * @param {object} opts - { silent: true } 不打「进入主题」埋点（每日选片从榜单里取片用，不是用户打开了这个榜单）
  */
-async function loadMoviesData(theme, openid, forceRefresh = false, queryOptions = {}) {
-  trackThemeOpen(theme); // 埋点：进入主题（含刷新会略多计，作热度/漏斗基数够用）
+async function loadMoviesData(theme, openid, forceRefresh = false, queryOptions = {}, opts = {}) {
+  if (!opts.silent) trackThemeOpen(theme); // 埋点：进入主题（含刷新会略多计，作热度/漏斗基数够用）
   // 自建清单同一个 theme 下有很多份，缓存按 listId 分开存
   const cacheTheme = cacheKeyTheme(theme, queryOptions);
   const cached = forceRefresh ? null : readMovieCache(cacheTheme);

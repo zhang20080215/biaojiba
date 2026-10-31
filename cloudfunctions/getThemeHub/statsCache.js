@@ -17,6 +17,26 @@ function dayKey(now = Date.now()) {
 }
 const valid = row => row && row.valid !== false && Number.isFinite(row.users) && row.users >= 0;
 
+// 首页「最近热门」：每个榜单留最近 8 天每天算出的去重人数（hist），
+// 「近 7 日热度」= 今天的人数 − 7 天前的人数，也就是这 7 天里新开始标记它的人数。
+// 用每日快照相减，不必再对 Marks（豆瓣 TOP250 单榜就 458 万条）按时间做一遍聚合。
+// 历史不满 7 天时，用能找到的最早一天，recentDays 如实给出跨度
+const HIST_DAYS = 8;
+function withHistory(row, prev, today) {
+  const hist = { ...((prev && prev.hist) || {}), [today]: row.users };
+  const keep = Object.keys(hist).sort().slice(-HIST_DAYS);
+  return { ...row, hist: Object.fromEntries(keep.map(k => [k, hist[k]])) };
+}
+function recentOf(hist) {
+  const keys = Object.keys(hist || {}).filter(k => Number.isFinite(hist[k])).sort();
+  if (keys.length < 2) return {};
+  const latest = keys[keys.length - 1];
+  const target = new Date(Date.parse(latest + 'T00:00:00Z') - 7 * 86400000).toISOString().slice(0, 10);
+  const base = keys.filter(k => k <= target).pop() || keys[0];
+  const days = Math.round((Date.parse(latest + 'T00:00:00Z') - Date.parse(base + 'T00:00:00Z')) / 86400000);
+  return { recent: Math.max(0, hist[latest] - hist[base]), recentDays: days };
+}
+
 module.exports = ({ db, localCatalog, logic, scan, count, now = () => Date.now() }) => {
   const ref = host => host.collection(COLLECTION).doc(DOC_ID);
   async function get(host = db) {
@@ -42,7 +62,10 @@ module.exports = ({ db, localCatalog, logic, scan, count, now = () => Date.now()
   function result(snapshot, extra = {}) {
     const rows = {};
     for (const [id, row] of Object.entries(snapshot.rows || {})) {
-      if (valid(row)) rows[id] = { ...row, valid: true, updatedAt: row.updatedAt || snapshot.generatedAt || now() };
+      if (!valid(row)) continue;
+      // hist 只在库里留着算热度，不下发；下发算好的 recent / recentDays
+      const { hist, ...pub } = row;
+      rows[id] = { ...pub, ...recentOf(hist), valid: true, updatedAt: row.updatedAt || snapshot.generatedAt || now() };
     }
     // refreshIds/needsRefresh 保留字段名兼容客户端；刷新已完全在服务端完成，客户端不用再逐个触发。
     return { success: true, rows, day: snapshot.day || '', generatedAt: now(), refreshIds: [], needsRefresh: false, done: true, ...extra };
@@ -69,7 +92,7 @@ module.exports = ({ db, localCatalog, logic, scan, count, now = () => Date.now()
       const rows = { ...(current.rows || {}) };
       // 查询期间有人在控制台手改了这一行：手改优先
       const untouched = JSON.stringify(rows[id]) === JSON.stringify(before);
-      if (row && untouched) rows[id] = row;
+      if (row && untouched) rows[id] = withHistory(row, rows[id], today);
       // 失败时保留旧值，但旧版「÷3」估算值失真严重（豆瓣曾估出 152 万），宁可不显示也不沿用
       if (!row && untouched && rows[id] && rows[id].estimated) delete rows[id];
       const done = Array.from(new Set(((current.refresh && current.refresh.day === today && current.refresh.done) || []).concat(id)));
@@ -163,3 +186,5 @@ module.exports = ({ db, localCatalog, logic, scan, count, now = () => Date.now()
   return { read, refresh: read, compute, dayKey };
 };
 module.exports.dayKey = dayKey;
+module.exports.recentOf = recentOf;
+module.exports.withHistory = withHistory;

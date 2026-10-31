@@ -50,8 +50,22 @@
   <block wx:if="{{pageKind === 'home'}}">
     <view class="hub-section-top hub-section"><text class="hub-section-title">每日标记</text></view>
     <view class="hub-daily"><view wx:for="{{dailyBlocks}}" wx:key="key" class="hub-daily-item" hover-class="hub-pressed" data-id="{{item.id}}" bindtap="onOpenTheme" role="button" aria-label="{{item.title}}"><view class="hub-daily-icon"><view class="hub-glyph icon-{{item.iconKey}}" aria-hidden="true"></view><text wx:if="{{item.isNew}}" class="hub-daily-new" aria-label="新上线">NEW</text></view><text>{{item.title}}</text></view></view>
+    <!-- 每日电影填词：每日标记下面一张整宽卡，一句话跟着今天的进度变（开始 / 继续 / 看排行），见 hubPage.loadGuessCard -->
+    <view class="hub-guess" hover-class="hub-pressed" data-id="guess_cross" bindtap="onOpenTheme" role="button" aria-label="每日电影填词">
+      <view class="hub-guess-icon" aria-hidden="true"><view class="hub-glyph hub-glyph-accent icon-crossword"></view></view>
+      <view class="hub-guess-body"><text class="hub-row-title">每日电影填词</text><text class="hub-muted hub-guess-sub">{{guessCard.sub}}</text></view>
+      <view class="hub-guess-cta hub-guess-cta-{{guessCard.status}}">{{guessCard.cta}}</view>
+    </view>
+    <!-- 每日选片：填词卡下面，转盘从电影榜单里抽一部；今天转过就显示转到的片（本地记录），见 hubPage.pickCardView -->
+    <view class="hub-guess hub-pick" hover-class="hub-pressed" data-id="daily_pick" bindtap="onOpenTheme" role="button" aria-label="每日选片">
+      <view class="hub-guess-icon" aria-hidden="true"><view class="hub-glyph hub-glyph-accent icon-wheel"></view></view>
+      <view class="hub-guess-body"><text class="hub-row-title">每日选片</text><text class="hub-muted hub-guess-sub">{{pickCard.sub}}</text></view>
+      <view class="hub-guess-cta hub-guess-cta-{{pickCard.status}}">{{pickCard.cta}}</view>
+    </view>
     <view wx:if="{{showTopAd}}" class="ad-zone hub-ad-top"><ad-custom unit-id="{{adUnitIds.home_top_native}}" bindload="onTopAdLoad" binderror="onTopAdError" /></view>
-    <block wx:if="{{newThemes.length}}"><view class="hub-section-top hub-section hub-latest-heading"><view class="hub-section-heading"><text class="hub-section-title">最新上线</text><button class="hub-link hub-wish-link" bindtap="onOpenRequestModal"><view class="hub-wish-icon hub-glyph hub-glyph-accent icon-wand" aria-hidden="true"></view><text>榜单许愿</text></button></view><button class="hub-link" bindtap="onGoDiscover" data-sort="latest">查看全部 ›</button></view><view class="hub-grid"><block wx:for="{{newThemes}}" wx:key="id"><template is="hub-card" data="{{item,module:'new'}}" /></block></view></block>
+    <!-- 「最近热门 / 最新上线」两个 tab（最近热门在前），各前 6 个（三列两行）。最近热门 = 近 7 日新增标记人数最多的榜单。
+         按 newTabShown 显示：最近热门还没数据时先显示最新上线 -->
+    <block wx:if="{{newThemes.length || recentHotThemes.length}}"><view class="hub-section-top hub-section hub-latest-heading"><view class="hub-section-heading hub-tabs-heading"><button class="hub-tab-title {{newTabShown === 'hot' ? 'active' : ''}}" data-tab="hot" bindtap="onSwitchNewTab">最近热门</button><button class="hub-tab-title {{newTabShown === 'new' ? 'active' : ''}}" data-tab="new" bindtap="onSwitchNewTab">最新上线</button><button class="hub-link hub-wish-link" bindtap="onOpenRequestModal"><view class="hub-wish-icon hub-glyph hub-glyph-accent icon-wand" aria-hidden="true"></view><text>许愿</text></button></view><button class="hub-link" bindtap="onGoDiscover" data-sort="{{newTabShown === 'hot' ? 'popular' : 'latest'}}">全部 ›</button></view><view class="hub-grid hub-grid-3"><block wx:for="{{newTabShown === 'hot' ? recentHotThemes : newThemes}}" wx:key="id"><template is="hub-card" data="{{item,module:newTabShown === 'hot' ? 'recentHot' : 'new'}}" /></block></view></block>
     <view class="hub-section-top hub-section"><text class="hub-section-title">{{hotThemes.length ? '最受欢迎' : '精选榜单'}}</text><button class="hub-link" bindtap="onGoDiscover" data-sort="popular">更多榜单 ›</button></view>
     <view wx:if="{{hotThemes.length}}" class="hub-popular-list"><block wx:for="{{hotThemes}}" wx:key="id"><template is="popular-row" data="{{item}}" /></block></view>
     <view wx:elif="{{statsState === 'loading'}}" class="hub-empty hub-empty-small"><text class="hub-muted">正在读取榜单人气…</text></view>
@@ -59,7 +73,7 @@
     <view wx:if="{{!hotThemes.length}}" class="hub-grid"><block wx:for="{{fallbackThemes}}" wx:key="id"><template is="hub-card" data="{{item,module:'featured'}}" /></block></view>
     <view wx:if="{{hotThemes.length && pendingClassicThemes.length}}" class="hub-popular-list"><block wx:for="{{pendingClassicThemes}}" wx:key="id"><template is="popular-row" data="{{item}}" /></block></view>
     <view wx:if="{{showNativeAd}}" class="ad-zone"><ad-custom unit-id="{{adUnitIds.category_native}}" bindload="onNativeAdLoad" binderror="onNativeAdError" /></view>
-    <view class="hub-tools"><view class="hub-tool" data-id="movie_search_all_platforms" bindtap="onOpenTheme" role="button"><text class="hub-row-title">电影评分查询</text><text class="hub-muted">豆瓣 · IMDb · 烂番茄</text></view><view wx:for="{{gameBlocks}}" wx:key="key" class="hub-tool" data-id="{{item.key}}" bindtap="onOpenTheme" role="button"><text class="hub-row-title">{{item.title}}</text><text class="hub-muted">{{item.sub}}</text></view></view>
+    <view class="hub-tools hub-tools-single"><view class="hub-tool" data-id="movie_search_all_platforms" bindtap="onOpenTheme" role="button"><text class="hub-row-title">电影评分查询</text><text class="hub-muted">豆瓣 · IMDb · 烂番茄</text></view></view>
   </block>
 
   <block wx:elif="{{pageKind === 'discover'}}">

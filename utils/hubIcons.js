@@ -27,7 +27,12 @@ const ICONS = {
   search: `<circle cx='10.8' cy='10.8' r='6.5'/><path d='M15.8 15.8l4.7 4.7'/>`,
   // 榜单许愿：魔法棒 + 三颗小星
   wand: `<path d='M4.5 19.5l9.8-9.8'/><path d='M12.6 8l3.4 3.4'/><path d='M17.5 2.8v3.6M15.7 4.6h3.6M20.2 10.4v2.6M18.9 11.7h2.6M9.6 3.6v2.2M8.5 4.7h2.2'/>`,
-  ruler: `<rect x='2.5' y='8' width='19' height='8' rx='1.6'/><path d='M6.5 8v3M10 8v4.2M13.5 8v3M17 8v4.2'/>`
+  ruler: `<rect x='2.5' y='8' width='19' height='8' rx='1.6'/><path d='M6.5 8v3M10 8v4.2M13.5 8v3M17 8v4.2'/>`,
+  // 每日电影填词：实心小方块拼成的填字棋盘一角 —— 一横排四格，第二、四格往下各接一列，
+  // 和填字页棋盘一样是分开的圆角方块。实心块用 {c} 占位，svg() 换成当前颜色
+  crossword: `<rect x='1.4' y='6.9' width='4.7' height='4.7' rx='1.2' fill='{c}' stroke='none'/><rect x='6.9' y='6.9' width='4.7' height='4.7' rx='1.2' fill='{c}' stroke='none'/><rect x='12.4' y='6.9' width='4.7' height='4.7' rx='1.2' fill='{c}' stroke='none'/><rect x='17.9' y='6.9' width='4.7' height='4.7' rx='1.2' fill='{c}' stroke='none'/><rect x='6.9' y='1.4' width='4.7' height='4.7' rx='1.2' fill='{c}' stroke='none'/><rect x='6.9' y='12.4' width='4.7' height='4.7' rx='1.2' fill='{c}' stroke='none'/><rect x='6.9' y='17.9' width='4.7' height='4.7' rx='1.2' fill='{c}' stroke='none'/><rect x='17.9' y='12.4' width='4.7' height='4.7' rx='1.2' fill='{c}' stroke='none'/><rect x='17.9' y='17.9' width='4.7' height='4.7' rx='1.2' fill='{c}' stroke='none'/>`,
+  // 每日选片：转盘 —— 圆盘四条直径分八格，圆心一个实心小轴，顶上一个实心指针
+  wheel: `<circle cx='12' cy='13.2' r='8.3'/><path d='M12 4.9v16.6M3.7 13.2h16.6M6.1 7.3l11.8 11.8M17.9 7.3L6.1 19.1'/><circle cx='12' cy='13.2' r='2.1' fill='{c}'/><path d='M9.8 1.6h4.4L12 4.6z' fill='{c}'/>`
 };
 
 // 本地目录里的主题按 id 指定；没列到的（含云端注册表新主题）按分类兜底
@@ -43,7 +48,7 @@ const ICON_BY_ID = {
   douban_books: 'book', weread_books: 'book', maodun_books: 'book', newbery_books: 'book',
   scenic_5a: 'mountain', museum_grade1: 'museum', travel_provinces: 'pin', travel_cities: 'pin',
   daily_movie: 'clapper', daily_read: 'reading', daily_sport: 'dumbbell', daily_water: 'droplet', daily_steps: 'footprints', daily_sleep: 'moon',
-  movie_search_all_platforms: 'search', child_growth: 'ruler'
+  movie_search_all_platforms: 'search', child_growth: 'ruler', guess_cross: 'crossword', daily_pick: 'wheel'
 };
 const ICON_BY_CATEGORY = { movie: 'film', oscar: 'trophy', tv: 'tv', anime: 'sparkle', reading: 'book', travel: 'pin', parenting: 'ruler', daily: 'sparkle', game: 'film' };
 
@@ -53,7 +58,7 @@ function keyFor(theme) {
 }
 
 function svg(key, color, width) {
-  return `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='${color}' stroke-width='${width || 1.8}' stroke-linecap='round' stroke-linejoin='round'>${ICONS[key]}</svg>`;
+  return `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='${color}' stroke-width='${width || 1.8}' stroke-linecap='round' stroke-linejoin='round'>${ICONS[key].replace(/{c}/g, color)}</svg>`;
 }
 
 module.exports = { ICONS, ICON_BY_ID, keyFor, svg };

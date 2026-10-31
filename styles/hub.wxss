@@ -107,8 +107,36 @@
 .hub-daily-item { min-width: 0; text-align: center; font-size: 24rpx; line-height: 1.5; padding: 8rpx 0 12rpx; }
 .hub-daily-icon { position: relative; display: flex; width: 88rpx; height: 88rpx; margin: 0 auto 14rpx; align-items: center; justify-content: center; border-radius: 26rpx; font-size: 38rpx; background: var(--hub-soft); border: 1rpx solid var(--line-subtle); }
 /* 新上线的每日主题：图标右上角的「NEW」角标，主题强调色底白字，白描边把它和图标底块隔开 */
-.hub-daily-new { position: absolute; top: -12rpx; right: -22rpx; padding: 0 9rpx; height: 28rpx; line-height: 28rpx; border-radius: 14rpx; font-size: 18rpx; font-weight: 700; letter-spacing: 1rpx; color: #FFFFFF; background: var(--hub-accent); border: 2rpx solid var(--bg-card, #FFFFFF); }
+.hub-daily-new { position: absolute; top: -12rpx; right: -22rpx; padding: 0 9rpx; height: 28rpx; line-height: 28rpx; border-radius: 14rpx; font-size: 18rpx; font-weight: 700; letter-spacing: 1rpx; color: #FFFFFF; background: var(--hub-new); border: 2rpx solid var(--bg-card, #FFFFFF); }
+/* NEW 角标用主题强调色的互补色，和满屏的主题色撞开、一眼能看到。
+   取强调色的相反色相，再压暗到白字看得清（粉的互补色青绿偏亮，单独压得最多） */
+.hub-root { --hub-new: #2E8B6A; }
+.hub-root.theme-gold { --hub-new: #2F5FB8; }
+.hub-root.theme-green { --hub-new: #7A4FB5; }
+.hub-root.theme-sand { --hub-new: #3F6FA8; }
 .hub-tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18rpx; margin-top: 24rpx; }
+.hub-tools-single { grid-template-columns: minmax(0, 1fr); }
+
+/* 每日电影填词卡：每日标记下面一张整宽卡，左图标、中间两行字、右边按钮 */
+.hub-guess { display: flex; align-items: center; margin-top: 20rpx; padding: 22rpx 24rpx; border-radius: 24rpx; background: var(--bg-card); border: 1rpx solid var(--line-subtle); }
+.hub-guess-icon { flex: none; width: 76rpx; height: 76rpx; border-radius: 22rpx; display: flex; align-items: center; justify-content: center; background: var(--hub-soft); }
+.hub-guess-icon .hub-glyph { width: 46rpx; height: 46rpx; }
+.hub-guess-body { flex: 1; min-width: 0; margin-left: 20rpx; }
+.hub-guess-sub { margin-top: 2rpx; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.hub-guess-cta { flex: none; margin-left: 16rpx; padding: 0 26rpx; height: 60rpx; line-height: 60rpx; border-radius: 30rpx; font-size: 25rpx; font-weight: 600; color: #FFFFFF; background: var(--hub-accent); }
+/* 做完了：按钮退成描边，不再催人点 */
+.hub-pick { margin-top: 16rpx; }
+.hub-guess-cta-done { color: var(--hub-accent); background: transparent; border: 2rpx solid var(--hub-accent); line-height: 56rpx; }
+
+/* 「最新上线 / 最近热门」tab 标题：选中的用区块标题的样式，没选中的灰一档 */
+.hub-tabs-heading { gap: 28rpx; }
+.hub-root button.hub-tab-title { width: auto; min-width: 0; margin: 0; padding: 0; background: transparent; line-height: 1.4; min-height: 40px; display: flex; align-items: center; font-size: 30rpx; font-weight: 600; color: var(--text-secondary); }
+.hub-root button.hub-tab-title.active { font-size: 32rpx; font-weight: 700; color: var(--category-card-title); }
+.hub-root button.hub-tab-title::after { border: none; }
+/* 三列：6 个两行就放下，封面矮一点 */
+.hub-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16rpx; }
+.hub-grid-3 .hub-cover { height: 150rpx; }
+.hub-grid-3 .hub-card-body { padding: 14rpx 16rpx; }
 .hub-tool { background: var(--category-meta-bg); padding: 24rpx 20rpx; border-radius: 20rpx; }
 .hub-filters { display: inline-flex; flex-wrap: nowrap; gap: 8rpx; padding: 18rpx 0 8rpx; }
 .hub-root .hub-chip { background: transparent; color: var(--text-secondary); font-size: 26rpx; padding: 0 22rpx; line-height: 76rpx; min-height: 40px; border-radius: 18rpx; }

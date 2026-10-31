@@ -15,10 +15,17 @@
 //   'state'   —— { mode, date } 取当前用户在这道题上的进度（切后台回来/换设备要能续上）
 //   'hint'    —— { mode:'grid', date, r, c } 求提示：透露该格某个正确答案的一个侧面，扣一次机会
 //   'players' —— {} 各玩法的参与人数（分类页玩法卡展示），不认人、不写库
+//   'summary' —— { mode:'cross', date } 结束面板要的数：连续天数 / 累计天数 / 完美次数 /
+//                当天排行榜（前 10 名；自己在榜上才给名次）/ 本局用时。不写库
 //
 // 集合：
 //   guess_records  _id = `${openid}_${mode}_${date}` —— 每人每题一份进度
+//                  （2026-10-30 起带 createdAt / updatedAt / finishedAt，排行榜和用时靠它们）
 //   guess_stats    _id = `${mode}_${date}` —— 全体作答分布，用来算「冷门加分」
+//   guess_opens    _id = `${openid}_${mode}_${date}` —— 第一次打开这道题的时间（firstAt，只写一次）
+//                  + 累计的作答用时 activeSeconds。guess_records 要第一次作答才落库，光打开看了一眼的人
+//                  原先不留痕；用时也放这里，因为还没作答时就已经在计时了
+//   'tick'    —— { mode:'cross', date, activeDelta } 填字页切到后台 / 离开时把这段前台时长报上来
 
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
@@ -28,6 +35,8 @@ const _ = db.command;
 
 const FACTS_COLLECTION = 'movie_facts';
 const PUZZLE_COLLECTION = 'guess_puzzles';
+const OPEN_COLLECTION = 'guess_opens';
+const RANK_TOP = 10;            // 排行榜显示前几名
 const RECORD_COLLECTION = 'guess_records';
 const STATS_COLLECTION = 'guess_stats';
 
@@ -66,6 +75,185 @@ function cnDateStr(ms) {
     const d = new Date((ms == null ? Date.now() : ms) + CN_TZ_OFFSET_MS);
     const p = n => (n < 10 ? '0' : '') + n;
     return d.getUTCFullYear() + '-' + p(d.getUTCMonth() + 1) + '-' + p(d.getUTCDate());
+}
+
+/** 'HH:MM'（北京时间） */
+function cnClock(t) {
+    const ms = msOf(t);
+    if (isNaN(ms)) return '';
+    const d = new Date(ms + CN_TZ_OFFSET_MS);
+    const p = n => (n < 10 ? '0' : '') + n;
+    return p(d.getUTCHours()) + ':' + p(d.getUTCMinutes());
+}
+
+function msOf(t) {
+    if (!t) return NaN;
+    return t instanceof Date ? t.getTime() : Date.parse(t);
+}
+
+/**
+ * 排行榜上的称呼。没有昵称体系，又不能露 openid，就用 openid 哈希出一个四位数：
+ * 同一个人每天都是同一个号，看得出「又是他」，但反推不出是谁
+ */
+function playerName(openid) {
+    let h = 2166136261;
+    for (let i = 0; i < openid.length; i++) h = Math.imul(h ^ openid.charCodeAt(i), 16777619);
+    return '影迷 #' + String((h >>> 0) % 10000).padStart(4, '0');
+}
+
+/**
+ * 昵称打码：留首尾、中间换成 *（「张三丰」→「张*丰」，「小明」→「小*」）。
+ * 按字符而不是按 UTF-16 码元切，昵称里的 emoji 才不会被切成半个
+ */
+function maskNickname(n) {
+    const s = Array.from(String(n || '').trim());
+    if (!s.length) return '';
+    if (s.length <= 2) return s[0] + '*';
+    return s[0] + '*'.repeat(Math.min(s.length - 2, 3)) + s[s.length - 1];
+}
+
+/**
+ * 排行榜上这些人的头像和打码昵称。资料来自「我的」页登录时用户自己设的（users 集合），
+ * 没设过的人照旧是「影迷 #四位数」+ 默认头像。
+ * 头像存的是云存储 fileID，而云存储只有上传者本人能读，别人的手机上直接显示不出来，
+ * 所以在这里（服务端有管理权限）换成临时链接再下发
+ */
+async function profilesOf(openids) {
+    const out = new Map();
+    const ids = Array.from(new Set(openids.filter(Boolean)));
+    if (!ids.length) return out;
+    try {
+        const res = await db.collection('users').where({ openid: _.in(ids) })
+            .field({ openid: true, nickname: true, avatarUrl: true }).limit(100).get();
+        ((res && res.data) || []).forEach(u => {
+            if (!out.has(u.openid)) out.set(u.openid, { name: maskNickname(u.nickname), avatar: u.avatarUrl || '' });
+        });
+        const fileIds = Array.from(out.values()).map(p => p.avatar).filter(a => /^cloud:\/\//.test(a));
+        if (fileIds.length) {
+            const t = await cloud.getTempFileURL({ fileList: fileIds });
+            const urlOf = new Map(((t && t.fileList) || []).map(f => [f.fileID, f.tempFileURL || '']));
+            out.forEach(p => { if (/^cloud:\/\//.test(p.avatar)) p.avatar = urlOf.get(p.avatar) || ''; });
+        }
+    } catch (e) {
+        console.warn('[submitGuess] 读排行榜头像昵称失败（照旧显示影迷编号）:', e && (e.errMsg || e.message));
+    }
+    return out;
+}
+
+/**
+ * 完美：全答出、没错、没用提示、没复活。
+ * 不看 lives：最早的记录（生命值规则之前）没有这个字段，按 lives > 0 判会把它们全漏掉；
+ * 而「已结束且一次没错」本身就只可能是全答出了（♥ 是答错才扣的）
+ */
+function isPerfectRound(r) {
+    return !!r.finished && !(r.wrongGuesses || []).length
+        && !(r.hintsUsed || 0) && !(r.revives || 0);
+}
+
+/**
+ * 结束面板的数。连续天数按「做过这天的题」算（有作答记录即算），从这道题的日期往回数；
+ * 排行榜只排已结束、而且带 finishedAt 的局 —— 10-30 之前的记录没有这个字段，那之前的日期没有榜
+ */
+async function crossSummary(openid, mode, date, rec) {
+    const mine = [];
+    for (let skip = 0; ; skip += 100) {
+        const res = await db.collection(RECORD_COLLECTION).where({ openid: openid, mode: mode })
+            .field({ date: true, finished: true, lives: true, wrongGuesses: true, hintsUsed: true, revives: true })
+            .skip(skip).limit(100).get();
+        const rows = (res && res.data) || [];
+        mine.push.apply(mine, rows);
+        if (rows.length < 100) break;
+    }
+    const days = new Set(mine.map(r => r.date));
+    let streak = 0;
+    for (let d = date; days.has(d); d = cnDateStr(Date.parse(d + 'T00:00:00Z') - CN_TZ_OFFSET_MS - 86400000)) streak++;
+
+    const done = { mode: mode, date: date, finished: true, finishedAt: _.gt(new Date(0)) };
+    const coll = db.collection(RECORD_COLLECTION);
+    const res = await Promise.all([
+        coll.where(done).orderBy('score', 'desc').orderBy('finishedAt', 'asc')
+            .field({ openid: true, score: true, finishedAt: true }).limit(RANK_TOP).get(),
+        coll.where(done).count()
+    ]);
+    const topRows = (res[0] && res[0].data) || [];
+    const profiles = await profilesOf(topRows.map(r => r.openid).concat([openid]));
+    const nameOf = id => (profiles.get(id) && profiles.get(id).name) || playerName(id || '');
+    const avatarOf = id => (profiles.get(id) && profiles.get(id).avatar) || '';
+    const top = topRows.map((r, i) => ({
+        rank: i + 1, name: nameOf(r.openid), avatar: avatarOf(r.openid), score: r.score || 0,
+        time: cnClock(r.finishedAt), me: r.openid === openid
+    }));
+    // 名次只给前 10 名：不在榜上的人只显示「未上榜」，不报具体第几名（10-30 定）
+    const idx = top.findIndex(x => x.me);
+    const myRank = idx >= 0 ? idx + 1 : null;
+
+    // 用时：累计的前台作答时长（见 addActive）。部署前做完的局没有这个数
+    let seconds = null;
+    if (rec.finished) {
+        try {
+            const o = oneDoc(await db.collection(OPEN_COLLECTION).doc(openid + '_' + mode + '_' + date).get());
+            if (o && typeof o.activeSeconds === 'number' && o.activeSeconds > 0) seconds = o.activeSeconds;
+        } catch (e) { /* 没有打开记录 */ }
+    }
+
+    return {
+        streak: streak,
+        totalDays: days.size,
+        perfectDays: mine.filter(isPerfectRound).length,
+        seconds: seconds,
+        rank: {
+            total: res[1].total,
+            myRank: myRank,           // 前 10 名之内才有，否则 null（前端显示「未上榜」）
+            // 没进前 10 时，榜单末尾补一行「我 · 未上榜」要用的头像
+            meAvatar: avatarOf(openid),
+            top: top
+        }
+    };
+}
+
+/** 记一笔「第一次打开这道题」。add 带固定 _id，已经有了就会抛错 —— 正好就是「只记第一次」 */
+async function logOpen(openid, mode, date) {
+    const id = openid + '_' + mode + '_' + date;
+    const doc = { _id: id, openid: openid, mode: mode, date: date, firstAt: db.serverDate(), activeSeconds: 0 };
+    try {
+        await db.collection(OPEN_COLLECTION).add({ data: doc });
+        return 0;
+    } catch (e) {
+        // 集合还没建：建一次再写
+        if (/not exist|不存在/i.test(String(e && (e.errMsg || e.message)))) {
+            try {
+                await db.createCollection(OPEN_COLLECTION);
+                await db.collection(OPEN_COLLECTION).add({ data: doc });
+            } catch (e2) { /* 算了 */ }
+            return 0;
+        }
+    }
+    // 已经有这条：把累计用时读回去，页面上的计时器接着走
+    try {
+        const o = oneDoc(await db.collection(OPEN_COLLECTION).doc(id).get());
+        return (o && Number(o.activeSeconds)) || 0;
+    } catch (e) {
+        return 0;
+    }
+}
+
+/**
+ * 累计作答用时：只算填字页停在前台、这一局还没结束的时间（前端掐表，切后台 / 看激励视频时暂停）。
+ * 每次作答、求提示、复活带上 activeDelta，切后台时单独报一次（action:'tick'）。
+ * 用时不参与排名，只在结束面板和成绩卡上显示，所以不防伪造；单次封顶 1 小时，免得一次异常把数撑爆
+ */
+async function addActive(openid, mode, date, delta) {
+    const d = Math.min(3600, Math.max(0, Math.round(Number(delta) || 0)));
+    if (!d) return;
+    const id = openid + '_' + mode + '_' + date;
+    try {
+        await db.collection(OPEN_COLLECTION).doc(id).update({ data: { activeSeconds: _.inc(d) } });
+    } catch (e) {
+        // 没有打开记录（部署前就打开着的页面）：补一条
+        try {
+            await db.collection(OPEN_COLLECTION).add({ data: { _id: id, openid: openid, mode: mode, date: date, firstAt: db.serverDate(), activeSeconds: d } });
+        } catch (e2) { /* 算了，少记一段 */ }
+    }
 }
 
 /** 正则元字符转义：片名里带 ()、+、. 的非常多（《这个杀手不太冷》还好，《V字仇杀队》《007》就会出事） */
@@ -227,6 +415,13 @@ async function loadRecord(openid, mode, date) {
 
 async function saveRecord(rec) {
     const { _id, ...data } = rec;
+    // 时间戳：排行榜「同分比谁先做完」、用时，都靠这三个。
+    // finishedAt 只在「结束」那一刻写：复活会把 finished 改回 false 并清掉它（见 revive），
+    // 之后再做完就重新记，所以它总是最后一次做完的时间
+    const now = db.serverDate();
+    if (!data.createdAt) data.createdAt = now;
+    data.updatedAt = now;
+    if (data.finished && !data.finishedAt) data.finishedAt = now;
     try { await db.createCollection(RECORD_COLLECTION); } catch (e) { /* 已存在 */ }
     await db.collection(RECORD_COLLECTION).doc(_id).set({ data });
 }
@@ -281,6 +476,7 @@ exports.main = async (event) => {
             try {
                 const $ = db.command.aggregate;
                 const res = await db.collection(RECORD_COLLECTION).aggregate()
+                    .match({ fake: _.neq(true) })   // 测排行榜塞的假玩家不算参与人数
                     .group({ _id: { mode: '$mode', openid: '$openid' } })
                     .group({ _id: '$_id.mode', total: $.sum(1) })
                     .end();
@@ -318,13 +514,124 @@ exports.main = async (event) => {
         const mode = (ev.mode === 'clue' || ev.mode === 'cross') ? ev.mode : 'grid';
         // 只有 grid/clue 还用「机会数」这套；cross 改成了生命值，走自己那一套判定
         const date = /^\d{4}-\d{2}-\d{2}$/.test(ev.date || '') ? ev.date : cnDateStr();
+
+        // —— 测排行榜用的假玩家（只能在云函数控制台跑：控制台调用没有 OPENID，小程序里调不到）。
+        //   { action:'seedRank', mode:'cross', date:'2026-10-28', count:25 }  —— 往这天塞 count 个假玩家
+        //   { ..., patchOpenid:'o_xxx' }  —— 顺手给这个人这天已做完的记录补上 finishedAt（老记录没有，进不了榜）
+        //   { action:'seedRank', mode:'cross', date:'2026-10-28', clear:true } —— 删掉这天的假玩家
+        // 假记录带 fake:true、openid 以 fake_ 开头；analyzeGuess 会跳过它们。测完记得 clear
+        if (action === 'seedRank') {
+            if (openid) return { success: false, error: '只能在云函数控制台跑' };
+            if (mode !== 'cross') return { success: false, error: '只有填字有排行榜' };
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(ev.date || '')) return { success: false, error: '要写明 date，别往今天塞' };
+            if (ev.clear === true) {
+                const r = await db.collection(RECORD_COLLECTION).where({ fake: true, mode: mode, date: date }).remove();
+                return { success: true, removed: (r && r.stats && r.stats.removed) || 0 };
+            }
+            const p = oneDoc(await db.collection(PUZZLE_COLLECTION).doc(mode + '_' + date).get().catch(() => null));
+            if (!p) return { success: false, error: '这天没有题' };
+            const n = (p.entries || []).length;
+            const count = Math.max(1, Math.min(Number(ev.count) || 25, 60));
+            const base = Date.parse(date + 'T00:00:00Z') - CN_TZ_OFFSET_MS + 7 * 3600000;   // 北京 07:00 起
+            const rows = [];
+            for (let i = 0; i < count; i++) {
+                // 分数：前几名满分（看同分按时间排），往后逐渐有错 / 用提示，最后几个 ♥ 用完
+                const wrong = i < 4 ? 0 : Math.min(3, Math.floor(i / 6));
+                const hints = i % 5 === 3 ? 1 : 0;
+                const dead = i >= count - 2;
+                const solved = dead ? Math.max(1, n - 3) : n;
+                const start = base + i * 23 * 60000;
+                rows.push({
+                    _id: 'fake_' + i + '_' + mode + '_' + date,
+                    openid: 'fake_' + i, mode: mode, date: date, fake: true,
+                    filled: Array.from({ length: solved }, (_v, k) => k + 1),
+                    wrongGuesses: Array.from({ length: dead ? 3 : wrong }, () => ({ entryNo: n, text: '假' })),
+                    hints: [], hintsUsed: hints, hintQuota: CROSS_FREE_HINTS, revives: 0,
+                    lives: dead ? 0 : CROSS_LIVES - wrong, finished: true,
+                    score: CROSS_START_SCORE + solved * SCORE_CORRECT + (dead ? 3 : wrong) * SCORE_WRONG + hints * SCORE_HINT,
+                    createdAt: new Date(start),
+                    updatedAt: new Date(start + (5 + i % 7) * 60000),
+                    finishedAt: new Date(start + (5 + i % 7) * 60000)
+                });
+            }
+            for (let i = 0; i < rows.length; i += 20) {
+                await Promise.all(rows.slice(i, i + 20).map(r => {
+                    const { _id, ...data } = r;
+                    return db.collection(RECORD_COLLECTION).doc(_id).set({ data: data });
+                }));
+            }
+            let patched = 0;
+            if (ev.patchOpenid) {
+                const id = String(ev.patchOpenid) + '_' + mode + '_' + date;
+                const mine = oneDoc(await db.collection(RECORD_COLLECTION).doc(id).get().catch(() => null));
+                if (mine && mine.finished && !mine.finishedAt) {
+                    await db.collection(RECORD_COLLECTION).doc(id).update({ data: { finishedAt: db.serverDate() } });
+                    patched = 1;
+                }
+            }
+            return { success: true, seeded: rows.length, patched: patched, note: '测完用 clear:true 删掉' };
+        }
+
         // 这句会原样弹给用户，别写成开发者口吻
         if (!openid) return { success: false, error: '没能识别身份，退出重进试试' };
 
         const rec = await loadRecord(openid, mode, date);
 
+        // 作答用时：作答 / 求提示 / 复活 / 切后台都会带上这段前台时长。这一局已经结束的不再记
+        // （结束后前端也不再计时；复活那一下带的是看完结束面板之前的零头，同样不记）
+        if (mode === 'cross' && ev.activeDelta && !rec.finished) {
+            await addActive(openid, mode, date, ev.activeDelta);
+        }
+        if (action === 'tick') return { success: true };
+
+        // —— 首页「每日电影填词」卡片：今天几个人在玩 + 我今天的进度 + 连续天数 + 进没进前 10。
+        // 首页每次进来都调，所以只做几条轻查询（一次计数、我最近 60 天的记录、前 10 名），不读头像昵称
+        if (action === 'hubCard') {
+            if (mode !== 'cross') return { success: false, error: '只有填字有首页卡片' };
+            const coll = db.collection(RECORD_COLLECTION);
+            const since = cnDateStr(Date.parse(date + 'T00:00:00Z') - CN_TZ_OFFSET_MS - 60 * 86400000);
+            const res = await Promise.all([
+                coll.where({ mode: mode, date: date, fake: _.neq(true) }).count(),
+                coll.where({ openid: openid, mode: mode, date: _.gte(since).and(_.lte(date)) })
+                    .field({ date: true }).limit(100).get(),
+                coll.where({ mode: mode, date: date, finished: true, finishedAt: _.gt(new Date(0)) })
+                    .orderBy('score', 'desc').orderBy('finishedAt', 'asc').field({ openid: true }).limit(RANK_TOP).get(),
+                db.collection(PUZZLE_COLLECTION).doc(mode + '_' + date).get().catch(() => null)
+            ]);
+            const puzzle = oneDoc(res[3]);
+            const days = new Set(((res[1] && res[1].data) || []).map(r => r.date));
+            let streak = 0;
+            for (let d = date; days.has(d); d = cnDateStr(Date.parse(d + 'T00:00:00Z') - CN_TZ_OFFSET_MS - 86400000)) streak++;
+            // 今天还没玩时，连续天数从昨天往回数（今天玩了就接上）
+            if (!streak) {
+                for (let d = cnDateStr(Date.parse(date + 'T00:00:00Z') - CN_TZ_OFFSET_MS - 86400000); days.has(d);
+                    d = cnDateStr(Date.parse(d + 'T00:00:00Z') - CN_TZ_OFFSET_MS - 86400000)) streak++;
+            }
+            const total = ((puzzle && puzzle.entries) || []).length;
+            const solved = (rec.filled || []).length;
+            const played = !!(rec.createdAt || solved || (rec.wrongGuesses || []).length || (rec.hints || []).length);
+            const idx = ((res[2] && res[2].data) || []).findIndex(r => r.openid === openid);
+            return {
+                success: true, date: date,
+                players: (res[0] && res[0].total) || 0,
+                // none 还没开始 / playing 做到一半 / done 做完了
+                status: rec.finished ? 'done' : (played ? 'playing' : 'none'),
+                solved: solved, total: total,
+                grade: !rec.finished ? '' : (solved < total ? 'dead' : (isPerfectRound(rec) ? 'perfect' : 'clear')),
+                rank: idx >= 0 ? idx + 1 : null,
+                streak: streak
+            };
+        }
+
+        if (action === 'summary') {
+            if (mode !== 'cross') return { success: false, error: '只有填字有结束面板' };
+            return Object.assign({ success: true }, await crossSummary(openid, mode, date, rec));
+        }
+
         if (action === 'state') {
             if (mode === 'cross') {
+                // 打开即记（只记第一次），顺便把累计的作答用时带回去，页面计时器从这里接着走
+                const activeSeconds = await logOpen(openid, mode, date);
                 // 断线重连要能把已答出的条目重新填回格子，所以 state 得连字一起给回来
                 let p = null;
                 try { p = oneDoc(await db.collection(PUZZLE_COLLECTION).doc(mode + '_' + date).get()); } catch (e) { /* 还没出题 */ }
@@ -351,6 +658,7 @@ exports.main = async (event) => {
                     answers: rec.finished
                         ? allEntries.map(function (x) { return { no: x.no, word: x.word, year: x.year }; })
                         : null,
+                    activeSeconds: activeSeconds,
                     lives: rec.lives, maxLives: CROSS_LIVES,
                     hintsLeft: Math.max(0, (rec.hintQuota || 0) - (rec.hintsUsed || 0)),
                     canBuyHint: true,
@@ -427,12 +735,15 @@ exports.main = async (event) => {
             if (action === 'revive') {
                 // 不限次数。revives 仍然累计，只用来看「一局要复活几次」这类分布。
                 if ((rec.lives || 0) >= CROSS_LIVES) {
-                    return wrap({ revived: false, error: '♥ 已经是满的' });
+                    return wrap({ revived: false, error: '爱心已经是满的' });
                 }
                 rec.lives = (rec.lives || 0) + 1;
                 rec.revives = (rec.revives || 0) + 1;
                 // 因为没命而结束的那局可以继续；已经答完的那局不会被复活「解锁」
-                if (rec.finished && solvedNos.length < entries.length) rec.finished = false;
+                if (rec.finished && solvedNos.length < entries.length) {
+                    rec.finished = false;
+                    rec.finishedAt = null;   // 接着做完时重新记（排行榜看的是最后一次做完的时间）
+                }
                 await saveRecord(rec);
                 return wrap({ revived: true });
             }

@@ -1,0 +1,44 @@
+page { background: #FFFCF5; }
+
+.page {
+  min-height: 100vh; box-sizing: border-box;
+  padding: 32rpx 32rpx 260rpx;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.state { padding: 80rpx 0; font-size: 28rpx; color: #A7A498; }
+
+/* 预览容器自己做阴影，衬在原生 canvas 下面 */
+.preview {
+  border-radius: 24rpx; overflow: hidden; background: #fff;
+  box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.1);
+}
+
+/* 「显示答案」开关：和预览图同宽，白底圆角一条 */
+.opt {
+  margin-top: 28rpx; padding: 20rpx 24rpx; box-sizing: border-box;
+  display: flex; align-items: center;
+  background: #fff; border-radius: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+.opt-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.opt-title { font-size: 28rpx; color: #2D2D2B; font-weight: 600; }
+.opt-sub { margin-top: 4rpx; font-size: 22rpx; color: #A7A498; }
+
+.bar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+  padding: 16rpx 32rpx calc(16rpx + env(safe-area-inset-bottom));
+  background: rgba(255, 252, 245, 0.96);
+  box-shadow: 0 -8rpx 24rpx rgba(0, 0, 0, 0.04);
+  box-sizing: border-box;
+}
+/* 微信 <button> 自带宽度（新版样式下约 184px）、左右内边距和行高，不清掉就会偏、文字也上下不居中。
+   这里一律清零：宽度撑满底栏，文字用 flex 居中（loading 圈出现时也不会把字挤歪） */
+.save {
+  width: 100% !important; margin: 0; padding: 0; box-sizing: border-box;
+  height: 92rpx; line-height: 1; border-radius: 46rpx;
+  display: flex; align-items: center; justify-content: center;
+  background: #6F8244; color: #fff; font-size: 30rpx; font-weight: 700;
+}
+.save::after { border: none; }
+.save[disabled] { background: #6F8244; color: #fff; opacity: 0.55; }
+.save-sub { display: block; margin-top: 10rpx; text-align: center; font-size: 22rpx; color: #A7A498; }

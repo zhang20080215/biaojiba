@@ -86,8 +86,34 @@ var DAILY_BLOCK_SOON = { emoji: '✨', color: '#EFE9DD', label: '#A89B85' };
 
 // Open games appear in home shortcuts and discovery tools, outside the list popularity pool.
 // Releasing a hidden mode also requires registering its route and removing its pack exclusion.
+// 首页填词卡的文案。r 是 submitGuess {action:'hubCard'} 的返回；拿不到（离线 / 没部署）时给默认文案
+function guessCardView(r) {
+  var n = (r && r.total) || 8;
+  if (!r || !r.success) return { status: 'none', sub: n + ' 部电影横竖交叉，每天一局', cta: '开始' };
+  if (r.status === 'playing') return { status: 'playing', sub: '已答出 ' + r.solved + '/' + r.total + '，接着做完', cta: '继续' };
+  if (r.status === 'done') {
+    var parts = [r.grade === 'perfect' ? '完美通关' : r.grade === 'dead' ? '未通关' : '通关'];
+    if (r.rank) parts.push('第 ' + r.rank + ' 名');
+    if (r.streak) parts.push('连续 ' + r.streak + ' 天');
+    return { status: 'done', sub: '今天' + parts.join(' · '), cta: '看排行' };
+  }
+  return { status: 'none', sub: n + ' 部电影横竖交叉 · ' + (r.players ? '今天 ' + r.players + ' 人在玩' : '每天一局'), cta: '开始' };
+}
+// 首页「每日选片」卡片的文案：今天转过就显示转到的那部（本地 storage，pages/pick/index 写），没转过给一句引导
+function pickCardView() {
+  var rec = null;
+  try {
+    var pick = require('./dailyPick');
+    rec = pick.todayPick(wx.getStorageSync('dailyPickToday'), pick.cnToday());
+  } catch (e) { rec = null; }
+  if (!rec) return { status: 'none', sub: '不知道看什么？从榜单里转一部', cta: '转一转' };
+  return { status: 'done', sub: '今天转到《' + rec.movie.title + '》', cta: '再转转' };
+}
+var NEW_TAB_KEY = 'hubNewTab';
+
 var GAME_BLOCKS = [
-  { key: 'guess_cross', mode: 'cross', title: '每日电影填词', sub: '五部电影横竖交叉，每天一局', emoji: '🔤', color: '#DEE6EF', label: '#46617F', url: '/pages/guess/cross/index' },
+  { key: 'guess_cross', mode: 'cross', title: '每日电影填词', sub: '八部电影横竖交叉，每天一局', emoji: '🔤', color: '#DEE6EF', label: '#46617F', url: '/pages/guess/cross/index' },
+  { key: 'daily_pick', title: '每日选片', sub: '从电影榜单里转一部今天看', emoji: '🎡', color: '#F3E6DA', label: '#8A5A33', url: '/pages/pick/index' },
   { key: 'guess_grid',  mode: 'grid',  title: '交叉填格', emoji: '🎬', color: '#E7EBD5', label: '#5E7238', url: '/pages/guess/grid/index', hidden: true },
   { key: 'guess_clue',  mode: 'clue',  title: '线索猜片', emoji: '🔍', color: '#EDE4F0', label: '#6B5A8C', url: '/pages/guess/clue/index', hidden: true }
 ];
@@ -157,6 +183,13 @@ module.exports = function createHubPage(pageKind) {
     timelineRows: [], timelineLoading: false, timelineOffline: false, timelineHasMore: false,
     sortMode: 'popular',
     hotThemes: [], pendingClassicThemes: [], fallbackThemes: [], newThemes: [], commonThemes: [], recentThemes: [], markedThemes: [],
+    // 首页「最近热门 / 最新上线」两个 tab（最近热门在前、默认选它），各显示前 6 个；选哪个本地记住。
+    // newTabShown 是实际显示的那个：最近热门还没有人数数据（离线 / 统计没回来）时先显示最新上线，不留空格子
+    newTab: 'hot', newTabShown: 'new', recentHotThemes: [],
+    // 首页「每日电影填词」卡片（每日标记下面）：按我今天的进度显示不同的一句话和按钮，见 loadGuessCard
+    guessCard: guessCardView(null),
+    // 首页「每日选片」卡片（填词卡下面），见 pickCardView
+    pickCard: { status: 'none', sub: '不知道看什么？从榜单里转一部', cta: '转一转' },
     popularityReady: false, statsState: 'loading', summaryState: 'loading', summaryRows: {},
     categories: [{id:'all',label:'全部'},{id:'movie',label:'电影'},{id:'tv',label:'剧集'},{id:'anime',label:'动漫'},{id:'reading',label:'读书'},{id:'travel',label:'旅行'},{id:'tools',label:'工具'}],
     userInfo: null,
@@ -225,7 +258,10 @@ module.exports = function createHubPage(pageKind) {
     // 读取本地保留的展示模式 / 置顶配置（无则用默认）
     const savedViewMode = wx.getStorageSync(VIEW_MODE_STORAGE_KEY) === 'list' ? 'list' : 'cover';
     const savedPinned = wx.getStorageSync(PIN_STORAGE_KEY);
+    let savedNewTab = 'hot';
+    try { savedNewTab = wx.getStorageSync(NEW_TAB_KEY) === 'new' ? 'new' : 'hot'; } catch (e) { /* 读不到用默认 */ }
     this.setData({
+      newTab: savedNewTab,
       statusBarHeight: windowInfo.statusBarHeight || 20,
       headerPadTop,
       themeClass: savedTheme,
@@ -558,7 +594,30 @@ module.exports = function createHubPage(pageKind) {
     if (!this._firstShow && pageKind === 'profile') this.loadPersonalSummary();
     if (!this._firstShow && pageKind === 'records') this.loadTimeline();
     if (!this._firstShow && pageKind === 'discover' && this.data.discoverSection === 'custom') this.loadCustomLists();
+    // 填词卡每次回到首页都刷新一下（做完题回来要看到「完美通关 · 第 3 名」），30 秒内不重复请求
+    if (pageKind === 'home') this.loadGuessCard();
+    if (pageKind === 'home') this.setData({ pickCard: pickCardView() });
     this._firstShow = false;
+  },
+
+  /** 首页填词卡：今天几个人在玩、我今天做到哪了。失败就保留上一次的样子（首次是默认文案） */
+  loadGuessCard(force) {
+    if (pageKind !== 'home') return Promise.resolve();
+    if (!force && this._guessCardAt && Date.now() - this._guessCardAt < 30000) return Promise.resolve();
+    this._guessCardAt = Date.now();
+    return wx.cloud.callFunction({ name: 'submitGuess', data: { action: 'hubCard', mode: 'cross' } }).then(res => {
+      const r = res && res.result;
+      if (!this._pageUnloaded && r && r.success) this.setData({ guessCard: guessCardView(r) });
+    }).catch(() => { this._guessCardAt = 0; });
+  },
+
+  /** 「最新上线 / 最近热门」切换 */
+  onSwitchNewTab(e) {
+    const tab = e && e.currentTarget && e.currentTarget.dataset.tab === 'new' ? 'new' : 'hot';
+    if (tab === this.data.newTabShown) return;
+    this.setData({ newTab: tab, newTabShown: tab === 'hot' && this.data.recentHotThemes.length ? 'hot' : 'new' });
+    try { wx.setStorageSync(NEW_TAB_KEY, tab); } catch (err) { /* 存不上下次回到默认 */ }
+    this.observeCards();
   },
 
   // 涓婚鍒囨崲
@@ -723,12 +782,14 @@ module.exports = function createHubPage(pageKind) {
     const fallbackThemes = pendingClassicThemes.concat(catalog.filter(t => t.contentCount !== 0 &&
       !pendingClassicThemes.some(p => p.id === t.id))).slice(0, 10);
     const newThemes = hubModel.selectNew(catalog);
+    const recentHotThemes = hubModel.selectRecentHot(catalog);
     const pinnedSet = new Set(pinnedIds);
     const filteredThemes = hubModel.filter(themes.filter(t => t.category !== 'daily'), tab, this.data.searchQuery, this.data.sortMode, t => this._themeKeywords(t))
       .map(t => pinnedSet.has(t.id) ? { ...t, favorited: true } : t);
     const searchKeywords = SEARCH_QUICK_WORDS.filter(word => themes.some(t => this._themeKeywords(t).some(v => normalizeSearch(v).includes(normalizeSearch(word)))));
     this.setData({ themes, pinnedIds, commonThemes: commonThemes.map(t => summaryRows[t.id] ? withProgress(t) : { ...t, progressText: '已收藏 · 点击打开' }), recentThemes: recentThemes.map(withProgress), markedThemes,
-      hotThemes, pendingClassicThemes, fallbackThemes, newThemes, filteredThemes, searchKeywords, dailyThemes: themes.filter(t => t.category === 'daily' && !t.hidden),
+      hotThemes, pendingClassicThemes, fallbackThemes, newThemes, recentHotThemes, filteredThemes,
+      newTabShown: this.data.newTab === 'hot' && recentHotThemes.length ? 'hot' : 'new', searchKeywords, dailyThemes: themes.filter(t => t.category === 'daily' && !t.hidden),
       popularityReady: catalog.some(t => t.countKnown && t.userCount > 0) });
     this.buildDailyBlocks();
     this.updatePersonalThemes();
@@ -1203,6 +1264,7 @@ module.exports = function createHubPage(pageKind) {
     try {
       const work = [this.loadCloudRegistry()];
       if (pageKind === 'home' || pageKind === 'discover') work.push(this.loadUserCounts(true));
+      if (pageKind === 'home') work.push(this.loadGuessCard(true));
       if (pageKind === 'profile') work.push(this.loadPersonalSummary());
       if (pageKind === 'records') work.push(this.loadTimeline());
       await Promise.allSettled(work);

@@ -45,12 +45,23 @@ test('popular rank responds to refreshed counts and excludes empty or hidden lis
   assert.equal(hot[0].id, 'movie2');
   assert.ok(!hot.some(t => t.id === 'movie0' || t.id === 'movie1'));
 });
-test('latest shows four most recent launches, including older and popular lists', () => {
+test('latest shows six most recent launches, including older and popular lists', () => {
   const now = Date.parse('2026-10-11T00:00:00Z');
   const dated = [ { id: 'valid', publishedAt: '2026-10-09' }, { id: 'hot', publishedAt: '2026-10-10', countKnown: true, userCount: 999 }, { id: 'old', publishedAt: '2026-07-01', isNew: true }, { id: 'unknown', isNew: true }, { id: 'future', publishedAt: '2027-01-01' }, { id: 'last', publishedAt: '2026-06-01' }, { id: 'empty', publishedAt: '2026-10-11', countKnown: true, contentCount: 0 }, { id: 'tool', category: 'daily', publishedAt: '2026-10-11' } ];
-  assert.deepEqual(model.selectNew(dated, now).map(t => t.id), ['hot', 'valid', 'old', 'last']);
+  assert.deepEqual(model.selectNew(dated, now).map(t => t.id), ['hot', 'valid', 'old', 'last', 'unknown']);
   assert.deepEqual(model.selectNew(dated.filter(t => !t.publishedAt), now).map(t => t.id), ['unknown']);
-  assert.deepEqual(model.selectNew(fixtures, now).map(t => t.id), ['movie0','movie1','movie2','movie3']);
+  assert.deepEqual(model.selectNew(fixtures, now).map(t => t.id), ['movie0','movie1','movie2','movie3','movie4','book']);
+});
+test('recent hot ranks lists by 7-day gain, falls back to total users before history exists', () => {
+  const stat = (users, recent) => ({ valid: true, users, total: 10, recent });
+  const themes = ['a', 'b', 'c', 'd'].map(id => ({ id, category: 'movie', title: id }));
+  const withGain = model.decorate(themes, { rows: { a: stat(900, 2), b: stat(50, 30), c: stat(400, 9), d: stat(10) } });
+  assert.deepEqual(model.selectRecentHot(withGain).map(t => t.id), ['b', 'c', 'a', 'd']);
+  const noHistory = model.decorate(themes, { rows: { a: stat(900), b: stat(50), c: stat(400), d: stat(10) } });
+  assert.deepEqual(model.selectRecentHot(noHistory).map(t => t.id), ['a', 'c', 'b', 'd']);
+  const many = Array.from({ length: 9 }, (_, i) => ({ id: 'm' + i, category: 'movie', title: 'm' + i }));
+  const rows = {}; many.forEach((t, i) => { rows[t.id] = stat(100, i); });
+  assert.equal(model.selectRecentHot(model.decorate(many, { rows })).length, 6);
 });
 test('search matches outrank popular partial matches and awards belong to film', () => {
   const rows = model.decorate(fixtures.concat({ id: 'match', category: 'reading', title: '小说' }), stats);
@@ -304,7 +315,7 @@ test('cloud catalog refresh updates existing titles, dates and removes disabled 
 test('registry launch dates and wish attribution apply to existing local lists', () => {
   const f = fixture('home'); f.page.onLoad();
   f.page._mergeCloudThemes([{ theme: 'oscarForeign', cardId: 'oscar_foreign_movies', publishedAt: '2026-10-10', wishFrom: '新**' }]);
-  assert.equal(f.page.data.newThemes.length, 4);
+  assert.equal(f.page.data.newThemes.length, 6);
   assert.equal(f.page.data.newThemes[0].id, 'oscar_foreign_movies');
   assert.equal(f.page.data.newThemes[0].wishFrom, '新**');
   assert.equal(f.page.data.newThemes[0].url, '/pages/genericList/list/list?theme=oscarForeign');

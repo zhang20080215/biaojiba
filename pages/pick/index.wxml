@@ -1,0 +1,120 @@
+<view class="page-root {{themeClass}}">
+  <view class="pk">
+
+    <!-- 头部：日期 + 一句话 -->
+    <view class="pk-head">
+      <view class="pk-date">{{dateText}}</view>
+      <view class="pk-h1">今晚看哪部？</view>
+    </view>
+
+    <!-- 从哪抽：一行胶囊，点开底部面板 -->
+    <view class="pk-source {{spinning ? 'off' : ''}}" bindtap="openSheet" hover-class="pk-press">
+      <text class="pk-source-name">{{sourceTitle || '选择榜单'}}</text>
+      <text class="pk-source-sep"></text>
+      <text class="pk-source-scope">{{scope === 'all' ? '全部' : '未看'}} {{loading ? '…' : (scope === 'all' ? counts.all : counts.unwatched) + ' 部'}}</text>
+      <text class="pk-caret"></text>
+    </view>
+
+    <!-- 转盘：外圈灯珠 + 扇区 + 带指针的中心按钮 -->
+    <view class="pk-stage">
+      <view class="pk-glow"></view>
+      <view class="pk-ring {{spinning ? 'spinning' : ''}}">
+        <view class="pk-pointer"></view>
+        <view wx:for="{{bulbs}}" wx:key="index"
+              class="pk-bulb {{index % 2 ? 'b' : 'a'}}"
+              style="transform: rotate({{item}}deg) translateY(-298rpx);"></view>
+        <view class="pk-wheel" style="background: {{wheelBg}}; transform: rotate({{rotation}}deg);">
+          <image class="pk-wheel-img" wx:if="{{wheelImg}}" src="{{wheelImg}}"/>
+        </view>
+        <!-- 中心钮：放映机，转的时候两个胶片盘跟着转 -->
+        <view class="pk-hub {{spinning ? 'spinning' : ''}} {{loading || !wheelImg ? 'busy' : ''}}" bindtap="onSpin" hover-class="pk-hub-press">
+          <view class="pk-proj">
+            <view class="pk-proj-body"></view>
+            <view class="pk-proj-reel big"></view>
+            <view class="pk-proj-reel small"></view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 转盘下方一行：状态 -->
+    <view class="pk-under">
+      <text class="pk-tip" wx:if="{{loading}}">正在读榜单…</text>
+      <text class="pk-tip err" wx:elif="{{errMsg}}" bindtap="onRetry">{{errMsg}}</text>
+      <text class="pk-tip link" wx:elif="{{empty}}" bindtap="onAllScope">这里的片你都看过了，从「全部」里抽 ›</text>
+      <text class="pk-tip" wx:else>{{poolSize}} 部都在盘上，转到哪部看哪部</text>
+    </view>
+
+    <!-- 今日选片：转过就留一条，点开是票根 -->
+    <view class="pk-strip" wx:if="{{today}}" bindtap="openReveal" hover-class="pk-press">
+      <image class="pk-strip-cover" src="{{today.cover}}" mode="aspectFill" wx:if="{{today.cover}}"/>
+      <view class="pk-strip-cover empty" wx:else>🎬</view>
+      <view class="pk-strip-info">
+        <view class="pk-strip-tag">今日选片</view>
+        <view class="pk-strip-title">{{today.title}}</view>
+      </view>
+      <view class="pk-strip-go">{{today.status === 'watched' ? '已看过' : today.status === 'wish' ? '已想看' : '查看'}} ›</view>
+    </view>
+  </view>
+
+  <!-- 揭晓：票根卡 -->
+  <view class="pk-mask {{reveal ? 'show' : ''}}" wx:if="{{reveal && today}}" bindtap="closeReveal" catchtouchmove="noop">
+    <view class="pk-ticket {{justPicked ? 'pop' : ''}}" catchtap="noop">
+      <view class="pk-t-top">
+        <image class="pk-t-blur" src="{{today.cover}}" mode="aspectFill" wx:if="{{today.cover}}"/>
+        <view class="pk-t-shade"></view>
+        <view class="pk-t-stamp">
+          <text class="pk-t-stamp-a">今日选片</text>
+          <text class="pk-t-stamp-b">{{dateShort}}</text>
+        </view>
+        <image class="pk-t-cover" src="{{today.cover}}" mode="aspectFill" wx:if="{{today.cover}}"/>
+        <view class="pk-t-cover empty" wx:else>🎬</view>
+      </view>
+
+      <view class="pk-t-perf"><view class="pk-t-notch l"></view><view class="pk-t-dash"></view><view class="pk-t-notch r"></view></view>
+
+      <view class="pk-t-body">
+        <view class="pk-t-title">{{today.title}}</view>
+        <view class="pk-t-meta" wx:if="{{metaText}}">{{metaText}}</view>
+        <view class="pk-t-row">
+          <view class="pk-t-score" wx:if="{{today.rating}}">
+            <text class="pk-t-score-num">{{today.rating}}</text>
+            <text class="pk-t-score-label">{{today.ratingLabel}}</text>
+          </view>
+          <view class="pk-t-from" wx:if="{{today.sourceTitle}}">来自「{{today.sourceTitle}}」</view>
+        </view>
+
+        <view class="pk-t-marks">
+          <view class="pk-t-mark {{today.status === 'wish' ? 'on' : ''}}" data-status="wish" bindtap="onMark">{{today.status === 'wish' ? '已想看' : '想看'}}</view>
+          <view class="pk-t-mark {{today.status === 'watched' ? 'on' : ''}}" data-status="watched" bindtap="onMark">{{today.status === 'watched' ? '已看过' : '看过'}}</view>
+        </view>
+        <button class="pk-t-share" open-type="share" hover-class="pk-t-share-press">分享给朋友</button>
+        <view class="pk-t-sign">标记吧 · 每日选片</view>
+      </view>
+    </view>
+    <view class="pk-again" bindtap="closeReveal">再转一次</view>
+  </view>
+
+  <!-- 画转盘用的 canvas，放在屏幕外；画完导出成图片给 .pk-wheel-img 转 -->
+  <canvas type="2d" id="pkWheelCanvas" class="pk-canvas"></canvas>
+
+  <!-- 从哪抽：底部面板 -->
+  <view class="pk-sheet-mask" wx:if="{{sheet}}" bindtap="closeSheet" catchtouchmove="noop">
+    <view class="pk-sheet" catchtap="noop">
+      <view class="pk-sheet-head">
+        <text class="pk-sheet-title">从哪里抽</text>
+        <view class="pk-seg">
+          <view class="pk-seg-item {{scope === 'unwatched' ? 'on' : ''}}" data-scope="unwatched" bindtap="onScope">未看</view>
+          <view class="pk-seg-item {{scope === 'all' ? 'on' : ''}}" data-scope="all" bindtap="onScope">全部</view>
+        </view>
+      </view>
+      <scroll-view class="pk-sheet-list" scroll-y enhanced show-scrollbar="{{false}}">
+        <view class="pk-chips">
+          <view wx:for="{{sources}}" wx:key="key"
+                class="pk-chip {{item.key === sourceKey ? 'on' : ''}}"
+                data-key="{{item.key}}" bindtap="onSource">{{item.title}}</view>
+        </view>
+      </scroll-view>
+    </view>
+  </view>
+</view>

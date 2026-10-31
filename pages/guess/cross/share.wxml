@@ -1,0 +1,25 @@
+<view class="page">
+  <view wx:if="{{empty}}" class="state">请回到填字页重新点「生成答题卡」</view>
+  <block wx:else>
+    <!-- canvas 是原生组件，藏不住，直接当预览图：backing 1080×1440，CSS 缩放到 previewW×previewH -->
+    <view class="preview" style="width:{{previewW}}px;height:{{previewH}}px">
+      <canvas type="2d" id="card" style="width:{{previewW}}px;height:{{previewH}}px"></canvas>
+    </view>
+
+    <!-- 默认不把字画上去，发出去不剧透；想晒答案的自己打开 -->
+    <view class="opt" style="width:{{previewW}}px">
+      <view class="opt-text">
+        <text class="opt-title">显示答案</text>
+        <text class="opt-sub">打开后棋盘格子里会写上片名，发出去会剧透</text>
+      </view>
+      <switch checked="{{showAnswers}}" color="#6F8244" disabled="{{!ready}}" bindchange="onToggleAnswers" />
+    </view>
+  </block>
+
+  <view wx:if="{{!empty}}" class="bar">
+    <button class="save" bindtap="saveImage" disabled="{{isGenerating || !ready}}" loading="{{isGenerating}}">
+      {{isGenerating ? '保存中…' : (ready ? '保存到相册' : '生成中…')}}
+    </button>
+    <text wx:if="{{needRewardedAd && ready}}" class="save-sub">需观看广告后保存</text>
+  </view>
+</view>
