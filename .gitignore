@@ -53,3 +53,5 @@ database_export-*.json
 # 本地拉数：小程序 AppSecret 与拉回来的数据
 tools/wx-analytics/secret.json
 tools/wx-analytics/out/
+# 豆瓣导入探测结果
+tools/douban-import-probe/out/
