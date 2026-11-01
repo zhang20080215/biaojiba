@@ -7,7 +7,7 @@
 // 本机 IP 和云函数出口 IP 待遇不同（桌面站会跳转非豆瓣 IP），所以同一份代码本地也跑一遍：
 //   node tools/douban-import-probe/probe.cjs <uid>
 //
-// 入参：{ uid, sources?: ['rexxar','collect'], status?: 'done'|'mark', maxPages?: 10, gapMs?: 1500 }
+// 入参：{ uid, sources?: ['rexxar','collect'], status?: 'done'|'mark', maxPages?: 10, gapMs?: 1500, startPage?: 0 }
 // 出参：每个来源每页一行 [start, httpStatus, ms, 条数, 备注]，加上读到的豆瓣条目 id（用于对片试算）。
 // 不返回、不保存任何用户昵称或评语。
 
@@ -83,13 +83,13 @@ async function pageCollect(uid, status, start) {
     return out;
 }
 
-async function probeSource(source, uid, status, maxPages, gapMs) {
+async function probeSource(source, uid, status, maxPages, gapMs, startPage) {
     const fn = source === 'rexxar' ? pageRexxar : pageCollect;
     const pages = [];
     const ids = [];
     let total = null;
     let blockedAt = null;
-    for (let p = 0; p < maxPages; p++) {
+    for (let p = startPage; p < startPage + maxPages; p++) {
         const start = p * PAGE[source];
         const r = await fn(uid, status, start);
         pages.push([start, r.status, r.ms, r.ids.length, r.note]);
@@ -109,9 +109,11 @@ async function probe(event) {
     const status = event.status === 'mark' ? 'mark' : 'done';
     const maxPages = Math.max(1, Math.min(30, parseInt(event.maxPages, 10) || 10));
     const gapMs = Math.max(500, parseInt(event.gapMs, 10) || 1500);
+    // 从外面经 HTTP 调用有很短的超时，一次读多页会被掐断，所以支持 maxPages:1 + startPage 逐页调
+    const startPage = Math.max(0, parseInt(event.startPage, 10) || 0);
     const t0 = Date.now();
     const results = [];
-    for (const s of sources) results.push(await probeSource(s, uid, status, maxPages, gapMs));
+    for (const s of sources) results.push(await probeSource(s, uid, status, maxPages, gapMs, startPage));
     return { ok: 1, uid, status, maxPages, gapMs, ms: Date.now() - t0, results };
 }
 
