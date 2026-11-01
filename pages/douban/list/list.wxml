@@ -26,11 +26,6 @@
             <view class="hero-progress-fill" style="width: {{watchedProgressWidth}};"></view>
           </view>
         </view>
-        <view wx:if="{{doubanImportIn}}" class="hero-subscribe-row">
-          <view class="hero-subscribe-chip" bindtap="onOpenDoubanImport" hover-class="hero-subscribe-chip-hover">
-            <text class="hero-subscribe-chip-text">从豆瓣导入我的标记 ›</text>
-          </view>
-        </view>
         <view wx:if="{{subscribeBucketIn}}" class="hero-subscribe-row">
           <view class="hero-subscribe-chip" bindtap="onTapSubscribeNewEntry" hover-class="hero-subscribe-chip-hover">
             <text class="hero-subscribe-chip-text">🔔 新片入榜提醒</text>
@@ -58,6 +53,7 @@
         <view wx:if="{{userInfo}}" class="batch-options">
           <block wx:if="{{!isBatchEditing}}">
             <view class="icon-btn batch-icon" bindtap="onStartBatchEdit">批量标记</view>
+            <view wx:if="{{doubanImportIn}}" class="icon-btn batch-icon" bindtap="onOpenDoubanImport">从豆瓣导入</view>
           </block>
           <block wx:elif="{{isBatchEditing}}">
             <view class="icon-btn action-watched" bindtap="onBatchWatch">批量已看</view>
