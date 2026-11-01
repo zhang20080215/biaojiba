@@ -175,11 +175,6 @@ Page({
     else wx.redirectTo({ url: '/pages/douban/list/list' });
   },
 
-  onGoDailyMovie() {
-    track('douban_import', { step: 'daily_movie', result: '', count: 0 });
-    wx.redirectTo({ url: '/pages/daily/movie/index' });
-  },
-
   onUndo() {
     if (this.data.undoing || !this._importId) return;
     wx.showModal({

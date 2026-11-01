@@ -236,24 +236,6 @@ page {
   font-size: var(--font-caption);
   color: var(--text-secondary);
 }
-.di-link-card {
-  display: flex;
-  align-items: center;
-  margin-top: 32rpx;
-  padding: 28rpx 32rpx;
-  border-radius: var(--radius-lg);
-  background: var(--brand-tint);
-}
-.di-link-text {
-  flex: 1;
-  font-size: var(--font-body);
-  font-weight: 600;
-  color: var(--brand-accent);
-}
-.di-link-arrow {
-  font-size: 36rpx;
-  color: var(--brand-accent);
-}
 .di-undo {
   display: block;
   padding-top: 20rpx;

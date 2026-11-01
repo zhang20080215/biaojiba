@@ -95,11 +95,6 @@
     </view>
     <text wx:if="{{summary.unmatched}}" class="di-caption">另有 {{summary.unmatched}} 部不在标记吧的榜单中</text>
 
-    <view class="di-link-card" bindtap="onGoDailyMovie" hover-class="di-pressed">
-      <text class="di-link-text">以后新看的电影，记在「每日电影」</text>
-      <text class="di-link-arrow">›</text>
-    </view>
-
     <view class="di-bottom">
       <view class="di-btn-row">
         <view class="di-btn" bindtap="onGoTop250">查看豆瓣 TOP250</view>

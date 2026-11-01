@@ -47,7 +47,7 @@
  *                 scope ∈ unwatched|all
  *   ── 第六版（feature/douban-import）──
  *   douban_import { step:字符串, result:字符串, count:整型 }    —— 从豆瓣导入（pages/doubanImport）
- *                 step ∈ open|preview|start|page|done|undo|daily_movie；
+ *                 step ∈ open|preview|start|page|done|undo；
  *                 result = ok / 云函数返回的 code（PAUSED、DAILY_LIMIT、BUSY、USER_NOT_FOUND…）；
  *                 count：preview=豆瓣看过总数，done=新导入部数，undo=撤销条数
  *
