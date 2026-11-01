@@ -84,6 +84,16 @@ test('planPage：同一页里重复的片只处理一次', () => {
   assert.equal(p.adds.length, 1);
 });
 
+test('planPage：列表页「批量未看」留下的 unwatched 记录当作没标，改写并按新增计，撤销还原', () => {
+  const existing = { 'movie_霸王别姬_': { _id: 'm1', status: 'unwatched', marked_at: '2025-01-01T00:00:00.000Z' } };
+  const p = planPage([{ doubanId: '1291546', status: 'watched', markedAt: T }], facts, existing, 'imp1');
+  assert.equal(p.adds.length, 0);
+  assert.deepEqual(p.upgrades, [{ _id: 'm1', movieId: 'movie_霸王别姬_', data: { status: 'watched', marked_at: T, source: 'douban_import', importId: 'imp1', importStatus: 'watched', prevStatus: 'unwatched', prevMarkedAt: '2025-01-01T00:00:00.000Z' } }]);
+  assert.equal(p.films.added, 1);
+  assert.equal(p.films.top250, 1);
+  const u = planUndo([Object.assign({ _id: 'm1' }, p.upgrades[0].data)]);
+  assert.deepEqual(u.restores, [{ _id: 'm1', data: { status: 'unwatched', marked_at: '2025-01-01T00:00:00.000Z' } }]);
+});
 test('planUndo：没改过的新增删掉、升级的还原、改过的保留', () => {
   const u = planUndo([
     { _id: 'a', status: 'watched', importStatus: 'watched' },

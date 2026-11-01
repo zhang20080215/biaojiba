@@ -39,6 +39,7 @@ function cnDate(ms) {
  *
  * 写入规则：只增不减、不降级。
  *   没有标记            → 新增
+ *   只有「未看」记录     → 改写成豆瓣的状态（按新增计；记下原状态，撤销时还原）
  *   已有「想看」+ 看过   → 升级为看过（记下原状态，撤销时还原）
  *   其余（含已看过 + 想看、状态相同）→ 跳过
  *
@@ -65,6 +66,13 @@ function planPage(entries, factsMap, existing, importId) {
             const ex = existing[movieId];
             if (!ex) {
                 adds.push({ movieId, status: e.status, marked_at: e.markedAt, source: 'douban_import', importId, importStatus: e.status });
+                touched = 'added';
+            } else if (ex.status !== 'watched' && ex.status !== 'wish') {
+                // 列表页「批量未看」会留一条 status:'unwatched' 的记录，页面上等于没标，按新增算
+                upgrades.push({
+                    _id: ex._id, movieId,
+                    data: { status: e.status, marked_at: e.markedAt, source: 'douban_import', importId, importStatus: e.status, prevStatus: ex.status || null, prevMarkedAt: ex.marked_at || null }
+                });
                 touched = 'added';
             } else if (ex.status === 'wish' && e.status === 'watched') {
                 upgrades.push({
