@@ -45,6 +45,11 @@
  *   ── 第五版（feature/guess-optimize）──
  *   daily_pick_spin { theme:字符串, scope:字符串 }              —— 每日选片转一次；theme = 榜单 id（自建影单为 customMovie），
  *                 scope ∈ unwatched|all
+ *   ── 第六版（feature/douban-import）──
+ *   douban_import { step:字符串, result:字符串, count:整型 }    —— 从豆瓣导入（pages/doubanImport）
+ *                 step ∈ open|preview|start|page|done|undo|daily_movie；
+ *                 result = ok / 云函数返回的 code（PAUSED、DAILY_LIMIT、BUSY、USER_NOT_FOUND…）；
+ *                 count：preview=豆瓣看过总数，done=新导入部数，undo=撤销条数
  *
  * 参数值只支持 number / string。
  */

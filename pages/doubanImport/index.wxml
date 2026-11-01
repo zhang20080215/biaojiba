@@ -1,0 +1,123 @@
+<view class="page-root di-page {{themeClass}}">
+
+  <!-- ① 粘贴主页链接 -->
+  <block wx:if="{{step === 'input'}}">
+    <view class="di-hero">
+      <text class="di-title">从豆瓣导入观影记录</text>
+      <text class="di-sub">把你在豆瓣标过的「看过 / 想看」一次搬进标记吧，各个榜单的进度马上点亮。</text>
+    </view>
+
+    <view class="di-card">
+      <view class="di-label">你的豆瓣主页链接</view>
+      <view class="di-input-row">
+        <input class="di-input" value="{{link}}" placeholder="粘贴链接，或直接输入豆瓣 ID" placeholder-class="di-placeholder" bindinput="onLinkInput" confirm-type="done" bindconfirm="onPreview" />
+        <view class="di-paste" bindtap="onPasteTap" hover-class="di-pressed">粘贴</view>
+      </view>
+      <view wx:if="{{errorText}}" class="di-error">{{errorText}}</view>
+      <view class="di-help">
+        <text class="di-help-title">怎么找到主页链接</text>
+        <text class="di-help-line">打开豆瓣 App →「我的」→ 点进个人主页 → 右上角「···」→「复制链接」</text>
+        <text class="di-help-line">链接形如 douban.com/people/123456/</text>
+      </view>
+    </view>
+
+    <view class="di-note">只读取你在豆瓣公开的观影记录，用来同步到标记吧；不需要豆瓣密码，也不保存你的豆瓣账号。</view>
+
+    <view class="di-bottom">
+      <view class="di-btn {{busy ? 'di-btn-disabled' : ''}}" bindtap="onPreview">{{busy ? '读取中…' : '读取我的记录'}}</view>
+    </view>
+  </block>
+
+  <!-- ② 预读结果 + 选范围 -->
+  <block wx:elif="{{step === 'preview'}}">
+    <view class="di-hero">
+      <text class="di-title">找到你的观影记录</text>
+      <text class="di-sub">豆瓣账号 {{uid}}</text>
+    </view>
+
+    <view wx:if="{{doneTotal + wishTotal === 0}}" class="di-card">
+      <view class="di-empty-title">没读到公开的观影记录</view>
+      <text class="di-help-line">可能是观影记录设置了仅自己可见。在豆瓣 App「设置 → 隐私设置」里把观影记录设为公开后再试一次。</text>
+    </view>
+    <view wx:else class="di-card">
+      <view class="di-option di-option-locked">
+        <view class="di-check di-check-on"></view>
+        <text class="di-option-name">看过</text>
+        <text class="di-option-count">{{doneTotal}} 部</text>
+      </view>
+      <view class="di-option" bindtap="onToggleWish">
+        <view class="di-check {{withWish ? 'di-check-on' : ''}} {{wishTotal === 0 ? 'di-check-disabled' : ''}}"></view>
+        <text class="di-option-name">想看</text>
+        <text class="di-option-count">{{wishTotal}} 部</text>
+      </view>
+      <view class="di-rules">
+        <text class="di-help-line">· 只补你还没标的，已有的标记不会被覆盖</text>
+        <text class="di-help-line">· 你标成「想看」、豆瓣是「看过」的，升级为看过</text>
+        <text class="di-help-line">· 标记时间沿用豆瓣，导入后可以随时撤销</text>
+      </view>
+      <view wx:if="{{errorText}}" class="di-error">{{errorText}}</view>
+    </view>
+
+    <view class="di-bottom di-bottom-two">
+      <view class="di-btn di-btn-ghost" bindtap="onChangeAccount">换个账号</view>
+      <view wx:if="{{doneTotal + wishTotal > 0}}" class="di-btn {{busy ? 'di-btn-disabled' : ''}}" bindtap="onStart">{{busy ? '准备中…' : '开始导入'}}</view>
+    </view>
+  </block>
+
+  <!-- ③ 导入中 -->
+  <block wx:elif="{{step === 'importing'}}">
+    <view class="di-hero">
+      <text class="di-title">正在导入…</text>
+      <text class="di-sub">{{phaseText}}，请停留在本页</text>
+    </view>
+    <view class="di-card">
+      <view class="di-progress-head">
+        <text class="di-progress-num">{{progressRead}}</text>
+        <text class="di-progress-of"> / {{progressTotal}} 部</text>
+        <text class="di-progress-pct">{{progressPercent}}%</text>
+      </view>
+      <view class="di-bar"><view class="di-bar-fill" style="width: {{progressPercent}}%;"></view></view>
+      <text class="di-help-line">每页 50 部，大约 20~40 秒导完。中途退出也没关系，再进来会从断点继续。</text>
+    </view>
+  </block>
+
+  <!-- ④ 完成 -->
+  <block wx:elif="{{step === 'done'}}">
+    <view class="di-hero">
+      <text class="di-title">导入完成</text>
+      <text class="di-sub">共读取 {{summary.read}} 部</text>
+    </view>
+    <view class="di-card">
+      <view class="di-stats">
+        <view class="di-stat"><text class="di-stat-num">{{summary.imported}}</text><text class="di-stat-label">新导入</text></view>
+        <view class="di-stat"><text class="di-stat-num">{{summary.top250}}</text><text class="di-stat-label">豆瓣TOP250 已看</text></view>
+        <view class="di-stat"><text class="di-stat-num">{{summary.skipped}}</text><text class="di-stat-label">原来就标过</text></view>
+      </view>
+      <text wx:if="{{summary.unmatched}}" class="di-help-line">另有 {{summary.unmatched}} 部暂时不在我们的榜单里，没有导入。</text>
+    </view>
+
+    <view class="di-card di-tip" bindtap="onGoDailyMovie" hover-class="di-pressed">
+      <text class="di-tip-title">以后看了新片，记在「每日电影」</text>
+      <text class="di-help-line">按天记录，月底和年底一键出观影海报 ›</text>
+    </view>
+
+    <view class="di-undo" bindtap="onUndo">{{undoing ? '撤销中…' : '导错了？撤销这次导入'}}</view>
+
+    <view class="di-bottom">
+      <view class="di-btn" bindtap="onGoTop250">去看豆瓣 TOP250 进度</view>
+    </view>
+  </block>
+
+  <!-- ⑤ 已撤销 -->
+  <block wx:elif="{{step === 'undone'}}">
+    <view class="di-hero">
+      <text class="di-title">已撤销</text>
+      <text class="di-sub">删除了 {{summary.removed}} 条新增标记，还原了 {{summary.restored}} 条</text>
+    </view>
+    <view class="di-bottom di-bottom-two">
+      <view class="di-btn di-btn-ghost" bindtap="onChangeAccount">重新导入</view>
+      <view class="di-btn" bindtap="onGoTop250">回到豆瓣 TOP250</view>
+    </view>
+  </block>
+
+</view>

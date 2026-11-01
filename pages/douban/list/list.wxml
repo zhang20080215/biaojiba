@@ -26,6 +26,11 @@
             <view class="hero-progress-fill" style="width: {{watchedProgressWidth}};"></view>
           </view>
         </view>
+        <view wx:if="{{doubanImportIn}}" class="hero-subscribe-row">
+          <view class="hero-subscribe-chip" bindtap="onOpenDoubanImport" hover-class="hero-subscribe-chip-hover">
+            <text class="hero-subscribe-chip-text">从豆瓣导入我的标记 ›</text>
+          </view>
+        </view>
         <view wx:if="{{subscribeBucketIn}}" class="hero-subscribe-row">
           <view class="hero-subscribe-chip" bindtap="onTapSubscribeNewEntry" hover-class="hero-subscribe-chip-hover">
             <text class="hero-subscribe-chip-text">🔔 新片入榜提醒</text>

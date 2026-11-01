@@ -1,0 +1,252 @@
+page {
+  background: var(--bg-page);
+}
+
+.di-page {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 32rpx 32rpx 220rpx;
+  color: var(--text-primary);
+}
+
+.di-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  padding: 16rpx 4rpx 32rpx;
+}
+.di-title {
+  font-size: var(--font-display);
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+.di-sub {
+  font-size: var(--font-body);
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.di-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  padding: 32rpx 28rpx;
+  margin-bottom: 24rpx;
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card);
+}
+.di-label {
+  font-size: var(--font-body);
+  font-weight: 600;
+}
+.di-input-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+/* 原生 input 自己把文字垂直居中：只留左右 padding，高度给满 */
+.di-input {
+  flex: 1;
+  min-width: 0;
+  height: 88rpx;
+  padding: 0 24rpx;
+  border-radius: var(--radius-md);
+  background: var(--bg-section);
+  font-size: 28rpx;
+  color: var(--text-primary);
+}
+.di-placeholder {
+  color: var(--text-muted);
+}
+.di-paste {
+  flex: 0 0 auto;
+  padding: 0 28rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: var(--radius-md);
+  background: var(--brand-tint);
+  color: var(--brand-accent);
+  font-size: var(--font-body);
+  font-weight: 600;
+}
+.di-error {
+  font-size: var(--font-caption);
+  color: #C0392B;
+  line-height: 1.6;
+}
+.di-help {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+  margin-top: 8rpx;
+}
+.di-help-title {
+  font-size: var(--font-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.di-help-line {
+  font-size: var(--font-caption);
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+.di-note {
+  padding: 0 8rpx;
+  font-size: var(--font-caption);
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+.di-empty-title {
+  font-size: var(--font-title);
+  font-weight: 600;
+}
+
+/* 导入范围勾选 */
+.di-option {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 12rpx 0;
+}
+.di-check {
+  width: 36rpx;
+  height: 36rpx;
+  box-sizing: border-box;
+  border-radius: 10rpx;
+  border: 3rpx solid var(--line-subtle);
+  background: var(--bg-card);
+}
+.di-check-on {
+  border-color: var(--brand-accent);
+  background: var(--brand-accent);
+  box-shadow: inset 0 0 0 6rpx var(--bg-card);
+}
+.di-check-disabled {
+  opacity: 0.4;
+}
+.di-option-locked .di-check-on {
+  opacity: 0.7;
+}
+.di-option-name {
+  flex: 1;
+  font-size: var(--font-title);
+  font-weight: 600;
+}
+.di-option-count {
+  font-size: var(--font-body);
+  color: var(--text-secondary);
+}
+.di-rules {
+  display: flex;
+  flex-direction: column;
+  padding-top: 16rpx;
+  border-top: 1rpx solid var(--line-subtle);
+}
+
+/* 进度 */
+.di-progress-head {
+  display: flex;
+  align-items: baseline;
+}
+.di-progress-num {
+  font-size: 64rpx;
+  font-weight: 700;
+  color: var(--brand-accent);
+}
+.di-progress-of {
+  flex: 1;
+  font-size: var(--font-body);
+  color: var(--text-secondary);
+}
+.di-progress-pct {
+  font-size: var(--font-body);
+  color: var(--text-secondary);
+}
+.di-bar {
+  height: 16rpx;
+  border-radius: var(--radius-pill);
+  background: var(--bg-section);
+  overflow: hidden;
+}
+.di-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--brand-accent);
+  transition: width 0.4s ease;
+}
+
+/* 完成汇总 */
+.di-stats {
+  display: flex;
+}
+.di-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6rpx;
+}
+.di-stat-num {
+  font-size: 56rpx;
+  font-weight: 700;
+  color: var(--brand-accent);
+}
+.di-stat-label {
+  font-size: var(--font-caption);
+  color: var(--text-secondary);
+}
+.di-tip {
+  gap: 6rpx;
+  background: var(--brand-tint);
+  box-shadow: none;
+}
+.di-tip-title {
+  font-size: var(--font-body);
+  font-weight: 600;
+  color: var(--brand-accent);
+}
+.di-undo {
+  padding: 16rpx;
+  text-align: center;
+  font-size: var(--font-caption);
+  color: var(--text-muted);
+  text-decoration: underline;
+}
+
+/* 底部按钮 */
+.di-bottom {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  gap: 20rpx;
+  padding: 24rpx 32rpx calc(24rpx + env(safe-area-inset-bottom));
+  background: var(--bg-page);
+}
+.di-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 96rpx;
+  border-radius: var(--radius-md);
+  background: var(--brand-accent);
+  color: #FFFFFF;
+  font-size: 30rpx;
+  font-weight: 700;
+}
+.di-btn-ghost {
+  background: var(--brand-tint);
+  color: var(--brand-accent);
+}
+.di-btn-disabled {
+  background: var(--line-subtle);
+  color: var(--text-muted);
+}
+.di-btn:active,
+.di-pressed {
+  opacity: 0.85;
+}

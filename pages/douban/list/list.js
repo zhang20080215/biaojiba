@@ -43,6 +43,7 @@ Page({
         markSheetStatus: '',
         showSharePicker: false,
         subscribeBucketIn: false,
+        doubanImportIn: false,
         tempAvatar: '',
         tempNickname: '',
         themeClass: '',
@@ -102,6 +103,16 @@ Page({
         }
         this.checkLoginStatus();
         this.setNavBarColor(currentTheme);
+        // 从豆瓣导入页回来：标记变了，重拉一次
+        const app = getApp();
+        if (app.globalData.doubanImportDirty && this.data.allMovies.length) {
+            app.globalData.doubanImportDirty = false;
+            this.loadUserMarks();
+        }
+    },
+
+    onOpenDoubanImport() {
+        wx.navigateTo({ url: '/pages/doubanImport/index' });
     },
 
     // 沉浸式导航下只决定状态栏文字颜色：四套头图都是浅色、标题用深色，状态栏统一黑字
@@ -174,10 +185,13 @@ Page({
                 userInfo,
                 openid,
                 pendingOpenid: '',
-                subscribeBucketIn: grayBucket.isInBucket(openid, SUBSCRIBE_BUCKET_PERCENT)
+                subscribeBucketIn: grayBucket.isInBucket(openid, SUBSCRIBE_BUCKET_PERCENT),
+                // 灰度：本地默认 0，放量走云端 app_config.grayRollout.douban_import
+                doubanImportIn: !!openid && (adConfig.isForcedIntoGray('douban_import', openid)
+                    || grayBucket.isInBucket(openid, adConfig.getGrayPercentage('douban_import')))
             });
         } else {
-            this.setData({ userInfo: null, openid: '', subscribeBucketIn: false });
+            this.setData({ userInfo: null, openid: '', subscribeBucketIn: false, doubanImportIn: false });
         }
     },
 

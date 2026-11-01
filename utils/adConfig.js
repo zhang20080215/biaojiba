@@ -80,12 +80,16 @@ const adConfig = {
     // 放量完全走云端 app_config.grayRollout.daily_movie_banner（存**数值**），
     // 改完用户下次冷启动生效，不用发版。
     daily_movie_banner: 0,
+    // 豆瓣导入入口（pages/doubanImport）：同样本地默认 0，放量走云端 grayRollout.douban_import。
+    // 不只是功能开关，也是对照实验：比较有入口 / 没入口两组新用户的次日、7 日留存和海报保存。
+    douban_import: 0,
   },
 
   grayForceIn: {
     save_image_rewarded: ['ozCMC7vB3JQinqbeqyXzY_7TwSMo'],
     // 灰度还是 0 的时候也能真机自测：白名单命中直接放行，绕过百分比
     daily_movie_banner: ['ozCMC7vB3JQinqbeqyXzY_7TwSMo'],
+    douban_import: ['ozCMC7vB3JQinqbeqyXzY_7TwSMo'],
   },
 
   frequency: {
