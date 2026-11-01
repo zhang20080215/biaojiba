@@ -6,6 +6,7 @@
     "pages/profile/index",
     "pages/douban/list/list",
     "pages/douban/share/share",
+    "pages/doubanImport/index",
     "pages/imdb/list/list",
     "pages/oscar/list/list",
     "pages/genericList/list/list",

@@ -53,6 +53,7 @@
         <view wx:if="{{userInfo}}" class="batch-options">
           <block wx:if="{{!isBatchEditing}}">
             <view class="icon-btn batch-icon" bindtap="onStartBatchEdit">批量标记</view>
+            <view wx:if="{{doubanImportIn}}" class="icon-btn batch-icon" bindtap="onOpenDoubanImport">从豆瓣导入</view>
           </block>
           <block wx:elif="{{isBatchEditing}}">
             <view class="icon-btn action-watched" bindtap="onBatchWatch">批量已看</view>
