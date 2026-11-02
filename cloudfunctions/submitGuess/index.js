@@ -20,7 +20,8 @@
 //
 // 集合：
 //   guess_records  _id = `${openid}_${mode}_${date}` —— 每人每题一份进度
-//                  （2026-10-30 起带 createdAt / updatedAt / finishedAt，排行榜和用时靠它们）
+//                  （2026-10-30 起带 createdAt / updatedAt / finishedAt，排行榜和用时靠它们；
+//                   做完时再抄一份用时 usedSeconds，11-03 起的榜同分比它）
 //   guess_stats    _id = `${mode}_${date}` —— 全体作答分布，用来算「冷门加分」
 //   guess_opens    _id = `${openid}_${mode}_${date}` —— 第一次打开这道题的时间（firstAt，只写一次）
 //                  + 累计的作答用时 activeSeconds。guess_records 要第一次作答才落库，光打开看了一眼的人
@@ -57,6 +58,12 @@ const SCORE_CORRECT = 20;
 const SCORE_WRONG = -10;
 const SCORE_HINT = -5;
 const SUGGEST_LIMIT = 10;
+// 排行榜同分比用时（guess_records.usedSeconds，做完那一刻从 guess_opens 抄过来）。
+// 没有用时的局（老版本前端不计时、上线前做完的）记成这个数：同分时排在有用时的人后面
+const NO_TIME_SECONDS = 999999;
+// 从这天的题起同分比用时。1.0.61 是 11-02 上午才放出去的，当天凌晨做完的人没有用时，
+// 所以这天之前的榜照旧「同分比谁先做完」、那一列显示做完的钟点
+const RANK_BY_TIME_FROM = '2026-11-03';
 
 /**
  * 从 doc(id).get() 的返回里取出那一份文档，取不到给 null。
@@ -77,18 +84,39 @@ function cnDateStr(ms) {
     return d.getUTCFullYear() + '-' + p(d.getUTCMonth() + 1) + '-' + p(d.getUTCDate());
 }
 
-/** 'HH:MM'（北京时间） */
+/** 榜上那一列的用时：「45秒」「3分12」「1时05分」—— 列宽只放得下四五个字；没有用时给「—」 */
+function usedText(sec) {
+    const s = Number(sec);
+    if (!(s > 0) || s >= NO_TIME_SECONDS) return '—';
+    if (s < 60) return s + '秒';
+    const p = n => (n < 10 ? '0' : '') + n;
+    const m = Math.floor(s / 60);
+    if (m >= 60) return Math.floor(m / 60) + '时' + p(m % 60) + '分';
+    return m + '分' + p(s % 60);
+}
+
+/** 'HH:MM'（北京时间）—— RANK_BY_TIME_FROM 之前的榜那一列显示它 */
 function cnClock(t) {
-    const ms = msOf(t);
+    const ms = !t ? NaN : (t instanceof Date ? t.getTime() : Date.parse(t));
     if (isNaN(ms)) return '';
     const d = new Date(ms + CN_TZ_OFFSET_MS);
     const p = n => (n < 10 ? '0' : '') + n;
     return p(d.getUTCHours()) + ':' + p(d.getUTCMinutes());
 }
 
-function msOf(t) {
-    if (!t) return NaN;
-    return t instanceof Date ? t.getTime() : Date.parse(t);
+function rankByTime(date) {
+    return date >= RANK_BY_TIME_FROM;
+}
+
+/**
+ * 当天排行：分数高的在前，同分用时短的在前，再同分同用时比谁先做完。
+ * RANK_BY_TIME_FROM 之前的日期不看用时，同分直接比谁先做完
+ */
+function rankQuery(mode, date) {
+    const q = db.collection(RECORD_COLLECTION)
+        .where({ mode: mode, date: date, finished: true, finishedAt: _.gt(new Date(0)) })
+        .orderBy('score', 'desc');
+    return (rankByTime(date) ? q.orderBy('usedSeconds', 'asc') : q).orderBy('finishedAt', 'asc');
 }
 
 /**
@@ -152,7 +180,8 @@ function isPerfectRound(r) {
 
 /**
  * 结束面板的数。连续天数按「做过这天的题」算（有作答记录即算），从这道题的日期往回数；
- * 排行榜只排已结束、而且带 finishedAt 的局 —— 10-30 之前的记录没有这个字段，那之前的日期没有榜
+ * 排行榜只排已结束、而且带 finishedAt 的局 —— 10-30 之前的记录没有这个字段，那之前的日期没有榜。
+ * 排序见 rankQuery；榜上那一列 11-03 起显示用时，之前的日期显示做完的钟点
  */
 async function crossSummary(openid, mode, date, rec) {
     const mine = [];
@@ -169,32 +198,26 @@ async function crossSummary(openid, mode, date, rec) {
     for (let d = date; days.has(d); d = cnDateStr(Date.parse(d + 'T00:00:00Z') - CN_TZ_OFFSET_MS - 86400000)) streak++;
 
     const done = { mode: mode, date: date, finished: true, finishedAt: _.gt(new Date(0)) };
-    const coll = db.collection(RECORD_COLLECTION);
     const res = await Promise.all([
-        coll.where(done).orderBy('score', 'desc').orderBy('finishedAt', 'asc')
-            .field({ openid: true, score: true, finishedAt: true }).limit(RANK_TOP).get(),
-        coll.where(done).count()
+        rankQuery(mode, date).field({ openid: true, score: true, usedSeconds: true, finishedAt: true }).limit(RANK_TOP).get(),
+        db.collection(RECORD_COLLECTION).where(done).count()
     ]);
     const topRows = (res[0] && res[0].data) || [];
+    const byTime = rankByTime(date);
     const profiles = await profilesOf(topRows.map(r => r.openid).concat([openid]));
     const nameOf = id => (profiles.get(id) && profiles.get(id).name) || playerName(id || '');
     const avatarOf = id => (profiles.get(id) && profiles.get(id).avatar) || '';
     const top = topRows.map((r, i) => ({
         rank: i + 1, name: nameOf(r.openid), avatar: avatarOf(r.openid), score: r.score || 0,
-        time: cnClock(r.finishedAt), me: r.openid === openid
+        // 字段名还叫 time：前端（1.0.61）原样显示这个字符串，改名就得发版
+        time: byTime ? usedText(r.usedSeconds) : cnClock(r.finishedAt), me: r.openid === openid
     }));
     // 名次只给前 10 名：不在榜上的人只显示「未上榜」，不报具体第几名（10-30 定）
     const idx = top.findIndex(x => x.me);
     const myRank = idx >= 0 ? idx + 1 : null;
 
     // 用时：累计的前台作答时长（见 addActive）。部署前做完的局没有这个数
-    let seconds = null;
-    if (rec.finished) {
-        try {
-            const o = oneDoc(await db.collection(OPEN_COLLECTION).doc(openid + '_' + mode + '_' + date).get());
-            if (o && typeof o.activeSeconds === 'number' && o.activeSeconds > 0) seconds = o.activeSeconds;
-        } catch (e) { /* 没有打开记录 */ }
-    }
+    const seconds = rec.finished ? ((await activeOf(openid, mode, date)) || null) : null;
 
     return {
         streak: streak,
@@ -204,6 +227,7 @@ async function crossSummary(openid, mode, date, rec) {
         rank: {
             total: res[1].total,
             myRank: myRank,           // 前 10 名之内才有，否则 null（前端显示「未上榜」）
+            timeCol: byTime ? '用时' : '做完',   // 那一列的表头（1.0.61 不认，写死「做完」）
             // 没进前 10 时，榜单末尾补一行「我 · 未上榜」要用的头像
             meAvatar: avatarOf(openid),
             top: top
@@ -237,10 +261,22 @@ async function logOpen(openid, mode, date) {
     }
 }
 
+/** 这一局累计的作答用时（秒），没有记录给 0 */
+async function activeOf(openid, mode, date) {
+    try {
+        const o = oneDoc(await db.collection(OPEN_COLLECTION).doc(openid + '_' + mode + '_' + date).get());
+        const s = o && Number(o.activeSeconds);
+        return s > 0 ? Math.round(s) : 0;
+    } catch (e) {
+        return 0;   // 没有打开记录
+    }
+}
+
 /**
  * 累计作答用时：只算填字页停在前台、这一局还没结束的时间（前端掐表，切后台 / 看激励视频时暂停）。
  * 每次作答、求提示、复活带上 activeDelta，切后台时单独报一次（action:'tick'）。
- * 用时不参与排名，只在结束面板和成绩卡上显示，所以不防伪造；单次封顶 1 小时，免得一次异常把数撑爆
+ * 11-03 起用时是排行榜同分时的第二排序（只比同分的人，分数仍由服务端判），前端上报的数不防伪造；
+ * 单次封顶 1 小时，免得一次异常把数撑爆
  */
 async function addActive(openid, mode, date, delta) {
     const d = Math.min(3600, Math.max(0, Math.round(Number(delta) || 0)));
@@ -421,7 +457,15 @@ async function saveRecord(rec) {
     const now = db.serverDate();
     if (!data.createdAt) data.createdAt = now;
     data.updatedAt = now;
-    if (data.finished && !data.finishedAt) data.finishedAt = now;
+    if (data.finished && !data.finishedAt) {
+        data.finishedAt = now;
+        // 用时同一刻抄进来，排行榜才能按它排序（guess_opens 那份是另一个集合，查询里排不了）。
+        // 最后一次作答带的 activeDelta 在 main 里已经先加进 guess_opens 了，这里读到的是全程
+        if (data.mode === 'cross') {
+            const s = await activeOf(data.openid, data.mode, data.date);
+            data.usedSeconds = s > 0 ? s : NO_TIME_SECONDS;
+        }
+    }
     try { await db.createCollection(RECORD_COLLECTION); } catch (e) { /* 已存在 */ }
     await db.collection(RECORD_COLLECTION).doc(_id).set({ data });
 }
@@ -551,7 +595,9 @@ exports.main = async (event) => {
                     score: CROSS_START_SCORE + solved * SCORE_CORRECT + (dead ? 3 : wrong) * SCORE_WRONG + hints * SCORE_HINT,
                     createdAt: new Date(start),
                     updatedAt: new Date(start + (5 + i % 7) * 60000),
-                    finishedAt: new Date(start + (5 + i % 7) * 60000)
+                    finishedAt: new Date(start + (5 + i % 7) * 60000),
+                    // 用时跟做完时刻错开，看得出同分时是按用时排、不是按谁先做完
+                    usedSeconds: 60 + ((i * 97) % 600)
                 });
             }
             for (let i = 0; i < rows.length; i += 20) {
@@ -570,6 +616,35 @@ exports.main = async (event) => {
                 }
             }
             return { success: true, seeded: rows.length, patched: patched, note: '测完用 clear:true 删掉' };
+        }
+
+        // —— 给已做完、还没有 usedSeconds 的填字记录补上用时（只能在控制台跑）。
+        //   { action:'backfillUsed', mode:'cross', date:'2026-11-03' }  —— 只补这一天
+        //   { action:'backfillUsed', mode:'cross' }                      —— 补全部
+        // 只有 RANK_BY_TIME_FROM 起的日期按用时排：部署晚于那天零点、那之前已经做完的局要补，不补的话「缺字段」在升序里被当成最小值，同分时反而排到最前面
+        if (action === 'backfillUsed') {
+            if (openid) return { success: false, error: '只能在云函数控制台跑' };
+            if (mode !== 'cross') return { success: false, error: '只有填字有排行榜' };
+            const where = { mode: mode, finished: true, finishedAt: _.gt(new Date(0)), usedSeconds: _.exists(false) };
+            if (/^\d{4}-\d{2}-\d{2}$/.test(ev.date || '')) where.date = ev.date;
+            let fixed = 0, noTime = 0;
+            const started = Date.now();
+            // 补过的就不再满足 exists(false)，所以每轮都从头取
+            while (Date.now() - started < 50000) {
+                const rows = ((await db.collection(RECORD_COLLECTION).where(where)
+                    .field({ openid: true, mode: true, date: true }).limit(100).get()).data) || [];
+                if (!rows.length) break;
+                for (let i = 0; i < rows.length; i += 20) {
+                    await Promise.all(rows.slice(i, i + 20).map(async r => {
+                        const s = await activeOf(r.openid, r.mode, r.date);
+                        if (!s) noTime++;
+                        await db.collection(RECORD_COLLECTION).doc(r._id).update({ data: { usedSeconds: s || NO_TIME_SECONDS } });
+                        fixed++;
+                    }));
+                }
+            }
+            const left = (await db.collection(RECORD_COLLECTION).where(where).count()).total;
+            return { success: true, fixed: fixed, noTime: noTime, left: left, note: left ? '还没补完，再跑一次' : '' };
         }
 
         // 这句会原样弹给用户，别写成开发者口吻
@@ -594,8 +669,7 @@ exports.main = async (event) => {
                 coll.where({ mode: mode, date: date, fake: _.neq(true) }).count(),
                 coll.where({ openid: openid, mode: mode, date: _.gte(since).and(_.lte(date)) })
                     .field({ date: true }).limit(100).get(),
-                coll.where({ mode: mode, date: date, finished: true, finishedAt: _.gt(new Date(0)) })
-                    .orderBy('score', 'desc').orderBy('finishedAt', 'asc').field({ openid: true }).limit(RANK_TOP).get(),
+                rankQuery(mode, date).field({ openid: true }).limit(RANK_TOP).get(),
                 db.collection(PUZZLE_COLLECTION).doc(mode + '_' + date).get().catch(() => null)
             ]);
             const puzzle = oneDoc(res[3]);
@@ -743,6 +817,7 @@ exports.main = async (event) => {
                 if (rec.finished && solvedNos.length < entries.length) {
                     rec.finished = false;
                     rec.finishedAt = null;   // 接着做完时重新记（排行榜看的是最后一次做完的时间）
+                    rec.usedSeconds = null;  // 同上：复活后接着计时，做完时连同这段重新抄
                 }
                 await saveRecord(rec);
                 return wrap({ revived: true });

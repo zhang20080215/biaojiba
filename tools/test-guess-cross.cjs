@@ -80,6 +80,30 @@ test('crossClue：clueAudit 里的几种坏线索（10-30 实测样本）', () =
     assert.ok(cross.crossClue(d).indexOf(' ') < 0, cross.crossClue(d));
 });
 
+test('crossClue / crossClueOk：新闻稿口吻的简介（11-02 crossStats 实测样本）', () => {
+    // 有剧情句时让位给剧情句
+    const a = { title: '某部新片', intro: '张三将加盟李四执导新片，明年开拍。一名退休警察回到故乡小镇，发现弟弟卷进了一桩旧案。' };
+    const ca = cross.crossClue(a);
+    assert.ok(ca.startsWith('一名退休警察') && cross.crossClueOk(ca), ca);
+    // 整段都是新闻稿：不进词库
+    ['███将加盟███执导新片[]，朝鲜某高官儿子在世界各国连续作案',
+        '《███》主演███、███、███、马修·佩里和大卫·施维默回到了这部标志性喜剧的片场',
+        '███、███、███将合作新片《███》，7月上半月开拍，和上部影片相隔三年',
+        '《███》讲述了███饰演的███被冤枉成杀人罪而判刑入狱'
+    ].forEach(function (c) { assert.strictEqual(cross.crossClueOk(c), false, c); });
+    // 普通剧情线索不受影响
+    assert.ok(cross.crossClueOk('二战期间，盟军苦于德国的秘密系统“英格玛”无法破译'));
+});
+
+test('crossWordPool：只有新闻稿简介的片不进词库，手工线索照收', () => {
+    const news = '某某将加盟某某执导新片，影片由三位实力派演员联袂主演，预计明年夏天正式开拍。';
+    const ws = cross.crossWordPool([
+        { _id: 'a', title: '某部新片', ratingCount: 300000, intro: news },
+        { _id: 'b', title: '另一部片', ratingCount: 300000, intro: news, clueOverride: '一名退休警察回到故乡小镇，发现弟弟卷进了一桩旧案' }
+    ], {});
+    assert.deepStrictEqual(ws.map(w => w._id), ['b']);
+});
+
 test('crossClue：手工线索优先，原样使用', () => {
     assert.strictEqual(cross.crossClue({ title: 'x', intro: '随便', clueOverride: '一个手工写的线索' }), '一个手工写的线索');
 });

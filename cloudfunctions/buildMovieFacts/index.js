@@ -455,7 +455,11 @@ exports.main = async (event) => {
         });
     }
 
-    const nextStart = startFrom + processed;
+    // 增量模式下一轮会重新算 targets，本轮建好的已经不在里面了，所以游标只能往前挪「失败的条数」；
+    // 照 forceRefresh 那样加 processed，每轮会跳过同样多还没建的片（2026-11-02 实测 2991 部只建了一半）
+    const cursor = startFrom + processed;
+    const nextStart = forceRefresh ? cursor : startFrom + (processed - built);
+    const remaining = Math.max(0, targets.length - cursor);
     const result = {
         success: true,
         mode: forceRefresh ? 'forceRefresh' : 'incremental',
@@ -463,8 +467,8 @@ exports.main = async (event) => {
         targets: targets.length,
         startFrom, processed, built, fetchFailed, writeFailed,
         failedIdsSample: failedIds,
-        remaining: Math.max(0, targets.length - nextStart),
-        nextStart: nextStart < targets.length ? nextStart : null,
+        remaining,
+        nextStart: remaining > 0 ? nextStart : null,
         stoppedEarly,
         elapsedMs: Date.now() - startedAt
     };
@@ -472,7 +476,7 @@ exports.main = async (event) => {
     // 自动接力：还没跑完就再调自己一轮。失败的条目留给下一次增量跑
     // （拉不到详情基本是豆瓣临时限流，隔一会儿重跑同一条就好）。
     if (ev.autoContinue === true && result.nextStart != null) {
-        console.log('[buildMovieFacts] 接力：已建 ' + nextStart + '/' + targets.length);
+        console.log('[buildMovieFacts] 接力：本轮建 ' + built + '，还剩 ' + remaining + '/' + targets.length);
         try {
             await cloud.callFunction({
                 name: 'buildMovieFacts',

@@ -231,10 +231,17 @@ const BOILERPLATE = /^(?:本片|影片|该片|电影|故事|这部电影|本剧)
 const ADAPTATION = /^(?:本片|影片|该片|电影)?(?:根据|改编自)/;
 const SETTING_ONLY = /^(?:\d{2,4}|[一二三四五六七八九十〇零]{2,4})(?:年代?|世纪)/;
 const META = /《|》|上映|票房|是一部|本片是|该片是|影片是|系列电影|续集/;
+// 新闻稿口吻（2026-11-02 crossStats 实测，多来自扩片源）：「███将加盟███执导新片」「《███》主演███、███…」。
+// 和 META 一样只在有剧情句时让位；整段都是这种句子的片，crossClueOk 直接拒掉，不进词库
+const NEWS = /执导|主演|领衔|加盟|开拍|杀青|新片|定档|饰演|特辑/;
 const plainLen = function (s) { return String(s).replace(/███/g, '').length; };
 
+function hasClueOverride(fact) {
+    return !!(fact && typeof fact.clueOverride === 'string' && fact.clueOverride.trim());
+}
+
 function crossClue(fact) {
-    if (fact && typeof fact.clueOverride === 'string' && fact.clueOverride.trim()) {
+    if (hasClueOverride(fact)) {
         return fact.clueOverride.trim().slice(0, CLUE_MAXLEN);
     }
     let s = String(fact.intro || '');
@@ -272,7 +279,7 @@ function crossClue(fact) {
         .filter(function (p) { return !ADAPTATION.test(p); })
         .map(function (p) { return p.replace(BOILERPLATE, '').replace(/^[，、：:\s]+/, ''); })
         .filter(function (p) { return p && !(plainLen(p) <= 12 && SETTING_ONLY.test(p)); });
-    const story = parts.filter(function (p) { return !META.test(p); });
+    const story = parts.filter(function (p) { return !META.test(p) && !NEWS.test(p); });
     if (story.length) parts = story;
     if (!parts.length) parts = raw;
     // ⑦ 按去码后的字数接句子
@@ -290,10 +297,13 @@ function crossClue(fact) {
 /**
  * 线索可用吗。打完码后可能只剩一堆 ███ 或者短得毫无信息，
  * 这种片直接不进词库 —— 填字里一条没法推的线索会卡死整盘。
+ * crossClue 有剧情句时只用剧情句，所以成品里还带 META / NEWS 的，说明简介里一句剧情都没有，也拒掉。
+ * 手工线索不走这里（crossWordPool 里直接放行）。
  */
 function crossClueOk(clue) {
     const s = String(clue || '');
     if (s.length < 14) return false;
+    if (META.test(s) || NEWS.test(s)) return false;
     const masked = (s.match(/███/g) || []).length * 3;
     return masked / s.length < 0.35;
 }
@@ -332,7 +342,7 @@ function crossWordPool(pool, opts) {
             && usableTitle(f.title)
             && String(f.intro || '').length >= 20
             && Number(f.ratingCount) >= minVotes
-            && crossClueOk(crossClue(f));
+            && (hasClueOverride(f) || crossClueOk(crossClue(f)));
         if (!ok) return;
         const cur = best.get(f.title);
         if (!cur || Number(f.ratingCount) > Number(cur.ratingCount)) best.set(f.title, f);

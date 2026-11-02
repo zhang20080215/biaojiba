@@ -426,6 +426,7 @@ Page({
                 seconds: r.seconds,
                 total: rank.total || 0,
                 myRank: rank.myRank || 0,   // 只有进了前 10 才有
+                timeCol: rank.timeCol || '用时',   // 那一列的表头：11-03 起是用时，之前是做完的钟点
                 top: top,
                 meAvatar: rank.meAvatar || ''   // 没进前 10 时，末尾「我 · 未上榜」那行用
             }

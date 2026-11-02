@@ -103,11 +103,12 @@
         <view class="rank-title">{{dayOffset === 0 ? '今日排行' : dateShort + ' 排行'}}</view>
         <view wx:if="{{!summary.top.length}}" class="rank-empty">还没有人上榜</view>
         <block wx:else>
-          <!-- 表头：「做完」是做完这一局的时刻，同分时先做完的排前面 -->
+          <!-- 表头：那一列的含义服务端说了算（rank.timeCol）——11-03 起的榜是「用时」，同分时用时短的排前面；
+               之前的日期是「做完」，同分时先做完的排前面 -->
           <view class="rank-cols">
             <text class="c-no">名次</text>
             <text class="c-player">玩家</text>
-            <text class="c-time">做完</text>
+            <text class="c-time">{{summary.timeCol}}</text>
             <text class="c-score">得分</text>
           </view>
           <view wx:for="{{summary.top}}" wx:key="rank" class="rank-row {{item.me ? 'me' : ''}}">
