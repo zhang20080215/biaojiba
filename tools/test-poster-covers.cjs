@@ -62,3 +62,25 @@ test('ensureCoverNodes：换链失败不抛，全部记 null', async () => {
   });
   assert.deepStrictEqual(nodes, { a: null });
 });
+
+test('ensureCoverNodes：allowHttp 时直链直接加载、cloud 照常换链，混在一起也对', async () => {
+  const nodes = {};
+  const loaded = [];
+  await ensureCoverNodes({
+    movies: [
+      { key: 'c', poster: 'cloud://x/c.jpg' },
+      { key: 'h', poster: 'https://img9.doubanio.com/p1.jpg' },
+      { key: 'h2', poster: 'http://img1.doubanio.com/p2.jpg' },
+      { key: 'n', poster: '' }
+    ],
+    nodes,
+    allowHttp: true,
+    getTempFileURL: async list => ({ fileList: list.map(id => ({ fileID: id, tempFileURL: 'https://t/' + id })) }),
+    load: async url => { loaded.push(url); return 'img:' + url; }
+  });
+  assert.strictEqual(nodes.c, 'img:https://t/cloud://x/c.jpg');
+  assert.strictEqual(nodes.h, 'img:https://img9.doubanio.com/p1.jpg');
+  assert.strictEqual(nodes.h2, 'img:http://img1.doubanio.com/p2.jpg');
+  assert.strictEqual(nodes.n, null);
+  assert.strictEqual(loaded.length, 3);
+});

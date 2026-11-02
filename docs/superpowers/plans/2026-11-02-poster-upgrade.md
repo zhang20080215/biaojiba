@@ -59,7 +59,8 @@ tools/
 - `ordinal`：「我记录的第 N 部」，由页面用全量记录算好后传入（见 T1.2）。
 
 `fromDailyRange(entries, { mode:'month'|'year', year, month })` → `{ kind:'range', label, films, groups, stats, favorite, monthsWithData, truncated }`
-- `films`：用 `pages/daily/movie/common.js` 现有的 `dedupeMovies` 按「部」去重。**直接 require 这个函数，不复制一份**。
+- `films`：用 `pages/daily/movie/common.js` 现有的 `dedupeMovies` 按「部」去重。**不复制一份**：由页面通过 `opts.dedupe` 传进来（utils 不反向 require pages），测试里传的也是这个真函数。
+- （实现备注）观影日 `days` 按**去重前**的记录算：重看那天也是观影日。经典版式的 `summarize` 是按去重后算的，两者在重看时会差几天，新版式以这里的口径为准。平均分用 5 星制，经典版式用的是 10 分制。
 - `stats = { count, days, avgStars }`：`days` 是有记录的不同日期数；`avgStars` 只算 `rating>0` 的条目，保留 1 位小数，没有任何评分时为 `null`。
 - `favorite`：评分最高的一部，同分取最早；全都没评分时取第一部，并带上 `favoriteKind:'first'`，让版式切换文案。
 - `groups`：按日期分组 `[{ date, weekdayCn, films[] }]`，供日程清单使用。
