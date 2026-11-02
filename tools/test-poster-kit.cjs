@@ -81,6 +81,30 @@ test('averageOf：平均色与亮度；getImageData 抛错返回 null', () => {
 });
 
 test('版式注册表：没有模块时只剩经典；登记模块后按规划顺序出现、默认值生效', () => {
+  const saved = Object.assign({}, reg.MODULES);
+  Object.keys(reg.MODULES).forEach(k => delete reg.MODULES[k]);
+  try {
+    registryCases();
+  } finally {
+    Object.keys(reg.MODULES).forEach(k => delete reg.MODULES[k]);
+    Object.assign(reg.MODULES, saved);
+  }
+});
+
+test('已登记的版式都实现了 supports / measure / draw，且 measure 在空数据下也给出尺寸', () => {
+  const model = require(path.join(dir, 'model.js'));
+  const empty = { single: model.fromDailySingle({}), range: model.fromDailyRange([], { mode: 'month', year: 2026, month: 1 }), ranking: model.fromRanking([], {}) };
+  Object.keys(reg.MODULES).forEach(id => {
+    const m = reg.MODULES[id];
+    ['supports', 'measure', 'draw'].forEach(fn => assert.strictEqual(typeof m[fn], 'function', `${id}.${fn}`));
+    Object.keys(empty).filter(k => m.supports(k)).forEach(k => {
+      const size = m.measure(empty[k]);
+      assert.ok(size.width === 1080 && size.height >= 1440, `${id}/${k} 尺寸 ${JSON.stringify(size)}`);
+    });
+  });
+});
+
+function registryCases() {
   assert.deepStrictEqual(reg.available('single'), ['classic']);
   assert.strictEqual(reg.defaultFor('single'), 'classic');
   assert.strictEqual(reg.resolve('single', 'ticket', 'classic'), 'classic');
@@ -102,7 +126,7 @@ test('版式注册表：没有模块时只剩经典；登记模块后按规划�
     delete reg.MODULES.ticket;
     delete reg.MODULES.magazine;
   }
-});
+}
 
 test('tokens：字体串；Inter 没加载时不出现 PosterNum', () => {
   assert.strictEqual(tokens.cn(700, 33.6), '700 34px "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif');

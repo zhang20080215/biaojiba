@@ -48,6 +48,25 @@ function averageOf(ctx, w, h) {
   }
 }
 
+// 糊开的颜色会发灰：提饱和 1.6、提亮 1.15（精修稿 CSS 的 saturate(1.6) brightness(1.15)）。
+// 只在 48×64 的中间图上逐像素算，三千个像素，不费时。getImageData 不支持就跳过。
+const SATURATE = 1.6, BRIGHTEN = 1.15;
+function vivid(ctx, w, h) {
+  try {
+    const img = ctx.getImageData(0, 0, w, h);
+    const d = img.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const r = d[i], g = d[i + 1], b = d[i + 2];
+      const gray = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      d[i] = clamp255((gray + (r - gray) * SATURATE) * BRIGHTEN);
+      d[i + 1] = clamp255((gray + (g - gray) * SATURATE) * BRIGHTEN);
+      d[i + 2] = clamp255((gray + (b - gray) * SATURATE) * BRIGHTEN);
+    }
+    ctx.putImageData(img, 0, 0);
+  } catch (e) { /* 不支持就保持原色 */ }
+}
+function clamp255(v) { return v < 0 ? 0 : v > 255 ? 255 : Math.round(v); }
+
 /**
  * 为一张封面准备模糊底素材。node = 页面 canvas.createImage 出来的封面（可为 null）。
  * 返回 { blurred: 离屏 canvas | null, avg: {r,g,b,lum} | null }
@@ -72,6 +91,7 @@ async function prepareTint(node) {
         mctx.imageSmoothingEnabled = true;
         if ('imageSmoothingQuality' in mctx) mctx.imageSmoothingQuality = 'high';
         mctx.drawImage(small, 0, 0, MID[0], MID[1]);
+        vivid(mctx, MID[0], MID[1]);
         out.blurred = mid;
       }
     }

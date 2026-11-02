@@ -3,6 +3,10 @@ const rewardedSaveGate = require('../../../utils/rewardedSaveGate.js');
 const MoviePosterDrawer = require('../../../utils/moviePosterDrawer.js');
 const CanvasHelper = require('../../../utils/canvasHelper.js');
 const { ensureCoverNodes } = require('../../../utils/posterCovers.js');
+const posterIndex = require('../../../utils/poster/index.js');
+const posterModel = require('../../../utils/poster/model.js');
+const { ensureFonts } = require('../../../utils/poster/fonts.js');
+const { prepareTint } = require('../../../utils/poster/tint.js');
 const { getNavMetrics, getWindowInfoCompat, formatDateCN, todayStr, flattenMovies, dedupeMovies } = require('./common.js');
 
 // 两种进入方式：
@@ -14,6 +18,9 @@ const MODE_STORAGE_KEY = 'moviePosterMode';   // 'xhs'(小红书 3:4) | 'raw'(�
 const HIDE_RATINGS_KEY = 'moviePosterHideRatings';   // 单部海报是否隐藏全部平台评分（豆瓣/IMDb/烂番茄）
 const LAYOUT_STORAGE_KEY = 'moviePosterLayout';       // 范围版式：'whole' | 'month' | 'rating' | 'calendar'(仅月度)
 const LAYOUTS = ['whole', 'month', 'rating', 'calendar'];
+// 单部海报的版式（utils/poster 注册表：票根 / 杂志 / … / 经典）；经典 = 原来的封面海报，比例开关只对它生效
+const SINGLE_STYLE_KEY = 'moviePosterStyleSingle';
+const ORDINAL_WAIT = 2500;                             // 「我记录的第 N 部」最多等这么久，超时就先不画
 const TITLE_MAX = 20;                                  // 自定义标题字数上限
 const MAX_MOVIES = 300;                                // 绘制器上限：超出按日期取前 300 部，统计仍按全量、海报页脚注明
 
@@ -55,6 +62,8 @@ Page({
 
     // 单部海报比例：xhs=小红书 3:4（可能裁切海报）/ raw=原始海报比例（不裁）
     singleMovie: false,
+    singleStyles: [],    // [{ id, name }]，只列已实现的版式 + 经典
+    singleStyle: 'classic',
     posterMode: 'xhs',
     hasRatings: false,   // 单部电影是否有平台评分（决定是否显示开关）
     hideRatings: false,  // 单部电影是否隐藏全部平台评分
@@ -121,7 +130,19 @@ Page({
     // ---- 单部：直接出图 ----
     if (selection.length) {
       this._isSingle = true;
-      Object.assign(patch, this._buildPosterData(selection.slice(0, 1)), this._previewSizePatch(), { loading: false, singleMovie: true });
+      this._singleEntry = selection[0];
+      let style = posterIndex.defaultFor('single');
+      try { style = posterIndex.resolve('single', wx.getStorageSync(SINGLE_STYLE_KEY), style); } catch (e) {}
+      this._posterLayout = style;        // poster_view / poster_save 按版式上报
+      // 新版式要用的：数字字体、「第 N 部」，和封面加载同时跑，不拖慢出图
+      if (style !== 'classic') { ensureFonts(); this._loadOrdinal(); }
+      Object.assign(patch, this._buildPosterData(selection.slice(0, 1)), { singleStyles: posterIndex.options('single'), singleStyle: style });
+      if (style !== 'classic') {
+        const size = posterIndex.get(style).measure(posterModel.fromDailySingle(selection[0]));
+        this._canvasW = size.width;
+        this._canvasH = size.height;
+      }
+      Object.assign(patch, this._previewSizePatch(), { loading: false, singleMovie: true });
       this.setData(patch);
       rewardedSaveGate.refreshHint(this);   // 异步，setData 落在首屏渲染之后
       return;
@@ -363,6 +384,52 @@ Page({
       this._hideRatings ? [] : (this._rawRatings || []);
   },
 
+  // ---- 新版式（utils/poster）：单部 ----
+  // 当前单部版式；范围海报暂时只有经典
+  _style() {
+    return this._isSingle ? (this.data.singleStyle || 'classic') : 'classic';
+  },
+
+  onPickStyle(e) {
+    const id = e.currentTarget.dataset.id;
+    if (!id || id === this.data.singleStyle || !this.data.ready) return;
+    try { wx.setStorageSync(SINGLE_STYLE_KEY, id); } catch (err) {}
+    this._posterLayout = id;
+    if (id !== 'classic') { ensureFonts(); this._loadOrdinal(); }
+    this.setData({ singleStyle: id, ready: false });
+    this.generatePoster();
+  },
+
+  // 「我记录的第 N 部」：拉全量记录数这一条之前（含）有几条。只拉一次；失败 / 超时就不画序号
+  _loadOrdinal() {
+    if (this._ordinalP) return this._ordinalP;
+    this._ordinalP = new Promise(resolve => {
+      wx.cloud.callFunction({
+        name: 'syncDailyLog',
+        data: { action: 'getAll', theme: 'movie' },
+        success: res => {
+          const r = res && res.result;
+          if (!r || !r.success) return resolve(null);
+          resolve(posterModel.ordinalOf(flattenMovies(r.days || []), this._singleEntry));
+        },
+        fail: () => resolve(null)
+      });
+    });
+    return this._ordinalP;
+  },
+
+  // 新版式的数据 + 绘制环境：字体、序号最多等一会儿，封面模糊底按需准备
+  async _prepareStyle(style) {
+    const [fontsReady, ordinal] = await Promise.all([
+      ensureFonts(),
+      Promise.race([this._loadOrdinal(), new Promise(r => setTimeout(() => r(null), ORDINAL_WAIT))])
+    ]);
+    const model = posterModel.fromDailySingle(this._singleEntry, { ordinal, hideRatings: this._hideRatings });
+    const key = model.film.key;
+    const tints = { [key]: await prepareTint(this._coverNodes[key]) };
+    return { layout: posterIndex.get(style), model, env: { s: 1, fontsReady, tints } };
+  },
+
   // 当前生效的版式（单部没有版式概念，恒为 whole；日历只在月度下生效）
   _layout() {
     if (this._isSingle) return 'whole';
@@ -430,14 +497,28 @@ Page({
       await this._ensureCovers(canvas, ctx, this.posterData.movies);
       if (this._destroyed) return;
 
+      const style = this._style();
+      const next = style !== 'classic' ? await this._prepareStyle(style) : null;
+      if (this._destroyed) return;
+
       // 封面就绪后再定画布尺寸（raw 单部要用海报真实比例），随后同步预览框
-      this._resolveCanvasSize();
+      if (next) {
+        const size = next.layout.measure(next.model);
+        this._canvasW = size.width;
+        this._canvasH = size.height;
+      } else {
+        this._resolveCanvasSize();
+      }
       canvas.width = this._canvasW;
       canvas.height = this._canvasH;
       this._syncPreviewToCanvas();
 
-      const drawer = new MoviePosterDrawer(canvas, ctx, this._canvasW, this._canvasH);
-      drawer.draw(this.posterData, this._coverNodes, this.data.themeId, this._layout());
+      if (next) {
+        next.layout.draw(ctx, next.model, this._coverNodes, next.env);
+      } else {
+        const drawer = new MoviePosterDrawer(canvas, ctx, this._canvasW, this._canvasH);
+        drawer.draw(this.posterData, this._coverNodes, this.data.themeId, this._layout());
+      }
 
       await new Promise(resolve => {
         canvas.requestAnimationFrame(() => canvas.requestAnimationFrame(resolve));

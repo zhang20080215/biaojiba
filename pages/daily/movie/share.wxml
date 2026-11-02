@@ -20,7 +20,17 @@
          单部 = 比例 + 评分开关；范围 = 范围(年度/月度 + 上下切换) + 版式 + 标题 + 背景 -->
     <view class="opt-panel">
       <block wx:if="{{singleMovie}}">
-        <view class="opt-row">
+        <!-- 版式：utils/poster 注册表里已实现的 + 经典；只有经典时整行不出现 -->
+        <view class="opt-row" wx:if="{{singleStyles.length > 1}}">
+          <text class="opt-label">版式</text>
+          <view class="mode-row">
+            <view wx:for="{{singleStyles}}" wx:key="id"
+                  class="mode-tab {{singleStyle === item.id ? 'is-active' : ''}}"
+                  bindtap="onPickStyle" data-id="{{item.id}}">{{item.name}}</view>
+          </view>
+        </view>
+        <!-- 比例只对经典（整幅封面）有意义：新版式都是固定 3:4 -->
+        <view class="opt-row" wx:if="{{singleStyle === 'classic'}}">
           <text class="opt-label">比例</text>
           <view class="mode-row">
             <view class="mode-tab {{posterMode === 'xhs' ? 'is-active' : ''}}" bindtap="onPickMode" data-mode="xhs">小红书</view>
