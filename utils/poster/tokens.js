@@ -54,4 +54,12 @@ function num(weight, size, fontsReady) {
   return `${weight} ${Math.round(size)}px ${fam}`;
 }
 
-module.exports = { DESIGN_W, DESIGN_H, COLOR, TYPE, SPACE, NUM_FAMILY, cn, num };
+// 等宽：小票版式的编号 / 日期 / 评分行。中文字形找不到等宽字体时按字回退到系统中文字体
+const MONO = 'Menlo, "SF Mono", "Courier New", monospace';
+
+/** 等宽字体串（小票） */
+function mono(weight, size) {
+  return `${weight} ${Math.round(size)}px ${MONO}, ${CN}`;
+}
+
+module.exports = { DESIGN_W, DESIGN_H, COLOR, TYPE, SPACE, NUM_FAMILY, cn, num, mono };

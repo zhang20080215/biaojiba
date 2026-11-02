@@ -88,4 +88,30 @@ function fitFontSize(text, maxW, maxLines, sizes, measureAt) {
   return sizes[sizes.length - 1];
 }
 
-module.exports = { ELLIPSIS, ellipsis, wrapLines, spacedWidth, drawSpaced, fitFontSize };
+/**
+ * 大标题排版：先从大到小找能一行放下的字号；都放不下再按两行排，并把两行尽量切均匀，
+ * 避免「牯岭街少年杀人事 / 件」这种第二行只剩一个字。返回 { size, lines }。
+ */
+function fitTitle(text, maxW, sizes, measureAt) {
+  const s = String(text == null ? '' : text).trim();
+  for (let i = 0; i < sizes.length; i++) {
+    if (measureAt(sizes[i])(s) <= maxW) return { size: sizes[i], lines: [s] };
+  }
+  const chars = Array.from(s);
+  for (let i = 0; i < sizes.length; i++) {
+    const m = measureAt(sizes[i]);
+    // 从正中间往两边找第一个两半都放得下的切点
+    const mid = Math.ceil(chars.length / 2);
+    for (let d = 0; d < chars.length; d++) {
+      for (const cut of d ? [mid + d, mid - d] : [mid]) {
+        if (cut <= 0 || cut >= chars.length) continue;
+        const a = chars.slice(0, cut).join('').trim(), b = chars.slice(cut).join('').trim();
+        if (m(a) <= maxW && m(b) <= maxW) return { size: sizes[i], lines: [a, b] };
+      }
+    }
+  }
+  const size = sizes[sizes.length - 1];
+  return { size, lines: wrapLines(s, maxW, 2, measureAt(size)) };
+}
+
+module.exports = { ELLIPSIS, ellipsis, wrapLines, spacedWidth, drawSpaced, fitFontSize, fitTitle };

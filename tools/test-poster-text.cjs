@@ -56,3 +56,16 @@ test('fitFontSize：取第一个不需要省略的字号，都不行取最小', 
   assert.strictEqual(T.fitFontSize('千与千寻', 10, 1, [20, 15, 10], mAt), 20);
   assert.strictEqual(T.fitFontSize('一二三四五六七八九十一二三四五六七八九十一', 10, 2, [20, 15, 10], mAt), 10);
 });
+
+test('fitTitle：能一行放下就一行（取最大字号），否则均分两行、不留单字尾巴', () => {
+  // 宽 9：字号 10 一行 9 字 → 「牯岭街少年杀人事件」字号 10 正好一行
+  assert.deepStrictEqual(T.fitTitle('牯岭街少年杀人事件', 9, [20, 15, 10], mAt), { size: 10, lines: ['牯岭街少年杀人事件'] });
+  // 宽 8：哪个字号都放不下一行 → 字号 20（一行 4 字）放不下两行，15（一行 5 字）可以，切成 5 / 4
+  assert.deepStrictEqual(T.fitTitle('牯岭街少年杀人事件', 8, [20, 15, 10], mAt), { size: 15, lines: ['牯岭街少年', '杀人事件'] });
+  assert.deepStrictEqual(T.fitTitle('千与千寻', 8, [20, 15, 10], mAt), { size: 20, lines: ['千与千寻'] });
+  // 两行都放不下 → 最小字号按字切两行并省略
+  const r = T.fitTitle('一二三四五六七八九十一二三四五', 4, [20, 10], mAt);
+  assert.strictEqual(r.size, 10);
+  assert.strictEqual(r.lines.length, 2);
+  assert.ok(r.lines[1].endsWith('…'));
+});

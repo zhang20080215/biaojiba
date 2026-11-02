@@ -26,7 +26,10 @@ const NAMES = {
 
 // 已实现的版式模块。新版式写完后在这里登记一行。
 const MODULES = {
-  ticket: require('./layouts/ticket.js')
+  ticket: require('./layouts/ticket.js'),
+  magazine: require('./layouts/magazine.js'),
+  polaroid: require('./layouts/polaroid.js'),
+  receipt: require('./layouts/receipt.js')
 };
 
 /** kind 下可选的版式 id（按 ORDER 顺序，只含已实现的 + classic） */

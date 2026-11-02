@@ -8,7 +8,7 @@ canvas{width:540px;height:720px;display:block;box-shadow:0 18px 50px rgba(20,25,
 .cap{margin-top:8px;color:#555}#log{white-space:pre-wrap;color:#a00;margin-top:12px}
 </style></head><body>
 <p>用小程序里的同一份 <code>utils/poster</code> 源码，在浏览器 canvas 上出图（宽 1080，缩到一半显示）。wx 只模拟了离屏 canvas；数字字体用本地 Inter 子集，和云存储上的是同一份文件。</p>
-<div class="row" id="row"></div><div id="log"></div>
+<div id="log"></div>
 <script>
 // ---- 极简 CommonJS：同步拉源码，按相对路径解析 require ----
 const _mods = {};
@@ -64,28 +64,34 @@ async function main() {
       e: Object.assign(entry({ title: '一部很冷门的片', year: '1987', dir: '某导演', genres: ['剧情'] }, '2026-08-11', 4, { rating: 3 }), { poster: '' }) }
   ];
 
-  const row = document.getElementById('row');
-  // ?full=N：只画第 N 个，按原尺寸 1080 显示，方便看细节
-  const full = new URLSearchParams(location.search).get('full');
+  // ?layouts=ticket,magazine：只画这几个版式（默认全部单部版式）；?full=N：只画第 N 个用例，按原尺寸 1080 显示
+  const q = new URLSearchParams(location.search);
+  const full = q.get('full');
+  const ids = (q.get('layouts') || poster.available('single').filter(id => id !== 'classic').join(',')).split(',');
   if (full != null) { document.querySelector('style').textContent += '.cell{width:1080px}canvas{width:1080px;height:auto}'; }
-  for (const c of (full != null ? [CASES[+full]] : CASES)) {
-    const cell = document.createElement('div'); cell.className = 'cell';
-    const canvas = document.createElement('canvas');
-    cell.appendChild(canvas);
-    const cap = document.createElement('div'); cap.className = 'cap'; cap.textContent = c.cap; cell.appendChild(cap);
-    row.appendChild(cell);
-    try {
-      const m = model.fromDailySingle(c.e, { ordinal: c.ordinal });
-      const layout = poster.get('ticket');
-      const size = layout.measure(m);
-      canvas.width = size.width; canvas.height = size.height;
-      const node = c.e.poster ? await loadImg(c.e.poster) : null;
-      const covers = { [m.film.key]: node };
-      const tints = { [m.film.key]: await tint.prepareTint(node) };
-      const t0 = performance.now();
-      layout.draw(canvas.getContext('2d'), m, covers, { s: 1, fontsReady, tints });
-      cap.textContent += `（绘制 ${Math.round(performance.now() - t0)}ms）`;
-    } catch (e) { log(c.cap + '：' + (e.stack || e)); }
+  const logEl = document.getElementById('log');
+  for (const id of ids) {
+    const h = document.createElement('h3'); h.textContent = poster.NAMES[id] || id; document.body.insertBefore(h, logEl);
+    const row = document.createElement('div'); row.className = 'row'; document.body.insertBefore(row, logEl);
+    for (const c of (full != null ? [CASES[+full]] : CASES)) {
+      const cell = document.createElement('div'); cell.className = 'cell';
+      const canvas = document.createElement('canvas');
+      cell.appendChild(canvas);
+      const cap = document.createElement('div'); cap.className = 'cap'; cap.textContent = c.cap; cell.appendChild(cap);
+      row.appendChild(cell);
+      try {
+        const m = model.fromDailySingle(c.e, { ordinal: c.ordinal });
+        const layout = poster.get(id);
+        const size = layout.measure(m);
+        canvas.width = size.width; canvas.height = size.height;
+        const node = c.e.poster ? await loadImg(c.e.poster) : null;
+        const covers = { [m.film.key]: node };
+        const tints = { [m.film.key]: await tint.prepareTint(node) };
+        const t0 = performance.now();
+        layout.draw(canvas.getContext('2d'), m, covers, { s: 1, fontsReady, tints });
+        cap.textContent += `（绘制 ${Math.round(performance.now() - t0)}ms）`;
+      } catch (e) { log(id + ' / ' + c.cap + '：' + (e.stack || e)); }
+    }
   }
 }
 main().catch(e => log(e.stack || e));
