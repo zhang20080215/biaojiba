@@ -1,24 +1,27 @@
-// 版式 · 电子小票（单部）。视觉基准：docs/superpowers/mockups/single.html「小票」。
-// 封面取色模糊底上一张上下锯齿边的白小票：MARKED / 观影小票 · No.编号 → 封面 + 片名 + 年份·导演 / 类型
-// → DATE 与平台评分逐行 → 我的评分 + 备注（短评）→ 条形码 + THANK YOU FOR WATCHING。
-// 段与段之间是虚线；哪段没数据就整段（连同它的虚线）不画。小票高度随内容，在页面里略偏上居中。
+// 版式 · 电子小票（单部）。视觉基准：docs/superpowers/mockups/v4.html ④。
+// 暗场景 + 顶光，一张略歪的锯齿边小票：MARKED / 观影小票 No.编号 / 日期 → 「热敏打印」的黑白高反差封面
+// → 账单式「电影票 ×1」《片名》、年份·导演·类型 → 平台评分逐行 → TOTAL = 我的星级、短评当脚注
+// → THANK YOU FOR WATCHING。
+// 段与段之间是虚线；哪段没数据就整段（连同它的虚线）不画。内容多了先压封面高度（440 → 300），小票整体垂直居中。
 //
-// 和票根一样先 layout（只量）再 draw：layout 返回一串「段」，每段知道自己的高度和画法。
+// 黑白封面要在离屏 canvas 上逐像素算，所以放在 prepare 里提前做（页面 / 调试页在 draw 之前 await）；
+// 没准备好（离屏 canvas 不可用）就退回彩色封面。
 const T = require('../tokens.js');
 const kit = require('../kit.js');
 const text = require('../text.js');
 const tint = require('../tint.js');
 
-const { COLOR } = T;
 const W = 1080, H = 1440;
-const CARD_W = 700, CARD_X = (W - CARD_W) / 2;
-const TOOTH = 24, ZIG = 12;           // 锯齿宽 / 深
-const PAD_X = 56, PAD_TOP = 26, PAD_BOTTOM = 30;
-const X0 = CARD_X + PAD_X, X1 = CARD_X + CARD_W - PAD_X, INNER_W = X1 - X0;
-const DASH = 22 + 2 + 22;             // 虚线段：上下各 22
-const COVER_W = 200, COVER_H = 290, COVER_GAP = 28;
-const ROW_LH = 42, NOTE_LH = 41;
-const BAR_H = 70, BARS = 23;
+const CARD_W = 720, CARD_X = (W - CARD_W) / 2;
+const TOOTH = 22, ZIG = 11;
+const PAD_X = 50, PAD_TOP = 22, PAD_BOTTOM = 28;
+const INNER_W = CARD_W - PAD_X * 2;
+const DASH = 20 + 2 + 20;
+const IMG_W = INNER_W, IMG_MAX = 440, IMG_MIN = 300;
+const ROW_LH = 43, NOTE_LH = 41;
+const REGION_TOP = 50, REGION_BOTTOM = H - 116;
+const TILT = -1.5;
+const PAPER = '#FAFAF7', INK = '#1B1B1B', GREY = '#666666', FAINT = '#888888';
 
 function supports(kind) { return kind === 'single'; }
 
@@ -26,178 +29,158 @@ function measure() { return { width: W, height: H }; }
 
 function pad4(n) { const s = String(n); return s.length >= 4 ? s : '0000'.slice(s.length) + s; }
 
-function layout(ctx, model) {
+/** 黑白热敏封面：按最大尺寸做一张，画的时候再按实际高度裁 */
+async function prepare(model, coverNodes) {
+  const key = model.film.key;
+  const node = (coverNodes || {})[key];
+  return { thermal: { [key]: node ? await tint.prepareThermal(node, IMG_W, IMG_MAX, 0.3) : null } };
+}
+
+function layout(ctx, model, hasCover) {
   const f = model.film;
   const blocks = [];
+  blocks.push({ type: 'head', h: 44 + 6 + 28 + (f.dateDot ? 2 + 28 : 0) });
+  if (hasCover) blocks.push({ type: 'dash' }, { type: 'img', h: IMG_MAX });
 
-  // 刊头
-  blocks.push({ type: 'head', h: 40 + 8 + 32 });
-
-  // 封面 + 片名
-  const textW = INNER_W - COVER_W - COVER_GAP;
   const measureAt = size => { ctx.font = T.cn(900, size); return s => ctx.measureText(s).width + 2 * Math.max(0, Array.from(s).length - 1); };
-  const title = f.title || '未命名电影';
-  const fit = text.fitTitle(title, textW, [40, 34, 30], measureAt);
-  const titleSize = fit.size, titleLines = fit.lines;
-  const metaLines = [[f.year, f.director].filter(Boolean).join(' · '), (f.genres || []).join(' / ')].filter(Boolean);
-  const textH = titleLines.length * Math.round(titleSize * 1.2) + (metaLines.length ? 12 + metaLines.length * 37 : 0);
-  blocks.push({ type: 'dash' }, { type: 'film', h: Math.max(COVER_H, textH), titleSize, titleLines, metaLines, textW });
+  const fit = text.fitTitle(`《${f.title || '未命名电影'}》`, INNER_W, [44, 38, 32], measureAt);
+  const titleLH = Math.round(fit.size * 1.4);
+  const meta = [f.year, f.director, (f.genres || []).join(' / ')].filter(Boolean).join(' · ');
+  blocks.push({ type: 'dash' }, { type: 'film', fit, titleLH, meta, h: ROW_LH + 2 + fit.lines.length * titleLH + 4 + (meta ? 32 : 0) });
 
-  // DATE + 平台评分
-  const rows = [];
-  if (f.dateDot) rows.push(['DATE', [f.dateDot, f.weekdayEn].filter(Boolean).join(' ')]);
-  (f.platform || []).slice(0, 4).forEach(p => rows.push([p.label, String(p.value)]));
-  if (rows.length) blocks.push({ type: 'dash' }, { type: 'rows', h: rows.length * ROW_LH, rows });
+  const rows = (f.platform || []).slice(0, 4).map(p => [p.label, String(p.value)]);
+  if (rows.length) blocks.push({ type: 'dash' }, { type: 'rows', rows, h: rows.length * ROW_LH });
 
-  // 我的评分 / 心情 + 备注
-  const hasBadge = f.rating > 0 || !!f.moodLabel;
+  const badge = f.rating > 0 ? 'stars' : (f.moodLabel ? 'mood' : '');
   ctx.font = T.cn(400, 24);
-  const prefixW = ctx.measureText('备注：').width;
-  const noteLines = f.note ? text.wrapLines(f.note, INNER_W - prefixW, 3, s => ctx.measureText(s).width) : [];
-  if (hasBadge || noteLines.length) {
-    blocks.push({ type: 'dash' }, {
-      type: 'mine', hasBadge, noteLines, prefixW,
-      h: (hasBadge ? 48 : 0) + (hasBadge && noteLines.length ? 14 : 0) + noteLines.length * NOTE_LH
-    });
+  const noteLines = f.note ? text.wrapLines(`* ${f.note}`, INNER_W, 3, s => ctx.measureText(s).width) : [];
+  if (badge || noteLines.length) {
+    blocks.push({ type: 'dash' }, { type: 'total', badge, noteLines, h: (badge ? 48 : 0) + (badge && noteLines.length ? 14 : 0) + noteLines.length * NOTE_LH });
   }
-
-  // 条形码
-  blocks.push({ type: 'dash' }, { type: 'bar', h: BAR_H + 10 + 28 });
-
+  blocks.push({ type: 'dash' }, { type: 'thanks', h: 28 });
   blocks.forEach(b => { if (b.type === 'dash') b.h = DASH; });
-  const contentH = blocks.reduce((s, b) => s + b.h, 0);
-  const cardH = ZIG + PAD_TOP + contentH + PAD_BOTTOM + ZIG;
-  // 精修稿 translateY(-53%)：比正中略偏上，给底部署名留气口
-  const cardY = Math.round(Math.max(60, H / 2 - cardH * 0.53));
-  return { f, blocks, cardH, cardY };
+
+  let cardH = () => ZIG + PAD_TOP + blocks.reduce((s, b) => s + b.h, 0) + PAD_BOTTOM + ZIG;
+  // 放不下先压封面
+  const img = blocks.find(b => b.type === 'img');
+  const over = cardH() - (REGION_BOTTOM - REGION_TOP);
+  if (img && over > 0) img.h = Math.max(IMG_MIN, IMG_MAX - over);
+  const h = cardH();
+  const y = Math.round(REGION_TOP + Math.max(0, (REGION_BOTTOM - REGION_TOP - h) / 2));
+  return { f, blocks, cardH: h, cardY: y };
 }
 
 function draw(ctx, model, covers, env) {
   const e = env || {};
   const fontsReady = !!e.fontsReady;
-  const L = layout(ctx, model);
-  const f = L.f;
+  const f = model.film;
   const node = (covers || {})[f.key] || null;
+  const hasCover = !!(node && node.width && node.height);
+  const thermal = ((e.thermal || {})[f.key]) || null;
+  const L = layout(ctx, model, hasCover);
 
-  // 1. 模糊底（比票根稍淡的白蒙层，小票本身是白的，底要留点颜色）
-  tint.drawTint(ctx, (e.tints || {})[f.key], W, H, 0.42);
+  // 1. 暗场景 + 顶光
+  tint.drawStage(ctx, (e.tints || {})[f.key], W, H);
+  const light = ctx.createRadialGradient(W / 2, 250, 0, W / 2, 250, 550);
+  light.addColorStop(0, 'rgba(255,255,255,0.22)');
+  light.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = light;
+  ctx.fillRect(0, 0, W, H);
 
-  // 2. 小票纸
-  kit.withShadow(ctx, { color: 'rgba(30,35,45,0.18)', blur: 40, y: 24 }, 1, () => {
-    kit.receiptPath(ctx, CARD_X, L.cardY, CARD_W, L.cardH, TOOTH);
-    ctx.fillStyle = COLOR.paper;
-    ctx.fill();
-  });
+  // 2. 小票：整张略歪
+  kit.rotated(ctx, W / 2, L.cardY + L.cardH / 2, TILT, () => {
+    ctx.translate(-CARD_W / 2, -L.cardH / 2);
+    kit.withShadow(ctx, { color: 'rgba(0,0,0,0.5)', blur: 50, y: 34 }, 1, () => {
+      kit.receiptPath(ctx, 0, 0, CARD_W, L.cardH, TOOTH);
+      ctx.fillStyle = PAPER;
+      ctx.fill();
+    });
 
-  ctx.textBaseline = 'middle';
-  ctx.textAlign = 'left';
-  let y = L.cardY + ZIG + PAD_TOP;
-  L.blocks.forEach(b => {
-    if (b.type === 'dash') {
-      kit.dashed(ctx, X0, y + 23, X1, y + 23, 2, '#D3D6DB', 8, 6);
-    } else if (b.type === 'head') {
-      ctx.fillStyle = COLOR.ink;
-      ctx.font = T.num(800, 30, fontsReady);
-      text.drawSpaced(ctx, 'MARKED', W / 2, y + 20, 10, 'center');
-      drawSerial(ctx, model.ordinal, y + 40 + 8 + 16);
-    } else if (b.type === 'film') {
-      drawFilm(ctx, b, f, node, y);
-    } else if (b.type === 'rows') {
-      b.rows.forEach((r, i) => {
-        const cy = y + ROW_LH * (i + 0.5);
-        ctx.fillStyle = COLOR.ink2;
+    const x0 = PAD_X, x1 = CARD_W - PAD_X, cx = CARD_W / 2;
+    let y = ZIG + PAD_TOP;
+    ctx.textBaseline = 'middle';
+    L.blocks.forEach(b => {
+      if (b.type === 'dash') {
+        kit.dashed(ctx, x0, y + 21, x1, y + 21, 2, '#CFCFCF', 8, 6);
+      } else if (b.type === 'head') {
+        ctx.fillStyle = INK;
+        ctx.font = T.num(800, 36, fontsReady);
+        text.drawSpaced(ctx, 'MARKED', cx, y + 22, 12, 'center');
+        ctx.font = T.mono(400, 20);
+        text.drawSpaced(ctx, model.ordinal ? `观影小票 No.${pad4(model.ordinal)}` : '观影小票', cx, y + 44 + 6 + 14, 2, 'center');
+        if (f.dateDot) {
+          ctx.fillStyle = '#777777';
+          ctx.textAlign = 'center';
+          ctx.fillText([f.dateDot, f.weekdayEn].filter(Boolean).join(' '), cx, y + 44 + 6 + 28 + 2 + 14);
+          ctx.textAlign = 'left';
+        }
+      } else if (b.type === 'img') {
+        if (thermal) {
+          const c = kit.coverCrop(thermal.width, thermal.height, IMG_W, b.h);
+          ctx.drawImage(thermal, c[0], c[1], c[2], c[3], x0, y, IMG_W, b.h);
+        } else {
+          kit.drawCover(ctx, node, x0, y, IMG_W, b.h, { r: 0, shadow: false, hairline: false, title: f.title, focusY: 0.3 });
+        }
+      } else if (b.type === 'film') {
+        ctx.fillStyle = INK;
         ctx.font = T.mono(400, 24);
+        ctx.fillText('电影票 ×1', x0, y + ROW_LH / 2);
+        let ty = y + ROW_LH + 2;
+        ctx.font = T.cn(900, b.fit.size);
+        b.fit.lines.forEach(line => { text.drawSpaced(ctx, line, x0 - b.fit.size * 0.3, ty + b.titleLH / 2, 2, 'left'); ty += b.titleLH; });
+        if (b.meta) {
+          ctx.fillStyle = GREY;
+          ctx.font = T.cn(400, 22);
+          ctx.fillText(text.ellipsis(b.meta, INNER_W, s => ctx.measureText(s).width), x0, ty + 4 + 16);
+        }
+      } else if (b.type === 'rows') {
+        ctx.fillStyle = INK;
+        ctx.font = T.mono(400, 24);
+        b.rows.forEach((r, i) => {
+          const ry = y + ROW_LH * (i + 0.5);
+          ctx.textAlign = 'left';
+          ctx.fillText(r[0], x0, ry);
+          ctx.textAlign = 'right';
+          ctx.fillText(r[1], x1, ry);
+        });
         ctx.textAlign = 'left';
-        ctx.fillText(r[0], X0, cy);
-        ctx.fillStyle = COLOR.ink;
-        ctx.textAlign = 'right';
-        ctx.fillText(r[1], X1, cy);
-      });
-      ctx.textAlign = 'left';
-    } else if (b.type === 'mine') {
-      drawMine(ctx, b, f, y);
-    } else if (b.type === 'bar') {
-      const probe = { fillRect() {}, set fillStyle(v) {} };
-      const bw = kit.barcode(probe, 0, 0, BAR_H, f.key, 3, BARS);
-      kit.barcode(ctx, W / 2 - bw / 2, y, BAR_H, f.key, 3, BARS, COLOR.ink);
-      ctx.fillStyle = COLOR.ink3;
-      ctx.font = T.mono(400, 18);
-      text.drawSpaced(ctx, 'THANK YOU FOR WATCHING', W / 2, y + BAR_H + 10 + 14, 4, 'center');
-    }
-    y += b.h;
+      } else if (b.type === 'total') {
+        drawTotal(ctx, b, f, x0, x1, y);
+      } else if (b.type === 'thanks') {
+        ctx.fillStyle = FAINT;
+        ctx.font = T.mono(400, 18);
+        text.drawSpaced(ctx, 'THANK YOU FOR WATCHING', cx, y + 14, 4, 'center');
+      }
+      y += b.h;
+    });
   });
 
   // 3. 署名
   ctx.textBaseline = 'alphabetic';
-  kit.watermark(ctx, W / 2, H - 56, 1, 'rgba(22,24,29,0.5)');
+  kit.watermark(ctx, W / 2, H - 52, 1, 'rgba(255,255,255,0.62)');
 }
 
-/** 「观影小票 · No.0037」居中；没有序号只写「观影小票」 */
-function drawSerial(ctx, ordinal, cy) {
-  const label = '观影小票';
-  const serial = ordinal ? `No.${pad4(ordinal)}` : '';
-  ctx.font = T.cn(400, 22);
-  const lw = ctx.measureText(label + (serial ? ' · ' : '')).width;
-  ctx.font = T.mono(400, 22);
-  const sw = serial ? ctx.measureText(serial).width : 0;
-  let x = W / 2 - (lw + sw) / 2;
-  ctx.fillStyle = COLOR.ink2;
-  ctx.font = T.cn(400, 22);
-  ctx.fillText(label + (serial ? ' · ' : ''), x, cy);
-  if (serial) {
-    ctx.font = T.mono(400, 22);
-    ctx.fillText(serial, x + lw, cy);
-  }
-}
-
-function drawFilm(ctx, b, f, node, y) {
-  kit.drawCover(ctx, node, X0, y, COVER_W, COVER_H, { r: 6, shadow: false, title: f.title, focusY: 0.3 });
-  const tx = X0 + COVER_W + COVER_GAP;
-  const lh = Math.round(b.titleSize * 1.2);
-  let ty = y;
-  ctx.fillStyle = COLOR.ink;
-  ctx.font = T.cn(900, b.titleSize);
-  b.titleLines.forEach(line => { text.drawSpaced(ctx, line, tx, ty + lh / 2, 2, 'left'); ty += lh; });
-  if (b.metaLines.length) {
-    ty += 12;
-    ctx.fillStyle = COLOR.ink2;
-    ctx.font = T.cn(400, 22);
-    b.metaLines.forEach(line => {
-      ctx.fillText(text.ellipsis(line, b.textW, s => ctx.measureText(s).width), tx, ty + 18);
-      ty += 37;
-    });
-  }
-}
-
-function drawMine(ctx, b, f, y) {
+function drawTotal(ctx, b, f, x0, x1, y) {
   let cy = y;
-  if (b.hasBadge) {
+  if (b.badge) {
     const mid = cy + 24;
-    ctx.fillStyle = COLOR.ink;
-    ctx.font = T.cn(700, 30);
-    ctx.fillText(f.rating > 0 ? '我的评分' : '我的心情', X0, mid);
-    if (f.rating > 0) {
-      const sw = 5 * 32 + 4 * 5;
-      kit.stars(ctx, X1 - sw, mid - 16, f.rating, 32, 5);
+    ctx.fillStyle = INK;
+    ctx.font = T.mono(700, 34);
+    ctx.fillText('TOTAL', x0, mid);
+    if (b.badge === 'stars') {
+      const sw = 5 * 34 + 4 * 5;
+      kit.stars(ctx, x1 - sw, mid - 17, f.rating, 34, 5, T.COLOR.acc, 'rgba(0,0,0,0.12)');
     } else {
       ctx.font = T.cn(400, 26);
       ctx.textAlign = 'right';
-      ctx.fillText(`${f.moodEmoji || ''} ${f.moodLabel}`.trim(), X1, mid);
+      ctx.fillText(`${f.moodEmoji || ''} ${f.moodLabel}`.trim(), x1, mid);
       ctx.textAlign = 'left';
     }
     cy += 48 + (b.noteLines.length ? 14 : 0);
   }
+  ctx.fillStyle = INK;
   ctx.font = T.cn(400, 24);
-  b.noteLines.forEach((line, i) => {
-    const mid = cy + NOTE_LH / 2;
-    if (i === 0) {
-      ctx.fillStyle = COLOR.ink2;
-      ctx.fillText('备注：', X0, mid);
-    }
-    ctx.fillStyle = COLOR.ink;
-    ctx.fillText(line, X0 + b.prefixW, mid);
-    cy += NOTE_LH;
-  });
+  b.noteLines.forEach(line => { ctx.fillText(line, x0, cy + NOTE_LH / 2); cy += NOTE_LH; });
 }
 
-module.exports = { supports, measure, draw, layout };
+module.exports = { supports, measure, draw, layout, prepare };

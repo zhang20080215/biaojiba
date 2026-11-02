@@ -427,7 +427,13 @@ Page({
     const model = posterModel.fromDailySingle(this._singleEntry, { ordinal, hideRatings: this._hideRatings });
     const key = model.film.key;
     const tints = { [key]: await prepareTint(this._coverNodes[key]) };
-    return { layout: posterIndex.get(style), model, env: { s: 1, fontsReady, tints } };
+    const layout = posterIndex.get(style);
+    const env = { s: 1, fontsReady, tints };
+    // 版式自己要的素材（小票的黑白热敏封面）：失败就不带，版式自己退回
+    if (layout.prepare) {
+      try { Object.assign(env, await layout.prepare(model, this._coverNodes)); } catch (e) {}
+    }
+    return { layout, model, env };
   },
 
   // 当前生效的版式（单部没有版式概念，恒为 whole；日历只在月度下生效）

@@ -20,6 +20,9 @@ function ellipsis(text, maxW, measure) {
   return lo > 0 ? chars.slice(0, lo).join('') + ELLIPSIS : ELLIPSIS;
 }
 
+// 不能出现在行首的标点（中文排版的「避头点」）
+const NO_LINE_START = '，。、；：！？）》」』】〉…,.;:!?)';
+
 /**
  * 按字切行，最多 maxLines 行；超出的部分在最后一行以「…」收尾。
  * 英文单词不做整词换行 —— 海报上的长文字是中文短评，按字切最稳。
@@ -32,7 +35,8 @@ function wrapLines(text, maxW, maxLines, measure) {
   let cur = '';
   for (let i = 0; i < chars.length; i++) {
     const next = cur + chars[i];
-    if (cur && measure(next) > maxW) {
+    // 句末标点不放行首：挂在上一行末尾（略超一点宽度），避免「。王家卫…」这种折法
+    if (cur && measure(next) > maxW && NO_LINE_START.indexOf(chars[i]) < 0) {
       lines.push(cur);
       cur = chars[i] === ' ' ? '' : chars[i];
       if (lines.length === maxLines) {

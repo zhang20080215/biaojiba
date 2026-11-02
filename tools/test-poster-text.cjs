@@ -69,3 +69,8 @@ test('fitTitle：能一行放下就一行（取最大字号），否则均分两
   assert.strictEqual(r.lines.length, 2);
   assert.ok(r.lines[1].endsWith('…'));
 });
+
+test('wrapLines：句末标点不放行首，挂在上一行末尾', () => {
+  assert.deepStrictEqual(T.wrapLines('一二三。四五', 3, 3, m1), ['一二三。', '四五']);
+  assert.deepStrictEqual(T.wrapLines('一二三」，四', 3, 3, m1), ['一二三」，', '四']);
+});

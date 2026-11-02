@@ -91,6 +91,27 @@ function drawCover(ctx, node, x, y, w, h, opts) {
   }
 }
 
+/** 绕 (cx, cy) 转 deg 度后执行 fn；fn 里的坐标以 (cx, cy) 为原点 */
+function rotated(ctx, cx, cy, deg, fn) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(deg * Math.PI / 180);
+  fn();
+  ctx.restore();
+}
+
+/** 圆角只在上面两个角的矩形路径（票根上半截 clip 用） */
+function topRoundRectPath(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x, y + h);
+  ctx.lineTo(x, y + r);
+  ctx.arcTo(x, y, x + r, y, r);
+  ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y, x + w, y + r, r);
+  ctx.lineTo(x + w, y + h);
+  ctx.closePath();
+}
+
 // ---------- 线 ----------
 
 function line(ctx, x1, y1, x2, y2, width, color) {
@@ -252,7 +273,7 @@ function watermark(ctx, cx, y, s, color) {
 
 module.exports = {
   SHADOW, WATERMARK,
-  roundRectPath, fillRoundRect, withShadow, coverCrop, drawCover,
+  roundRectPath, fillRoundRect, withShadow, coverCrop, drawCover, rotated, topRoundRectPath,
   line, dashed, starPath, stars,
   ticketPath, receiptPath,
   hashStr, seeded, barcode,

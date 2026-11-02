@@ -132,6 +132,80 @@ function drawTint(ctx, tint, W, H, wash) {
   }
 }
 
+/** 在 (x, y, w, h) 里画模糊图（aspectFill + 裁切），没有模糊图退平均色 / 深灰。调用方负责 clip */
+function drawTintRect(ctx, tint, x, y, w, h) {
+  const t = tint || {};
+  if (t.blurred) {
+    try {
+      const bw = t.blurred.width, bh = t.blurred.height;
+      // 往里收一圈像素：放大后边缘像素会拉出暗边
+      const c = coverCrop(bw - 4, bh - 4, w, h);
+      ctx.save();
+      ctx.imageSmoothingEnabled = true;
+      if ('imageSmoothingQuality' in ctx) ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(t.blurred, c[0] + 2, c[1] + 2, c[2], c[3], x, y, w, h);
+      ctx.restore();
+      return;
+    } catch (e) {
+      ctx.restore();
+    }
+  }
+  ctx.fillStyle = t.avg ? `rgb(${t.avg.r},${t.avg.g},${t.avg.b})` : STAGE_FALLBACK;
+  ctx.fillRect(x, y, w, h);
+}
+
+/**
+ * 暗场景底（v4 单部海报）：封面糊开铺满，再压一层中心浅、四角深的暗角 ——
+ * 白色卡片 / 相纸 / 小票放上去才是全图最亮的东西（参照每日选片票卡的深色遮罩）。
+ */
+const STAGE_FALLBACK = '#2A2D33';
+function drawStage(ctx, tint, W, H) {
+  drawTintRect(ctx, tint, 0, 0, W, H);
+  const cx = W / 2, cy = H * 0.42;
+  const r = Math.hypot(Math.max(cx, W - cx), Math.max(cy, H - cy));
+  const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+  g.addColorStop(0, 'rgba(12,10,10,0.18)');
+  g.addColorStop(0.7, 'rgba(12,10,10,0.55)');
+  g.addColorStop(1, 'rgba(12,10,10,0.72)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+}
+
+/**
+ * 「热敏打印」黑白高反差封面（小票版式）：在离屏 canvas 上按 w×h 裁好、转灰度、提对比。
+ * 精修稿 CSS = grayscale(1) contrast(1.45) brightness(1.08)。失败返回 null，版式退回彩色封面。
+ */
+const _thermalCache = {};
+async function prepareThermal(node, w, h, focusY) {
+  const src = node && node.src;
+  if (!src) return null;
+  const key = `${src}|${w}x${h}`;
+  if (key in _thermalCache) return _thermalCache[key];
+  let out = null;
+  const c = makeOffscreen(w, h);
+  if (c) {
+    const img = await loadOn(c, src);
+    if (img && img.width && img.height) {
+      try {
+        const cctx = c.getContext('2d');
+        const k = coverCrop(img.width, img.height, w, h, focusY);
+        cctx.drawImage(img, k[0], k[1], k[2], k[3], 0, 0, w, h);
+        const data = cctx.getImageData(0, 0, w, h);
+        const d = data.data;
+        for (let i = 0; i < d.length; i += 4) {
+          const g = 0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2];
+          const v = clamp255(((g - 128) * 1.45 + 128) * 1.08);
+          d[i] = d[i + 1] = d[i + 2] = v;
+        }
+        cctx.putImageData(data, 0, 0);
+        out = c;
+      } catch (e) { out = null; }
+    }
+  }
+  _thermalCache[key] = out;
+  return out;
+}
+
 /** 把平均色提亮到 HSL 亮度 ≥ minL（0~1），票夹色带用，避免发暗发脏 */
 function brighten(avg, minL) {
   if (!avg) return null;
@@ -146,4 +220,4 @@ function brighten(avg, minL) {
   return `rgb(${mix(r)},${mix(g)},${mix(b)})`;
 }
 
-module.exports = { prepareTint, drawTint, brighten, averageOf };
+module.exports = { prepareTint, drawTint, drawTintRect, drawStage, prepareThermal, brighten, averageOf };

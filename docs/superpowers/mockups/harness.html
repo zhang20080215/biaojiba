@@ -87,8 +87,10 @@ async function main() {
         const node = c.e.poster ? await loadImg(c.e.poster) : null;
         const covers = { [m.film.key]: node };
         const tints = { [m.film.key]: await tint.prepareTint(node) };
+        const env = { s: 1, fontsReady, tints };
+        if (layout.prepare) Object.assign(env, await layout.prepare(m, covers));
         const t0 = performance.now();
-        layout.draw(canvas.getContext('2d'), m, covers, { s: 1, fontsReady, tints });
+        layout.draw(canvas.getContext('2d'), m, covers, env);
         cap.textContent += `（绘制 ${Math.round(performance.now() - t0)}ms）`;
       } catch (e) { log(id + ' / ' + c.cap + '：' + (e.stack || e)); }
     }
