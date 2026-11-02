@@ -1,6 +1,6 @@
 // 版式 · 拍立得（单部）。视觉基准：docs/superpowers/mockups/v4.html ③。
-// 暗场景上一张向左歪 4° 的大相纸（完整竖版封面），左上一条半透明胶带；相纸下沿只写片名 + 日期。
-// 星级、短评、「我记录的第 N 部」写在一张钉着图钉的便签上，斜压在相纸右下角。
+// 场景底（深 / 浅可切）上一张向左歪 4° 的大相纸（完整竖版封面），左上一条半透明胶带；相纸下沿只写片名 + 日期。
+// 便签钉在相纸右下角：顶行 No.037（大）+ 星级（或心情），下面是短评。
 // 便签没有内容（没评分、没心情、没短评、没序号）就不画，片名占满相纸下沿。
 const T = require('../tokens.js');
 const kit = require('../kit.js');
@@ -23,19 +23,18 @@ function supports(kind) { return kind === 'single'; }
 
 function measure() { return { width: W, height: H }; }
 
+const HEAD_H = 52;   // 便签顶行：No.037 大字的行高
+
 /** 便签内容与高度；没有可写的就返回 null */
 function noteLayout(ctx, model) {
   const f = model.film;
   const badge = f.rating > 0 ? 'stars' : (f.moodLabel ? 'mood' : '');
   ctx.font = T.cn(400, NOTE_SIZE);
   const lines = f.note ? text.wrapLines(f.note, NOTE_W - NOTE_PAD_X * 2, 3, s => ctx.measureText(s).width) : [];
-  const sign = model.ordinal ? `—— 我记录的第 ${model.ordinal} 部` : '';
-  if (!badge && !lines.length && !sign) return null;
-  const h = 40 + (badge ? STAR + (lines.length || sign ? 16 : 0) : 0)
-    + lines.length * NOTE_LH
-    + (sign ? (lines.length || badge ? 16 : 0) + 28 : 0)
-    + 30;
-  return { badge, lines, sign, h, y: Math.min(NOTE_Y, NOTE_BOTTOM_MAX - h) };
+  const head = !!(badge || model.serial);
+  if (!head && !lines.length) return null;
+  const h = 36 + (head ? HEAD_H + (lines.length ? 14 : 0) : 0) + lines.length * NOTE_LH + 30;
+  return { badge, lines, head, h, y: Math.min(NOTE_Y, NOTE_BOTTOM_MAX - h) };
 }
 
 function draw(ctx, model, covers, env) {
@@ -44,14 +43,16 @@ function draw(ctx, model, covers, env) {
   const f = model.film;
   const node = (covers || {})[f.key] || null;
   const note = noteLayout(ctx, model);
+  const mode = e.stage === 'light' ? 'light' : 'dark';
+  const ink = tint.stageInk(mode);
 
-  // 1. 暗场景
-  tint.drawStage(ctx, (e.tints || {})[f.key], W, H);
+  // 1. 场景底
+  tint.drawStage(ctx, (e.tints || {})[f.key], W, H, mode);
 
   // 2. 相纸：绕自身中心转 -4°，坐标改成相对左上角
   kit.rotated(ctx, FRAME_X + FRAME_W / 2, FRAME_Y + FRAME_H / 2, -4, () => {
     ctx.translate(-FRAME_W / 2, -FRAME_H / 2);
-    kit.withShadow(ctx, { color: 'rgba(0,0,0,0.42)', blur: 80, y: 44 }, 1, () => {
+    kit.withShadow(ctx, { color: ink.shadow, blur: 80, y: 44 }, 1, () => {
       ctx.fillStyle = PAPER;
       ctx.fillRect(0, 0, FRAME_W, FRAME_H);
     });
@@ -72,8 +73,8 @@ function draw(ctx, model, covers, env) {
     const dateText = [f.dateDot, f.weekdayEn].filter(Boolean).join(' ');
     if (dateText) {
       ctx.fillStyle = COLOR.ink2;
-      ctx.font = T.num(500, 24, fontsReady);
-      text.drawSpaced(ctx, dateText, capX, capTop + 80 + 12 + 17, 1, 'left');
+      ctx.font = T.num(500, 28, fontsReady);
+      text.drawSpaced(ctx, dateText, capX, capTop + 80 + 12 + 19, 1, 'left');
     }
   });
 
@@ -84,14 +85,14 @@ function draw(ctx, model, covers, env) {
   });
 
   // 4. 便签
-  if (note) drawNote(ctx, note, f);
+  if (note) drawNote(ctx, note, f, model.serial, fontsReady);
 
   // 5. 署名
   ctx.textBaseline = 'alphabetic';
-  kit.watermark(ctx, W / 2, H - 52, 1, 'rgba(255,255,255,0.62)');
+  kit.watermark(ctx, W / 2, H - 52, 1, ink.wm);
 }
 
-function drawNote(ctx, note, f) {
+function drawNote(ctx, note, f, serial, fontsReady) {
   kit.rotated(ctx, NOTE_X + NOTE_W / 2, note.y + note.h / 2, 5, () => {
     ctx.translate(-NOTE_W / 2, -note.h / 2);
     kit.withShadow(ctx, { color: 'rgba(0,0,0,0.35)', blur: 40, y: 24 }, 1, () => {
@@ -107,30 +108,33 @@ function drawNote(ctx, note, f) {
     });
 
     const x0 = NOTE_PAD_X, x1 = NOTE_W - NOTE_PAD_X;
-    let y = 40;
+    let y = 36;
     ctx.textBaseline = 'middle';
-    if (note.badge === 'stars') {
-      kit.stars(ctx, x0, y, f.rating, STAR, STAR_GAP, COLOR.acc, 'rgba(43,39,34,0.14)');
-    } else if (note.badge === 'mood') {
-      ctx.fillStyle = NOTE_INK;
-      ctx.font = T.cn(400, 28);
-      ctx.fillText(`${f.moodEmoji || ''} ${f.moodLabel}`.trim(), x0, y + STAR / 2);
+    if (note.head) {
+      const mid = y + HEAD_H / 2;
+      if (serial) {
+        ctx.fillStyle = NOTE_INK;
+        ctx.font = T.num(800, 46, fontsReady);
+        text.drawSpaced(ctx, serial, x0, mid, -1, 'left');
+      }
+      // 有编号时星级靠右，没编号就靠左
+      if (note.badge === 'stars') {
+        const sw = 5 * STAR + 4 * STAR_GAP;
+        kit.stars(ctx, serial ? x1 - sw : x0, mid - STAR / 2, f.rating, STAR, STAR_GAP, COLOR.acc, 'rgba(43,39,34,0.14)');
+      } else if (note.badge === 'mood') {
+        ctx.fillStyle = NOTE_INK;
+        ctx.font = T.cn(400, 28);
+        ctx.textAlign = serial ? 'right' : 'left';
+        ctx.fillText(`${f.moodEmoji || ''} ${f.moodLabel}`.trim(), serial ? x1 : x0, mid);
+        ctx.textAlign = 'left';
+      }
+      y += HEAD_H + (note.lines.length ? 14 : 0);
     }
-    if (note.badge) y += STAR + (note.lines.length || note.sign ? 16 : 0);
 
     ctx.fillStyle = NOTE_INK;
     ctx.font = T.cn(400, NOTE_SIZE);
     note.lines.forEach(line => { ctx.fillText(line, x0, y + NOTE_LH / 2); y += NOTE_LH; });
-
-    if (note.sign) {
-      if (note.lines.length || note.badge) y += 16;
-      ctx.fillStyle = NOTE_SIGN;
-      ctx.font = T.cn(400, 20);
-      ctx.textAlign = 'right';
-      ctx.fillText(note.sign, x1, y + 14);
-      ctx.textAlign = 'left';
-    }
   });
 }
 
-module.exports = { supports, measure, draw, noteLayout };
+module.exports = { supports, measure, draw, noteLayout, stages: true };

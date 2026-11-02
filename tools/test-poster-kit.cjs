@@ -133,3 +133,23 @@ test('tokens：字体串；Inter 没加载时不出现 PosterNum', () => {
   assert.ok(tokens.num(800, 300, true).indexOf('"PosterNum"') > 0);
   assert.ok(tokens.num(800, 300, false).indexOf('PosterNum') < 0);
 });
+
+test('版式注册表：金句只在有短评时出现；能切深浅底的版式', () => {
+  const model = require(path.join(dir, 'model.js'));
+  const withNote = model.fromDailySingle({ date: '2026-10-18', ts: 1, title: 'x', note: '一直往前走' });
+  const noNote = model.fromDailySingle({ date: '2026-10-18', ts: 1, title: 'x' });
+  assert.ok(reg.available('single', withNote).indexOf('quote') >= 0);
+  assert.ok(reg.available('single', noNote).indexOf('quote') < 0);
+  assert.ok(reg.available('single').indexOf('quote') >= 0, '不给数据时按全部可能列出');
+  assert.strictEqual(reg.resolve('single', 'quote', 'ticket', noNote), 'ticket', '存过金句、这条没短评 → 退回默认');
+  assert.strictEqual(reg.hasStage('ticket'), true);
+  assert.strictEqual(reg.hasStage('magazine'), false, '杂志整幅封面，没有场景底');
+  assert.strictEqual(reg.hasStage('classic'), false);
+});
+
+test('金句：按句读切分句，标点跟在分句末尾', () => {
+  const q = require(path.join(dir, 'layouts', 'quote.js'));
+  assert.deepStrictEqual(q.clausesOf('不要回头，一直往前走。'), ['不要回头，', '一直往前走。']);
+  assert.deepStrictEqual(q.clausesOf('他说「好」。然后走了'), ['他说「好」。', '然后走了']);
+  assert.deepStrictEqual(q.clausesOf('好看'), ['好看']);
+});

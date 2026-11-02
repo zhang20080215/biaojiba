@@ -57,9 +57,11 @@ async function main() {
     { cap: '完整：评分 + 三栏平台评分 + 短评 + 第 N 部', ordinal: 37,
       e: entry(by('千与千寻'), '2026-10-18', 1, { rating: 5, note: '不要回头，一直往前走。', platformRatings: [{ label: '豆瓣', value: '9.4' }, { label: 'IMDb', value: '8.6' }, { label: '新鲜度', value: '96%' }] }) },
     { cap: '长片名、没评分有心情、无短评、无平台评分、无序号', ordinal: null,
-      e: entry(by('牯岭街少年杀人事件'), '2026-09-02', 2, { moodEmoji: '🥲', moodLabel: '想哭' }) },
+      e: entry(by('牯岭街少年杀人事件'), '2026-09-02', 2, { moodEmoji: '😢', moodLabel: '泪目' }) },
     { cap: '四栏平台评分 + 三行长短评（封面被压缩）', ordinal: 120,
       e: entry(by('花样年华'), '2026-10-04', 3, { rating: 4, note: '那个时代已过去，属于那个时代的一切都不存在了。王家卫把一段没有说出口的感情拍成了一场漫长的雨，旗袍一件件换，人一次次错过，最后只剩吴哥窟墙上的一个洞。', platformRatings: [{ label: '豆瓣', value: '8.8' }, { label: 'IMDb', value: '8.1' }, { label: '新鲜度', value: '92%' }, { label: '爆米花', value: '93%' }] }) },
+    { cap: '浅色封面 + 心情「治愈」 + 中等长度短评', ordinal: 24,
+      e: entry(by('龙猫'), '2026-09-27', 5, { rating: 5, moodEmoji: '🥰', moodLabel: '治愈', note: '小时候相信的东西，长大了也想继续相信。', platformRatings: [{ label: '豆瓣', value: '9.2' }, { label: 'IMDb', value: '8.1' }] }) },
     { cap: '没有封面（占位）', ordinal: 5,
       e: Object.assign(entry({ title: '一部很冷门的片', year: '1987', dir: '某导演', genres: ['剧情'] }, '2026-08-11', 4, { rating: 3 }), { poster: '' }) }
   ];
@@ -69,11 +71,15 @@ async function main() {
   const full = q.get('full');
   const ids = (q.get('layouts') || poster.available('single').filter(id => id !== 'classic').join(',')).split(',');
   if (full != null) { document.querySelector('style').textContent += '.cell{width:1080px}canvas{width:1080px;height:auto}'; }
+  // ?stage=light：浅色场景底；?thumb=1：按小红书信息流缩略图（约 1/4 宽）显示，验收小字还读不读得出
+  const stage = q.get('stage') === 'light' ? 'light' : 'dark';
+  if (q.get('thumb')) document.querySelector('style').textContent += '.cell{width:270px}canvas{width:270px;height:360px}';
   const logEl = document.getElementById('log');
   for (const id of ids) {
     const h = document.createElement('h3'); h.textContent = poster.NAMES[id] || id; document.body.insertBefore(h, logEl);
     const row = document.createElement('div'); row.className = 'row'; document.body.insertBefore(row, logEl);
     for (const c of (full != null ? [CASES[+full]] : CASES)) {
+      if (poster.available('single', model.fromDailySingle(c.e)).indexOf(id) < 0) continue;   // 金句：没短评不出
       const cell = document.createElement('div'); cell.className = 'cell';
       const canvas = document.createElement('canvas');
       cell.appendChild(canvas);
@@ -87,7 +93,7 @@ async function main() {
         const node = c.e.poster ? await loadImg(c.e.poster) : null;
         const covers = { [m.film.key]: node };
         const tints = { [m.film.key]: await tint.prepareTint(node) };
-        const env = { s: 1, fontsReady, tints };
+        const env = { s: 1, fontsReady, tints, stage };
         if (layout.prepare) Object.assign(env, await layout.prepare(m, covers));
         const t0 = performance.now();
         layout.draw(canvas.getContext('2d'), m, covers, env);

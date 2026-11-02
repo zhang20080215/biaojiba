@@ -29,6 +29,14 @@
                   bindtap="onPickStyle" data-id="{{item.id}}">{{item.name}}</view>
           </view>
         </view>
+        <!-- 背景深 / 浅：只对能切场景底的版式出现（杂志整幅封面、经典没有） -->
+        <view class="opt-row" wx:if="{{stageOk}}">
+          <text class="opt-label">背景</text>
+          <view class="mode-row">
+            <view class="mode-tab {{singleStage === 'dark' ? 'is-active' : ''}}" bindtap="onPickStage" data-id="dark">深色</view>
+            <view class="mode-tab {{singleStage === 'light' ? 'is-active' : ''}}" bindtap="onPickStage" data-id="light">浅色</view>
+          </view>
+        </view>
         <!-- 比例只对经典（整幅封面）有意义：新版式都是固定 3:4 -->
         <view class="opt-row" wx:if="{{singleStyle === 'classic'}}">
           <text class="opt-label">比例</text>

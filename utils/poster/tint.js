@@ -159,16 +159,29 @@ function drawTintRect(ctx, tint, x, y, w, h) {
  * 白色卡片 / 相纸 / 小票放上去才是全图最亮的东西（参照每日选片票卡的深色遮罩）。
  */
 const STAGE_FALLBACK = '#2A2D33';
-function drawStage(ctx, tint, W, H) {
+function drawStage(ctx, tint, W, H, mode) {
   drawTintRect(ctx, tint, 0, 0, W, H);
   const cx = W / 2, cy = H * 0.42;
   const r = Math.hypot(Math.max(cx, W - cx), Math.max(cy, H - cy));
   const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-  g.addColorStop(0, 'rgba(12,10,10,0.18)');
-  g.addColorStop(0.7, 'rgba(12,10,10,0.55)');
-  g.addColorStop(1, 'rgba(12,10,10,0.72)');
+  if (mode === 'light') {
+    // 浅色：同一张糊开的封面罩一层白，中心更亮 —— 「清新」那一档，物件靠投影浮起来
+    g.addColorStop(0, 'rgba(255,255,255,0.66)');
+    g.addColorStop(1, 'rgba(255,255,255,0.46)');
+  } else {
+    g.addColorStop(0, 'rgba(12,10,10,0.18)');
+    g.addColorStop(0.7, 'rgba(12,10,10,0.55)');
+    g.addColorStop(1, 'rgba(12,10,10,0.72)');
+  }
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, H);
+}
+
+/** 场景底上直接写的字 / 署名 / 物件投影的颜色，跟着深浅走 */
+function stageInk(mode) {
+  return mode === 'light'
+    ? { ink: '#16181D', ink2: 'rgba(22,24,29,0.62)', wm: 'rgba(22,24,29,0.5)', shadow: 'rgba(30,35,45,0.22)' }
+    : { ink: '#FFFFFF', ink2: 'rgba(255,255,255,0.72)', wm: 'rgba(255,255,255,0.62)', shadow: 'rgba(0,0,0,0.45)' };
 }
 
 /**
@@ -220,4 +233,4 @@ function brighten(avg, minL) {
   return `rgb(${mix(r)},${mix(g)},${mix(b)})`;
 }
 
-module.exports = { prepareTint, drawTint, drawTintRect, drawStage, prepareThermal, brighten, averageOf };
+module.exports = { prepareTint, drawTint, drawTintRect, drawStage, stageInk, prepareThermal, brighten, averageOf };

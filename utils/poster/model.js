@@ -27,6 +27,23 @@ function byDateTs(a, b) {
   return (a.ts || 0) - (b.ts || 0);
 }
 
+// 星级 → 一句态度（盖在印章 / 贴纸上）。1 星不写「烂片」：是我的评价，不替片子下定论
+const STAR_VERDICT = ['', '踩雷', '一般', '还行', '推荐', '神作'];
+
+/** 印章文案：选了心情用心情（最有个人味），否则按星级，都没有就「看过了」 */
+function verdictOf(e) {
+  if (e && e.moodLabel) return String(e.moodLabel);
+  const r = Math.max(0, Math.min(5, Math.round(Number(e && e.rating) || 0)));
+  return STAR_VERDICT[r] || '看过了';
+}
+
+/** 记录序号的展示：No.037（三位补零，上千照写） */
+function serialOf(n) {
+  if (!(n > 0)) return '';
+  const s = String(n);
+  return 'No.' + (s.length >= 3 ? s : ('00' + s).slice(-3));
+}
+
 /**
  * 每日电影 / 读书的一条记录 → 版式用的 film。
  * 入参是 pages/daily/movie/common.js normalizeMovieEntry 的输出（已带 platformRatings）。
@@ -44,13 +61,15 @@ function toFilm(e, hideRatings) {
     moodEmoji: e.moodEmoji || '',
     moodLabel: e.moodLabel || '',
     note: e.note || '',
-    platform: hideRatings ? [] : (e.platformRatings || []).filter(r => r && r.value !== '' && r.value != null),
+    // 「—」是分享页给没取到的平台占的位，海报上不画
+    platform: hideRatings ? [] : (e.platformRatings || []).filter(r => r && r.value !== '' && r.value != null && r.value !== '—'),
     date: e.date || '',
     ts: e.ts || 0,
     weekdayCn: p.weekdayCn,
     weekdayEn: p.weekdayEn,
     dateDot: p.dot,
-    md: p.md
+    md: p.md,
+    verdict: verdictOf(e)
   };
 }
 
@@ -71,7 +90,8 @@ function fromDailySingle(entry, opts) {
   return {
     kind: 'single',
     film: toFilm(entry || {}, !!o.hideRatings),
-    ordinal: typeof o.ordinal === 'number' && o.ordinal > 0 ? o.ordinal : null
+    ordinal: typeof o.ordinal === 'number' && o.ordinal > 0 ? o.ordinal : null,
+    serial: serialOf(o.ordinal)
   };
 }
 
@@ -201,4 +221,4 @@ function fromRanking(items, marks, opts) {
   };
 }
 
-module.exports = { MONTH_CN, WEEK_CN, WEEK_EN, RECENT_MAX, dateParts, toFilm, ordinalOf, fromDailySingle, fromDailyRange, fromRanking };
+module.exports = { verdictOf, serialOf, MONTH_CN, WEEK_CN, WEEK_EN, RECENT_MAX, dateParts, toFilm, ordinalOf, fromDailySingle, fromDailyRange, fromRanking };

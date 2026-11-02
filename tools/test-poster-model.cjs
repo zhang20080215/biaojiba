@@ -122,3 +122,18 @@ test('fromRanking：没有 rank 的按原顺序排在后面；空榜单', () => 
   assert.strictEqual(e0.pct, 0);
   assert.deepStrictEqual(e0.recent, []);
 });
+
+test('verdictOf / serialOf：印章文案（心情优先、再星级、都没有「看过了」）与序号格式', () => {
+  const M = require(path.join(__dirname, '..', 'utils', 'poster', 'model.js'));
+  assert.strictEqual(M.verdictOf({ rating: 5 }), '神作');
+  assert.strictEqual(M.verdictOf({ rating: 1 }), '踩雷');
+  assert.strictEqual(M.verdictOf({ rating: 4, moodLabel: '泪目' }), '泪目');
+  assert.strictEqual(M.verdictOf({}), '看过了');
+  assert.strictEqual(M.serialOf(7), 'No.007');
+  assert.strictEqual(M.serialOf(1234), 'No.1234');
+  assert.strictEqual(M.serialOf(null), '');
+  const m = M.fromDailySingle({ date: '2026-10-18', ts: 1, rating: 5, platformRatings: [{ label: '豆瓣', value: '9.4' }, { label: 'IMDb', value: '—' }] }, { ordinal: 37 });
+  assert.strictEqual(m.serial, 'No.037');
+  assert.strictEqual(m.film.verdict, '神作');
+  assert.deepStrictEqual(m.film.platform.map(p => p.label), ['豆瓣'], '「—」占位不上海报');
+});

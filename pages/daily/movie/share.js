@@ -20,6 +20,7 @@ const LAYOUT_STORAGE_KEY = 'moviePosterLayout';       // 范围版式：'whole' 
 const LAYOUTS = ['whole', 'month', 'rating', 'calendar'];
 // 单部海报的版式（utils/poster 注册表：票根 / 杂志 / … / 经典）；经典 = 原来的封面海报，比例开关只对它生效
 const SINGLE_STYLE_KEY = 'moviePosterStyleSingle';
+const SINGLE_STAGE_KEY = 'moviePosterStageSingle';   // 新版式的场景底：dark | light
 const ORDINAL_WAIT = 2500;                             // 「我记录的第 N 部」最多等这么久，超时就先不画
 const TITLE_MAX = 20;                                  // 自定义标题字数上限
 const MAX_MOVIES = 300;                                // 绘制器上限：超出按日期取前 300 部，统计仍按全量、海报页脚注明
@@ -64,6 +65,8 @@ Page({
     singleMovie: false,
     singleStyles: [],    // [{ id, name }]，只列已实现的版式 + 经典
     singleStyle: 'classic',
+    singleStage: 'dark',  // 场景底深 / 浅（只对 hasStage 的版式有意义）
+    stageOk: false,
     posterMode: 'xhs',
     hasRatings: false,   // 单部电影是否有平台评分（决定是否显示开关）
     hideRatings: false,  // 单部电影是否隐藏全部平台评分
@@ -131,12 +134,22 @@ Page({
     if (selection.length) {
       this._isSingle = true;
       this._singleEntry = selection[0];
-      let style = posterIndex.defaultFor('single');
-      try { style = posterIndex.resolve('single', wx.getStorageSync(SINGLE_STYLE_KEY), style); } catch (e) {}
-      this._posterLayout = style;        // poster_view / poster_save 按版式上报
+      // 版式按这条记录筛：没写短评就没有「金句」；存过的版式这条用不了就退回默认
+      const model0 = posterModel.fromDailySingle(selection[0]);
+      let style = posterIndex.defaultFor('single', null, model0);
+      let stage = 'dark';
+      try {
+        style = posterIndex.resolve('single', wx.getStorageSync(SINGLE_STYLE_KEY), style, model0);
+        if (wx.getStorageSync(SINGLE_STAGE_KEY) === 'light') stage = 'light';
+      } catch (e) {}
+      this._stage = stage;
+      this._posterLayout = this._layoutTag(style);   // poster_view / poster_save 按版式上报
       // 新版式要用的：数字字体、「第 N 部」，和封面加载同时跑，不拖慢出图
       if (style !== 'classic') { ensureFonts(); this._loadOrdinal(); }
-      Object.assign(patch, this._buildPosterData(selection.slice(0, 1)), { singleStyles: posterIndex.options('single'), singleStyle: style });
+      Object.assign(patch, this._buildPosterData(selection.slice(0, 1)), {
+        singleStyles: posterIndex.options('single', model0), singleStyle: style,
+        singleStage: stage, stageOk: posterIndex.hasStage(style)
+      });
       if (style !== 'classic') {
         const size = posterIndex.get(style).measure(posterModel.fromDailySingle(selection[0]));
         this._canvasW = size.width;
@@ -394,10 +407,25 @@ Page({
     const id = e.currentTarget.dataset.id;
     if (!id || id === this.data.singleStyle || !this.data.ready) return;
     try { wx.setStorageSync(SINGLE_STYLE_KEY, id); } catch (err) {}
-    this._posterLayout = id;
+    this._posterLayout = this._layoutTag(id);
     if (id !== 'classic') { ensureFonts(); this._loadOrdinal(); }
-    this.setData({ singleStyle: id, ready: false });
+    this.setData({ singleStyle: id, stageOk: posterIndex.hasStage(id), ready: false });
     this.generatePoster();
+  },
+
+  onPickStage(e) {
+    const id = e.currentTarget.dataset.id === 'light' ? 'light' : 'dark';
+    if (id === this._stage || !this.data.ready) return;
+    try { wx.setStorageSync(SINGLE_STAGE_KEY, id); } catch (err) {}
+    this._stage = id;
+    this._posterLayout = this._layoutTag(this.data.singleStyle);
+    this.setData({ singleStage: id, ready: false });
+    this.generatePoster();
+  },
+
+  // 埋点里的版式名：能切深浅底的版式带上底色（ticket / ticket_light），好比较两种底谁存得多
+  _layoutTag(style) {
+    return posterIndex.hasStage(style) && this._stage === 'light' ? style + '_light' : style;
   },
 
   // 「我记录的第 N 部」：拉全量记录数这一条之前（含）有几条。只拉一次；失败 / 超时就不画序号
@@ -428,7 +456,7 @@ Page({
     const key = model.film.key;
     const tints = { [key]: await prepareTint(this._coverNodes[key]) };
     const layout = posterIndex.get(style);
-    const env = { s: 1, fontsReady, tints };
+    const env = { s: 1, fontsReady, tints, stage: this._stage || 'dark' };
     // 版式自己要的素材（小票的黑白热敏封面）：失败就不带，版式自己退回
     if (layout.prepare) {
       try { Object.assign(env, await layout.prepare(model, this._coverNodes)); } catch (e) {}

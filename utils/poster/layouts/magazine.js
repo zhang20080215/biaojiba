@@ -1,7 +1,8 @@
 // 版式 · 杂志封面（单部）。视觉基准：docs/superpowers/mockups/v4.html ②。
-// 整幅封面铺满 + 真杂志的「家具」：通栏大刊头 MARKED → 期号行（ISSUE No.记录序号 · 我的观影志 · 日期）
-// → 左侧平台评分做成大数字封面要点 → 右上「看过了」圆贴纸 → 底部封面故事（片名 / 年份·导演·类型 / 星级 / 短评）
-// → 右下杂志条码框。
+// 整幅封面铺满 + 杂志的「家具」：通栏大刊头 MARKED → 刊期行（YYYY年M月刊 · 我的观影志 · 星期 日期）
+// → 左侧大号记录编号 No.037（没有编号退回豆瓣评分大数字）→ 右上态度圆贴纸（神作 / 泪目 …）
+// → 底部封面故事（片名 / 年份·导演·类型 / 星级 + 平台评分 / 短评）。
+// 2026-11 做过一轮减法：去掉了右下条码框和两个平台评分大数字 —— 元素太多互相抢。
 // 上下两段黑色渐变保证白字可读；封面越亮遮罩越深（亮度来自 tint.avg）。底部封面故事从下往上排，始终贴底。
 const T = require('../tokens.js');
 const kit = require('../kit.js');
@@ -9,11 +10,10 @@ const text = require('../text.js');
 
 const W = 1080, H = 1440;
 const X0 = 60, X1 = W - 60;
-const STORY_BOTTOM = H - 150, STORY_W = 720;
+const STORY_BOTTOM = H - 140, STORY_W = X1 - X0;
 const TITLE_SIZES = [112, 96, 80];
 const NOTE_SIZE = 30, NOTE_LH = 46;
 const STAR = 36, STAR_GAP = 7;
-const BOX_W = 206, BOX_H = 110;
 const WHITE = '#FFFFFF';
 const NO_COVER_BG = '#2A2D33';
 // 白字压在封面上：一层轻投影，封面自带的字 / 亮色块不至于把字吃掉
@@ -35,8 +35,6 @@ function overlayAlpha(avg) {
   return { top: 0.5 + 0.25 * k, mid: 0.12 * k, bottom: 0.82 + 0.1 * k };
 }
 
-function pad4(n) { const s = String(n); return s.length >= 4 ? s : '0000'.slice(s.length) + s; }
-
 /** 排版（只量不画）：底部封面故事各行的位置，从下往上 */
 function layout(ctx, model) {
   const f = model.film;
@@ -45,22 +43,26 @@ function layout(ctx, model) {
   const titleLH = Math.round(fit.size * 1.05);
   ctx.font = T.cn(400, NOTE_SIZE);
   const noteLines = f.note ? text.wrapLines(`「${f.note}」`, STORY_W, 2, s => ctx.measureText(s).width) : [];
-  const badge = f.rating > 0 ? 'stars' : (f.moodLabel ? 'mood' : '');
+  // 心情已经写在态度章上了（verdict 心情优先），这里只放星级，不重复
+  const badge = f.rating > 0 ? 'stars' : '';
   const meta = metaLine(f);
+  // 没编号时第一个平台评分已经做成了左上大数字，这里不重复
+  const plat = (f.platform || []).slice(model.serial ? 0 : 1, 3);
+  const platformText = plat.map(p => `${p.label} ${p.value}`).join('   ');
 
   const rows = {};
   let bottom = STORY_BOTTOM;
   if (noteLines.length) { rows.noteTop = bottom - noteLines.length * NOTE_LH; bottom = rows.noteTop - 16; }
-  if (badge) { rows.badge = bottom - STAR / 2; bottom -= STAR + 22; }
+  if (badge || platformText) { rows.badge = bottom - STAR / 2; bottom -= STAR + 22; }
   else if (noteLines.length) bottom -= 6;
   if (meta) { rows.meta = bottom - 19; bottom -= 38 + 14; }
   rows.titleTop = bottom - fit.lines.length * titleLH;
   rows.kicker = rows.titleTop - 10 - 17;
-  return { f, fit, titleLH, noteLines, badge, meta, rows };
+  return { f, fit, titleLH, noteLines, badge, meta, rows, platformText };
 }
 
-/** 「看过了 / 10.18」圆贴纸：圆心 (cx, cy)，转 12° */
-function sticker(ctx, cx, cy, md, fontsReady) {
+/** 态度圆贴纸「神作 / 10.18」：圆心 (cx, cy)，转 12° */
+function sticker(ctx, cx, cy, word, md, fontsReady) {
   kit.rotated(ctx, cx, cy, 12, () => {
     kit.withShadow(ctx, { color: 'rgba(0,0,0,0.3)', blur: 28, y: 12 }, 1, () => {
       ctx.beginPath();
@@ -70,8 +72,8 @@ function sticker(ctx, cx, cy, md, fontsReady) {
     });
     ctx.fillStyle = WHITE;
     ctx.textBaseline = 'middle';
-    ctx.font = T.cn(900, 30);
-    text.drawSpaced(ctx, '看过了', 0, md ? -22 : 0, 4, 'center');
+    ctx.font = T.cn(900, Array.from(word).length > 2 ? 32 : 40);
+    text.drawSpaced(ctx, word, 0, md ? -22 : 0, 4, 'center');
     if (md) {
       ctx.font = T.num(800, 40, fontsReady);
       ctx.textAlign = 'center';
@@ -79,24 +81,6 @@ function sticker(ctx, cx, cy, md, fontsReady) {
       ctx.textAlign = 'left';
     }
   });
-}
-
-/** 右下杂志条码框 */
-function barcodeBox(ctx, f, ordinal, fontsReady) {
-  const bx = X1 - BOX_W, by = STORY_BOTTOM - BOX_H;
-  ctx.fillStyle = WHITE;
-  ctx.fillRect(bx, by, BOX_W, BOX_H);
-  // 条数按宽度定：先量再画，同一 seed 两次图案一样
-  const probe = { fillRect() {}, set fillStyle(v) {} };
-  let bars = 26, bw = 0;
-  do { bw = kit.barcode(probe, 0, 0, 62, f.key, 2, bars); } while (bw > BOX_W - 32 && --bars > 8);
-  kit.barcode(ctx, bx + (BOX_W - bw) / 2, by + 14, 62, f.key, 2, bars, '#111111');
-  ctx.fillStyle = '#111111';
-  ctx.font = T.num(500, 15, fontsReady);
-  ctx.textBaseline = 'middle';
-  const ty = by + 14 + 62 + 6 + 10;
-  text.drawSpaced(ctx, ordinal ? `No.${pad4(ordinal)}` : 'MARKED', bx + 16, ty, 1, 'left');
-  if (f.md) text.drawSpaced(ctx, f.md, bx + BOX_W - 16, ty, 1, 'right');
 }
 
 function draw(ctx, model, covers, env) {
@@ -141,36 +125,36 @@ function draw(ctx, model, covers, env) {
   kit.line(ctx, X0, 236, X1, 236, 2, 'rgba(255,255,255,0.55)');
   ctx.fillStyle = 'rgba(255,255,255,0.9)';
   const issueY = 236 + 2 + 12 + 15;
-  ctx.font = T.num(500, 21, fontsReady);
-  text.drawSpaced(ctx, model.ordinal ? `ISSUE No.${model.ordinal}` : (f.weekdayEn || 'ISSUE'), X0, issueY, 3, 'left');
-  if (f.dateDot) text.drawSpaced(ctx, f.dateDot, X1, issueY, 3, 'right');
-  ctx.font = T.cn(400, 21);
+  const ym = /^(d{4})-(d{2})/.exec(f.date || '');
+  ctx.font = T.cn(400, 22);
+  if (ym) text.drawSpaced(ctx, `${ym[1]}年${Number(ym[2])}月刊`, X0, issueY, 3, 'left');
   text.drawSpaced(ctx, '我的观影志', W / 2, issueY, 3, 'center');
+  ctx.font = T.num(500, 22, fontsReady);
+  const dayText = [f.weekdayEn, f.md].filter(Boolean).join(' ');
+  if (dayText) text.drawSpaced(ctx, dayText, X1, issueY, 3, 'right');
 
-  // 5. 封面要点：平台评分大数字（最多两个）
-  const platform = (f.platform || []).slice(0, 2);
-  kit.withShadow(ctx, TEXT_SHADOW, 1, () => {
-    platform.forEach((p, i) => {
-      const top = 330 + i * 142;
+  // 5. 封面要点：大号记录编号（连着发成系列）；没有编号退回豆瓣评分大数字
+  const lead = model.serial
+    ? { big: model.serial, small: `我记录的第 ${model.ordinal} 部电影` }
+    : ((f.platform || [])[0] ? { big: String(f.platform[0].value), small: `${f.platform[0].label}评分` } : null);
+  if (lead) {
+    kit.withShadow(ctx, TEXT_SHADOW, 1, () => {
       ctx.fillStyle = WHITE;
-      ctx.font = T.num(800, 84, fontsReady);
-      text.drawSpaced(ctx, String(p.value), X0, top + 42, -2, 'left');
-      ctx.fillStyle = 'rgba(255,255,255,0.85)';
-      ctx.font = T.cn(400, 22);
-      text.drawSpaced(ctx, `${p.label}评分`, X0, top + 84 + 4 + 16, 3, 'left');
+      ctx.font = T.num(800, 112, fontsReady);
+      text.drawSpaced(ctx, lead.big, X0 - 4, 330 + 56, -3, 'left');
+      ctx.fillStyle = 'rgba(255,255,255,0.88)';
+      ctx.font = T.cn(400, 26);
+      text.drawSpaced(ctx, lead.small, X0, 330 + 112 + 8 + 18, 3, 'left');
     });
-  });
+  }
 
   // 6. 圆贴纸
-  sticker(ctx, W - 64 - 88, 350 + 88, f.md, fontsReady);
+  sticker(ctx, W - 64 - 88, 350 + 88, f.verdict, f.md, fontsReady);
 
   // 7. 封面故事
   kit.withShadow(ctx, TEXT_SHADOW, 1, () => drawStory(ctx, L, f, fontsReady));
 
-  // 8. 条码框
-  barcodeBox(ctx, f, model.ordinal, fontsReady);
-
-  // 9. 署名
+  // 8. 署名
   ctx.textBaseline = 'alphabetic';
   kit.watermark(ctx, W / 2, H - 52, 1, 'rgba(255,255,255,0.62)');
 }
@@ -191,12 +175,20 @@ function drawStory(ctx, L, f, fontsReady) {
     ctx.font = T.cn(400, 26);
     ctx.fillText(text.ellipsis(L.meta, STORY_W, s => ctx.measureText(s).width), X0, R.meta);
   }
+  let bx = X0;
   if (L.badge === 'stars') {
-    kit.stars(ctx, X0, R.badge - STAR / 2, f.rating, STAR, STAR_GAP, T.COLOR.acc, 'rgba(255,255,255,0.3)');
+    bx += kit.stars(ctx, X0, R.badge - STAR / 2, f.rating, STAR, STAR_GAP, T.COLOR.acc, 'rgba(255,255,255,0.3)');
   } else if (L.badge === 'mood') {
     ctx.fillStyle = WHITE;
     ctx.font = T.cn(400, 28);
-    ctx.fillText(`${f.moodEmoji || ''} ${f.moodLabel}`.trim(), X0, R.badge);
+    const mood = `${f.moodEmoji || ''} ${f.moodLabel}`.trim();
+    ctx.fillText(mood, X0, R.badge);
+    bx += ctx.measureText(mood).width;
+  }
+  if (L.platformText) {
+    ctx.fillStyle = 'rgba(255,255,255,0.82)';
+    ctx.font = T.num(600, 26, fontsReady);
+    ctx.fillText(L.platformText, bx + (L.badge ? 28 : 0), R.badge);
   }
   if (L.noteLines.length) {
     ctx.fillStyle = WHITE;
