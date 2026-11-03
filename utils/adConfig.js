@@ -22,6 +22,10 @@
  *   showRecordsTab: true           // 可选，底部「记录」tab 开关；提审期间保持 false，过审上线后改 true
  * }
  *
+ * 「记录」真正开放（tab + 真实时间轴，而不是「打磨中」蒙版）走同一套灰度：
+ *   grayRollout.records_open   0 = 关，100 = 全员，中间值按 openid 放量
+ *   grayForceIn.records_open   ["o..."] 指定 openid 直通（不管百分比和 showRecordsTab），自测 / 小范围先用
+ *
  * 灰度只对**接了 adPlacementGate 的展示位**和激励闸门生效；老广告位直接读 getAdUnitId，
  * 不过灰度这一层。
  *
@@ -34,6 +38,7 @@
 
 var adFree = require('./adFree')
 var adFreePass = require('./adFreePass')
+var grayBucket = require('./grayBucket')
 
 // ── 本地默认配置（兜底，云端拉取失败时使用） ──
 const adConfig = {
@@ -83,6 +88,10 @@ const adConfig = {
     // 豆瓣导入入口（pages/doubanImport）：同样本地默认 0，放量走云端 grayRollout.douban_import。
     // 不只是功能开关，也是对照实验：比较有入口 / 没入口两组新用户的次日、7 日留存和海报保存。
     douban_import: 0,
+    // 「记录」真正开放：0 = 关（本地默认）。比 showRecordsTab 多管「页面内容」那一层——showRecordsTab 只管 tab 露不露
+    // （页面仍是「打磨中」蒙版）；这里放开后露 tab + 真实时间轴。放开走云端 grayRollout.records_open（存**数值**），
+    // 100 = 全员；改完用户下次进入生效，不用发版。本地常量 utils/hubFlags.js 的 recordsOpen 仍可发版强制开放。
+    records_open: 0,
   },
 
   grayForceIn: {
@@ -90,6 +99,8 @@ const adConfig = {
     // 灰度还是 0 的时候也能真机自测：白名单命中直接放行，绕过百分比
     daily_movie_banner: ['ozCMC7vB3JQinqbeqyXzY_7TwSMo'],
     douban_import: ['ozCMC7vB3JQinqbeqyXzY_7TwSMo'],
+    // 指定 openid 直通「记录」：不管百分比和 showRecordsTab，该用户就有 tab + 真实时间轴；云端改这个名单会整份替换本地的
+    records_open: ['ozCMC7vB3JQinqbeqyXzY_7TwSMo'],
   },
 
   frequency: {
@@ -299,9 +310,24 @@ function shouldPromptUpdate() {
   return adConfig.forceUpdatePrompt === true
 }
 
-/** 底部「记录」tab 是否露出（默认 false，过审后云端打开） */
-function shouldShowRecordsTab() {
-  return adConfig.showRecordsTab === true
+/**
+ * 「记录」对这个用户是否真正开放（tab 露出 + 页面显示真实时间轴）：
+ * grayRollout.records_open = 100 全员（不需要 openid）；指定 openid 命中 grayForceIn.records_open；
+ * 或 openid 落在 grayRollout.records_open 的百分比内。
+ */
+function isRecordsOpenFor(openid) {
+  var percentage = getGrayPercentage('records_open')
+  if (percentage >= 100) return true
+  if (!openid || typeof openid !== 'string') return false
+  return isForcedIntoGray('records_open', openid) || grayBucket.isInBucket(openid, percentage)
+}
+
+/**
+ * 底部「记录」tab 是否露出：showRecordsTab（只露 tab，页面仍是蒙版）或「真正开放」（全员 / 白名单）。
+ * openid 传当前用户的；还没拿到时传空，只看全员开关，拿到后 notifyOpenidReady 会让 tab 栏重算。
+ */
+function shouldShowRecordsTab(openid) {
+  return adConfig.showRecordsTab === true || isRecordsOpenFor(openid)
 }
 
 // 云端配置拉回来后通知已渲染的界面（custom-tab-bar 据此即时增减「记录」tab）
@@ -319,6 +345,11 @@ function _notifyRemoteApplied() {
   })
 }
 
+/** openid 刚拿到：白名单是按 openid 判的，已渲染的界面（tab 栏、记录页）要据此重算一次 */
+function notifyOpenidReady() {
+  _notifyRemoteApplied()
+}
+
 /** 云端那次网络拉取是否已收口。用于区分「确实关着」和「配置还没到」 */
 function isRemoteFetched() {
   return _remoteFetched
@@ -333,6 +364,8 @@ module.exports = {
   fetchRemoteConfig,
   shouldPromptUpdate,
   shouldShowRecordsTab,
+  isRecordsOpenFor,
+  notifyOpenidReady,
   onRemoteApplied,
   offRemoteApplied,
   isRemoteFetched,

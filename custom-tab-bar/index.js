@@ -1,5 +1,6 @@
 // 自定义底部 tab：取代原生 tabBar，唯一目的是能按云端开关隐藏「记录」tab
-// （app_config.showRecordsTab，默认 false = 提审包里不出现，过审后云端打开）。
+// （app_config.showRecordsTab，默认 false = 提审包里不出现，过审后云端打开；「记录」真正开放的灰度
+// records_open（全员 / 百分比 / 指定 openid）命中的用户也会露出，见 adConfig.shouldShowRecordsTab）。
 // 外观对齐原来的原生 tabBar：灰字 #77776D、底色 #FAFAFA、选中色与选中图标随主题色。
 // 各 tab 页 onShow 经 hubStore.applyTabStyle → sync(kind, theme) 推选中态。
 const adConfig = require('../utils/adConfig');
@@ -15,7 +16,9 @@ const ICON_SUFFIX = { 'theme-green': '', 'theme-gold': '-gold', 'theme-sand': '-
 
 function buildTabs(theme) {
   const suffix = ICON_SUFFIX[theme] == null ? '' : ICON_SUFFIX[theme];
-  return TABS.filter(t => t.kind !== 'records' || adConfig.shouldShowRecordsTab()).map(t => ({
+  const app = getApp();
+  const openid = (app && app.globalData && app.globalData.openid) || '';
+  return TABS.filter(t => t.kind !== 'records' || adConfig.shouldShowRecordsTab(openid)).map(t => ({
     kind: t.kind,
     text: t.text,
     path: t.path,
