@@ -752,3 +752,101 @@ test('discover: switching the left category or the top section clears the select
   assert.equal(f.page.data.searchQuery, '东野', 'typed search is not a tag and stays');
   f.page.onUnload();
 });
+
+// ── 「记录」tab 云端开放开关：grayRollout.records_open（全员 / 百分比）/ grayForceIn.records_open（指定 openid）──
+function loadRealAdConfig(remote) {
+  const storage = new Map(remote ? [['ad_remote_config', { data: remote, timestamp: Date.now() }]] : []);
+  const box = { module: { exports: {} }, console, Date, setTimeout, clearTimeout,
+    wx: { getStorageSync: k => storage.get(k), setStorageSync: (k, v) => storage.set(k, v) },
+    require: p => (p === './adFree' ? { isAdFree: () => false } : p === './adFreePass' ? { isActive: () => false } : require(path.join(root, 'utils', p))) };
+  vm.runInNewContext(fs.readFileSync(path.join(root, 'utils/adConfig.js'), 'utf8'), box);
+  box.module.exports.fetchRemoteConfig(true);   // 没有 wx.cloud：只套用本地缓存的云端配置
+  return box.module.exports;
+}
+test('adConfig: records open switch is off by default, whole-user switch and openid whitelist open the tab and page', () => {
+  const none = loadRealAdConfig(null);
+  assert.equal(none.isRecordsOpenFor('o_a'), false);
+  assert.equal(none.shouldShowRecordsTab('o_a'), false);
+  assert.equal(none.isRecordsOpenFor('ozCMC7vB3JQinqbeqyXzY_7TwSMo'), true, 'built-in self-test openid works even with no cloud config');
+  // 只开 tab（审核期间过审后的形态）：露出 tab，但页面仍是蒙版
+  const tabOnly = loadRealAdConfig({ showRecordsTab: true });
+  assert.equal(tabOnly.shouldShowRecordsTab(''), true);
+  assert.equal(tabOnly.isRecordsOpenFor('o_a'), false);
+  // 全员开放：不需要 openid，tab 和页面都开
+  const all = loadRealAdConfig({ grayRollout: { records_open: 100 } });
+  assert.equal(all.isRecordsOpenFor(''), true);
+  assert.equal(all.shouldShowRecordsTab(''), true);
+  // 白名单：只有命中的 openid；没有 openid / 不在名单里都不行
+  const list = loadRealAdConfig({ grayForceIn: { records_open: ['o_a', 'o_b'] } });
+  assert.equal(list.isRecordsOpenFor('o_a'), true);
+  assert.equal(list.shouldShowRecordsTab('o_b'), true);
+  assert.equal(list.isRecordsOpenFor('o_c'), false);
+  assert.equal(list.shouldShowRecordsTab(''), false);
+  assert.equal(list.isRecordsOpenFor('ozCMC7vB3JQinqbeqyXzY_7TwSMo'), false, 'cloud list replaces the local default list');
+  // 百分比放量：按 openid 分桶，和其他灰度同一套算法
+  const grayBucket = require('../utils/grayBucket');
+  const pick = want => { for (let i = 0; i < 1000; i++) { const id = 'o_' + i; if (grayBucket.isInBucket(id, 50) === want) return id; } };
+  const half = loadRealAdConfig({ grayRollout: { records_open: 50 }, grayForceIn: { records_open: [] } });
+  assert.equal(half.isRecordsOpenFor(pick(true)), true);
+  assert.equal(half.isRecordsOpenFor(pick(false)), false);
+  assert.equal(half.isRecordsOpenFor(''), false, '50% needs an openid');
+  // 云端把百分比改回 0、名单清空，本地缓存的旧值要被覆盖掉
+  const off = loadRealAdConfig({ grayRollout: { records_open: 0 }, grayForceIn: { records_open: [] } });
+  assert.equal(off.isRecordsOpenFor('o_a'), false);
+  assert.equal(off.isRecordsOpenFor('ozCMC7vB3JQinqbeqyXzY_7TwSMo'), false);
+});
+
+test('records tab: whitelisted openid sees the real timeline under a locked config, everyone else keeps the mask', async () => {
+  const tick = () => new Promise(resolve => setImmediate(resolve));
+  const allowed = fixture('records', { recordsLocked: true, openid: 'o_allow', recordsWhitelist: ['o_allow'] });
+  allowed.page.onLoad(); allowed.page.onShow(); await tick(); await tick();
+  assert.equal(allowed.page.data.recordsLocked, false);
+  assert.equal(allowed.page.data.timelineRows.length, 1, 'real timeline replaces the 4 demo rows');
+  assert.equal(allowed.page.data.timelineRows[0].id, 'fixture_event');
+  const other = fixture('records', { recordsLocked: true, openid: 'o_other', recordsWhitelist: ['o_allow'] });
+  other.page.onLoad(); other.page.onShow(); await tick(); await tick();
+  assert.equal(other.page.data.recordsLocked, true);
+  assert.equal(other.page.data.timelineRows.length, 4);
+  assert.ok(!other.calls.includes('markTimeline'));
+  allowed.page.onUnload(); other.page.onUnload();
+  assert.equal(allowed.configListeners.size, 0, 'config listener removed on unload');
+});
+
+test('records tab: cloud switch flips lock at runtime both ways and a late demo-cover query cannot overwrite real rows', async () => {
+  const tick = () => new Promise(resolve => setImmediate(resolve));
+  const options = { recordsLocked: true, openid: 'o_x' };
+  const f = fixture('records', options);
+  f.page.onLoad(); f.page.onShow(); await tick();
+  assert.equal(f.page.data.recordsLocked, true);
+  assert.equal(f.page.data.timelineRows.length, 4);
+  // 云端把 recordsOpen 改 true，配置到达
+  options.cloudRecordsOpen = true; f.fireConfig(); await tick(); await tick();
+  assert.equal(f.page.data.recordsLocked, false);
+  assert.equal(f.page.data.timelineRows.length, 1);
+  // 放开之后迟到的示例封面结果不能把真实时间轴盖回示例
+  await f.page.loadRecordsDemoCovers(); await tick();
+  assert.equal(f.page.data.timelineRows.length, 1);
+  // 放开期间下拉刷新正常；收回后回到蒙版 + 示例行
+  await f.page.onPullDownRefresh();
+  options.cloudRecordsOpen = false; f.fireConfig(); await tick(); await tick();
+  assert.equal(f.page.data.recordsLocked, true);
+  assert.equal(f.page.data.timelineRows.length, 4);
+  f.page.onUnload();
+});
+
+test('custom tab bar: shows the records tab for a whitelisted openid and re-renders when the openid arrives', () => {
+  let def; const globalData = { theme: 'theme-green' };
+  const adConfig = loadRealAdConfig({ grayForceIn: { records_open: ['o_allow'] } });
+  const listeners = new Set();
+  const wrapped = { ...adConfig, onRemoteApplied: fn => listeners.add(fn), offRemoteApplied: fn => listeners.delete(fn) };
+  vm.runInNewContext(fs.readFileSync(path.join(root, 'custom-tab-bar/index.js'), 'utf8'), {
+    Component: d => { def = d; }, require: () => wrapped, getApp: () => ({ globalData }), wx: {}
+  });
+  const bar = { data: JSON.parse(JSON.stringify(def.data)), setData(patch) { Object.assign(this.data, patch); }, ...def.methods };
+  def.lifetimes.attached.call(bar);
+  assert.equal(bar.data.tabs.some(t => t.kind === 'records'), false, 'no openid yet: tab stays hidden');
+  globalData.openid = 'o_other'; [...listeners].forEach(fn => fn());
+  assert.equal(bar.data.tabs.some(t => t.kind === 'records'), false, 'other openid: still hidden');
+  globalData.openid = 'o_allow'; [...listeners].forEach(fn => fn());
+  assert.equal(bar.data.tabs.some(t => t.kind === 'records'), true, 'whitelisted openid: tab appears');
+});
