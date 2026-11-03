@@ -1,0 +1,14 @@
+{
+  "name": "jjwxcBook",
+  "version": "1.0.0",
+  "description": "Search and fetch Jinjiang (jjwxc) web novels for 每日读书: GBK search page + detail page",
+  "main": "index.js",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "wx-server-sdk": "latest",
+    "axios": "^0.27.2",
+    "cheerio": "^0.22.0",
+    "iconv-lite": "^0.6.3"
+  }
+}

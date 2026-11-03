@@ -29,11 +29,17 @@
     <view class="card">
       <view class="card-title">搜索书籍</view>
 
+      <!-- 来源切换：豆瓣读书（出版书）/ 晋江文学城（网文） -->
+      <view class="source-tabs">
+        <view class="source-tab {{source === 'douban' ? 'active' : ''}}" data-source="douban" bindtap="onSwitchSource">豆瓣</view>
+        <view class="source-tab {{source === 'jjwxc' ? 'active' : ''}}" data-source="jjwxc" bindtap="onSwitchSource">晋江</view>
+      </view>
+
       <view class="search-row">
         <view class="search-input-wrap">
           <text class="search-icon">⌕</text>
           <input class="search-input"
-                 placeholder="输入书名"
+                 placeholder="{{placeholder}}"
                  placeholder-class="placeholder"
                  value="{{keyword}}"
                  bindinput="onKeywordInput"
@@ -57,11 +63,12 @@
               data-douban-id="{{item.doubanId}}"
               bindtap="onSelectMovie"
               hover-class="tap-soft">
-          <image class="candidate-poster" src="{{item.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" lazy-load="true" binderror="onCandCoverError" data-index="{{index}}" />
+          <!-- 晋江搜索结果没有封面（封面有防盗链、要转存，选中后才有），整块不画，不放占位图 -->
+          <image wx:if="{{item.source !== 'jjwxc'}}" class="candidate-poster" src="{{item.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" lazy-load="true" binderror="onCandCoverError" data-index="{{index}}" />
           <view class="candidate-info">
             <text class="candidate-title">{{item.title}}</text>
             <view wx:if="{{item.ratingText}}" class="candidate-rating">
-              <text class="cand-score">豆瓣 {{item.ratingText}}</text>
+              <text class="cand-score">{{item.scoreLabel}} {{item.ratingText}}</text>
               <text wx:if="{{item.votesText}}" class="cand-votes">{{item.votesText}}</text>
             </view>
             <text wx:if="{{item.author}}" class="candidate-meta">作者：{{item.author}}</text>
@@ -84,7 +91,8 @@
               hover-class="tap-soft">
           <image class="continue-poster" src="{{item.posterThumb || '/images/default-movie.jpg'}}" mode="aspectFill" lazy-load="true" />
           <text class="continue-title">{{item.title}}</text>
-          <text class="continue-progress">读到 {{item.lastPage}}/{{item.totalPages}} 页</text>
+          <text class="continue-progress">读到 {{item.lastPage}}/{{item.totalPages}} {{item.unit}}</text>
+          <text wx:if="{{item.waiting}}" class="continue-waiting">等更新</text>
         </view>
       </scroll-view>
     </view>
@@ -96,13 +104,19 @@
         <view class="candidate-info">
           <text class="candidate-title">{{selected.title}}</text>
           <view wx:if="{{selected.ratingText}}" class="candidate-rating">
-            <text class="cand-score">豆瓣 {{selected.ratingText}}</text>
+            <text class="cand-score">{{selected.scoreLabel}} {{selected.ratingText}}</text>
             <text wx:if="{{selected.votesText}}" class="cand-votes">{{selected.votesText}}</text>
           </view>
           <text wx:if="{{selected.author}}" class="candidate-meta">作者：{{selected.author}}</text>
-          <text wx:if="{{selected.publisherText}}" class="candidate-meta">出版社：{{selected.publisherText}}</text>
-          <text wx:if="{{selected.year}}" class="candidate-meta">出版年：{{selected.year}}</text>
-          <text class="candidate-meta">总页数：{{selected.pagesText}}</text>
+          <block wx:if="{{selected.isJj}}">
+            <text wx:if="{{selected.serialText || selected.wordText}}" class="candidate-meta">{{selected.serialText}}{{selected.serialText && selected.wordText ? ' · ' : ''}}{{selected.wordText}}</text>
+            <text class="candidate-meta">总章节：{{selected.pagesText}}</text>
+          </block>
+          <block wx:else>
+            <text wx:if="{{selected.publisherText}}" class="candidate-meta">出版社：{{selected.publisherText}}</text>
+            <text wx:if="{{selected.year}}" class="candidate-meta">出版年：{{selected.year}}</text>
+            <text class="candidate-meta">总页数：{{selected.pagesText}}</text>
+          </block>
         </view>
         <view class="del-btn" bindtap="onReselect" hover-class="tap-soft">✕</view>
       </view>
@@ -141,7 +155,7 @@
                  bindinput="onCurrentPageInput" />
           <text wx:if="{{totalPages}}" class="page-sep">/</text>
           <text wx:if="{{totalPages}}" class="page-total">{{totalPages}}</text>
-          <text class="page-unit">页</text>
+          <text class="page-unit">{{selected.unit || '页'}}</text>
         </view>
       </view>
 
