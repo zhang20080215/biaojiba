@@ -84,6 +84,8 @@ Page({
             themeClass: savedTheme
         });
         this.checkLoginStatus();
+        this._onGrayConfig = () => this.checkLoginStatus();
+        adConfig.onRemoteApplied(this._onGrayConfig);
         this.loadAllMovies();
         this.initAds();
         this.setNavBarColor(savedTheme);
@@ -112,6 +114,12 @@ Page({
     },
 
     onOpenDoubanImport() {
+        // 导入的标记要落到登录用户名下、回来后列表才读得到：未登录先引导登录（和订阅 / 分享同一套提示）
+        if (!this.hasLogin()) {
+            wx.showToast({ title: '请先完成登录', icon: 'none' });
+            this.onGetUserProfile();
+            return;
+        }
         wx.navigateTo({ url: '/pages/doubanImport/index' });
     },
 
@@ -136,6 +144,7 @@ Page({
 
     onUnload() {
         if (this._toastTimer) clearTimeout(this._toastTimer);
+        if (this._onGrayConfig) adConfig.offRemoteApplied(this._onGrayConfig);
     },
 
     onBackHome() {
@@ -177,6 +186,15 @@ Page({
         this.updateFilteredMovies();
     },
 
+    // 「从豆瓣导入」入口灰度：本地默认 0，放量走云端 app_config.grayRollout.douban_import。
+    // 未登录用户也按设备 openid 判（app 启动时就拉了 openid，不依赖登录资料），点击时再引导登录
+    inDoubanImportGray(openid) {
+        // 全量（100）不需要 openid：一进页面就显示，不等设备 openid 拉回来
+        if (adConfig.getGrayPercentage('douban_import') >= 100) return true;
+        return !!openid && (adConfig.isForcedIntoGray('douban_import', openid)
+            || grayBucket.isInBucket(openid, adConfig.getGrayPercentage('douban_import')));
+    },
+
     checkLoginStatus() {
         const userInfo = this.getStoredUserInfo();
         if (userInfo) {
@@ -186,12 +204,11 @@ Page({
                 openid,
                 pendingOpenid: '',
                 subscribeBucketIn: grayBucket.isInBucket(openid, SUBSCRIBE_BUCKET_PERCENT),
-                // 灰度：本地默认 0，放量走云端 app_config.grayRollout.douban_import
-                doubanImportIn: !!openid && (adConfig.isForcedIntoGray('douban_import', openid)
-                    || grayBucket.isInBucket(openid, adConfig.getGrayPercentage('douban_import')))
+                doubanImportIn: this.inDoubanImportGray(openid)
             });
         } else {
-            this.setData({ userInfo: null, openid: '', subscribeBucketIn: false, doubanImportIn: false });
+            const deviceOpenid = (getApp().globalData && getApp().globalData.openid) || '';
+            this.setData({ userInfo: null, openid: '', subscribeBucketIn: false, doubanImportIn: this.inDoubanImportGray(deviceOpenid) });
         }
     },
 
