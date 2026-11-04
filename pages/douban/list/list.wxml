@@ -50,7 +50,8 @@
     <!-- 操作区域（吸顶） -->
     <view class="sticky-action-container">
       <view class="middle-action-section">
-        <view wx:if="{{userInfo}}" class="batch-options">
+        <!-- 未登录也显示：点「批量标记」「从豆瓣导入」时再引导登录（onStartBatchEdit / onOpenDoubanImport） -->
+        <view class="batch-options">
           <block wx:if="{{!isBatchEditing}}">
             <view class="icon-btn batch-icon" bindtap="onStartBatchEdit">批量标记</view>
             <view wx:if="{{doubanImportIn}}" class="icon-btn batch-icon" bindtap="onOpenDoubanImport">从豆瓣导入</view>
