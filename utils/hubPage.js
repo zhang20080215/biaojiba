@@ -37,7 +37,7 @@ function recordsDemoRows(dynCovers, demo, now) {
         note: '希望是美好的事物，也许是人间至善。', extra: '豆瓣 9.7 · 1994 · 弗兰克·德拉邦特' }] },
     { id: 'demo_2', theme: 'daily:read', at: now - 3 * hour, count: 1, mode: 'single',
       items: [{ title: DEMO_BOOK, cover: poster(DEMO_BOOK) || c.douban_books || '', status: 'checkin', stars: 4,
-        note: '满纸荒唐言，一把辛酸泪。', progress: '读到第 320 / 1606 页（20%） · 已读 12 天', extra: '豆瓣 9.6 · 曹雪芹' }] },
+        note: '满纸荒唐言，一把辛酸泪。', progress: '已读 320/1606 页（20%） · 已读 12 天', extra: '豆瓣 9.6 · 曹雪芹' }] },
     { id: 'demo_3', theme: 'douban', at: now - 26 * hour, count: 3, mode: 'batch',
       items: DEMO_MOVIES.slice(1).map(title => ({ title, cover: poster(title), status: 'watched' })) },
     { id: 'demo_4', theme: 'scenic5a', at: now - 3 * 24 * hour, count: 1, mode: 'single',

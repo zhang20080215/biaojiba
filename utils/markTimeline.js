@@ -24,9 +24,10 @@ function snapshot(item, status, ctx) {
   const epCur = num(item.currentEpisode), epTotal = num(item.totalEpisodes);
   if (epCur && epTotal) progress.push(`看到第 ${epCur} 集 / 共 ${epTotal} 集`);
   else if (epCur) progress.push(`看到第 ${epCur} 集`);
-  const pageCur = num(item.currentPage), pageTotal = num(item.totalPages);
-  if (pageCur && pageTotal) progress.push(`读到第 ${pageCur} / ${pageTotal} 页（${Math.min(100, Math.round(pageCur / pageTotal * 100))}%）`);
-  else if (pageCur) progress.push(`读到第 ${pageCur} 页`);
+  // 单位随书走：豆瓣书是「页」，晋江网文记的是「章」（meta.progressUnit）
+  const pageCur = num(item.currentPage), pageTotal = num(item.totalPages), unit = item.progressUnit || '页';
+  if (pageCur && pageTotal) progress.push(`已读 ${pageCur}/${pageTotal} ${unit}（${Math.min(100, Math.round(pageCur / pageTotal * 100))}%）`);
+  else if (pageCur) progress.push(`已读 ${pageCur} ${unit}`);
   if (num(item.readDays) > 0) progress.push(`已读 ${num(item.readDays)} 天`);
   if (progress.length) snap.progress = clip(progress.join(' · '), 60);
   const extra = [];
@@ -97,60 +98,69 @@ async function list(before) {
     return { rows: before ? [] : pending.slice().sort((a, b) => b.at - a.at), offline: true, pending: pending.length };
   }
 }
-// 每个主题自己的说法：电影是「看了一部电影」，书是「读完了一本书」，景区是「打卡了黄山」……
-// done/wish 是一次标记的动作，doneAdj 用于批量补记（「标记了 12 部看过的电影」，批量多是回忆，不说「看了」）。
+// 每个主题自己的说法。榜单标记统一一个骨架：一个就直接写「看过《A》」「想看《A》」，
+// 多个 / 批量写「标记了 12 部看过的电影」。doneAdj = 看过 / 读过 / 去过 / 参观过，wish = 想看 / 想读 / 想去。
+// 标记只是点了「看过」，不等于「看完了」，所以不再用「看了 / 看完了 / 读完了 / 打卡了」这类动词。
 const TRAVEL_VOCAB = {
-  scenic_5a: { unit: '个', noun: '景区' }, museum_grade1: { unit: '座', noun: '博物馆', done: '参观了', doneAdj: '参观过' },
+  scenic_5a: { unit: '个', noun: '景区' }, museum_grade1: { unit: '座', noun: '博物馆', doneAdj: '参观过' },
   travel_provinces: { unit: '个', noun: '省份' }, travel_cities: { unit: '座', noun: '城市' }
 };
 function vocabFor(rowTheme, t) {
-  if (rowTheme === 'daily:movie') return { kind: 'dailyMovie', unit: '部', noun: '电影', done: '看了', doneAdj: '看过', wish: '想看', quote: true };
-  if (rowTheme === 'daily:read') return { kind: 'dailyRead', unit: '本', noun: '书', done: '读了', doneAdj: '读过', wish: '想读', quote: true };
+  if (rowTheme === 'daily:movie') return { kind: 'dailyMovie', unit: '部', noun: '电影', doneAdj: '看过', wish: '想看', quote: true };
+  if (rowTheme === 'daily:read') return { kind: 'dailyRead', unit: '本', noun: '书', doneAdj: '读过', wish: '想读', quote: true };
   if (rowTheme === 'daily:sport') return { kind: 'sport' };
   if (rowTheme === 'daily:water') return { kind: 'water' };
   // 自建书单不在主题目录里，按 theme id 认
   const domain = rowTheme === 'customBook' ? 'reading' : t && t.domain;
-  if (domain === 'travel') return { unit: '个', noun: '地方', done: '打卡了', doneAdj: '去过', wish: '想去', quote: false, ...(TRAVEL_VOCAB[t.id] || {}) };
-  if (domain === 'reading') return { unit: '本', noun: '书', done: '读完了', doneAdj: '读过', wish: '想读', quote: true };
-  if (domain === 'tv') return { unit: '部', noun: '剧', done: '看完了', doneAdj: '看过', wish: '想看', quote: true };
-  if (domain === 'anime') return { unit: '部', noun: '动画', done: '看完了', doneAdj: '看过', wish: '想看', quote: true };
-  return { unit: '部', noun: '电影', done: '看了', doneAdj: '看过', wish: '想看', quote: true };
+  if (domain === 'travel') return { unit: '个', noun: '地方', doneAdj: '去过', wish: '想去', quote: false, ...(TRAVEL_VOCAB[t.id] || {}) };
+  if (domain === 'reading') return { unit: '本', noun: '书', doneAdj: '读过', wish: '想读', quote: true };
+  if (domain === 'tv') return { unit: '部', noun: '剧', doneAdj: '看过', wish: '想看', quote: true };
+  if (domain === 'anime') return { unit: '部', noun: '动画', doneAdj: '看过', wish: '想看', quote: true };
+  return { unit: '部', noun: '电影', doneAdj: '看过', wish: '想看', quote: true };
 }
 const isUnmark = s => ['unmark', 'unwatched', 'unread'].includes(s);
-// 每日电影/读书里记了进度、还没看完/读完的：剧是「在追」，书是「在读」
+// 每日电影/读书里记了进度、还没看完/读完的：进行中写「在看 / 在读」，已完成写「看过 / 读过」
 const watching = (v, item) => {
   const m = v.kind === 'dailyMovie' && /看到第 (\d+) 集(?: \/ 共 (\d+) 集)?/.exec(item.progress || '');
-  return !!m && !(m[2] && Number(m[1]) >= Number(m[2]));   // 看到最后一集就是看完了，不算「在追」
+  return !!m && !(m[2] && Number(m[1]) >= Number(m[2]));   // 看到最后一集就是看完了，不算「在看」
 };
-const reading = (v, item) => v.kind === 'dailyRead' && /页/.test(item.progress || '') && !/（100%）/.test(item.progress);
+const reading = (v, item) => v.kind === 'dailyRead' && /[页章]/.test(item.progress || '') && !/（100%）/.test(item.progress);
 function statusText(v, s, item = {}) {
   if (isUnmark(s)) return '取消标记';
-  if (watching(v, item)) return '在追';
+  if (watching(v, item)) return '在看';
   if (reading(v, item)) return '在读';
   if (v.kind === 'sport' || v.kind === 'water') return '已打卡';
   if (s === 'wish') return v.wish;
   return v.doneAdj;
 }
-function summarize(v, items, batch) {
+function summarize(v, items) {
   const name = item => (v.quote ? `《${item.title}》` : item.title);
   if (v.kind === 'sport') return items.length === 1 ? `练了${items[0].title}` : `完成了 ${items.length} 项训练`;
   if (v.kind === 'water') return items.length === 1 ? `喝了 ${items[0].title} 水` : `喝了 ${items.length} 次水`;
-  if (items.length === 1 && watching(v, items[0])) return `在追一部剧${name(items[0])}`;
-  if (items.length === 1 && reading(v, items[0])) return `在读一本书${name(items[0])}`;
-  // 记了集数且已到最后一集 / 读到 100%：是「看完了一部剧」「读完了一本书」
-  if (items.length === 1 && v.kind === 'dailyMovie' && /集/.test(items[0].progress || '')) return `看完了一部剧${name(items[0])}`;
-  if (items.length === 1 && v.kind === 'dailyRead' && /（100%）/.test(items[0].progress || '')) return `读完了一本书${name(items[0])}`;
+  // 每日电影 / 读书：进行中写「在看 / 在读」，已完成（含看到最后一集、读到 100%）和没记进度的都写「看过 / 读过」
+  if (items.length === 1 && watching(v, items[0])) return `在看${name(items[0])}`;
+  if (items.length === 1 && reading(v, items[0])) return `在读${name(items[0])}`;
   const groups = { done: [], wish: [], unmark: [] };
   items.forEach(item => groups[isUnmark(item.status) ? 'unmark' : item.status === 'wish' ? 'wish' : 'done'].push(item));
-  const parts = [];
   const { done, wish, unmark } = groups;
-  if (done.length === 1) parts.push(v.quote ? `${v.done}一${v.unit}${v.noun}${name(done[0])}` : `${v.done}${name(done[0])}`);
-  else if (done.length) parts.push(batch ? `标记了 ${done.length} ${v.unit}${v.doneAdj}的${v.noun}` : `${v.done} ${done.length} ${v.unit}${v.noun}`);
-  if (wish.length === 1) parts.push(`${v.wish}${name(wish[0])}`);
-  else if (wish.length) parts.push(batch ? `标记了 ${wish.length} ${v.unit}${v.wish}的${v.noun}` : `${v.wish} ${wish.length} ${v.unit}${v.noun}`);
-  if (unmark.length === 1) parts.push(`取消了${name(unmark[0])}的标记`);
-  else if (unmark.length) parts.push(`取消了 ${unmark.length} ${v.unit}${v.noun}的标记`);
-  return parts.join('，') || '留下了一次标记';
+  // 一个：直接写状态 + 名字（看过《A》）；多个 / 批量：标记了 12 部看过的电影。连着两段数量句时后一段省掉「标记了」
+  const parts = [];
+  const mark = (list, adj) => {
+    if (list.length === 1) parts.push({ text: `${adj}${name(list[0])}` });
+    else if (list.length) parts.push({ count: true, text: `${list.length} ${v.unit}${adj}的${v.noun}` });
+  };
+  mark(done, v.doneAdj);
+  mark(wish, v.wish);
+  if (unmark.length === 1) parts.push({ text: `取消了${name(unmark[0])}的标记` });
+  else if (unmark.length) parts.push({ text: `取消了 ${unmark.length} ${v.unit}${v.noun}的标记` });
+  return parts.map((p, i) => (p.count && !(i > 0 && parts[i - 1].count) ? `标记了 ${p.text}` : p.text)).join('，') || '留下了一次标记';
+}
+// 老记录里存的进度文案是「读到第 320 / 1606 页（20%）」「读到第 12 页」，新记录统一成「已读 320/1606 页（20%）」。
+// 进度是记录那一刻存下的文本，历史行不重写，展示时转成新说法（只认这两种老格式，其余原样）。
+function legacyProgress(text) {
+  return String(text || '')
+    .replace(/读到第 (\d+) \/ (\d+) ([页章])/g, '已读 $1/$2 $3')
+    .replace(/读到第 (\d+) ([页章])/g, '已读 $1 $2');
 }
 function present(rows, themes, now = Date.now()) {
   const model = require('./hubModel');
@@ -175,11 +185,11 @@ function present(rows, themes, now = Date.now()) {
     const single = all.length === 1 ? all[0] : null;
     const result = { ...row, day, showDay: day !== lastDay, time, timeLabel,
       themeId: t && t.id || '', themeIcon: t && t.placeholderEmoji || '✦', themeTitle: t && t.title || row.title || '每日标记',
-      summary: summarize(v, all, row.mode === 'batch'),
+      summary: summarize(v, all),
       // 只有一条时把星级/心情/短评/进度/评分摊开展示；多条时只在小图上标状态
       detail: single && (single.stars || single.mood || single.note || single.progress || single.extra) ? {
         starsText: single.stars ? '★'.repeat(single.stars) + '☆'.repeat(5 - single.stars) : '',
-        mood: single.mood || '', note: single.note || '', progress: single.progress || '', extra: single.extra || '' } : null,
+        mood: single.mood || '', note: single.note || '', progress: legacyProgress(single.progress), extra: single.extra || '' } : null,
       items: all.slice(0, row.expanded ? undefined : 9).map((item, index) => ({ ...item, key: index, statusText: statusText(v, item.status, item) })) };
     lastDay = day;
     return result;
