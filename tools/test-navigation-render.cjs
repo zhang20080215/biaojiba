@@ -69,7 +69,7 @@ async function main() {
         }
       }
       if (kind === 'profile' && !options.offline) assert.ok(JSON.stringify(tree).includes('已看 32 / 250'));
-      if (kind === 'records' && !options.empty) assert.ok(JSON.stringify(tree).includes('看了一部电影《肖申克的救赎》，想看《霸王别姬》'));
+      if (kind === 'records' && !options.empty) assert.ok(JSON.stringify(tree).includes('看过《肖申克的救赎》，想看《霸王别姬》'));
       if (kind === 'records') {
         const locked = fixture('records', { ...options, recordsLocked: true }); locked.page.onLoad(); locked.page.onShow(); await new Promise(resolve => setImmediate(resolve));
         const lockedTree = JSON.stringify(render(locked.page.data));

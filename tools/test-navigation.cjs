@@ -452,7 +452,7 @@ test('locked records tab shows a demo feed under the mask and never loads the ti
   assert.equal(f.page.data.timelineRows.length, 4);
   assert.equal(f.page.data.timelineRows[0].items[0].title, '肖申克的救赎');
   assert.equal(f.page.data.timelineRows[0].items[0].cover, 'cloud://shawshank.jpg');
-  assert.equal(f.page.data.timelineRows[1].summary, '在读一本书《红楼梦》');
+  assert.equal(f.page.data.timelineRows[1].summary, '在读《红楼梦》');
   assert.equal(f.page.data.timelineRows[2].summary, '标记了 3 部看过的电影');
   assert.equal(f.page.data.timelineRows[0].detail.starsText, '★★★★★');
   assert.equal(coverQueries, 0);
@@ -526,7 +526,7 @@ test('locked records demo loads real posters once and reuses them', async () => 
   assert.equal(rows[0].items[0].cover, 'cloud://m1');
   assert.equal(rows[1].items[0].cover, 'cloud://b1');
   assert.deepEqual(Array.from(rows[2].items, i => i.cover), ['cloud://m2', 'cloud://m3', 'cloud://m4']);
-  assert.equal(rows[3].summary, '打卡了故宫');
+  assert.equal(rows[3].summary, '去过故宫');
   assert.equal(rows[3].items[0].cover, 'cloud://s1');
   assert.equal(queries.length, 3);
   const again = fixture('records', { recordsLocked: true, database });
