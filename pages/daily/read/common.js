@@ -117,22 +117,25 @@ function progressRingUri(pct, opts) {
 
 // 从 meta 归一化阅读进度，返回 { totalPages, currentPage, progressPct, progressLabel, readDays, ... }
 // progressLabel：有分母→「已读 120/362 页」，只有当前页→「已读 120 页」，都没有→''
+// 单位取 meta.progressUnit：缺省「页」（豆瓣书），晋江网文记「章」（totalPages 此时存的是章节数）
 // readDays：这本书累计读了几天（老记录没有这个字段 → 0 → 不展示）
 function buildProgress(meta) {
   const totalPages = Number(meta && meta.totalPages) || 0;
   const currentPage = Number(meta && meta.currentPage) || 0;
   const readDays = Number(meta && meta.readDays) || 0;
+  const unit = (meta && meta.progressUnit) || '页';
   const hasPct = totalPages > 0 && currentPage > 0;
   let progressLabel = '';
   if (currentPage > 0) {
     progressLabel = totalPages > 0
-      ? `已读 ${currentPage}/${totalPages} 页`
-      : `已读 ${currentPage} 页`;
+      ? `已读 ${currentPage}/${totalPages} ${unit}`
+      : `已读 ${currentPage} ${unit}`;
   }
   const readDaysLabel = readDays > 0 ? `已读 ${readDays} 天` : '';
   return {
     totalPages,
     currentPage,
+    progressUnit: unit,
     progressPct: hasPct ? Math.min(100, Math.round(currentPage / totalPages * 100)) : 0,
     progressLabel,
     readDays,
@@ -168,6 +171,17 @@ function suggestReadDays(days, doubanId, date) {
   return dateSet.size + (dateSet.has(date) ? 0 : 1);
 }
 
+// 「继续阅读」里该不该留着一本已经读到最新的连载书：晋江连载书读到 180/180 并不代表读完，
+// 作者还在更，留着让用户点进去重拉最新章节数。只对「记录时还在连载的晋江书」生效，
+// 且超过 WAIT_UPDATE_DAYS 没动静就不再占位（否则烂尾书会永远挂在列表里）。
+const WAIT_UPDATE_DAYS = 60;
+function isWaitingUpdate(meta, maxPage, total, latestTs, now) {
+  if (!meta || !(maxPage >= 1) || !(total > 0) || maxPage < total) return false;
+  const jj = meta.source === 'jjwxc' || String(meta.doubanId || '').indexOf('jj_') === 0;
+  if (!jj || meta.finished) return false;
+  return (now || Date.now()) - (latestTs || 0) <= WAIT_UPDATE_DAYS * 86400000;
+}
+
 function normalizeBookEntry(entry, date) {
   const meta = (entry && entry.meta) || {};
   // 封面：兼容 cover / poster / posterUrl 多种历史字段
@@ -180,7 +194,9 @@ function normalizeBookEntry(entry, date) {
     ts: entry && entry.ts,
     value: entry && entry.value,
     date,
+    // 书的唯一键。豆瓣书是豆瓣 subject id；晋江网文存成 'jj_<novelid>'（meta.source === 'jjwxc'）
     doubanId: meta.doubanId || '',
+    source: meta.source || '',
     title: meta.title || '未命名书籍',
     year: meta.year || '',
     poster,
@@ -248,6 +264,8 @@ module.exports = {
   ratingText,
   progressRingUri,
   suggestReadDays,
+  isWaitingUpdate,
+  WAIT_UPDATE_DAYS,
   normalizeBookEntry,
   flattenBooks,
   dedupeBooks,

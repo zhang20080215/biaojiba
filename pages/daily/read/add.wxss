@@ -154,6 +154,12 @@ page {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* 连载书读到最新章：进度下面再挂一行「等更新」 */
+.continue-waiting {
+  margin-top: 2rpx;
+  font-size: 20rpx;
+  color: #A89E8C;
+}
 .continue-progress {
   margin-top: 2rpx;
   font-size: 20rpx;
@@ -293,6 +299,32 @@ page {
 }
 
 /* 搜索 */
+/* 来源切换：豆瓣 / 晋江，分段胶囊 */
+.source-tabs {
+  display: inline-flex;
+  padding: 6rpx;
+  margin-bottom: 18rpx;
+  border-radius: 24rpx;
+  background: #FAF6EB;
+  border: 2rpx solid #E8E0CC;
+}
+.source-tab {
+  min-width: 104rpx;
+  height: 56rpx;
+  padding: 0 24rpx;
+  box-sizing: border-box;
+  border-radius: 18rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 25rpx;
+  font-weight: 700;
+  color: #A89E8C;
+}
+.source-tab.active {
+  background: #1A1A1A;
+  color: #FFFFFF;
+}
 .search-row {
   display: flex;
   gap: 14rpx;

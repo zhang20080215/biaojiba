@@ -8,7 +8,7 @@ const wishLike = require('./wishLike');
 const { track } = require('./track');
 var adConfig = require('./adConfig')
 var rewardedAdManager = require('./rewardedAdManager')
-var { awaitOpenid } = require('./openidWaiter.js')
+var { awaitOpenid, getCurrentOpenid } = require('./openidWaiter.js')
 var userStore = require('./userStore.js')
 var themeRegistry = require('./themeRegistry.js')
 var customList = require('../pages/customList/common.js')
@@ -37,7 +37,7 @@ function recordsDemoRows(dynCovers, demo, now) {
         note: '希望是美好的事物，也许是人间至善。', extra: '豆瓣 9.7 · 1994 · 弗兰克·德拉邦特' }] },
     { id: 'demo_2', theme: 'daily:read', at: now - 3 * hour, count: 1, mode: 'single',
       items: [{ title: DEMO_BOOK, cover: poster(DEMO_BOOK) || c.douban_books || '', status: 'checkin', stars: 4,
-        note: '满纸荒唐言，一把辛酸泪。', progress: '读到第 320 / 1606 页（20%） · 已读 12 天', extra: '豆瓣 9.6 · 曹雪芹' }] },
+        note: '满纸荒唐言，一把辛酸泪。', progress: '已读 320/1606 页（20%） · 已读 12 天', extra: '豆瓣 9.6 · 曹雪芹' }] },
     { id: 'demo_3', theme: 'douban', at: now - 26 * hour, count: 3, mode: 'batch',
       items: DEMO_MOVIES.slice(1).map(title => ({ title, cover: poster(title), status: 'watched' })) },
     { id: 'demo_4', theme: 'scenic5a', at: now - 3 * 24 * hour, count: 1, mode: 'single',
@@ -166,13 +166,16 @@ var DYNAMIC_COVER_THEMES = [
 ];
 
 module.exports = function createHubPage(pageKind) {
-  // 「记录」tab 未开放时只显示蒙版，不加载任何时间轴数据（开关见 utils/hubFlags.js）
-  const recordsLocked = pageKind === 'records' && !hubFlags.recordsOpen;
+  // 「记录」tab 未开放时只显示蒙版，不加载任何时间轴数据。是否开放是**运行时**判断（data.recordsLocked）：
+  // 本地常量 utils/hubFlags.js、云端灰度 grayRollout.records_open（全员 / 百分比）、grayForceIn.records_open（指定 openid）
+  // 任一为开即放开；云端配置或 openid 晚到时由 _refreshRecordsLock 重算并就地切换。
+  const syncOpenid = (getApp() && getApp().globalData && getApp().globalData.openid) || '';
+  const recordsLockedAtStart = pageKind === 'records' && !hubFlags.recordsOpen && !adConfig.isRecordsOpenFor(syncOpenid);
   return {
   _pageKind: pageKind,
   data: {
     pageKind,
-    recordsLocked,
+    recordsLocked: recordsLockedAtStart,
     wishLikes: 0, wishTotalText: '100+', likePop: '', likeBursts: [],
     pageTitle: { home: '标记吧', discover: '分类', records: '记录', profile: '我的' }[pageKind],
     discoverSection: 'lists', dailyThemes: [],
@@ -276,12 +279,16 @@ module.exports = function createHubPage(pageKind) {
     this._seedDynCoversFromCache();
     // 云端注册表：先用本地缓存的新主题即时合入卡片（无网络等待），稍后 loadCloudRegistry 再拉最新
     this._mergeCloudThemes(themeRegistry.readAll());
-    if (recordsLocked) {
-      this._timelineRaw = this._recordsDemo();
-      const cached = wishLike.cachedTotal();
-      this._wishBase = cached ? cached.total : 0;
-      this._renderWishLikes();
-      wishLike.loadTotal().then(total => { this._wishBase = total; if (!this._pageUnloaded) this._renderWishLikes(); });
+    // 工厂函数在注册页面时只跑一次（那时云端配置 / openid 多半还没到），所以进页面时按当下状态重新算一次
+    if (pageKind === 'records') {
+      this.setData({ recordsLocked: !(hubFlags.recordsOpen || adConfig.isRecordsOpenFor(getCurrentOpenid(this))) });
+    }
+    if (this.data.recordsLocked) this._enterRecordsLocked();
+    if (pageKind === 'records') {
+      // 云端配置 / openid 晚于 onLoad 才到时重算开放状态（白名单按 openid 判）
+      this._onRecordsConfig = () => this._refreshRecordsLock();
+      adConfig.onRemoteApplied(this._onRecordsConfig);
+      this._refreshRecordsLock();
     }
 
     this.checkLoginStatus();
@@ -295,10 +302,46 @@ module.exports = function createHubPage(pageKind) {
       if (pageKind === 'home' || pageKind === 'discover') this.loadUserCounts();
       if (pageKind === 'profile') this.loadPersonalSummary();
       if (pageKind === 'records') this.loadTimeline();
-      if (pageKind !== 'profile' && !recordsLocked) this.loadDynamicCovers();
-      if (recordsLocked) this.loadRecordsDemoCovers();
+      if (pageKind !== 'profile' && !this.data.recordsLocked) this.loadDynamicCovers();
+      if (this.data.recordsLocked) this.loadRecordsDemoCovers();
       this.initAds();
     });
+  },
+
+  // 蒙版态的初始化：示例时间轴 + 「期待上线」点赞总数
+  _enterRecordsLocked() {
+    this._timelineRaw = this._recordsDemo();
+    const cached = wishLike.cachedTotal();
+    this._wishBase = cached ? cached.total : 0;
+    this._renderWishLikes();
+    wishLike.loadTotal().then(total => { this._wishBase = total; if (!this._pageUnloaded) this._renderWishLikes(); });
+  },
+
+  // 重算「记录」是否对当前用户开放，状态变了就地切换（蒙版 ↔ 真实时间轴）。
+  // 先用同步拿得到的 openid（全员开关不需要 openid）；没开再等 openid 到位判白名单。
+  async _refreshRecordsLock() {
+    if (pageKind !== 'records') return;
+    const isOpen = openid => hubFlags.recordsOpen || adConfig.isRecordsOpenFor(openid);
+    let open = isOpen(getCurrentOpenid(this));
+    if (!open) open = isOpen(await awaitOpenid(this, 3000));
+    if (this._pageUnloaded) return;
+    const locked = !open;
+    if (locked === this.data.recordsLocked) return;
+    if (locked) {
+      // 开放被云端收回：回到蒙版和示例时间轴
+      this.setData({ recordsLocked: true, timelineRows: [], timelineHasMore: false, timelineOffline: false, timelineLoading: false });
+      this._enterRecordsLocked();
+      this.setData({ timelineRows: this._presentTimeline(this._timelineRaw, this.data.themes) });
+      this.loadRecordsDemoCovers();
+      return;
+    }
+    // 放开：丢掉示例数据，加载真实时间轴
+    this._flushWishLikes();
+    this._timelineRaw = [];
+    this._timelineCursor = null;
+    this.setData({ recordsLocked: false, timelineRows: [] });
+    this.loadTimeline();
+    this.loadDynamicCovers();
   },
 
   _recordsDemo() {
@@ -338,6 +381,7 @@ module.exports = function createHubPage(pageKind) {
     const next = { covers, spot, checkedAt: Date.now() };
     try { wx.setStorageSync(RECORDS_DEMO_COVERS_KEY, next); } catch (e) {}
     if (JSON.stringify({ covers, spot }) === JSON.stringify({ covers: (cached && cached.covers) || {}, spot: cached && cached.spot || null })) return;
+    if (this._pageUnloaded || !this.data.recordsLocked) return;
     this._timelineRaw = this._recordsDemo();
     this.setData({ timelineRows: this._presentTimeline(this._timelineRaw, this.data.themes) });
   },
@@ -622,10 +666,11 @@ module.exports = function createHubPage(pageKind) {
 
   // 涓婚鍒囨崲
   // 记录页：切走 tab 时把攒着的「期待上线」次数一次报上去
-  onHide() { if (recordsLocked) this._flushWishLikes(); },
+  onHide() { if (this.data.recordsLocked) this._flushWishLikes(); },
 
   onUnload() {
-    if (recordsLocked) this._flushWishLikes();
+    if (this.data.recordsLocked) this._flushWishLikes();
+    if (this._onRecordsConfig) adConfig.offRemoteApplied(this._onRecordsConfig);
     if (this._adFreePassTimer) { clearTimeout(this._adFreePassTimer); this._adFreePassTimer = null; }
     // syncMemberCode 的 openid 等待可能晚于页面销毁返回，落 setData 会往已销毁的
     // 父节点插节点（insertTextView:fail parent not found）
@@ -1168,7 +1213,7 @@ module.exports = function createHubPage(pageKind) {
     this.setData({ personalTotal: rows.length, personalThemes: this.data.personalExpanded ? rows : rows.slice(0, 3) });
   },
   async loadTimeline(more = false) {
-    if (recordsLocked || this.data.timelineLoading) return;
+    if (this.data.recordsLocked || this.data.timelineLoading) return;
     this.setData({ timelineLoading: true });
     try {
       await awaitOpenid();
@@ -1260,6 +1305,8 @@ module.exports = function createHubPage(pageKind) {
     }
   },
   async onPullDownRefresh() {
+    // 蒙版态没有可刷新的数据（pages/records/index.json 的下拉刷新为了云端放开而常开）
+    if (this.data.recordsLocked) { wx.stopPullDownRefresh(); return; }
     hubStore.invalidateSummary();
     try {
       const work = [this.loadCloudRegistry()];

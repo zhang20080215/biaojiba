@@ -148,6 +148,8 @@ App({
       if (openid) {
         self.globalData.openid = openid
         self._openidAttempt = 0
+        // 「记录」tab 的白名单按 openid 判：tab 栏和记录页据此重算一次
+        adConfig.notifyOpenidReady()
         return
       }
       // 退避重试 1s / 2s / 4s，共 3 次；再失败就交给后续 ensureOpenid 调用

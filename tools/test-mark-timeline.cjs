@@ -123,7 +123,7 @@ test('snapshots keep the details that make a record specific', async () => {
   assert.deepEqual(item('imdb'), { title: '肖申克的救赎', cover: '', status: 'watched', extra: 'IMDB 9.3 · 1994 · 弗兰克·德拉邦特' });
   assert.deepEqual(item('daily:movie'), { title: '漫长的季节', cover: 'cloud://p.jpg', status: 'checkin', stars: 5, note: '好看', mood: '🥹 感动',
     progress: '看到第 8 集 / 共 12 集', extra: '豆瓣 9.4 · 2023' });
-  assert.deepEqual(item('daily:read'), { title: '红楼梦', cover: '', status: 'checkin', progress: '读到第 320 / 1606 页（20%） · 已读 12 天', extra: '曹雪芹' });
+  assert.deepEqual(item('daily:read'), { title: '红楼梦', cover: '', status: 'checkin', progress: '已读 320/1606 页（20%） · 已读 12 天', extra: '曹雪芹' });
   assert.deepEqual(item('scenic5a'), { title: '黄山', cover: '', status: 'watched', extra: '安徽 · 黄山' });
 });
 test('cloud save keeps only bounded detail fields', async () => {
@@ -139,4 +139,74 @@ test('cloud save keeps only bounded detail fields', async () => {
   const saved = [...docs.values()][0].items;
   assert.equal(saved[0].stars, undefined); assert.equal(saved[0].note.length, 140); assert.equal(saved[0].evil, undefined);
   assert.equal(saved[0].progress, '看到第 8 集'); assert.equal(saved[1].stars, 4);
+});
+
+// ── 主句文案：一个直接写「看过《A》」，多个 / 批量写「标记了 N 部看过的电影」 ──
+test('timeline summaries use one skeleton: single = state + title, several / batch = 标记了 N 部…', () => {
+  const { present } = require('../utils/markTimeline');
+  const themes = [{ id: 'm', domain: 'movie' }, { id: 'tv', domain: 'tv' }, { id: 'b', domain: 'reading' }, { id: 'sp', domain: 'travel' }, { id: 'mu', domain: 'travel' }];
+  const it = (title, status = 'watched', extra = {}) => ({ title, status, ...extra });
+  const say = (theme, items, mode = 'single') => present([{ id: 'r', theme, at: Date.now(), mode, items }], theme === 'mu' ? [{ id: 'mu', domain: 'travel' }] : themes)[0].summary;
+  // 榜单：单个
+  assert.equal(say('m', [it('肖申克的救赎')]), '看过《肖申克的救赎》');
+  assert.equal(say('m', [it('霸王别姬', 'wish')]), '想看《霸王别姬》');
+  assert.equal(say('b', [it('红楼梦')]), '读过《红楼梦》');
+  assert.equal(say('sp', [it('黄山')]), '去过黄山');
+  assert.equal(say('sp', [it('黄山', 'wish')]), '想去黄山');
+  // 多个（连续标记）和批量同一句式
+  const many = n => Array.from({ length: n }, (_, i) => it('片' + i));
+  assert.equal(say('m', many(3)), '标记了 3 部看过的电影');
+  assert.equal(say('m', many(12), 'batch'), '标记了 12 部看过的电影');
+  assert.equal(say('m', [it('a', 'wish'), it('b', 'wish')]), '标记了 2 部想看的电影');
+  assert.equal(say('tv', many(2)), '标记了 2 部看过的剧');
+  assert.equal(say('b', many(4), 'batch'), '标记了 4 本读过的书');
+  assert.equal(say('sp', many(5), 'batch'), '标记了 5 个去过的地方');
+  // 混合：单个段直接写，连着两段数量句时后一段省掉「标记了」
+  assert.equal(say('m', [it('A'), it('B', 'wish')]), '看过《A》，想看《B》');
+  assert.equal(say('m', [...many(3), it('x', 'wish'), it('y', 'wish')]), '标记了 3 部看过的电影，2 部想看的电影');
+  assert.equal(say('m', [...many(2), it('x', 'wish')]), '标记了 2 部看过的电影，想看《x》');
+  // 取消
+  assert.equal(say('m', [it('A', 'unmark')]), '取消了《A》的标记');
+  assert.equal(say('m', [it('A', 'unmark'), it('B', 'unmark')]), '取消了 2 部电影的标记');
+});
+
+test('daily check-ins: in progress = 在看 / 在读, finished or no progress = 看过 / 读过', () => {
+  const { present } = require('../utils/markTimeline');
+  const say = (theme, item) => present([{ id: 'r', theme, at: Date.now(), mode: 'single', items: [{ status: 'checkin', ...item }] }], [])[0];
+  assert.equal(say('daily:movie', { title: '漫长的季节', progress: '看到第 8 集 / 共 12 集' }).summary, '在看《漫长的季节》');
+  assert.equal(say('daily:movie', { title: '漫长的季节', progress: '看到第 12 集 / 共 12 集' }).summary, '看过《漫长的季节》');
+  assert.equal(say('daily:movie', { title: '肖申克的救赎' }).summary, '看过《肖申克的救赎》');
+  assert.equal(say('daily:read', { title: '红楼梦', progress: '已读 320/1606 页（20%）' }).summary, '在读《红楼梦》');
+  assert.equal(say('daily:read', { title: '红楼梦', progress: '已读 1606/1606 页（100%）' }).summary, '读过《红楼梦》');
+  assert.equal(say('daily:read', { title: '红楼梦' }).summary, '读过《红楼梦》');
+  assert.equal(say('daily:read', { title: '天官赐福', progress: '已读 12/252 章（5%）' }).summary, '在读《天官赐福》');
+  assert.equal(say('daily:read', { title: '红楼梦', progress: '读到第 320 / 1606 页（20%）' }).summary, '在读《红楼梦》', 'rows saved before the wording change still read as in-progress');
+  assert.equal(say('daily:movie', { title: '漫长的季节', progress: '看到第 8 集 / 共 12 集' }).items[0].statusText, '在看');
+  assert.equal(say('daily:sport', { title: '深蹲' }).summary, '练了深蹲');
+  assert.equal(say('daily:water', { title: '250ml' }).summary, '喝了 250ml 水');
+});
+
+test('book progress snapshot follows the book unit: 页 for print books, 章 for web novels', async () => {
+  const f = client();
+  f.api.record({ data: { allBooks: [] } }, 'daily:read', 'checkin', [{ title: '天官赐福', currentPage: 12, totalPages: 252, progressUnit: '章', readDays: 3 }]);
+  f.api.record({ data: { allBooks: [] } }, 'daily:read', 'checkin', [{ title: '红楼梦', currentPage: 320, totalPages: 1606, readDays: 12 }]);
+  const rows = JSON.parse(JSON.stringify((await f.api.list()).rows));
+  const progress = title => rows.flatMap(r => r.items).find(i => i.title === title).progress;
+  assert.equal(progress('天官赐福'), '已读 12/252 章（5%） · 已读 3 天');
+  assert.equal(progress('红楼梦'), '已读 320/1606 页（20%） · 已读 12 天');
+});
+
+test('rows saved with the old progress wording display in the new wording; the stored text is untouched', () => {
+  const { present } = require('../utils/markTimeline');
+  const show = progress => {
+    const row = { id: 'r', theme: 'daily:read', at: Date.now(), mode: 'single', items: [{ title: '红楼梦', status: 'checkin', progress }] };
+    const out = present([row], [])[0];
+    assert.equal(row.items[0].progress, progress, 'source row is not mutated');
+    return out.detail.progress;
+  };
+  assert.equal(show('读到第 320 / 1606 页（20%） · 已读 12 天'), '已读 320/1606 页（20%） · 已读 12 天');
+  assert.equal(show('读到第 120 页'), '已读 120 页');
+  assert.equal(show('读到第 120 页 · 已读 3 天'), '已读 120 页 · 已读 3 天');
+  assert.equal(show('已读 320/1606 页（20%）'), '已读 320/1606 页（20%）');
+  assert.equal(show('看到第 8 集 / 共 12 集'), '看到第 8 集 / 共 12 集', 'episode wording is not touched');
 });

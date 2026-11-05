@@ -9,8 +9,12 @@ module.exports = function createFixture(kind, options = {}) {
   // 广告配置桩：与真实 getPlacement 一样——会员全关；限时通行证只关页面广告，*_rewarded 激励位照旧
   const pass = { until: options.passUntil || 0 };
   const passUntil = () => (pass.until > Date.now() ? pass.until : 0);
+  const configListeners = new Set();
   const adConfig = {
     isAdFree: () => !!options.vip, getVipExpireAt: () => null,
+    // 「记录」真正开放：全员开关 / 指定 openid 白名单，可在测试中途改 options 后触发 fireConfig 重算
+    isRecordsOpenFor: openid => !!options.cloudRecordsOpen || !!(openid && (options.recordsWhitelist || []).includes(openid)),
+    onRemoteApplied: fn => configListeners.add(fn), offRemoteApplied: fn => configListeners.delete(fn),
     getAdUnitId: k => (options.vip || (passUntil() && !/_rewarded$/.test(k)) ? '' : (options.adUnits && options.adUnits[k]) || ''),
     getAdFreePassUntil: passUntil, isAdFreePassActive: () => !!passUntil(),
     grantAdFreePass: () => { pass.until = Date.now() + 30 * 60000; return pass.until; }
@@ -48,7 +52,7 @@ module.exports = function createFixture(kind, options = {}) {
     './hubModel': model, './hubStore': store, './themeCatalog': catalog, './hubStats': require('../utils/hubStats'),
     './track': { track: (name, data) => tracked.push({ name, data }) }, './adConfig': adConfig,
     './rewardedAdManager': { showForReward: async (placement, pg, toast) => { rewards.push({ placement, toast }); return typeof options.rewardOutcome === 'function' ? options.rewardOutcome() : (options.rewardOutcome || 'failed'); }, preload() {} },
-    './openidWaiter.js': { awaitOpenid: async () => 'fixture' }, './userStore.js': { getUserInfo: () => null }, './themeRegistry.js': { readAll: () => options.cloudThemes || [], writeAll() {} },
+    './openidWaiter.js': { awaitOpenid: async () => options.openid || 'fixture', getCurrentOpenid: () => options.openid || '' }, './userStore.js': { getUserInfo: () => null }, './themeRegistry.js': { readAll: () => options.cloudThemes || [], writeAll() {} },
     '../pages/customList/common.js': loadCustomListCommon()
   };
   // 自建清单共用模块同样跑在本 fixture 的 wx 上（云函数调用走 options.callFunction）
@@ -60,5 +64,6 @@ module.exports = function createFixture(kind, options = {}) {
   page = sandbox.module.exports(kind);
   page.data = JSON.parse(JSON.stringify(page.data));
   page.setData = function(patch) { for (const [key,value] of Object.entries(patch)) { const parts = key.split('.'); let target = this.data; for (const part of parts.slice(0,-1)) target = target[part] || (target[part] = {}); target[parts[parts.length - 1]] = value; } };
-  return { page, wx, app, store, calls, errors, navigations, stats, rows, tracked, rewards, toasts, pass };
+  const fireConfig = () => { for (const fn of [...configListeners]) fn(); };
+  return { page, wx, app, store, fireConfig, configListeners, calls, errors, navigations, stats, rows, tracked, rewards, toasts, pass };
 };
