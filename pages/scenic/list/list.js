@@ -8,6 +8,7 @@ import imageCacheManager from '../../../utils/imageCacheManager';
 var adConfig = require('../../../utils/adConfig');
 var { trackMark, trackShare } = require('../../../utils/track.js');
 var userStore = require('../../../utils/userStore.js');
+var markSync = require('../../../utils/markSync.js');
 var { getTravelTheme } = require('../../../utils/travelThemeConfig.js');
 
 const PAGE_SIZE = 24;   // 分批渲染每页条数（首屏只渲染一页，上拉自动追加）
@@ -411,7 +412,7 @@ Page({
             // 静默截断，给批量标过 100+ 条的用户造出过重复记录。只删一条的话旧记录留在库里，下次
             // 加载又被读回来 —— 表现就是「取消不掉、标记复活，状态还可能变回旧的」。删全部顺手把
             // 这些历史重复清干净，且不需要单独跑清理脚本。
-            const persist = db.collection('Marks').where({ movieId: id, openid }).remove();
+            const persist = markSync.save(id, '');
             persist.then(() => { markTimeline.record(this, this.data.theme, 'unmark', [id]); }).catch(err => {
                 console.error('取消标记失败:', err);
                 this.restoreSingleMarkLocally(id, snapshot);
@@ -425,8 +426,9 @@ Page({
         this.applySingleMarkLocally(id, targetStatus, now, existingRecordId);
         this.showCustomToast(targetStatus === 'watched' ? `✓ 已标记为${this.data.cfg.visitedLabel}` : '✓ 已标记为想去');
 
+        // 改已有标记走云函数：这条可能是云函数写的，小程序端改不动（见 utils/markSync.js）
         const persist = existingRecordId
-            ? db.collection('Marks').doc(existingRecordId).update({ data: { status: targetStatus, marked_at: now } })
+            ? markSync.save(id, targetStatus)
             : db.collection('Marks').add({ data: { movieId: id, openid, status: targetStatus, marked_at: now } });
 
         persist.then(res => {

@@ -4,7 +4,8 @@ const DataLoader = require('../../../utils/dataLoader.js');
 var adConfig = require('../../../utils/adConfig');
 const rewardedSaveGate = require('../../../utils/rewardedSaveGate.js');
 const userStore = require('../../../utils/userStore.js');
-var { getThemeConfig } = require('../../../utils/genericThemeConfig.js');
+var { THEME_CONFIG, getThemeConfig } = require('../../../utils/genericThemeConfig.js');
+var themeRegistryLoader = require('../../../utils/themeRegistryLoader.js');
 // 查询参数（排序方向 / 自建影单 listId）与列表页同一份：DataLoader.queryOptions
 
 const FOOTER_TEXT = '小程序：标记吧，免费制作同款图';
@@ -75,6 +76,7 @@ Page({
     async onLoad(options) {
         try {
             const theme = (options && options.theme) || '';
+            await themeRegistryLoader.ensureTheme(theme, THEME_CONFIG);
             const cfg = getThemeConfig(theme);
             const listId = (cfg.custom && options.listId) || '';
             if (cfg.custom && options.title) cfg.title = decodeURIComponent(options.title);

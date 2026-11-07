@@ -7,6 +7,7 @@ import DataLoader from '../../../utils/dataLoader';
 var adConfig = require('../../../utils/adConfig');
 var { trackMark, trackShare } = require('../../../utils/track.js');
 var userStore = require('../../../utils/userStore.js');
+var markSync = require('../../../utils/markSync.js');
 
 const THEME = 'city';
 const PAGE_SIZE = 40;   // 单省城市数≤35，一屏渲染完；全部视图靠 scroll-view 触底追加
@@ -390,7 +391,7 @@ Page({
             // 静默截断，给批量标过 100+ 条的用户造出过重复记录。只删一条的话旧记录留在库里，下次
             // 加载又被读回来 —— 表现就是「取消不掉、标记复活，状态还可能变回旧的」。删全部顺手把
             // 这些历史重复清干净，且不需要单独跑清理脚本。
-            const persist = db.collection('Marks').where({ movieId: id, openid }).remove();
+            const persist = markSync.save(id, '');
             persist.then(() => { markTimeline.record(this, 'city', 'unmark', [id]); }).catch(err => {
                 console.error('取消标记失败:', err);
                 this.restoreSingleMarkLocally(id, snapshot);
@@ -403,8 +404,9 @@ Page({
         this.applySingleMarkLocally(id, targetStatus, now, existingRecordId);
         this.showCustomToast(targetStatus === 'watched' ? '✓ 已标记为去过' : '✓ 已标记为想去');
 
+        // 改已有标记走云函数：这条可能是云函数写的，小程序端改不动（见 utils/markSync.js）
         const persist = existingRecordId
-            ? db.collection('Marks').doc(existingRecordId).update({ data: { status: targetStatus, marked_at: now } })
+            ? markSync.save(id, targetStatus)
             : db.collection('Marks').add({ data: { movieId: id, openid, status: targetStatus, marked_at: now } });
 
         persist.then(res => {
