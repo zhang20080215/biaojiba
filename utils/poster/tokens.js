@@ -48,6 +48,14 @@ function cn(weight, size) {
   return `${weight} ${Math.round(size)}px ${CN}`;
 }
 
+// 粗宋：先用系统自带的（iOS 宋体），没有就退到 serif。Noto Serif SC 是调试页用的网络字体
+const SERIF = '"Noto Serif SC", "Songti SC", "STSong", "Source Han Serif SC", "SimSun", serif';
+
+/** 粗宋字体串（小票「云霞」配色） */
+function serif(weight, size) {
+  return `${weight} ${Math.round(size)}px ${SERIF}`;
+}
+
 /** 数字字体串；fontsReady=false 时只用系统字体 */
 function num(weight, size, fontsReady) {
   const fam = fontsReady ? `"${NUM_FAMILY}", ${SYS_NUM}` : SYS_NUM;
@@ -62,4 +70,4 @@ function mono(weight, size) {
   return `${weight} ${Math.round(size)}px ${MONO}, ${CN}`;
 }
 
-module.exports = { DESIGN_W, DESIGN_H, COLOR, TYPE, SPACE, NUM_FAMILY, cn, num, mono };
+module.exports = { DESIGN_W, DESIGN_H, COLOR, TYPE, SPACE, NUM_FAMILY, cn, serif, num, mono };

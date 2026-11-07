@@ -7,14 +7,15 @@
 //   supportsModel(model) → bool             这份数据能不能用这个版式（金句要有短评）
 //   prepare(model, coverNodes) → Promise<{}> 画之前要先算好的素材，并进 env（小票的黑白封面）
 //   stages: true                             能切深色 / 浅色场景底（env.stage = 'dark' | 'light'）
+//   coverFilms(model) → film[]               只需要这几部的封面（范围海报：年度几百部不用全加载）
 // 'classic' 没有模块：页面看到 classic 就走原来的绘制代码（moviePosterDrawer / 豆瓣页自带的绘制）。
 //
 // 版式是一个个加进来的（每个都要先过 1080 精修稿的设计门）：ORDER 里列的是规划好的全部版式，
 // available(kind) 只返回已经有模块的 + classic，页面拿它渲染选项，没做完的版式不会露出来。
 
 const ORDER = {
-  single: ['ticket', 'quote', 'magazine', 'polaroid', 'receipt', 'classic'],
-  range: ['agenda', 'magazine', 'polaroid', 'film', 'ticket', 'receipt', 'classic'],
+  single: ['ticket', 'quote', 'polaroid', 'receipt', 'classic'],
+  range: ['tickets', 'statement', 'classic'],
   ranking: ['magazine', 'film', 'receipt', 'classic']
 };
 
@@ -24,7 +25,8 @@ const NAMES = {
   magazine: '杂志',
   polaroid: '拍立得',
   receipt: '小票',
-  agenda: '清单',
+  tickets: '票夹',
+  statement: '小票',
   film: '胶片',
   classic: '经典'
 };
@@ -33,9 +35,10 @@ const NAMES = {
 const MODULES = {
   ticket: require('./layouts/ticket.js'),
   quote: require('./layouts/quote.js'),
-  magazine: require('./layouts/magazine.js'),
   polaroid: require('./layouts/polaroid.js'),
-  receipt: require('./layouts/receipt.js')
+  receipt: require('./layouts/receipt.js'),
+  tickets: require('./layouts/rangeTickets.js'),
+  statement: require('./layouts/rangeStatement.js')
 };
 
 /** kind 下可选的版式 id（按 ORDER 顺序，只含已实现的 + classic）；给了 model 再按数据筛一遍 */
@@ -49,12 +52,12 @@ function available(kind, model) {
 }
 
 /**
- * 默认版式。variant：range 用 'month' | 'year'，ranking 用 'poster' | 'text'（列表页的两个入口）。
+ * 默认版式。variant：ranking 用 'poster' | 'text'（列表页的两个入口）。
  * 规划的默认还没实现时，退到 available 的第一个。
  */
 function defaultFor(kind, variant, model) {
   const want = kind === 'single' ? 'ticket'
-    : kind === 'range' ? (variant === 'year' ? 'magazine' : 'agenda')
+    : kind === 'range' ? 'tickets'
       : (variant === 'text' ? 'receipt' : 'magazine');
   const list = available(kind, model);
   return list.indexOf(want) >= 0 ? want : list[0];

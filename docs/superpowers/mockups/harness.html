@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh"><head><meta charset="utf-8"><title>海报调试页</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@600;700;900&display=swap" rel="stylesheet">
 <style>
 body{margin:0;background:#DADDE2;font:13px/1.6 -apple-system,'PingFang SC',sans-serif;padding:24px;color:#333}
 .row{display:flex;flex-wrap:wrap;gap:24px}.cell{width:540px}
@@ -48,6 +48,7 @@ async function main() {
 
   const films = await (await fetch('films.json')).json();
   const by = t => films.find(f => f.title === t);
+  if (new URLSearchParams(location.search).get('kind') === 'range') return mainRange({ poster, model, tint, films, by, fontsReady });
   const entry = (f, date, ts, extra) => Object.assign({
     date, ts, title: f.title, year: f.year, director: f.dir, genres: f.genres, poster: f ? 'covers/' + f.id + '.jpg' : '',
     rating: 0, note: '', moodEmoji: '', moodLabel: '', platformRatings: []
@@ -66,7 +67,7 @@ async function main() {
       e: Object.assign(entry({ title: '一部很冷门的片', year: '1987', dir: '某导演', genres: ['剧情'] }, '2026-08-11', 4, { rating: 3 }), { poster: '' }) }
   ];
 
-  // ?layouts=ticket,magazine：只画这几个版式（默认全部单部版式）；?full=N：只画第 N 个用例，按原尺寸 1080 显示
+  // ?layouts=ticket,polaroid：只画这几个版式（默认全部单部版式）；?full=N：只画第 N 个用例，按原尺寸 1080 显示
   const q = new URLSearchParams(location.search);
   const full = q.get('full');
   const ids = (q.get('layouts') || poster.available('single').filter(id => id !== 'classic').join(',')).split(',');
@@ -100,6 +101,96 @@ async function main() {
         cap.textContent += `（绘制 ${Math.round(performance.now() - t0)}ms）`;
       } catch (e) { log(id + ' / ' + c.cap + '：' + (e.stack || e)); }
     }
+  }
+}
+// ---- 范围海报：?kind=range&one=tickets-month（按原尺寸出一张，页面标题 H=高度）/ ?kind=range&set=month（全部版式）；&stage=light ----
+async function mainRange({ poster, model, tint, films, by, fontsReady }) {
+  const q = new URLSearchParams(location.search);
+  const mk = (rows, start) => rows.map(([t, date, rating, mood], i) => {
+    const f = by(t);
+    return { doubanId: f.id, date, ts: start + i, title: f.title, year: f.year, director: f.dir, genres: f.genres, poster: 'covers/' + f.id + '.jpg', rating, moodLabel: mood || '' };
+  });
+  const MONTH = [['千与千寻','2026-10-02',5,'治愈'],['花样年华','2026-10-04',4,'心动'],['重庆森林','2026-10-05',4,'怀旧'],['寄生虫','2026-10-09',5,'震撼'],['黑客帝国','2026-10-11',4,'过瘾'],['低俗小说','2026-10-11',3,''],['一一','2026-10-15',5,'泪目'],['龙猫','2026-10-18',5,'治愈'],['闪灵','2026-10-22',3,'惊悚'],['穆赫兰道','2026-10-25',2,'烧脑'],['钢的琴','2026-10-27',4,''],['逃出绝命镇','2026-10-31',3,'惊悚']];
+  const FEW = [['龙猫','2026-09-06',5,'治愈'],['牯岭街少年杀人事件','2026-09-13',4,'深思'],['东京物语','2026-09-27',5,'泪目']];
+  const st = [4,5,3,4,5,4,3,4,2,5,4,3,5,4,4,3,5,4,3,4,5,2,4,3,4,5,3,4,4,3,5,4,3,4,4];
+  let d = Date.UTC(2026, 7, 3);
+  const YEAR = films.map((f, i) => { const row = [f.title, new Date(d).toISOString().slice(0, 10), st[i % st.length], '']; d += 86400000 * (i % 3 === 0 ? 2 : 3); return row; });
+  const SETS = {
+    month: { list: mk(MONTH, 100), mode: 'month', month: 10 },
+    few: { list: mk(FEW, 100), mode: 'month', month: 9 },
+    year: { list: mk(YEAR, 100), mode: 'year' },
+    custom: { list: mk(MONTH, 100), mode: 'month', month: 10, customTitle: '十月份和朋友们一起看的电影' },
+    m30: { list: mk(YEAR.slice(0, 30), 100), mode: 'month', month: 6 },
+    y120: { list: mk(YEAR.concat(YEAR, YEAR, YEAR).slice(0, 120), 100), mode: 'year' },
+    long: { list: mk(FEW.concat([['燃烧女子的肖像','2026-09-28',0,''],['2001太空漫游','2026-09-29',0,'']]), 100).map((e, i) => i === 2 ? Object.assign(e, { title: '这是一部片名特别特别特别特别特别特别长的电影' }) : e), mode: 'month', month: 9, customTitle: '这是一个足足有二十个字的自定义海报标题呀' }
+  };
+  const render = async (id, name, canvas, stageId) => {
+    const S = SETS[name];
+    const m = model.fromDailyRange(S.list, { mode: S.mode, year: 2026, month: S.month, customTitle: S.customTitle, dedupe: l => l });
+    const layout = poster.get(id);
+    const size = layout.measure(m);
+    canvas.width = size.width; canvas.height = size.height;
+    // 网络字体按用到的字分片加载：先把这张图的字都拉下来，否则 canvas 画的时候还是回退字体
+    const words = '标记吧小程序观影小票日期片名评分下次电影见观影日平均评分部天十九月' + S.list.map(e => e.title).join('') + '#0123456789.—~TOTAL★';
+    for (const w of ['600', '700', '800', '900']) await document.fonts.load(`${w} 40px "Noto Serif SC"`, words);
+    const covers = {};
+    for (const f of layout.coverFilms(m)) covers[f.key] = await loadImg(f.poster);
+    layout.draw(canvas.getContext('2d'), m, covers, { s: 1, fontsReady, palette: stageId || q.get('palette'), inked: !!q.get('ink') });
+    return size;
+  };
+  // ?classic=whole-month：经典版式（排法-数据集），&theme= 配色，&book=1 用读书词表
+  const classic = q.get('classic');
+  if (classic) {
+    const [layout, name] = classic.split('-');
+    const S = SETS[name];
+    const Drawer = requireAt(q.get('book') ? 'utils/bookPosterDrawer.js' : 'utils/moviePosterDrawer.js');
+    const movies = S.list.map(e => ({
+      key: e.date + '-' + e.ts, date: e.date, poster: e.poster, title: e.title, year: e.year,
+      byline: e.director ? '导演 ' + e.director : '', tags: e.genres || [],
+      dateLabel: Number(e.date.slice(5, 7)) + '月' + Number(e.date.slice(8, 10)) + '日', watchDateText: '',
+      rating: e.rating, moodEmoji: '', moodLabel: e.moodLabel || '', note: '', platformRatings: []
+    }));
+    const size = layout === 'whole' ? Drawer.computeSize(movies.length) : Drawer.computeLayoutSize(layout, movies);
+    document.body.innerHTML = '<canvas id="c" style="width:1080px;height:auto;box-shadow:none;border-radius:0"></canvas>';
+    document.body.style.cssText = 'margin:0;padding:0;background:#000';
+    const canvas = document.getElementById('c');
+    canvas.width = size.width; canvas.height = size.height;
+    const words = '观影阅读总结部日平均分月标记吧小程序使用生成' + movies.map(m => m.title).join('') + (S.customTitle || '');
+    for (const w of ['500', '600', '700', '900']) { await document.fonts.load(w + ' 40px "Noto Sans SC"', words); await document.fonts.load(w + ' 40px "Noto Serif SC"', words); }
+    const covers = {};
+    for (const m of movies) covers[m.key] = await loadImg(m.poster);
+    const data = { movies, customTitle: S.customTitle || '', periodLead: S.mode === 'year' ? '2026年度' : '2026年' + S.month + '月', totalCount: movies.length, fullStats: Drawer.summarize(movies), ymDot: S.mode === 'year' ? '2026' : '2026.' + String(S.month).padStart(2, '0') };
+    new Drawer(canvas, canvas.getContext('2d'), size.width, size.height).draw(data, covers, q.get('theme') || undefined, layout);
+    document.title = 'H=' + Math.round(size.height * 1080 / size.width);
+    return;
+  }
+  const one = q.get('one');
+  if (one) {
+    const [id, name] = one.split('-');
+    document.body.innerHTML = '<canvas id="c" style="width:1080px;height:auto;box-shadow:none;border-radius:0"></canvas>';
+    document.body.style.cssText = 'margin:0;padding:0;background:#000';
+    const size = await render(id, name, document.getElementById('c'));
+    document.title = 'H=' + size.height;
+    return;
+  }
+  // ?palettes=1：小票的全部配色一起出
+  if (q.get('palettes')) {
+    const row = document.createElement('div'); row.className = 'row'; document.body.appendChild(row);
+    for (const p of Object.keys(poster.get('statement').PALETTE)) {
+      const cell = document.createElement('div'); cell.className = 'cell';
+      const c = document.createElement('canvas'); c.style.height = 'auto'; cell.appendChild(c);
+      const cap = document.createElement('div'); cap.className = 'cap'; cap.textContent = p; cell.appendChild(cap);
+      row.appendChild(cell);
+      await render('statement', 'month', c, p);
+    }
+    return;
+  }
+  const name = q.get('set') || 'month';
+  const row = document.createElement('div'); row.className = 'row'; document.body.appendChild(row);
+  for (const id of poster.available('range').filter(i => i !== 'classic')) {
+    const cell = document.createElement('div'); cell.className = 'cell';
+    const c = document.createElement('canvas'); c.style.height = 'auto'; cell.appendChild(c); row.appendChild(cell);
+    await render(id, name, c);
   }
 }
 main().catch(e => log(e.stack || e));

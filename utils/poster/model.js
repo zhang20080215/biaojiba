@@ -152,6 +152,9 @@ function fromDailyRange(list, opts) {
     title: custom || defaultTitle,
     periodTitle,
     periodSub,
+    customTitle: custom,
+    ymDot: isMonth ? `${year}.${pad2(month)}` : String(year),
+    spanText: spanTextOf(films[0], films[films.length - 1]),
     films,
     groups,
     favorite,
@@ -159,6 +162,24 @@ function fromDailyRange(list, opts) {
     stats: { count: films.length, days: Object.keys(dayset).length, avgStars },
     monthsWithData
   };
+}
+
+/** 记录的起止日期「2026.10.02 — 10.31」，跨年写全 */
+function spanTextOf(first, last) {
+  if (!first) return '';
+  if (first.date === last.date) return first.dateDot;
+  return `${first.dateDot} — ${first.date.slice(0, 4) === last.date.slice(0, 4) ? last.md : last.dateDot}`;
+}
+
+/** 版式放不下全部时挑哪些：星级高的优先，同分取早的，选完仍按时间排（films 已按时间升序） */
+function topPicks(films, n) {
+  if (films.length <= n) return films;
+  const order = {};
+  films.forEach((f, i) => { order[f.key] = i; });
+  return films.slice()
+    .sort((a, b) => (b.rating - a.rating) || (order[a.key] - order[b.key]))
+    .slice(0, n)
+    .sort((a, b) => order[a.key] - order[b.key]);
 }
 
 /**
@@ -221,4 +242,4 @@ function fromRanking(items, marks, opts) {
   };
 }
 
-module.exports = { verdictOf, serialOf, MONTH_CN, WEEK_CN, WEEK_EN, RECENT_MAX, dateParts, toFilm, ordinalOf, fromDailySingle, fromDailyRange, fromRanking };
+module.exports = { verdictOf, serialOf, topPicks, MONTH_CN, WEEK_CN, WEEK_EN, RECENT_MAX, dateParts, toFilm, ordinalOf, fromDailySingle, fromDailyRange, fromRanking };

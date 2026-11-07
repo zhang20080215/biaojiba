@@ -12,8 +12,8 @@ const { getNavMetrics, getWindowInfoCompat, formatDateCN, todayStr, flattenMovie
 // 两种进入方式：
 //   1. 时间轴条目「分享」：app.globalData.moviePosterSelection = [一部] → 单部海报（比例 / 隐藏评分）
 //   2. 日历页右上「海报」：?year=&month= → 范围海报：拉全部记录，按「年度 / 月度」范围筛选，
-//      版式 整体 / 按月份 / 按评分 / 日历（仅月度），背景三套对齐豆瓣 TOP250 海报页。
-const THEME_STORAGE_KEY = 'movieShareTheme';
+//      版式 票夹 / 杂志 / 拍立得 / 印样 / 小票（utils/poster）+ 经典；经典下面才有 整体 / 按月份 / 按评分 / 日历（仅月度）
+//      和三套背景（对齐豆瓣 TOP250 海报页），这部分是上线已久的旧逻辑。
 const MODE_STORAGE_KEY = 'moviePosterMode';   // 'xhs'(小红书 3:4) | 'raw'(原始海报比例)
 const HIDE_RATINGS_KEY = 'moviePosterHideRatings';   // 单部海报是否隐藏全部平台评分（豆瓣/IMDb/烂番茄）
 const LAYOUT_STORAGE_KEY = 'moviePosterLayout';       // 范围版式：'whole' | 'month' | 'rating' | 'calendar'(仅月度)
@@ -21,6 +21,12 @@ const LAYOUTS = ['whole', 'month', 'rating', 'calendar'];
 // 单部海报的版式（utils/poster 注册表：票根 / 杂志 / … / 经典）；经典 = 原来的封面海报，比例开关只对它生效
 const SINGLE_STYLE_KEY = 'moviePosterStyleSingle';
 const SINGLE_STAGE_KEY = 'moviePosterStageSingle';   // 新版式的场景底：dark | light
+// 范围海报的版式：用户选过才有值；没选过按月度 / 年度各走默认
+const RANGE_STYLE_KEY = 'moviePosterStyleRange';
+const RANGE_STAGE_KEY = 'moviePosterStageRange';
+const RECEIPT_PALETTE_KEY = 'moviePosterReceiptPalette';   // 小票配色
+const RECEIPT_INK_KEY = 'moviePosterReceiptInk';           // 油墨字：'on' = 开；默认关
+const receiptLayout = posterIndex.get('statement');
 const ORDINAL_WAIT = 2500;                             // 「我记录的第 N 部」最多等这么久，超时就先不画
 const TITLE_MAX = 20;                                  // 自定义标题字数上限
 const MAX_MOVIES = 300;                                // 绘制器上限：超出按日期取前 300 部，统计仍按全量、海报页脚注明
@@ -58,8 +64,6 @@ Page({
     isGenerating: false,
     needRewardedAd: false,
 
-    themes: MoviePosterDrawer.THEMES,
-    themeId: MoviePosterDrawer.DEFAULT_THEME,
 
     // 单部海报比例：xhs=小红书 3:4（可能裁切海报）/ raw=原始海报比例（不裁）
     singleMovie: false,
@@ -77,7 +81,12 @@ Page({
     rangeMonth: 0,
     rangeLabel: '',
     canNextRange: false,
-    posterLayout: 'whole',
+    rangeStyles: [],     // [{ id, name }]
+    rangeStyle: 'classic',
+    receiptPalettes: receiptLayout.PALETTE_LIST,
+    receiptPalette: receiptLayout.DEFAULT_PALETTE,
+    receiptInk: false,
+    posterLayout: 'whole',   // 经典下的四种排法
     calendarOk: false,   // 范围粒度为月度时才能选「日历」
     customTitle: '',     // 自定义标题（≤20 字，空 = 各版式默认标题）
     titleMax: TITLE_MAX
@@ -101,13 +110,10 @@ Page({
     const selection = (app && app.globalData && app.globalData.moviePosterSelection) || [];
     if (app && app.globalData) app.globalData.moviePosterSelection = null;   // 一次性，别留给下次
 
-    let themeId = MoviePosterDrawer.DEFAULT_THEME;
     let posterMode = 'xhs';
     let posterLayout = 'whole';
     let hideRatings = false;
     try {
-      const saved = wx.getStorageSync(THEME_STORAGE_KEY);
-      if (saved && this.data.themes.some(t => t.id === saved)) themeId = saved;
       const savedMode = wx.getStorageSync(MODE_STORAGE_KEY);
       if (savedMode === 'xhs' || savedMode === 'raw') posterMode = savedMode;
       const savedLayout = wx.getStorageSync(LAYOUT_STORAGE_KEY);
@@ -123,7 +129,6 @@ Page({
       statusBarHeight: nav.statusBarHeight,
       navBarHeight: nav.navBarHeight,
       navOffset: nav.navOffset,
-      themeId,
       posterMode,
       posterLayout,
       rangeMode: 'month',
@@ -167,7 +172,23 @@ Page({
     const y = Number(options && options.year) || Number(today.slice(0, 4));
     const m = Number(options && options.month) || Number(today.slice(5, 7));
     this._today = today;
-    Object.assign(patch, { rangeYear: y, rangeMonth: m }, this._rangePatch('month', y, m));
+    let savedStyle = '';
+    let stage = 'dark';
+    try {
+      savedStyle = posterIndex.resolve('range', wx.getStorageSync(RANGE_STYLE_KEY), '');
+      const savedPalette = wx.getStorageSync(RECEIPT_PALETTE_KEY);
+      if (receiptLayout.PALETTE[savedPalette]) patch.receiptPalette = savedPalette;
+      if (wx.getStorageSync(RECEIPT_INK_KEY) === 'on') patch.receiptInk = true;
+      if (wx.getStorageSync(RANGE_STAGE_KEY) === 'light') stage = 'light';
+    } catch (e) {}
+    this._stage = stage;
+    const rangeStyle = savedStyle || posterIndex.defaultFor('range', 'month');
+    this._posterLayout = this._layoutTag(rangeStyle, patch);
+    if (rangeStyle !== 'classic') ensureFonts();
+    Object.assign(patch, { rangeYear: y, rangeMonth: m }, this._rangePatch('month', y, m), {
+      rangeStyles: posterIndex.options('range'), rangeStyle,
+      singleStage: stage, stageOk: posterIndex.hasStage(rangeStyle)
+    });
     if (patch.posterLayout === 'calendar' && !patch.calendarOk) patch.posterLayout = 'whole';
     this.setData(patch);
     rewardedSaveGate.refreshHint(this);
@@ -233,6 +254,7 @@ Page({
     const { rangeMode, rangeYear, rangeMonth } = this.data;
     const prefix = rangeMode === 'month' ? `${rangeYear}-${pad2(rangeMonth)}` : String(rangeYear);
     let list = (this._all || []).filter(m => String(m.date || '').indexOf(prefix) === 0);
+    this._rangeRaw = list;   // 新版式的 model 自己去重：观影日要按去重前的记录算
     if (this._layout() !== 'calendar') list = dedupeMovies(list);
     list.sort((a, b) => (a.date !== b.date) ? (a.date < b.date ? -1 : 1) : ((a.ts || 0) - (b.ts || 0)));
     const lead = rangeMode === 'month' ? `${rangeYear}年${rangeMonth}月` : `${rangeYear}年度`;
@@ -349,15 +371,6 @@ Page({
     return { previewW, previewH, slotH };
   },
 
-  onPickTheme(e) {
-    const id = e.currentTarget.dataset.id;
-    if (!id || id === this.data.themeId) return;
-    if (!this.data.ready) return;
-    try { wx.setStorageSync(THEME_STORAGE_KEY, id); } catch (err) {}
-    this.setData({ themeId: id, ready: false });
-    this.generatePoster();
-  },
-
   onPickMode(e) {
     const mode = e.currentTarget.dataset.mode;
     if (!mode || mode === this.data.posterMode) return;
@@ -397,10 +410,22 @@ Page({
       this._hideRatings ? [] : (this._rawRatings || []);
   },
 
-  // ---- 新版式（utils/poster）：单部 ----
-  // 当前单部版式；范围海报暂时只有经典
+  // ---- 新版式（utils/poster）----
   _style() {
-    return this._isSingle ? (this.data.singleStyle || 'classic') : 'classic';
+    return (this._isSingle ? this.data.singleStyle : this.data.rangeStyle) || 'classic';
+  },
+
+  onPickRangeStyle(e) {
+    const id = e.currentTarget.dataset.id;
+    if (!id || id === this.data.rangeStyle || !this.data.ready) return;
+    try { wx.setStorageSync(RANGE_STYLE_KEY, id); } catch (err) {}
+    this._posterLayout = this._layoutTag(id);
+    if (id !== 'classic') ensureFonts();
+    const wasCal = this._layout() === 'calendar';
+    this.setData({ rangeStyle: id, stageOk: posterIndex.hasStage(id), ready: false });
+    // 只有经典的日历不去重：跨过这个边界要重筛
+    if (wasCal !== (this._layout() === 'calendar')) this._applyRange();
+    this.generatePoster();
   },
 
   onPickStyle(e) {
@@ -413,18 +438,41 @@ Page({
     this.generatePoster();
   },
 
+  onPickPalette(e) {
+    const id = e.currentTarget.dataset.id;
+    if (!id || id === this.data.receiptPalette || !this.data.ready) return;
+    try { wx.setStorageSync(RECEIPT_PALETTE_KEY, id); } catch (err) {}
+    this._posterLayout = this._layoutTag(this._style(), { receiptPalette: id });
+    this.setData({ receiptPalette: id, ready: false });
+    this.generatePoster();
+  },
+
+  onToggleInk() {
+    if (!this.data.ready) return;
+    const on = !this.data.receiptInk;
+    try { wx.setStorageSync(RECEIPT_INK_KEY, on ? 'on' : 'off'); } catch (err) {}
+    this._posterLayout = this._layoutTag(this._style(), { receiptInk: on });
+    this.setData({ receiptInk: on, ready: false });
+    this.generatePoster();
+  },
+
   onPickStage(e) {
     const id = e.currentTarget.dataset.id === 'light' ? 'light' : 'dark';
     if (id === this._stage || !this.data.ready) return;
-    try { wx.setStorageSync(SINGLE_STAGE_KEY, id); } catch (err) {}
+    try { wx.setStorageSync(this._isSingle ? SINGLE_STAGE_KEY : RANGE_STAGE_KEY, id); } catch (err) {}
     this._stage = id;
-    this._posterLayout = this._layoutTag(this.data.singleStyle);
+    this._posterLayout = this._layoutTag(this._style());
     this.setData({ singleStage: id, ready: false });
     this.generatePoster();
   },
 
-  // 埋点里的版式名：能切深浅底的版式带上底色（ticket / ticket_light），好比较两种底谁存得多
-  _layoutTag(style) {
+  // 埋点里的版式名：能切深浅底的版式带上底色（ticket / ticket_light），
+  // 小票带配色和油墨、票夹带配色（statement_cloud_ink / tickets_night），好比较用户存哪种
+  _layoutTag(style, receipt) {
+    if (style === 'statement' || style === 'tickets') {
+      const r = Object.assign({}, this.data, receipt);
+      return `${style}_${r.receiptPalette}${style === 'statement' && r.receiptInk ? '_ink' : ''}`;
+    }
     return posterIndex.hasStage(style) && this._stage === 'light' ? style + '_light' : style;
   },
 
@@ -464,9 +512,26 @@ Page({
     return { layout, model, env };
   },
 
-  // 当前生效的版式（单部没有版式概念，恒为 whole；日历只在月度下生效）
+  // 范围海报新版式的数据：这段时间的记录
+  _rangeModel() {
+    const { rangeMode, rangeYear, rangeMonth } = this.data;
+    return posterModel.fromDailyRange(this._rangeRaw || [], {
+      mode: rangeMode, year: rangeYear, month: rangeMonth,
+      dedupe: dedupeMovies,
+      customTitle: this.posterData ? this.posterData.customTitle : ''
+    });
+  },
+
+  // 范围新版式的绘制环境：配色小票、票夹共用，油墨只有小票有
+  async _prepareRange(style, model) {
+    const fontsReady = await ensureFonts();
+    const { receiptPalette, receiptInk } = this.data;
+    return { layout: posterIndex.get(style), model, env: { s: 1, fontsReady, palette: receiptPalette, inked: style === 'statement' && receiptInk } };
+  },
+
+  // 经典下的排法（单部没有这个概念，恒为 whole；新版式不用它，也恒为 whole；日历只在月度下生效）
   _layout() {
-    if (this._isSingle) return 'whole';
+    if (this._isSingle || this._style() !== 'classic') return 'whole';
     const l = this.data.posterLayout;
     if (l === 'calendar' && !this.data.calendarOk) return 'whole';
     return LAYOUTS.indexOf(l) >= 0 ? l : 'whole';
@@ -527,12 +592,22 @@ Page({
       if (this._destroyed) return;
       const ctx = canvas.getContext('2d');
 
-      // 只加载还没缓存的封面（createImage 不依赖画布尺寸；切范围/主题/版式重绘复用）
-      await this._ensureCovers(canvas, ctx, this.posterData.movies);
+      // 范围内没有记录：新版式没东西可画，走经典的空态（保存按钮是禁用的）
+      const style = !this._isSingle && !(this._rangeRaw || []).length ? 'classic' : this._style();
+      const rangeModel = !this._isSingle && style !== 'classic' ? this._rangeModel() : null;
+
+      // 只加载还没缓存的封面（createImage 不依赖画布尺寸；切范围/主题/版式重绘复用）。
+      // 新版式只要画得到的那几张，年度几百部不用全等
+      const coverList = rangeModel
+        ? Array.from(new Set(posterIndex.get(style).coverFilms(rangeModel)))
+        : this.posterData.movies;
+      await this._ensureCovers(canvas, ctx, coverList);
       if (this._destroyed) return;
 
-      const style = this._style();
-      const next = style !== 'classic' ? await this._prepareStyle(style) : null;
+      let next = null;
+      if (rangeModel) next = await this._prepareRange(style, rangeModel);
+      else if (style !== 'classic') next = await this._prepareStyle(style);
+      else this.posterData.fontsReady = await ensureFonts();
       if (this._destroyed) return;
 
       // 封面就绪后再定画布尺寸（raw 单部要用海报真实比例），随后同步预览框
@@ -551,7 +626,7 @@ Page({
         next.layout.draw(ctx, next.model, this._coverNodes, next.env);
       } else {
         const drawer = new MoviePosterDrawer(canvas, ctx, this._canvasW, this._canvasH);
-        drawer.draw(this.posterData, this._coverNodes, this.data.themeId, this._layout());
+        drawer.draw(this.posterData, this._coverNodes, this.data.receiptPalette, this._layout());
       }
 
       await new Promise(resolve => {

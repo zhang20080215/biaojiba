@@ -141,12 +141,24 @@ function starPath(ctx, x, y, size) {
   ctx.closePath();
 }
 
-/** 一排 5 颗星，左上角 (x, y)；n = 亮几颗（0~5）。返回总宽 */
+/** 一排 5 颗星，左上角 (x, y)；n = 亮几颗（0~5，可以是 4.5：最后一颗亮半边）。返回总宽 */
 function stars(ctx, x, y, n, size, gap, onColor, offColor) {
   for (let i = 0; i < 5; i++) {
-    starPath(ctx, x + i * (size + gap), y, size);
-    ctx.fillStyle = i < n ? (onColor || COLOR.acc) : (offColor || COLOR.starOff);
+    const sx = x + i * (size + gap);
+    const part = Math.max(0, Math.min(1, n - i));
+    starPath(ctx, sx, y, size);
+    ctx.fillStyle = part === 1 ? (onColor || COLOR.acc) : (offColor || COLOR.starOff);
     ctx.fill();
+    if (part > 0 && part < 1) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(sx, y, size * part, size);
+      ctx.clip();
+      starPath(ctx, sx, y, size);
+      ctx.fillStyle = onColor || COLOR.acc;
+      ctx.fill();
+      ctx.restore();
+    }
   }
   return 5 * size + 4 * gap;
 }
@@ -226,6 +238,77 @@ function barcode(ctx, x, y, h, seed, unit, bars, color) {
   return cx - x;
 }
 
+/** 铺满宽度 w 的条码（等高），最后一根按右边界裁齐 */
+function barcodeFill(ctx, x, y, w, h, seed, unit, color) {
+  const rnd = seeded(seed);
+  const end = x + w;
+  let cx = x;
+  ctx.fillStyle = color || COLOR.ink;
+  while (cx < end) {
+    const bw = Math.min((1 + Math.floor(rnd() * 3)) * unit, end - cx);
+    ctx.fillRect(cx, y, bw, h);
+    cx += bw + (1 + Math.floor(rnd() * 2)) * unit;
+  }
+}
+
+// 一维盒式模糊：src 里从 start 起、每隔 step 取一个值，共 n 个，半径 r，结果写回原位
+function boxLine(src, start, step, n, r, tmp) {
+  let sum = 0;
+  const size = r * 2 + 1;
+  for (let i = -r; i <= r; i++) sum += src[start + Math.max(0, Math.min(n - 1, i)) * step];
+  for (let i = 0; i < n; i++) {
+    tmp[i] = sum / size;
+    sum += src[start + Math.min(n - 1, i + r + 1) * step] - src[start + Math.max(0, i - r) * step];
+  }
+  for (let i = 0; i < n; i++) src[start + i * step] = tmp[i];
+}
+
+/**
+ * 油墨边：把 (x, y, w, h) 里已经画好的字压成铅印那种毛边。
+ * 先把字晕开 radius 像素，再加噪声过阈值：笔画变粗、边缘不规则，字角被磨圆 —— 只动抗锯齿那 1 像素是看不出来的。
+ * 颜色按预乘透明度一起晕开，所以多色的字（墨色 + 点缀色）各走各的。
+ * opts: { radius 晕开半径, strength 毛边幅度, threshold 阈值（越低字越粗，细笔画才不断） }
+ * 大约 1 百万像素的区域手机上要几十毫秒，只在选了这个效果时跑。getImageData 不可用时什么都不做。
+ */
+function inkEdge(ctx, x, y, w, h, seed, opts) {
+  let img;
+  try { img = ctx.getImageData(x, y, w, h); } catch (e) { return false; }
+  const o = opts || {};
+  const r = o.radius || 1, k = o.strength == null ? 0.4 : o.strength, cut = o.threshold == null ? 0.36 : o.threshold;
+  const d = img.data, n = w * h;
+  const buf = new Float32Array(n * 4);
+  for (let p = 0, q = 0; p < n; p++, q += 4) {
+    const a = d[q + 3] / 255;
+    buf[q] = d[q] * a; buf[q + 1] = d[q + 1] * a; buf[q + 2] = d[q + 2] * a; buf[q + 3] = a;
+  }
+  const tmp = new Float32Array(Math.max(w, h));
+  for (let c = 0; c < 4; c++) {
+    for (let row = 0; row < h; row++) boxLine(buf, row * w * 4 + c, 4, w, r, tmp);
+    for (let col = 0; col < w; col++) boxLine(buf, col * 4 + c, w * 4, h, r, tmp);
+  }
+  // 低频噪声决定边往里还是往外走，高频噪声出毛刺
+  const rnd = seeded(seed);
+  const STEP = 4, nw = Math.ceil(w / STEP) + 2, nh = Math.ceil(h / STEP) + 2;
+  const noise = new Float32Array(nw * nh);
+  for (let i = 0; i < noise.length; i++) noise[i] = rnd() - 0.5;
+  for (let py = 0, q = 0; py < h; py++) {
+    const gy = py / STEP, y0 = Math.floor(gy), fy = gy - y0;
+    for (let px = 0; px < w; px++, q += 4) {
+      const a = buf[q + 3];
+      if (a < 0.01) { d[q + 3] = 0; continue; }
+      const gx = px / STEP, x0 = Math.floor(gx), fx = gx - x0;
+      const top = noise[y0 * nw + x0] * (1 - fx) + noise[y0 * nw + x0 + 1] * fx;
+      const bot = noise[(y0 + 1) * nw + x0] * (1 - fx) + noise[(y0 + 1) * nw + x0 + 1] * fx;
+      const v = a + (top * (1 - fy) + bot * fy) * k + (rnd() - 0.5) * k * 0.35;
+      const t = (v - cut) / 0.1;
+      d[q] = buf[q] / a; d[q + 1] = buf[q + 1] / a; d[q + 2] = buf[q + 2] / a;
+      d[q + 3] = t <= 0 ? 0 : t >= 1 ? 255 : Math.round(t * 255);
+    }
+  }
+  ctx.putImageData(img, x, y);
+  return true;
+}
+
 // ---------- 点阵 / 胶片 ----------
 
 /** 点阵：dots 为 'w'|'h'|'u'，colors 对应三种颜色；cell = 点心距，r = 半径 */
@@ -256,15 +339,15 @@ function filmHoles(ctx, x, y, len, vertical, holeW, holeH, gap, color) {
 
 const WATERMARK = '使用小程序「标记吧」生成';
 
-/** 底部署名「● 使用小程序「标记吧」生成」，(cx, baselineY) 居中；s = 画布缩放 */
-function watermark(ctx, cx, y, s, color) {
-  ctx.font = cn(400, 20 * s);
+/** 底部署名「● 使用小程序「标记吧」生成」，(cx, baselineY) 居中；s = 画布缩放；dotColor 默认强调色；font 默认中文黑体 */
+function watermark(ctx, cx, y, s, color, dotColor, font) {
+  ctx.font = (font || cn)(400, 20 * s);
   const tw = ctx.measureText(WATERMARK).width;
   const dot = 4 * s, gap = 10 * s;
   const x0 = cx - (tw + dot * 2 + gap) / 2;
   ctx.beginPath();
   ctx.arc(x0 + dot, y - 7 * s, dot, 0, Math.PI * 2);
-  ctx.fillStyle = COLOR.acc;
+  ctx.fillStyle = dotColor || COLOR.acc;
   ctx.fill();
   ctx.fillStyle = color || COLOR.ink3;
   ctx.textAlign = 'left';
@@ -276,6 +359,6 @@ module.exports = {
   roundRectPath, fillRoundRect, withShadow, coverCrop, drawCover, rotated, topRoundRectPath,
   line, dashed, starPath, stars,
   ticketPath, receiptPath,
-  hashStr, seeded, barcode,
+  hashStr, seeded, barcode, barcodeFill, inkEdge,
   dotMatrix, filmHoles, watermark
 };

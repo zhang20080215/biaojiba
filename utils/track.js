@@ -10,7 +10,7 @@
  * 本项目已用到的事件（注册清单）：
  *   poster_view  { route:字符串, layout:字符串 }             —— 打开海报页（查看海报）
  *   poster_save  { route:字符串, gated:数值(0/1), layout:字符串 } —— 每次“保存海报”尝试
- *                 layout = 海报版式 id（ticket|magazine|…|classic，见 utils/poster/index.js），老页面不带这个字段；
+ *                 layout = 海报版式 id（ticket|polaroid|…|classic，见 utils/poster/index.js），老页面不带这个字段；
  *                 ⚠ 属性 layout 是 2026-11 海报升级加的，要先在上报管理里给这两个事件补上
  *                 漏斗：poster_view − poster_save = 看了海报但没保存的人
  *   ad_rewarded  { route:字符串, result:字符串 }              —— 激励视频结果

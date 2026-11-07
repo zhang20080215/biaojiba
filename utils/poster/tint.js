@@ -233,4 +233,4 @@ function brighten(avg, minL) {
   return `rgb(${mix(r)},${mix(g)},${mix(b)})`;
 }
 
-module.exports = { prepareTint, drawTint, drawTintRect, drawStage, stageInk, prepareThermal, brighten, averageOf };
+module.exports = { makeOffscreen, prepareTint, drawTint, drawTintRect, drawStage, stageInk, prepareThermal, brighten, averageOf };

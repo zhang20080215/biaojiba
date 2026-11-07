@@ -111,20 +111,24 @@ function registryCases() {
 
   const fake = (kinds) => ({ supports: k => kinds.indexOf(k) >= 0 });
   reg.MODULES.ticket = fake(['single', 'range']);
-  reg.MODULES.magazine = fake(['single', 'range', 'ranking']);
+  reg.MODULES.magazine = fake(['ranking']);
+  reg.MODULES.polaroid = fake(['single']);
+  reg.MODULES.statement = fake(['range']);
   try {
-    assert.deepStrictEqual(reg.available('single'), ['ticket', 'magazine', 'classic']);
-    assert.deepStrictEqual(reg.available('range'), ['magazine', 'ticket', 'classic']);
+    assert.deepStrictEqual(reg.available('single'), ['ticket', 'polaroid', 'classic']);
+    assert.deepStrictEqual(reg.available('range'), ['statement', 'classic']);
     assert.strictEqual(reg.defaultFor('single'), 'ticket');
-    assert.strictEqual(reg.defaultFor('range', 'month'), 'magazine', '清单还没做，退到第一个可用的');
-    assert.strictEqual(reg.defaultFor('range', 'year'), 'magazine');
+    assert.strictEqual(reg.defaultFor('range'), 'statement', '票夹还没登记，退到第一个可用的');
     assert.strictEqual(reg.defaultFor('ranking', 'text'), 'magazine');
-    assert.strictEqual(reg.resolve('single', 'magazine', 'ticket'), 'magazine');
+    assert.strictEqual(reg.resolve('single', 'polaroid', 'ticket'), 'polaroid');
+    assert.strictEqual(reg.resolve('single', 'magazine', 'ticket'), 'ticket', '杂志删了，存过的回默认');
     assert.strictEqual(reg.resolve('single', 'film', 'ticket'), 'ticket');
     assert.deepStrictEqual(reg.options('ranking'), [{ id: 'magazine', name: '杂志' }, { id: 'classic', name: '经典' }]);
   } finally {
     delete reg.MODULES.ticket;
     delete reg.MODULES.magazine;
+    delete reg.MODULES.polaroid;
+    delete reg.MODULES.statement;
   }
 }
 
@@ -143,7 +147,6 @@ test('版式注册表：金句只在有短评时出现；能切深浅底的版�
   assert.ok(reg.available('single').indexOf('quote') >= 0, '不给数据时按全部可能列出');
   assert.strictEqual(reg.resolve('single', 'quote', 'ticket', noNote), 'ticket', '存过金句、这条没短评 → 退回默认');
   assert.strictEqual(reg.hasStage('ticket'), true);
-  assert.strictEqual(reg.hasStage('magazine'), false, '杂志整幅封面，没有场景底');
   assert.strictEqual(reg.hasStage('classic'), false);
 });
 

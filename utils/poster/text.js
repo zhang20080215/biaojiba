@@ -79,6 +79,30 @@ function drawSpaced(ctx, text, x, y, spacing, align) {
 }
 
 /**
+ * 数字等宽绘制：Inter 的 1 比 0 窄，「10.11」「10.22」不等宽，一列日期就对不齐。
+ * 数字占同样的格子、居中放，标点按自身宽度。调用前 ctx.font / fillStyle / textBaseline 已设好；返回画出的宽度。
+ */
+function drawTabular(ctx, str, x, y) {
+  const cell = ctx.measureText('0').width;
+  const prevAlign = ctx.textAlign;
+  ctx.textAlign = 'center';
+  let cx = x;
+  Array.from(String(str == null ? '' : str)).forEach(ch => {
+    const w = /d/.test(ch) ? cell : ctx.measureText(ch).width;
+    ctx.fillText(ch, cx + w / 2, y);
+    cx += w;
+  });
+  ctx.textAlign = prevAlign;
+  return cx - x;
+}
+
+/** drawTabular 画出来的宽度（调用前 ctx.font 已设好） */
+function tabularWidth(ctx, str) {
+  const cell = ctx.measureText('0').width;
+  return Array.from(String(str == null ? '' : str)).reduce((w, ch) => w + (/d/.test(ch) ? cell : ctx.measureText(ch).width), 0);
+}
+
+/**
  * 从大到小试字号，返回第一个让 text 在 maxLines 行内放下（不需要省略）的字号；
  * 都放不下就返回最小那个。measureAt(size) → measure 函数。
  */
@@ -118,4 +142,4 @@ function fitTitle(text, maxW, sizes, measureAt) {
   return { size, lines: wrapLines(s, maxW, 2, measureAt(size)) };
 }
 
-module.exports = { ELLIPSIS, ellipsis, wrapLines, spacedWidth, drawSpaced, fitFontSize, fitTitle };
+module.exports = { ELLIPSIS, ellipsis, wrapLines, spacedWidth, drawSpaced, drawTabular, tabularWidth, fitFontSize, fitTitle };
