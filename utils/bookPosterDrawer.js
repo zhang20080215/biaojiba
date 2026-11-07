@@ -15,6 +15,7 @@
 const MoviePosterDrawer = require('./moviePosterDrawer.js');
 
 const BookPosterDrawer = MoviePosterDrawer.withVocab({
+  cinema: false,     // 抬头不画放映机，只有标题
   unit: '本',
   verb: '阅读',
   dayLabel: '阅读日',

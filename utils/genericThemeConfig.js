@@ -287,7 +287,10 @@ function getThemeConfig(theme) {
     if (reg && reg.type !== 'book') cfg = reg;
   }
   cfg = cfg || DEFAULT_CONFIG;
-  return { editionField: 'edition', orderDirection: 'asc', firstDirectorOnly: false, ratingLabel: '豆瓣', extraChips: [], useCache: false, ...cfg };
+  const merged = { editionField: 'edition', orderDirection: 'asc', firstDirectorOnly: false, ratingLabel: '豆瓣', extraChips: [], useCache: false, ...cfg };
+  // 不在硬编码表里的主题一定是通用影单，dataLoader 据此路由，见 cloudFnForTheme
+  if (!THEME_CONFIG[theme]) merged.catalogType = 'movie';
+  return merged;
 }
 
 module.exports = { THEME_CONFIG, getThemeConfig };

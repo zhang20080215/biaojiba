@@ -70,7 +70,7 @@ const GENERIC_CITY_THEMES = new Set(['city']);
 // listVersion = `listId:rev`，清单一改缓存就失效。
 const CUSTOM_LIST_THEMES = new Set(['customMovie', 'customBook']);
 
-function cloudFnForTheme(theme) {
+function cloudFnForTheme(theme, queryOptions) {
   if (GENERIC_PROVINCE_THEMES.has(theme)) return 'getProvinces';
   if (GENERIC_CITY_THEMES.has(theme)) return 'getCities';
   if (CUSTOM_LIST_THEMES.has(theme)) return 'customList';
@@ -82,6 +82,9 @@ function cloudFnForTheme(theme) {
   // 读本地注册表缓存判定类型；命中不了（缓存未写/纯深链首开）才落到 getMoviesData。
   const reg = themeRegistry.find(theme);
   if (reg) return reg.type === 'book' ? 'getThemeBooks' : 'getThemeMovies';
+  // 通用页上的非硬编码主题，注册表拉不到时也不能落到 getMoviesData：
+  // 它不认识的主题一律读 movies 集合，用户会看到豆瓣 TOP250，标记也写到豆瓣电影上。
+  if (queryOptions && queryOptions.catalogType) return queryOptions.catalogType === 'book' ? 'getThemeBooks' : 'getThemeMovies';
   return 'getMoviesData';
 }
 
@@ -113,7 +116,7 @@ async function loadMoviesData(theme, openid, forceRefresh = false, queryOptions 
     movies = cached.data;
     try {
       const markRes = await wx.cloud.callFunction({
-        name: cloudFnForTheme(theme),
+        name: cloudFnForTheme(theme, queryOptions),
         data: { theme, openid, marksOnly: true, ...queryOptions }
       });
       const result = markRes && markRes.result;
@@ -133,7 +136,7 @@ async function loadMoviesData(theme, openid, forceRefresh = false, queryOptions 
 
   if (useFull) {
     const res = await wx.cloud.callFunction({
-      name: cloudFnForTheme(theme),
+      name: cloudFnForTheme(theme, queryOptions),
       data: { theme, openid, ...queryOptions }
     });
     if (!res.result || !res.result.success) {
@@ -155,6 +158,7 @@ async function loadMoviesData(theme, openid, forceRefresh = false, queryOptions 
 function queryOptions(cfg, listId) {
   const opts = { orderByField: 'rank', orderDirection: (cfg && cfg.orderDirection) || 'asc' };
   if (listId) opts.listId = listId;
+  if (cfg && cfg.catalogType) opts.catalogType = cfg.catalogType;
   return opts;
 }
 
@@ -181,7 +185,7 @@ async function loadThemeItems(theme, queryOptions = {}) {
   const cached = readMovieCache(theme);
   if (cached && cached.data && cached.data.length) return cached.data;
   const res = await wx.cloud.callFunction({
-    name: cloudFnForTheme(theme),
+    name: cloudFnForTheme(theme, queryOptions),
     data: { theme, ...queryOptions }
   });
   if (!res.result || !res.result.success) {

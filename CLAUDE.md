@@ -281,6 +281,7 @@ Several themes/files live in source but are **excluded from the production bundl
 
 - **Mark statuses:** `'watched'` or `'wish'`, stored in `Marks` collection keyed by `(movieId, openid)`
 - **Batch operations:** `batchUpdateMarks` cloud function atomically upserts multiple marks
+- **Changing an existing mark must go through a cloud function:** marks written by `batchUpdateMarks` / `syncMarkAcrossThemes` / `importDoubanMarks` / `batchUpdateBookMarks` have no `_openid`, so the client is not their creator: `doc().update` / `where().remove()` from a page cannot touch them and do not report an error, the UI says saved and the old status returns on the next load (online feedback 2026-11-06; 408 of 1000 sampled marks of the self-test account). Pages only `add` directly; updates and removals use `markSync.save` / `saveBookMark`. `syncMarkAcrossThemes` must be deployed before a client using `markSync.save` ships
 - **Image optimization:** List views use thumbnail URLs via `imageCacheManager.getThumbnailUrl()`; poster walls use full-size originals
 - **Cloud DB batch reads:** `MAX_LIMIT=100` with looped queries to bypass the 20-record default limit
 - **getMoviesData:** supports `marksOnly` flag for lightweight mark refresh

@@ -106,7 +106,10 @@ function getThemeConfig(theme) {
     if (reg && reg.type === 'book') cfg = reg;
   }
   cfg = cfg || DEFAULT_CONFIG;
-  return { editionField: 'edition', orderDirection: 'asc', source: 'generic', showYear: false, simplifyTitle: false, useCache: false, ...cfg };
+  const merged = { editionField: 'edition', orderDirection: 'asc', source: 'generic', showYear: false, simplifyTitle: false, useCache: false, ...cfg };
+  // 不在硬编码表里的主题一定是通用书单，dataLoader 据此路由，见 cloudFnForTheme
+  if (!THEME_CONFIG[theme]) merged.catalogType = 'book';
+  return merged;
 }
 
 module.exports = { THEME_CONFIG, getThemeConfig };

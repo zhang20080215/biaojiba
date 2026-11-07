@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>单部海报 v4</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--cn:'Noto Sans SC','PingFang SC',sans-serif;--num:'Inter','Noto Sans SC',sans-serif;--mono:Menlo,'Courier New',monospace;--ink:#16181D;--ink2:#6B7079;--ink3:#A3A8B0;--line:#ECEDF0;--acc:#FF5B3A}
+*{box-sizing:border-box}
+body{margin:0;background:#C9CCD2;font-family:var(--cn);color:var(--ink);padding:28px;-webkit-font-smoothing:antialiased}
+.intro{font-size:13px;color:#444;line-height:1.8;margin:0 0 22px;max-width:1120px}
+.wrap{display:flex;flex-wrap:wrap;gap:28px}
+.slot{width:540px}.slot>.cap{font-size:12px;color:#555;margin:10px 2px 0;line-height:1.6}
+.frame{width:540px;height:720px;overflow:hidden;border-radius:4px;box-shadow:0 18px 50px rgba(20,25,35,.25)}
+.poster{width:1080px;height:1440px;transform:scale(.5);transform-origin:0 0;position:relative;overflow:hidden}
+.num{font-family:var(--num);font-feature-settings:'tnum' 1}
+img{display:block;object-fit:cover}
+/* 暗场景：封面糊开、提饱和，再压暗 + 四角暗角 —— 白色物件放上去才「亮」 */
+.stage{position:absolute;inset:-140px;background-size:cover;background-position:center;filter:blur(64px) saturate(1.5)}
+.dim{position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 42%,rgba(12,10,10,.18) 0%,rgba(12,10,10,.55) 70%,rgba(12,10,10,.72) 100%)}
+.wm{position:absolute;left:0;right:0;bottom:52px;text-align:center;font-size:20px;color:rgba(255,255,255,.62)}
+.wm i{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--acc);margin-right:10px;vertical-align:2px}
+.stars{display:inline-flex;gap:8px;vertical-align:middle}
+</style></head><body>
+<p class="intro"><b>v4 · 单部海报重做方向</b>：参照每日选片的票卡 —— ①暗场景衬亮物件（封面糊开压暗当底，白色卡片 / 相纸 / 小票是唯一的亮处）；②封面永远完整竖版、带真投影，不再裁成横条；③字少，焦点只有片名 + 我的星级 + 一句话；④每张有一个「物件感」的小彩蛋（印章、杂志条码、便签、热敏打印的黑白封面）。数据仍只用每日电影一条记录里有的字段。</p>
+<div class="wrap" id="wrap"></div>
+<script>
+const R=[
+ {id:'1291561',title:'千与千寻',year:'2001',dir:'宫崎骏',genres:['剧情','动画'],date:'2026.10.18',md:'10.18',wd:'SUN',wdcn:'周日',n:37,stars:5,note:'不要回头，一直往前走。',plat:[['豆瓣','9.4'],['IMDb','8.6'],['新鲜度','96%']],lum:.25},
+ {id:'1291557',title:'花样年华',year:'2000',dir:'王家卫',genres:['剧情','爱情'],date:'2026.10.04',md:'10.04',wd:'SUN',wdcn:'周日',n:31,stars:4,note:'那个时代已过去，属于那个时代的一切都不存在了。',plat:[['豆瓣','8.8'],['IMDb','8.1'],['新鲜度','92%']],lum:.35},
+ {id:'1291560',title:'龙猫',year:'1988',dir:'宫崎骏',genres:['动画','奇幻'],date:'2026.09.27',md:'09.27',wd:'SAT',wdcn:'周六',n:24,stars:5,note:'小时候相信的东西，长大了也想继续相信。',plat:[['豆瓣','9.2'],['IMDb','8.1']],lum:.78}
+];
+const src=r=>'covers/'+r.id+'.jpg';
+const STAR=(n,size,off='rgba(22,24,29,.12)',gap=8)=>`<span class="stars" style="gap:${gap}px">${[0,1,2,3,4].map(k=>`<svg width="${size}" height="${size}" viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z" fill="${k<n?'var(--acc)':off}"/></svg>`).join('')}</span>`;
+const WM=`<div class="wm"><i></i>使用小程序「标记吧」生成</div>`;
+const stage=r=>`<div class="stage" style="background-image:url(${src(r)})"></div><div class="dim"></div>`;
+
+// ① 票根：每日选片票卡放大成海报
+function ticket(r){
+ const W=800,X=140,TOP=720,NR=30;
+ return `${stage(r)}
+ <div style="position:absolute;left:${X}px;top:${r.note.length>20?66:96}px;width:${W}px;filter:drop-shadow(0 40px 70px rgba(0,0,0,.45))">
+  <div style="position:relative;height:${TOP}px;border-radius:40px 40px 0 0;overflow:hidden">
+   <div style="position:absolute;inset:-60px;background:url(${src(r)}) center/cover;filter:blur(26px) saturate(1.5)"></div>
+   <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.02),rgba(0,0,0,.28))"></div>
+   <img src="${src(r)}" style="position:absolute;left:${(W-420)/2}px;top:66px;width:420px;height:598px;border-radius:18px;box-shadow:0 26px 50px rgba(0,0,0,.42)">
+   <div style="position:absolute;left:40px;top:40px;transform:rotate(-7deg);background:rgba(255,255,255,.94);border-radius:16px;padding:14px 22px 12px;text-align:center;box-shadow:0 6px 16px rgba(0,0,0,.18)">
+    <div style="font-size:24px;font-weight:900;letter-spacing:4px;color:var(--acc)">看过了</div>
+    <div class="num" style="font-size:34px;font-weight:800;margin-top:2px">${r.md}</div></div>
+  </div>
+  <div style="height:56px;background:radial-gradient(circle at 0 50%,transparent ${NR}px,#fff ${NR+1}px) left/51% 100% no-repeat,radial-gradient(circle at 100% 50%,transparent ${NR}px,#fff ${NR+1}px) right/51% 100% no-repeat;position:relative">
+   <div style="position:absolute;left:48px;right:48px;top:27px;border-top:3px dashed #E3E5E9"></div></div>
+  <div style="background:#fff;border-radius:0 0 40px 40px;padding:6px 56px 40px;text-align:center">
+   <div style="font-size:80px;font-weight:900;letter-spacing:4px;line-height:1.15">${r.title}</div>
+   <div style="font-size:26px;color:var(--ink2);margin-top:12px">${r.year} · ${r.dir} · ${r.genres.join(' / ')}</div>
+   <div style="margin-top:26px">${STAR(r.stars,40)}</div>
+   <div style="font-size:30px;line-height:1.6;margin-top:22px;color:var(--ink)">「${r.note}」</div>
+   <div style="display:flex;justify-content:space-between;align-items:center;margin-top:30px;padding-top:24px;border-top:2px solid var(--line);font-size:22px;color:var(--ink2)">
+    <span>我记录的第 <b class="num" style="color:var(--ink);font-size:26px">${r.n}</b> 部</span><span class="num" style="letter-spacing:1px">${r.date} ${r.wd}</span></div>
+  </div>
+ </div>${WM}`}
+
+// ② 杂志：整幅封面 + 真杂志的「家具」：通栏刊头、期号行、封面要点大数字、圆形贴纸、右下条码框
+function magazine(r){
+ const bars='3121231213112312213121321'.split('').map((w,k)=>`<i style="display:inline-block;width:${w*2}px;height:${k%7===0?62:56}px;background:#111;margin-right:3px;vertical-align:bottom"></i>`).join('');
+ return `<img src="${src(r)}" style="position:absolute;inset:0;width:1080px;height:1440px;object-position:center 28%">
+ <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,${.5+.25*Math.max(0,(r.lum-.35)/.4)}) 0%,rgba(0,0,0,${.12*Math.max(0,(r.lum-.35)/.4)}) 30%,rgba(0,0,0,${.12*Math.max(0,(r.lum-.35)/.4)}) 48%,rgba(0,0,0,${.82+.1*Math.max(0,(r.lum-.35)/.4)}) 100%)"></div>
+ <div class="num" style="position:absolute;left:52px;right:52px;top:36px;color:#fff;font-size:214px;font-weight:900;letter-spacing:-9px;line-height:.86;text-align:center">MARKED</div>
+ <div style="position:absolute;left:60px;right:60px;top:236px;display:flex;justify-content:space-between;color:rgba(255,255,255,.9);font-size:21px;letter-spacing:3px;border-top:2px solid rgba(255,255,255,.55);padding-top:12px">
+  <span class="num">ISSUE No.${r.n}</span><span>我的观影志</span><span class="num">${r.date}</span></div>
+ <div style="position:absolute;left:60px;top:330px;color:#fff;text-shadow:0 2px 14px rgba(0,0,0,.35)">
+  ${r.plat.slice(0,2).map(([l,v])=>`<div style="margin-bottom:22px"><div class="num" style="font-size:84px;font-weight:800;line-height:1;letter-spacing:-2px">${v}</div><div style="font-size:22px;letter-spacing:3px;opacity:.85;margin-top:4px">${l}评分</div></div>`).join('')}
+ </div>
+ <div style="position:absolute;right:64px;top:350px;width:176px;height:176px;border-radius:50%;background:var(--acc);transform:rotate(12deg);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;box-shadow:0 12px 28px rgba(0,0,0,.3)">
+  <div style="font-size:30px;font-weight:900;letter-spacing:4px">看过了</div><div class="num" style="font-size:40px;font-weight:800;margin-top:2px">${r.md}</div></div>
+ <div style="position:absolute;left:60px;right:300px;bottom:150px;color:#fff">
+  <div class="num" style="font-size:22px;letter-spacing:6px;color:var(--acc);font-weight:700">COVER STORY</div>
+  <div style="font-size:112px;font-weight:900;letter-spacing:4px;line-height:1.05;margin-top:10px">${r.title}</div>
+  <div style="font-size:26px;opacity:.82;margin-top:14px">${r.year} · ${r.dir} · ${r.genres.join(' / ')}</div>
+  <div style="margin-top:22px">${STAR(r.stars,36,'rgba(255,255,255,.3)',7)}</div>
+  <div style="font-size:30px;line-height:1.55;margin-top:16px">「${r.note}」</div>
+ </div>
+ <div style="position:absolute;right:60px;bottom:150px;width:206px;background:#fff;padding:14px 16px 10px;text-align:center">
+  <div style="white-space:nowrap;height:62px">${bars}</div>
+  <div class="num" style="display:flex;justify-content:space-between;font-size:15px;color:#111;margin-top:6px;letter-spacing:1px"><span>No.${String(r.n).padStart(4,'0')}</span><span>${r.md}</span></div>
+ </div>
+ ${WM}`}
+
+// ③ 拍立得：暗场景上一张相纸 + 斜压在角上的便签（短评）
+function polaroid(r){
+ return `${stage(r)}
+ <div style="position:absolute;left:150px;top:120px;width:780px;transform:rotate(-4deg);background:#FBFBF9;padding:42px 42px 0;box-shadow:0 44px 80px rgba(0,0,0,.42),0 2px 0 rgba(0,0,0,.05)">
+  <img src="${src(r)}" style="width:696px;height:900px;object-position:center 25%">
+  <div style="height:190px;padding:30px 4px 0;display:flex;justify-content:space-between;align-items:flex-start">
+   <div><div style="font-size:56px;font-weight:900;letter-spacing:3px">${r.title}</div>
+    <div class="num" style="font-size:24px;color:var(--ink2);margin-top:12px;letter-spacing:1px">${r.date} ${r.wd}</div></div>
+   </div>
+ </div>
+ <div style="position:absolute;left:200px;top:96px;width:200px;height:56px;background:rgba(255,250,235,.62);transform:rotate(-16deg)"></div>
+ <div style="position:absolute;left:560px;top:990px;width:430px;transform:rotate(5deg);background:#FFF6D9;padding:40px 36px 30px;box-shadow:0 24px 40px rgba(0,0,0,.35)">
+  <div style="position:absolute;left:50%;top:-14px;width:28px;height:28px;margin-left:-14px;border-radius:50%;background:var(--acc);box-shadow:0 4px 8px rgba(0,0,0,.3)"></div>
+  <div style="margin-bottom:16px">${STAR(r.stars,32,'rgba(43,39,34,.14)',6)}</div>
+  <div style="font-size:30px;line-height:1.6;color:#2B2722">${r.note}</div>
+  <div style="font-size:20px;color:#9A8F7A;margin-top:16px;text-align:right">—— 我记录的第 ${r.n} 部</div>
+ </div>
+ ${WM}`}
+
+// ④ 小票：暗场景 + 顶光；封面用「热敏打印」的黑白高反差印在票上，账单式条目
+function receipt(r){
+ const dash=`<div style="border-top:2px dashed #CFCFCF;margin:20px 0"></div>`;
+ const row=(a,b,big)=>`<div style="display:flex;justify-content:space-between;font-size:${big?34:24}px;line-height:1.8;${big?'font-weight:700':''}"><span>${a}</span><span>${b}</span></div>`;
+ const zig=(flip)=>`<div style="height:16px;background:linear-gradient(${flip?'45deg':'-45deg'},transparent 11px,#FAFAF7 0) 0 0/22px 22px repeat-x,linear-gradient(${flip?'-45deg':'45deg'},transparent 11px,#FAFAF7 0) 0 0/22px 22px repeat-x;${flip?'transform:rotate(180deg)':''}"></div>`;
+ return `${stage(r)}
+ <div style="position:absolute;left:50%;top:-200px;width:1100px;height:900px;margin-left:-550px;background:radial-gradient(closest-side,rgba(255,255,255,.22),rgba(255,255,255,0))"></div>
+ <div style="position:absolute;left:180px;width:720px;top:70px;transform:rotate(-1.5deg);filter:drop-shadow(0 34px 50px rgba(0,0,0,.5))">
+  ${zig(true)}
+  <div style="background:#FAFAF7;padding:22px 50px 28px;font-family:var(--mono);color:#1B1B1B">
+   <div class="num" style="text-align:center;font-size:36px;font-weight:900;letter-spacing:12px">MARKED</div>
+   <div style="text-align:center;font-size:20px;margin-top:6px;letter-spacing:2px">观影小票 No.${String(r.n).padStart(4,'0')}</div>
+   <div style="text-align:center;font-size:20px;color:#777;margin-top:2px">${r.date} ${r.wd}</div>
+   ${dash}
+   <img src="${src(r)}" style="width:620px;height:440px;object-position:center 30%;filter:grayscale(1) contrast(1.45) brightness(1.08)">
+   ${dash}
+   ${row('电影票 ×1','')}
+   <div style="font-family:var(--cn);font-size:44px;font-weight:900;letter-spacing:2px;margin:2px 0 4px">《${r.title}》</div>
+   <div style="font-family:var(--cn);font-size:22px;color:#666">${r.year} · ${r.dir} · ${r.genres.join(' / ')}</div>
+   ${dash}
+   ${r.plat.map(([l,v])=>row(l,v)).join('')}
+   ${dash}
+   <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:34px;font-weight:700">TOTAL</span>${STAR(r.stars,34,'rgba(0,0,0,.12)',5)}</div>
+   <div style="font-family:var(--cn);font-size:24px;line-height:1.7;margin-top:14px">* ${r.note}</div>
+   ${dash}
+   <div style="text-align:center;font-size:18px;color:#888;letter-spacing:4px">THANK YOU FOR WATCHING</div>
+  </div>
+  ${zig(false)}
+ </div>${WM}`}
+
+const SETS=[['票根',ticket,'就是每日选片那张票卡放大：上半截糊开的封面衬一张完整竖版封面，斜贴「看过了 10.18」印章；齿孔缺口露出暗底。'],
+ ['杂志',magazine,'通栏大刊头 + 期号行（ISSUE No.=记录序号），左侧平台评分做成大数字封面要点，右上一枚「看过了」圆贴纸，右下杂志条码框。'],
+ ['拍立得',polaroid,'暗场景里一张大相纸，短评写在一张钉着图钉的便签上斜压在相纸角上；相纸下沿只留片名、日期、星级。'],
+ ['小票',receipt,'顶光打在小票上；封面按热敏打印做成黑白高反差印在票面，账单式「电影票 ×1」、平台评分逐行、TOTAL = 我的星级、短评当脚注。']];
+const wrap=document.getElementById('wrap');
+// ?one=<版式序号>-<片序号>：按原尺寸只出一张（无头浏览器截图用）
+const one=new URLSearchParams(location.search).get('one');
+if(one){const [a,b]=one.split('-').map(Number);document.body.style.cssText='margin:0;padding:0;background:#000';document.querySelector('.intro').remove();
+ wrap.innerHTML=`<div class="poster" style="transform:none">${SETS[a][1](R[b])}</div>`;}
+// ?set=<版式序号>：这个版式的三张并排、各按一半（1620×720）
+const set=new URLSearchParams(location.search).get('set');
+if(set){document.body.style.cssText='margin:0;padding:0;background:#000';document.querySelector('.intro').remove();wrap.style.gap='0';
+ wrap.innerHTML=R.map(r=>`<div class="frame" style="border-radius:0;box-shadow:none"><div class="poster">${SETS[+set][1](r)}</div></div>`).join('');}
+else if(one){}
+else SETS.forEach(([name,fn,cap])=>R.forEach((r,i)=>{
+ const s=document.createElement('div');s.className='slot';
+ s.innerHTML=`<div class="frame"><div class="poster">${fn(r)}</div></div><div class="cap"><b>${name}</b> · ${r.title}${i?'':'。'+cap}</div>`;
+ wrap.appendChild(s);
+}));
+</script></body></html>

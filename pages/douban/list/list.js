@@ -670,7 +670,7 @@ Page({
             // 静默截断，给批量标过 100+ 条的用户造出过重复记录。只删一条的话旧记录留在库里，下次
             // 加载又被读回来 —— 表现就是「取消不掉、标记复活，状态还可能变回旧的」。删全部顺手把
             // 这些历史重复清干净，且不需要单独跑清理脚本。
-            const persist = db.collection('Marks').where({ movieId, openid }).remove();
+            const persist = markSync.save(movieId, '');
             persist.then(() => {
                 markTimeline.record(this, 'douban', 'unmark', [movieId]);
                 // 跨榜单同步：其他榜单里的同一部电影也一并取消。fire-and-forget，
@@ -688,8 +688,9 @@ Page({
         this.applySingleMarkLocally(movieId, targetStatus, now, existingRecordId);
         this.showCustomToast(targetStatus === 'watched' ? '✓ 已标记为已看' : '✓ 已标记为想看');
 
+        // 改已有标记走云函数：这条可能是云函数写的，小程序端改不动（见 utils/markSync.js）
         const persist = existingRecordId
-            ? db.collection('Marks').doc(existingRecordId).update({ data: { status: targetStatus, marked_at: now } })
+            ? markSync.save(movieId, targetStatus)
             : db.collection('Marks').add({ data: { movieId, openid, status: targetStatus, marked_at: now } });
 
         persist.then(res => {

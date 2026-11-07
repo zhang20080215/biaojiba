@@ -34,9 +34,11 @@ async function mapLimit(items, limit, fn, isCancelled) {
  *   load            url → Promise<image 节点>
  *   onProgress      (done, total)，每加载完一张调一次（可选）
  *   isCancelled     () → bool，页面卸载后停止（可选）
+ *   allowHttp       true 时 http(s) 封面不换链、直接交给 load（榜单页：封面可能是豆瓣直链，
+ *                   load 用 CanvasHelper.loadImage，它自己会下载并走跨页面缓存）。默认 false，每日电影 / 读书行为不变
  */
 async function ensureCoverNodes(opts) {
-  const { movies, nodes, getTempFileURL, load, onProgress, isCancelled } = opts;
+  const { movies, nodes, getTempFileURL, load, onProgress, isCancelled, allowHttp } = opts;
   const pending = (movies || []).filter(m => !(m.key in nodes));
   if (!pending.length) return;
 
@@ -63,7 +65,8 @@ async function ensureCoverNodes(opts) {
   // 3. 并发加载
   let done = 0;
   await mapLimit(pending, CONCURRENCY, async m => {
-    const url = tempMap[m.poster || ''];
+    const raw = m.poster || '';
+    const url = tempMap[raw] || (allowHttp && /^https?:\/\//.test(raw) ? raw : '');
     let node = null;
     if (url) {
       try { node = await load(url); } catch (e) { node = null; }

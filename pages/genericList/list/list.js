@@ -5,7 +5,8 @@ var adConfig = require('../../../utils/adConfig');
 var { trackMark, trackShare } = require('../../../utils/track.js');
 var adManager = require('../../../utils/adManager');
 var userStore = require('../../../utils/userStore.js');
-var { getThemeConfig } = require('../../../utils/genericThemeConfig.js');
+var { THEME_CONFIG, getThemeConfig } = require('../../../utils/genericThemeConfig.js');
+var themeRegistryLoader = require('../../../utils/themeRegistryLoader.js');
 var { formatVotes, formatBoxOffice } = require('../../../utils/movieFormat.js');
 var markSync = require('../../../utils/markSync.js');
 
@@ -69,6 +70,16 @@ Page({
             return;
         }
         const theme = (options && options.theme) || '';
+        // 分享链接冷启动：本地没有这个云端主题时，先拉注册表再按它的标题和配色启动
+        if (themeRegistryLoader.needsFetch(theme, THEME_CONFIG)) {
+            this.setData({ theme, cfg: { ...getThemeConfig(theme), title: '', slogan: '' } });
+            themeRegistryLoader.refresh().then(() => this.bootTheme(options, theme));
+            return;
+        }
+        this.bootTheme(options, theme);
+    },
+
+    bootTheme(options, theme) {
         const cfg = getThemeConfig(theme);
         this._defaultSlogan = cfg.slogan;  // 自建清单清空说明语时退回主题 slogan
         const listId = (cfg.custom && options && options.listId) || '';
@@ -644,7 +655,7 @@ Page({
             // 静默截断，给批量标过 100+ 条的用户造出过重复记录。只删一条的话旧记录留在库里，下次
             // 加载又被读回来 —— 表现就是「取消不掉、标记复活，状态还可能变回旧的」。删全部顺手把
             // 这些历史重复清干净，且不需要单独跑清理脚本。
-            const persist = db.collection('Marks').where({ movieId, openid }).remove();
+            const persist = markSync.save(movieId, '');
             persist.then(() => {
                 markTimeline.record(this, this.data.theme, 'unmark', [movieId]);
                 // 跨榜单同步：其他榜单里的同一部电影也一并取消（详见 utils/markSync.js）
@@ -662,8 +673,9 @@ Page({
         this.applySingleMarkLocally(movieId, targetStatus, now, existingRecordId);
         this.showCustomToast(targetStatus === 'watched' ? '✓ 已标记为已看' : '✓ 已标记为想看');
 
+        // 改已有标记走云函数：这条可能是云函数写的，小程序端改不动（见 utils/markSync.js）
         const persist = existingRecordId
-            ? db.collection('Marks').doc(existingRecordId).update({ data: { status: targetStatus, marked_at: now } })
+            ? markSync.save(movieId, targetStatus)
             : db.collection('Marks').add({ data: { movieId, openid, status: targetStatus, marked_at: now } });
 
         persist.then(res => {

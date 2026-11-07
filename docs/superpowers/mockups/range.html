@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>范围海报样稿</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--cn:'Noto Sans SC','PingFang SC',sans-serif;--num:'Inter','Noto Sans SC',sans-serif;--mono:Menlo,'Courier New',monospace;--ink:#16181D;--ink2:#6B7079;--ink3:#A3A8B0;--line:#ECEDF0;--acc:#FF5B3A}
+*{box-sizing:border-box}
+body{margin:0;background:#C9CCD2;font-family:var(--cn);color:var(--ink);padding:28px;-webkit-font-smoothing:antialiased}
+.wrap{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}
+.slot{width:540px}.slot>.cap{font-size:12px;color:#555;margin:10px 2px 0;line-height:1.6}
+.frame{width:540px;overflow:hidden;border-radius:4px;box-shadow:0 18px 50px rgba(20,25,35,.25)}
+.poster{width:1080px;transform:scale(.5);transform-origin:0 0;position:relative;overflow:hidden}
+.num{font-family:var(--num);font-feature-settings:'tnum' 1}
+img{display:block;object-fit:cover}
+.stage{position:absolute;inset:-140px;background-size:cover;background-position:center;filter:blur(64px) saturate(1.5)}
+.dim{position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 42%,rgba(12,10,10,.18) 0%,rgba(12,10,10,.55) 70%,rgba(12,10,10,.72) 100%)}
+.wash{position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 40%,rgba(255,255,255,.66) 0%,rgba(255,255,255,.46) 100%)}
+.wm{position:absolute;left:0;right:0;bottom:52px;text-align:center;font-size:20px;color:rgba(255,255,255,.62)}
+.wm.dark{color:rgba(22,24,29,.45)}
+.wm i{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--acc);margin-right:10px;vertical-align:2px}
+.stars{display:inline-flex;vertical-align:middle}
+</style></head><body>
+<div class="wrap" id="wrap"></div>
+<script>
+// ---------------- 数据：都是每日电影记录里有的字段 ----------------
+const F={};
+const RAW=[['1291561','千与千寻','2001','宫崎骏'],['1291557','花样年华','2000','王家卫'],['1291999','重庆森林','1994','王家卫'],['27010768','寄生虫','2019','奉俊昊'],
+['1291843','黑客帝国','1999','莉莉·沃卓斯基'],['1291832','低俗小说','1994','昆汀·塔伦蒂诺'],['1292434','一一','2000','杨德昌'],['1291560','龙猫','1988','宫崎骏'],
+['1292225','闪灵','1980','斯坦利·库布里克'],['1292217','穆赫兰道','2001','大卫·林奇'],['4876722','钢的琴','2010','张猛'],['26688480','逃出绝命镇','2017','乔丹·皮尔'],
+['1292063','美丽人生','1997','罗伯托·贝尼尼'],['1291841','教父','1972','科波拉'],['1299131','教父2','1974','科波拉'],['1292226','2001太空漫游','1968','库布里克'],
+['1292329','牯岭街少年杀人事件','1991','杨德昌'],['1291879','罗生门','1950','黑泽明'],['1293181','惊魂记','1960','希区柯克'],['1294371','摩登时代','1936','卓别林'],
+['1291839','银翼杀手','1982','雷德利·斯科特'],['30257175','燃烧女子的肖像','2019','瑟琳·席安玛'],['1293460','雨中曲','1952','斯坦利·多南'],['1292222','出租车司机','1976','斯科塞斯'],
+['1296753','卡萨布兰卡','1942','柯蒂兹'],['1295399','七武士','1954','黑泽明'],['1299080','后窗','1954','希区柯克'],['1293908','城市之光','1931','卓别林'],
+['1297294','迷魂记','1958','希区柯克'],['1291568','东京物语','1953','小津安二郎'],['26648249','月光男孩','2016','巴里·詹金斯'],['1300056','四百击','1959','特吕弗'],
+['1292268','好家伙','1990','斯科塞斯'],['1292288','公民凯恩','1941','奥逊·威尔斯'],['1292260','现代启示录','1979','科波拉']];
+RAW.forEach(([id,title,year,dir])=>F[title]={id,title,year,dir});
+const mk=(rows,startN)=>rows.map(([t,date,stars,mood],i)=>Object.assign({},F[t],{date,md:date.slice(5).replace('-','.'),stars,mood,n:startN+i}));
+const MONTH=mk([['千与千寻','2026-10-02',5,'治愈'],['花样年华','2026-10-04',4,'心动'],['重庆森林','2026-10-05',4,'怀旧'],['寄生虫','2026-10-09',5,'震撼'],
+ ['黑客帝国','2026-10-11',4,'过瘾'],['低俗小说','2026-10-11',3,''],['一一','2026-10-15',5,'泪目'],['龙猫','2026-10-18',5,'治愈'],
+ ['闪灵','2026-10-22',3,'惊悚'],['穆赫兰道','2026-10-25',2,'烧脑'],['钢的琴','2026-10-27',4,''],['逃出绝命镇','2026-10-31',3,'惊悚']],25);
+const FEW=mk([['龙猫','2026-09-06',5,'治愈'],['牯岭街少年杀人事件','2026-09-13',4,'深思'],['东京物语','2026-09-27',5,'泪目']],22);
+const YEAR=(()=>{const ts=Object.keys(F);const out=[];let d=new Date('2026-08-03');
+ const st=[4,5,3,4,5,4,3,4,2,5,4,3,5,4,4,3,5,4,3,4,5,2,4,3,4,5,3,4,4,3,5,4,3,4,4];
+ const md=['治愈','','怀旧','震撼','','泪目','','心动','无聊','热血','','烧脑','治愈','','深思','','泪目','','惊悚','','超爱','失望','','欢乐','','泪目','','','深思','','治愈','','','过瘾',''];
+ ts.forEach((t,i)=>{out.push([t,d.toISOString().slice(0,10),st[i],md[i]]);d=new Date(d.getTime()+86400000*(i%3===0?2:3));});
+ return mk(out,1);})();
+const SETS={
+ month:{label:'十月',year:2026,mode:'month',films:MONTH,range:'2026.10.01 — 10.31',ym:'2026.10',issue:'2026年10月刊'},
+ year:{label:'2026',year:2026,mode:'year',films:YEAR,range:'2026.08.03 — 11.01',ym:'2026',issue:'2026 合订本 · 共 3 个月有记录',months:3},
+ few:{label:'九月',year:2026,mode:'month',films:FEW,range:'2026.09.01 — 09.30',ym:'2026.09',issue:'2026年9月刊'}};
+function derive(S){
+ const f=S.films;const days=new Set(f.map(x=>x.date)).size;const avg=(f.reduce((s,x)=>s+x.stars,0)/f.length).toFixed(1);
+ const top=Math.max(...f.map(x=>x.stars));const fav=f.find(x=>x.stars===top);
+ const cnt=k=>{const m={};f.forEach(x=>{if(x[k])m[x[k]]=(m[x[k]]||0)+1});const e=Object.entries(m).sort((a,b)=>b[1]-a[1])[0];return e&&e[1]>=2?e:null};
+ return Object.assign({},S,{n:f.length,days,avg,fav,mood:cnt('mood'),dir:cnt('dir'),serial:`No.${String(f[0].n).padStart(3,'0')}–${String(f[f.length-1].n).padStart(3,'0')}`});
+}
+// ---------------- 公共件 ----------------
+const src=r=>'covers/'+r.id+'.jpg';
+const STAR=(n,size,on='var(--acc)',off='rgba(22,24,29,.12)',gap=6)=>`<span class="stars" style="gap:${gap}px">${[0,1,2,3,4].map(k=>`<svg width="${size}" height="${size}" viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z" fill="${k<n?on:off}"/></svg>`).join('')}</span>`;
+const WM=(dark)=>`<div class="wm ${dark?'dark':''}"><i></i>使用小程序「标记吧」生成</div>`;
+const stage=(r,light)=>`<div class="stage" style="background-image:url(${src(r)})"></div><div class="${light?'wash':'dim'}"></div>`;
+// 片 key 做种子：同一份数据每次画都一样
+const rnd=(seed)=>{let h=2166136261;for(const c of String(seed)){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return ((h>>>0)%10000)/10000};
+const jit=(r,k,a)=>(rnd(r.id+k)-.5)*2*a;
+
+// ============ ① 杂志 · 月刊：整幅封面 = 本月最爱；封面要点 = 部数大数字；底部「本期片单」缩略封面 ============
+function magazine(D){
+ const r=D.fav,H=1440;
+ const thumbs=D.films.slice(0,24),rows=thumbs.length>12?2:1,TW=68,TH=97,G=10;
+ const more=D.n-thumbs.length;
+ const stripH=rows*TH+(rows-1)*G;
+ const stripTop=H-140-stripH;
+ // 小红书原生的话题标签：心情 / 导演出现 ≥2 次才有
+ const tags=[];
+ if(D.mood)tags.push(`#${D.mood[0]} ×${D.mood[1]}`);
+ if(D.dir)tags.push(`#${D.dir[0]} ×${D.dir[1]}`);
+ return {H,html:`<img src="${src(r)}" style="position:absolute;left:0;top:0;width:1080px;height:${H}px;object-position:center 22%">
+ <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.6) 0%,rgba(0,0,0,.2) 26%,rgba(0,0,0,.16) 44%,rgba(0,0,0,.8) 64%,rgba(0,0,0,.95) 100%)"></div>
+ <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.5) 0%,rgba(0,0,0,0) 55%)"></div>
+ <div class="num" style="position:absolute;left:52px;right:52px;top:36px;color:#fff;font-size:214px;font-weight:900;letter-spacing:-9px;line-height:.86;text-align:center">MARKED</div>
+ <div style="position:absolute;left:60px;right:60px;top:236px;display:flex;justify-content:space-between;color:rgba(255,255,255,.92);font-size:21px;letter-spacing:3px;border-top:2px solid rgba(255,255,255,.55);padding-top:12px">
+  <span>${D.issue}</span><span>我的观影志</span><span class="num">${D.serial}</span></div>
+ <div style="position:absolute;left:60px;top:318px;color:#fff;text-shadow:0 2px 16px rgba(0,0,0,.4)">
+  <div style="display:flex;align-items:flex-end;gap:14px"><div class="num" style="font-size:250px;font-weight:900;line-height:.8;letter-spacing:-12px">${D.n}</div><div style="font-size:40px;font-weight:900;letter-spacing:4px;padding-bottom:6px">部电影</div></div>
+  <div style="margin-top:34px;font-size:30px;letter-spacing:1px"><b class="num">${D.days}</b> 个观影日<span style="opacity:.5;margin:0 14px">/</span>平均 <b class="num">★${D.avg}</b></div>
+  ${tags.length?`<div style="display:flex;gap:14px;margin-top:22px">${tags.map(t=>`<span style="font-size:26px;font-weight:700;padding:8px 20px;border-radius:30px;background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.35)">${t}</span>`).join('')}</div>`:''}
+ </div>
+ <div style="position:absolute;right:64px;top:350px;width:184px;height:184px;border-radius:50%;background:var(--acc);transform:rotate(12deg);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;box-shadow:0 12px 28px rgba(0,0,0,.3)">
+  <div style="font-size:30px;font-weight:900;letter-spacing:3px">${D.mode==='year'?'今年最爱':'本月最爱'}</div><div class="num" style="font-size:40px;font-weight:800;margin-top:2px">${r.md}</div></div>
+ <div style="position:absolute;left:60px;right:60px;top:${stripTop-250}px;color:#fff">
+  <div class="num" style="font-size:22px;letter-spacing:6px;color:var(--acc);font-weight:700">COVER STORY</div>
+  <div style="display:flex;align-items:baseline;gap:28px;margin-top:8px"><div style="font-size:92px;font-weight:900;letter-spacing:4px;line-height:1.1">${r.title}</div>${STAR(r.stars,34,'var(--acc)','rgba(255,255,255,.3)',6)}</div>
+  <div style="font-size:24px;opacity:.78;margin-top:8px">${r.year} · ${r.dir}</div>
+ </div>
+ <div style="position:absolute;left:60px;right:60px;top:${stripTop-62}px;display:flex;justify-content:space-between;color:rgba(255,255,255,.7);font-size:20px;letter-spacing:3px;border-top:2px solid rgba(255,255,255,.3);padding-top:14px">
+  <span>本期片单</span><span class="num">${D.n} FILMS${more>0?` · 另 ${more} 部`:''}</span></div>
+ <div style="position:absolute;left:60px;top:${stripTop}px;display:grid;grid-template-columns:repeat(12,${TW}px);gap:${G}px">
+  ${thumbs.map(f=>`<img src="${src(f)}" style="width:${TW}px;height:${TH}px;border-radius:4px;${f===r?'outline:3px solid var(--acc);outline-offset:3px':''}">`).join('')}</div>
+ ${WM()}`};
+}
+
+// ============ ② 票夹：暗场景上一格格撕下来的票根，每张 = 封面 + 齿孔 + 日期 / No. / 星级 ============
+function tickets(D){
+ const n=D.n,cols=n<=3?3:n<=12?4:5,GX=n<=12?46:30,GY=n<=12?26:28;
+ const W=Math.min(n<=3?290:250,Math.floor((1080-2*(n<=3?66:104)-(cols-1)*GX)/cols));
+ const P=Math.round(W*.075),CW=W-2*P,CH=Math.round(CW*1.42),BOT=Math.round(W*.37),PERF=Math.round(W*.12);
+ const TH=P+CH+P*.4+PERF+BOT;
+ const rows=Math.ceil(n/cols),HEAD=n>12?300:268,FOOT=118;
+ const gridH=rows*TH+(rows-1)*GY;
+ const H=Math.max(1440,HEAD+gridH+FOOT);
+ const top=HEAD+Math.max(0,(H-HEAD-FOOT-gridH)/2);
+ const gridW=cols*W+(cols-1)*GX,left=(1080-gridW)/2;
+ const NR=Math.round(W*.05);
+ const t=(f,i)=>{const c=i%cols,rw=Math.floor(i/cols);const x=left+c*(W+GX)+jit(f,'x',6),y=top+rw*(TH+GY)+jit(f,'y',6);
+  const isFav=f===D.fav;
+  return `<div style="position:absolute;left:${x}px;top:${y}px;width:${W}px;transform:rotate(${jit(f,'r',3.2)}deg);filter:drop-shadow(0 14px 22px rgba(0,0,0,.42))">
+   <div style="background:#fff;border-radius:${Math.round(W*.07)}px ${Math.round(W*.07)}px 0 0;padding:${P}px ${P}px ${P*.4}px"><img src="${src(f)}" style="width:${CW}px;height:${CH}px;border-radius:${Math.round(W*.03)}px"></div>
+   <div style="height:${PERF}px;position:relative;background:radial-gradient(circle at 0 50%,transparent ${NR}px,#fff ${NR+1}px) left/51% 100% no-repeat,radial-gradient(circle at 100% 50%,transparent ${NR}px,#fff ${NR+1}px) right/51% 100% no-repeat">
+    <div style="position:absolute;left:${NR+8}px;right:${NR+8}px;top:50%;border-top:2px dashed #E1E3E7"></div></div>
+   <div style="background:#fff;border-radius:0 0 ${Math.round(W*.07)}px ${Math.round(W*.07)}px;height:${BOT}px;padding:0 ${P+2}px;display:flex;flex-direction:column;justify-content:center;gap:${Math.round(W*.03)}px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><span class="num" style="font-size:${Math.round(W*.13)}px;font-weight:800;letter-spacing:-.5px">${f.md}</span><span class="num" style="font-size:${Math.round(W*.075)}px;color:var(--ink3);font-weight:600">No.${String(f.n).padStart(3,'0')}</span></div>
+    ${STAR(f.stars,Math.round(W*.085),'var(--acc)','rgba(22,24,29,.12)',Math.round(W*.012))}
+   </div>
+   ${isFav?`<div style="position:absolute;right:${-W*.12}px;top:${-W*.1}px;width:${W*.5}px;height:${W*.5}px;border-radius:50%;border:${Math.max(3,W*.016)}px solid var(--acc);color:var(--acc);display:flex;flex-direction:column;align-items:center;justify-content:center;transform:rotate(-16deg);background:rgba(255,255,255,.9);box-shadow:0 6px 14px rgba(0,0,0,.2)"><div style="font-size:${W*.11}px;font-weight:900;letter-spacing:2px">最爱</div></div>`:''}
+  </div>`};
+ return {H,html:`${stage(D.fav)}
+ <div style="position:absolute;left:0;right:0;top:76px;text-align:center;color:#fff">
+  <div class="num" style="font-size:22px;letter-spacing:8px;opacity:.72;font-weight:600">MARKED · ${D.ym}</div>
+  <div style="font-size:84px;font-weight:900;letter-spacing:4px;margin-top:14px;line-height:1.1">${D.label}的 <span class="num" style="color:var(--acc)">${n}</span> 张电影票</div>
+  <div style="font-size:24px;opacity:.75;margin-top:16px;letter-spacing:1px">${D.days} 个观影日 · 平均 ★${D.avg} · <span class="num">${D.serial}</span></div>
+ </div>
+ ${D.films.map(t).join('')}
+ ${WM()}`};
+}
+
+// ============ ③ 拍立得墙：浅色场景（清新），星级最高的 9 部贴上墙；多出来的写在便签上「还有 N 部没贴上墙」 ============
+function polaroids(D){
+ const pick=D.films.slice().sort((a,b)=>b.stars-a.stars||a.date.localeCompare(b.date)).slice(0,9).sort((a,b)=>a.date.localeCompare(b.date));
+ const n=pick.length,cols=n<=4?2:3,W=cols===2?380:262,PD=Math.round(W*.05),PW=W-2*PD,PH=Math.round(PW*1.05),CAP=Math.round(W*.25);
+ const PHH=PD+PH+CAP,rows=Math.ceil(n/cols),GX=cols===2?70:44,GY=cols===2?50:26,HEAD=262,FOOT=120;
+ const gridH=rows*PHH+(rows-1)*GY,H=1440,top=HEAD+Math.max(0,(H-HEAD-FOOT-gridH)/2);
+ const gridW=cols*W+(cols-1)*GX,left=(1080-gridW)/2;
+ const more=D.n-n;
+ const p=(f,i)=>{const c=i%cols,rw=Math.floor(i/cols);const off=(rows*cols>n&&rw===rows-1)?((cols-(n%cols))*(W+GX))/2:0;
+  const x=left+c*(W+GX)+off+jit(f,'x',10),y=top+rw*(PHH+GY)+jit(f,'y',8),isFav=f===D.fav;
+  return `<div style="position:absolute;left:${x}px;top:${y}px;width:${W}px;transform:rotate(${jit(f,'r',4.5)}deg);background:#FBFBF9;padding:${PD}px ${PD}px 0;box-shadow:0 18px 30px rgba(40,36,30,.22),0 2px 4px rgba(40,36,30,.08)">
+   <img src="${src(f)}" style="width:${PW}px;height:${PH}px;object-position:center 22%">
+   <div style="height:${CAP}px;display:flex;flex-direction:column;justify-content:center;gap:${W*.02}px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:${Math.round(W*.085)}px;font-weight:900;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:${PW*.68}px">${f.title}</span><span class="num" style="font-size:${Math.round(W*.06)}px;color:var(--ink2);font-weight:600">${f.md}</span></div>
+    ${STAR(f.stars,Math.round(W*.055),'var(--acc)','rgba(22,24,29,.12)',3)}
+   </div>
+   ${isFav?`<div style="position:absolute;left:50%;top:${-W*.04}px;width:${W*.09}px;height:${W*.09}px;margin-left:${-W*.045}px;border-radius:50%;background:var(--acc);box-shadow:0 4px 8px rgba(0,0,0,.3)"></div>
+    <div style="position:absolute;right:${-W*.08}px;top:${PH*.62}px;transform:rotate(8deg);background:var(--acc);color:#fff;font-size:${W*.075}px;font-weight:900;letter-spacing:2px;padding:${W*.02}px ${W*.045}px;box-shadow:0 6px 12px rgba(0,0,0,.2)">${D.mode==='year'?'今年最爱':'本月最爱'}</div>`
+    :`<div style="position:absolute;left:${W*.3+jit(f,'t',20)}px;top:${-W*.05}px;width:${W*.4}px;height:${W*.1}px;background:rgba(255,250,235,.7);transform:rotate(${jit(f,'tr',8)}deg);box-shadow:0 1px 2px rgba(0,0,0,.06)"></div>`}
+  </div>`};
+ return {H,html:`<div style="position:absolute;inset:0;background:linear-gradient(170deg,#FBF8F2 0%,#F3EEE5 60%,#EDE6DA 100%)"></div>
+ <div style="position:absolute;inset:0;background:radial-gradient(70% 50% at 50% 35%,rgba(255,255,255,.8),rgba(255,255,255,0))"></div>
+ <div style="position:absolute;left:84px;top:78px;color:var(--ink)">
+  <div class="num" style="font-size:22px;letter-spacing:8px;color:var(--ink2);font-weight:600">MARKED · ${D.ym}</div>
+  <div style="font-size:78px;font-weight:900;letter-spacing:3px;margin-top:10px;line-height:1.1">${D.label}<span style="color:var(--acc)">·</span>看了 <span class="num">${D.n}</span> 部</div>
+  <div style="font-size:24px;color:var(--ink2);margin-top:14px;letter-spacing:1px">${D.days} 个观影日 · 平均 ★${D.avg} · <span class="num">${D.serial}</span></div>
+ </div>
+ ${more>0?`<div style="position:absolute;right:62px;top:70px;width:190px;transform:rotate(6deg);background:#FFF2C6;padding:26px 20px 20px;box-shadow:0 14px 24px rgba(40,36,30,.2);text-align:center;color:#3A332A">
+  <div style="font-size:24px;line-height:1.5">还有 <b class="num" style="font-size:40px">${more}</b> 部<br>没贴上墙</div></div>`:''}
+ ${pick.map(p).join('')}
+ ${WM(true)}`};
+}
+
+// ============ ④ 月结单：暗场景顶光下一张长小票，逐行「日期 片名 星级」，红色「已结清」章 ============
+function receipt(D){
+ const ROW=44,rows=D.films.length;
+ const zig=(flip)=>{let p='';for(let x=0;x<=760;x+=22)p+=`${x},${flip?0:12} ${x+11},${flip?12:0} `;return `<svg width="760" height="12" style="display:block"><polygon points="0,${flip?12:0} ${p}760,${flip?12:0}" fill="#FAFAF7"/></svg>`};
+ const dash=`<div style="border-top:2px dashed #CFCFCF;margin:18px 0"></div>`;
+ const bars='31212312131123122131213213121312'.split('').map((w,k)=>`<i style="display:inline-block;width:${w*3}px;height:70px;background:#1B1B1B;margin-right:4px"></i>`).join('');
+ const bodyH=12+22+156+38+34+rows*ROW+38+3*42+38+60+38+130+28+12;
+ const H=Math.max(1440,bodyH+50+100);
+ const sum=(a,b)=>`<div style="display:flex;justify-content:space-between;font-size:26px;line-height:42px"><span>${a}</span><span>${b}</span></div>`;
+ return {H,html:`${stage(D.fav)}
+ <div style="position:absolute;left:50%;top:-200px;width:1100px;height:900px;margin-left:-550px;background:radial-gradient(closest-side,rgba(255,255,255,.22),rgba(255,255,255,0))"></div>
+ <div style="position:absolute;left:160px;width:760px;top:${50+Math.max(0,(H-150-bodyH)/2)}px;transform:rotate(-1.2deg);filter:drop-shadow(0 34px 50px rgba(0,0,0,.5))">
+  ${zig(true)}
+  <div style="background:#FAFAF7;padding:22px 50px 28px;font-family:var(--mono);color:#1B1B1B;position:relative">
+   <div class="num" style="text-align:center;font-size:30px;font-weight:800;letter-spacing:12px">MARKED</div>
+   <div style="text-align:center;font-family:var(--cn);font-size:64px;font-weight:900;letter-spacing:6px;margin-top:6px">${D.label}观影${D.mode==='year'?'':'月'}结单</div>
+   <div style="text-align:center;font-size:22px;color:#555;margin-top:8px;letter-spacing:1px">${D.range} · ${D.serial}</div>
+   ${dash}
+   <div style="display:flex;font-size:20px;color:#888;letter-spacing:2px"><span style="width:110px">日期</span><span style="flex:1">片名</span><span>评分</span></div>
+   ${D.films.map(f=>`<div style="display:flex;align-items:center;height:${ROW}px;font-size:26px"><span style="width:110px">${f.md}</span><span style="flex:1;font-family:var(--cn);font-size:28px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:16px">${f.title}</span><span style="letter-spacing:2px;font-size:24px">${'★'.repeat(f.stars)}<span style="color:#CFCFCF">${'★'.repeat(5-f.stars)}</span></span></div>`).join('')}
+   ${dash}
+   ${sum('观影日',`${D.days} 天`)}${sum('平均评分',`★ ${D.avg}`)}${sum(D.mode==='year'?'今年最爱':'本月最爱',`《${D.fav.title}》`)}
+   ${dash}
+   <div style="display:flex;justify-content:space-between;align-items:center;font-size:44px;font-weight:700"><span>TOTAL</span><span>${D.n} 部</span></div>
+   ${dash}
+   <div style="height:130px;position:relative">
+   <div style="padding-top:12px;white-space:nowrap;height:82px">${bars.split('</i>').slice(0,20).join('</i>')}</i></div>
+   <div style="font-size:18px;color:#888;letter-spacing:4px;margin-top:12px">THANK YOU FOR WATCHING</div>
+   <div style="position:absolute;right:4px;top:-12px;width:170px;height:170px;border-radius:50%;border:5px solid var(--acc);box-shadow:inset 0 0 0 7px #FAFAF7,inset 0 0 0 9px var(--acc);color:var(--acc);display:flex;flex-direction:column;align-items:center;justify-content:center;transform:rotate(-14deg);opacity:.88;font-family:var(--cn)">
+    <div style="font-size:38px;font-weight:900;letter-spacing:4px">已结清</div><div class="num" style="font-size:20px;font-weight:700;margin-top:2px">${D.ym}</div></div>
+   </div>
+  </div>
+  ${zig(false)}
+ </div>${WM()}`};
+}
+
+// ============ ⑤ 印样：摄影师的接触印样 —— 白相纸上几条黑胶片，帧边印日期，最爱那一帧用红色油性笔圈出来 ============
+function contact(D){
+ const n=D.n,k=n<=3?3:n<=8?4:5,FG=14,SX=60,SW=960,BAND=56;
+ const FW=Math.floor((SW-2*34-(k-1)*FG)/k),FH=Math.round(FW*1.36);
+ const SH=FH+2*BAND,strips=Math.ceil(n/k),GAP=20,HEAD=284,FOOT=100;
+ const gridH=strips*SH+(strips-1)*GAP,H=Math.max(1440,HEAD+gridH+FOOT),top=HEAD+Math.max(0,(H-HEAD-FOOT-gridH)/2);
+ const holes=(y)=>{let s='';for(let x=12;x<SW-20;x+=32)s+=`<i style="position:absolute;left:${x}px;top:${y}px;width:16px;height:14px;border-radius:3px;background:#F2F0EB"></i>`;return s};
+ const edge='#E8A13A';
+ let out='';
+ for(let s=0;s<strips;s++){
+  const y=top+s*(SH+GAP),fs=D.films.slice(s*k,s*k+k);
+  let frames='';
+  for(let j=0;j<k;j++){const f=fs[j];const x=34+j*(FW+FG);
+   frames+=`<div style="position:absolute;left:${x}px;top:${BAND}px;width:${FW}px;height:${FH}px;background:#2A2724;border-radius:3px;overflow:hidden">${f?`<img src="${src(f)}" style="width:100%;height:100%">`:''}</div>`;
+   if(f){frames+=`<div class="num" style="position:absolute;left:${x+2}px;top:${BAND-24}px;font-size:15px;font-weight:700;color:${edge};letter-spacing:1px">▸ ${f.n}</div>
+     <div class="num" style="position:absolute;left:${x}px;top:${BAND+FH+6}px;width:${FW}px;font-size:16px;font-weight:700;color:${edge};letter-spacing:1px;text-align:center">${f.md} ${'★'.repeat(f.stars)}</div>`;}
+   if(f&&f===D.fav){frames+=`<svg style="position:absolute;left:${x-30}px;top:${BAND-34}px;overflow:visible" width="${FW+60}" height="${FH+68}"><path d="M ${(FW+60)*.52} 6 C ${FW+70} 0, ${FW+64} ${FH+70}, ${(FW+60)*.5} ${FH+64} C -8 ${FH+58}, -6 8, ${(FW+60)*.58} 12" fill="none" stroke="#E5322B" stroke-width="7" stroke-linecap="round" opacity=".92"/></svg>
+     <div style="position:absolute;left:${x+FW-24}px;top:${-30}px;transform:rotate(-8deg);font-size:36px;text-shadow:0 0 6px #191715;font-weight:900;color:#E5322B;letter-spacing:2px;white-space:nowrap">${D.mode==='year'?'今年最爱!':'本月最爱!'}</div>`;}
+  }
+  out+=`<div style="position:absolute;left:${SX}px;top:${y}px;width:${SW}px;height:${SH}px;background:#191715;transform:rotate(${(s%2?.5:-.4)}deg);box-shadow:0 6px 16px rgba(0,0,0,.18)">
+   ${holes(8)}${holes(SH-22)}
+   ${frames}</div>`;
+ }
+ return {H,html:`<div style="position:absolute;inset:0;background:#F2F0EB"></div>
+ <div style="position:absolute;inset:0;background:radial-gradient(120% 80% at 50% 20%,rgba(255,255,255,.7),rgba(255,255,255,0) 70%)"></div>
+ <div style="position:absolute;left:72px;right:72px;top:76px;color:var(--ink)">
+  <div style="display:flex;justify-content:space-between;align-items:baseline"><div class="num" style="font-size:24px;letter-spacing:8px;font-weight:700">CONTACT SHEET</div><div class="num" style="font-size:22px;letter-spacing:3px;color:var(--ink2);font-weight:600">${D.serial}</div></div>
+  <div style="border-top:3px solid var(--ink);margin-top:14px"></div>
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:16px">
+   <div style="font-size:80px;font-weight:900;letter-spacing:4px;line-height:1.1">${D.label}<span style="color:var(--acc)">·</span><span class="num">${n}</span> 帧</div>
+   <div style="font-size:24px;color:var(--ink2);letter-spacing:1px;text-align:right;line-height:1.6;padding-bottom:8px">${D.days} 个观影日<br>平均 ★${D.avg}${D.mood?` · #${D.mood[0]}`:''}</div>
+  </div>
+ </div>
+ ${out}
+ ${WM(true)}`};
+}
+
+const LAYOUTS={magazine:['杂志 · 月刊',magazine],tickets:['票夹',tickets],polaroids:['拍立得墙',polaroids],receipt:['月结单',receipt],contact:['印样',contact]};
+const q=new URLSearchParams(location.search),wrap=document.getElementById('wrap');
+const one=q.get('one');
+if(one){const [l,s]=one.split('-');const r=LAYOUTS[l][1](derive(SETS[s]));document.body.style.cssText='margin:0;padding:0;background:#000';
+ wrap.innerHTML=`<div class="poster" style="transform:none;height:${r.H}px">${r.html}</div>`;document.title='H='+r.H;}
+else{const sets=(q.get('sets')||'month').split(',');
+ Object.entries(LAYOUTS).forEach(([id,[name,fn]])=>sets.forEach(s=>{const r=fn(derive(SETS[s]));const d=document.createElement('div');d.className='slot';
+  d.innerHTML=`<div class="frame" style="height:${r.H/2}px"><div class="poster" style="height:${r.H}px">${r.html}</div></div><div class="cap"><b>${name}</b> · ${s}</div>`;wrap.appendChild(d);}));}
+</script></body></html>

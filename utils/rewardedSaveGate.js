@@ -28,6 +28,14 @@ const { awaitOpenid } = require('./openidWaiter')
 
 const PLACEMENT = 'save_image_rewarded'
 
+// 海报版式（utils/poster/index.js 的 id，经典 = 'classic'）：页面在 refreshHint 前、切换版式时设 page._posterLayout，
+// 用来按版式比较保存率。只有设了的页面才带 layout 字段 —— 老页面上报内容和以前完全一样，
+// 不受「属性还没在上报管理里注册」影响。⚠ 带 layout 的页面上线前，属性要先在上报管理里建好
+function withLayout(page, data) {
+  if (page && typeof page._posterLayout === 'string' && page._posterLayout) data.layout = page._posterLayout
+  return data
+}
+
 function isGated(openid) {
   if (!openid) return false
   // 免广告白名单：加白用户保存海报不再需要看激励视频。
@@ -54,7 +62,7 @@ function isGated(openid) {
 function refreshHint(page) {
   if (!page || typeof page.setData !== 'function') return
   // 打开海报页即埋一次“查看海报”；与 poster_save 组成漏斗：poster_view − poster_save = 看了海报但没保存
-  track('poster_view', { route: (page && page.route) || '' })
+  track('poster_view', withLayout(page, { route: (page && page.route) || '' }))
   awaitOpenid(page, 1500).then(function (openid) {
     syncHint(page, openid)
     if (page && page.data && page.data.needRewardedAd) {
@@ -105,7 +113,7 @@ async function ensureGrant(page) {
     currentOpenid = openid
     const gated = isGated(openid)
     // 每次保存尝试都埋点：gated=1 表示本次需看广告，用于观察“每次看广告”改动对保存量的影响
-    track('poster_save', { route: (page && page.route) || '', gated: gated ? 1 : 0 })
+    track('poster_save', withLayout(page, { route: (page && page.route) || '', gated: gated ? 1 : 0 }))
     if (!gated) return true
 
     const watched = await rewardedAdManager.show(PLACEMENT, page)

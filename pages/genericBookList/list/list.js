@@ -5,7 +5,8 @@ var adConfig = require('../../../utils/adConfig');
 var { trackMark, trackShare } = require('../../../utils/track.js');
 var adManager = require('../../../utils/adManager');
 var userStore = require('../../../utils/userStore.js');
-var { getThemeConfig } = require('../../../utils/genericBookThemeConfig.js');
+var { THEME_CONFIG, getThemeConfig } = require('../../../utils/genericBookThemeConfig.js');
+var themeRegistryLoader = require('../../../utils/themeRegistryLoader.js');
 
 // 通用读书榜单页：走 enrichThemeBooks/generic_theme_books 流水线的新读书主题共用这一套页面，
 // 通过 ?theme=xxx 区分（结构镜像 pages/genericList/list/list.js 电影版；标记语义/BookMarks 写入
@@ -67,6 +68,16 @@ Page({
             return;
         }
         const theme = (options && options.theme) || '';
+        // 分享链接冷启动：本地没有这个云端主题时，先拉注册表再按它的标题和配色启动
+        if (themeRegistryLoader.needsFetch(theme, THEME_CONFIG)) {
+            this.setData({ theme, cfg: { ...getThemeConfig(theme), title: '', slogan: '' } });
+            themeRegistryLoader.refresh().then(() => this.bootTheme(options, theme));
+            return;
+        }
+        this.bootTheme(options, theme);
+    },
+
+    bootTheme(options, theme) {
         const cfg = getThemeConfig(theme);
         this._defaultSlogan = cfg.slogan;  // 自建清单清空说明语时退回主题 slogan
         const listId = (cfg.custom && options && options.listId) || '';
@@ -579,6 +590,18 @@ Page({
 
     onCloseMarkSheet() { this.setData({ markSheetVisible: false }); },
 
+    // 走云函数改 / 删一条 BookMarks，等结果，失败 reject
+    saveBookMark(bookId, status, openid, source) {
+        return wx.cloud.callFunction({
+            name: 'batchUpdateBookMarks',
+            data: { bookIds: [bookId], status, openid, source }
+        }).then(res => {
+            const r = (res && res.result) || {};
+            if (!r.success) throw new Error(r.error || '标记保存失败');
+            return r;
+        });
+    },
+
     // 统一标记入口：targetStatus 为 'read'|'wish'|''（''=没读过=取消标记）。乐观更新 + 写 BookMarks
     setMark(bookId, targetStatus) {
         const openid = this.getActiveOpenid();
@@ -616,7 +639,10 @@ Page({
             // 静默截断，给批量标过 100+ 条的用户造出过重复记录。只删一条的话旧记录留在库里，下次
             // 加载又被读回来 —— 表现就是「取消不掉、标记复活，状态还可能变回旧的」。删全部顺手把
             // 这些历史重复清干净，且不需要单独跑清理脚本。
-            const persist = db.collection('BookMarks').where({ bookId, openid }).remove();
+            // 云函数写的记录小程序端删不掉（见 utils/markSync.js），先删得动的，再让云函数按 source 收尾
+            const persist = db.collection('BookMarks').where({ bookId, openid }).remove()
+                .catch(() => {})
+                .then(() => this.saveBookMark(bookId, 'unread', openid, source));
             persist.then(() => { markTimeline.record(this, this.data.theme, 'unmark', [bookId]); }).catch(err => {
                 console.error('取消标记失败:', err);
                 this.restoreSingleMarkLocally(bookId, snapshot);
@@ -629,8 +655,9 @@ Page({
         this.applySingleMarkLocally(bookId, targetStatus, now, existingRecordId);
         this.showCustomToast(targetStatus === 'read' ? '✓ 已标记为已读' : '✓ 已标记为想读');
 
+        // 改已有标记走云函数：这条可能是云函数写的，小程序端改不动（见 utils/markSync.js）
         const persist = existingRecordId
-            ? db.collection('BookMarks').doc(existingRecordId).update({ data: { status: targetStatus, marked_at: now, source } })
+            ? this.saveBookMark(bookId, targetStatus, openid, source)
             : db.collection('BookMarks').add({ data: { bookId, openid, status: targetStatus, marked_at: now, source } });
 
         persist.then(res => {

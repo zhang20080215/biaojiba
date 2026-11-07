@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><title>海报调试页</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@600;700;900&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#DADDE2;font:13px/1.6 -apple-system,'PingFang SC',sans-serif;padding:24px;color:#333}
+.row{display:flex;flex-wrap:wrap;gap:24px}.cell{width:540px}
+canvas{width:540px;height:720px;display:block;box-shadow:0 18px 50px rgba(20,25,35,.22);border-radius:4px;background:#fff}
+.cap{margin-top:8px;color:#555}#log{white-space:pre-wrap;color:#a00;margin-top:12px}
+</style></head><body>
+<p>用小程序里的同一份 <code>utils/poster</code> 源码，在浏览器 canvas 上出图（宽 1080，缩到一半显示）。wx 只模拟了离屏 canvas；数字字体用本地 Inter 子集，和云存储上的是同一份文件。</p>
+<div id="log"></div>
+<script>
+// ---- 极简 CommonJS：同步拉源码，按相对路径解析 require ----
+const _mods = {};
+function _resolve(from, p) {
+  const parts = from.split('/'); parts.pop();
+  p.split('/').forEach(s => { if (s === '..') parts.pop(); else if (s !== '.') parts.push(s); });
+  let r = parts.join('/'); if (!/\.js$/.test(r)) r += '.js'; return r;
+}
+function requireAt(file) {
+  if (_mods[file]) return _mods[file].exports;
+  const x = new XMLHttpRequest(); x.open('GET', '/repo/' + file, false); x.send();
+  if (x.status !== 200) throw new Error('load fail ' + file);
+  const module = { exports: {} }; _mods[file] = module;
+  new Function('module', 'exports', 'require', x.responseText + '\n//# sourceURL=' + file)(module, module.exports, p => requireAt(_resolve(file, p)));
+  return module.exports;
+}
+// ---- 模拟 wx：离屏 canvas ----
+window.wx = { createOffscreenCanvas: ({ width, height }) => { const c = document.createElement('canvas'); c.width = width; c.height = height; c.createImage = () => new Image(); return c; } };
+
+const log = m => { document.getElementById('log').textContent += m + '\n'; };
+const loadImg = src => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = src; });
+
+async function main() {
+  const poster = requireAt('utils/poster/index.js');
+  const model = requireAt('utils/poster/model.js');
+  const tint = requireAt('utils/poster/tint.js');
+  // 数字字体：和云存储同一份文件
+  let fontsReady = false;
+  try {
+    for (const w of ['500', '700', '800']) {
+      const ff = new FontFace('PosterNum', `url(/repo/cloudfunctions/uploadStaticAssets/assets/poster_fonts/inter-${w}.woff2)`, { weight: w });
+      document.fonts.add(await ff.load());
+    }
+    fontsReady = true;
+  } catch (e) { log('字体加载失败：' + e.message); }
+  await document.fonts.load('900 40px "Noto Sans SC"');
+
+  const films = await (await fetch('films.json')).json();
+  const by = t => films.find(f => f.title === t);
+  if (new URLSearchParams(location.search).get('kind') === 'range') return mainRange({ poster, model, tint, films, by, fontsReady });
+  const entry = (f, date, ts, extra) => Object.assign({
+    date, ts, title: f.title, year: f.year, director: f.dir, genres: f.genres, poster: f ? 'covers/' + f.id + '.jpg' : '',
+    rating: 0, note: '', moodEmoji: '', moodLabel: '', platformRatings: []
+  }, extra || {});
+
+  const CASES = [
+    { cap: '完整：评分 + 三栏平台评分 + 短评 + 第 N 部', ordinal: 37,
+      e: entry(by('千与千寻'), '2026-10-18', 1, { rating: 5, note: '不要回头，一直往前走。', platformRatings: [{ label: '豆瓣', value: '9.4' }, { label: 'IMDb', value: '8.6' }, { label: '新鲜度', value: '96%' }] }) },
+    { cap: '长片名、没评分有心情、无短评、无平台评分、无序号', ordinal: null,
+      e: entry(by('牯岭街少年杀人事件'), '2026-09-02', 2, { moodEmoji: '😢', moodLabel: '泪目' }) },
+    { cap: '四栏平台评分 + 三行长短评（封面被压缩）', ordinal: 120,
+      e: entry(by('花样年华'), '2026-10-04', 3, { rating: 4, note: '那个时代已过去，属于那个时代的一切都不存在了。王家卫把一段没有说出口的感情拍成了一场漫长的雨，旗袍一件件换，人一次次错过，最后只剩吴哥窟墙上的一个洞。', platformRatings: [{ label: '豆瓣', value: '8.8' }, { label: 'IMDb', value: '8.1' }, { label: '新鲜度', value: '92%' }, { label: '爆米花', value: '93%' }] }) },
+    { cap: '浅色封面 + 心情「治愈」 + 中等长度短评', ordinal: 24,
+      e: entry(by('龙猫'), '2026-09-27', 5, { rating: 5, moodEmoji: '🥰', moodLabel: '治愈', note: '小时候相信的东西，长大了也想继续相信。', platformRatings: [{ label: '豆瓣', value: '9.2' }, { label: 'IMDb', value: '8.1' }] }) },
+    { cap: '没有封面（占位）', ordinal: 5,
+      e: Object.assign(entry({ title: '一部很冷门的片', year: '1987', dir: '某导演', genres: ['剧情'] }, '2026-08-11', 4, { rating: 3 }), { poster: '' }) }
+  ];
+
+  // ?layouts=ticket,polaroid：只画这几个版式（默认全部单部版式）；?full=N：只画第 N 个用例，按原尺寸 1080 显示
+  const q = new URLSearchParams(location.search);
+  const full = q.get('full');
+  const ids = (q.get('layouts') || poster.available('single').filter(id => id !== 'classic').join(',')).split(',');
+  if (full != null) { document.querySelector('style').textContent += '.cell{width:1080px}canvas{width:1080px;height:auto}'; }
+  // ?stage=light：浅色场景底；?thumb=1：按小红书信息流缩略图（约 1/4 宽）显示，验收小字还读不读得出
+  const stage = q.get('stage') === 'light' ? 'light' : 'dark';
+  if (q.get('thumb')) document.querySelector('style').textContent += '.cell{width:270px}canvas{width:270px;height:360px}';
+  const logEl = document.getElementById('log');
+  for (const id of ids) {
+    const h = document.createElement('h3'); h.textContent = poster.NAMES[id] || id; document.body.insertBefore(h, logEl);
+    const row = document.createElement('div'); row.className = 'row'; document.body.insertBefore(row, logEl);
+    for (const c of (full != null ? [CASES[+full]] : CASES)) {
+      if (poster.available('single', model.fromDailySingle(c.e)).indexOf(id) < 0) continue;   // 金句：没短评不出
+      const cell = document.createElement('div'); cell.className = 'cell';
+      const canvas = document.createElement('canvas');
+      cell.appendChild(canvas);
+      const cap = document.createElement('div'); cap.className = 'cap'; cap.textContent = c.cap; cell.appendChild(cap);
+      row.appendChild(cell);
+      try {
+        const m = model.fromDailySingle(c.e, { ordinal: c.ordinal });
+        const layout = poster.get(id);
+        const size = layout.measure(m);
+        canvas.width = size.width; canvas.height = size.height;
+        const node = c.e.poster ? await loadImg(c.e.poster) : null;
+        const covers = { [m.film.key]: node };
+        const tints = { [m.film.key]: await tint.prepareTint(node) };
+        const env = { s: 1, fontsReady, tints, stage };
+        if (layout.prepare) Object.assign(env, await layout.prepare(m, covers));
+        const t0 = performance.now();
+        layout.draw(canvas.getContext('2d'), m, covers, env);
+        cap.textContent += `（绘制 ${Math.round(performance.now() - t0)}ms）`;
+      } catch (e) { log(id + ' / ' + c.cap + '：' + (e.stack || e)); }
+    }
+  }
+}
+// ---- 范围海报：?kind=range&one=tickets-month（按原尺寸出一张，页面标题 H=高度）/ ?kind=range&set=month（全部版式）；&stage=light ----
+async function mainRange({ poster, model, tint, films, by, fontsReady }) {
+  const q = new URLSearchParams(location.search);
+  const mk = (rows, start) => rows.map(([t, date, rating, mood], i) => {
+    const f = by(t);
+    return { doubanId: f.id, date, ts: start + i, title: f.title, year: f.year, director: f.dir, genres: f.genres, poster: 'covers/' + f.id + '.jpg', rating, moodLabel: mood || '' };
+  });
+  const MONTH = [['千与千寻','2026-10-02',5,'治愈'],['花样年华','2026-10-04',4,'心动'],['重庆森林','2026-10-05',4,'怀旧'],['寄生虫','2026-10-09',5,'震撼'],['黑客帝国','2026-10-11',4,'过瘾'],['低俗小说','2026-10-11',3,''],['一一','2026-10-15',5,'泪目'],['龙猫','2026-10-18',5,'治愈'],['闪灵','2026-10-22',3,'惊悚'],['穆赫兰道','2026-10-25',2,'烧脑'],['钢的琴','2026-10-27',4,''],['逃出绝命镇','2026-10-31',3,'惊悚']];
+  const FEW = [['龙猫','2026-09-06',5,'治愈'],['牯岭街少年杀人事件','2026-09-13',4,'深思'],['东京物语','2026-09-27',5,'泪目']];
+  const st = [4,5,3,4,5,4,3,4,2,5,4,3,5,4,4,3,5,4,3,4,5,2,4,3,4,5,3,4,4,3,5,4,3,4,4];
+  let d = Date.UTC(2026, 7, 3);
+  const YEAR = films.map((f, i) => { const row = [f.title, new Date(d).toISOString().slice(0, 10), st[i % st.length], '']; d += 86400000 * (i % 3 === 0 ? 2 : 3); return row; });
+  const SETS = {
+    month: { list: mk(MONTH, 100), mode: 'month', month: 10 },
+    few: { list: mk(FEW, 100), mode: 'month', month: 9 },
+    year: { list: mk(YEAR, 100), mode: 'year' },
+    custom: { list: mk(MONTH, 100), mode: 'month', month: 10, customTitle: '十月份和朋友们一起看的电影' },
+    m30: { list: mk(YEAR.slice(0, 30), 100), mode: 'month', month: 6 },
+    y120: { list: mk(YEAR.concat(YEAR, YEAR, YEAR).slice(0, 120), 100), mode: 'year' },
+    long: { list: mk(FEW.concat([['燃烧女子的肖像','2026-09-28',0,''],['2001太空漫游','2026-09-29',0,'']]), 100).map((e, i) => i === 2 ? Object.assign(e, { title: '这是一部片名特别特别特别特别特别特别长的电影' }) : e), mode: 'month', month: 9, customTitle: '这是一个足足有二十个字的自定义海报标题呀' }
+  };
+  const render = async (id, name, canvas, stageId) => {
+    const S = SETS[name];
+    const m = model.fromDailyRange(S.list, { mode: S.mode, year: 2026, month: S.month, customTitle: S.customTitle, dedupe: l => l });
+    const layout = poster.get(id);
+    const size = layout.measure(m);
+    canvas.width = size.width; canvas.height = size.height;
+    // 网络字体按用到的字分片加载：先把这张图的字都拉下来，否则 canvas 画的时候还是回退字体
+    const words = '标记吧小程序观影小票日期片名评分下次电影见观影日平均评分部天十九月' + S.list.map(e => e.title).join('') + '#0123456789.—~TOTAL★';
+    for (const w of ['600', '700', '800', '900']) await document.fonts.load(`${w} 40px "Noto Serif SC"`, words);
+    const covers = {};
+    for (const f of layout.coverFilms(m)) covers[f.key] = await loadImg(f.poster);
+    layout.draw(canvas.getContext('2d'), m, covers, { s: 1, fontsReady, palette: stageId || q.get('palette'), inked: !!q.get('ink') });
+    return size;
+  };
+  // ?classic=whole-month：经典版式（排法-数据集），&theme= 配色，&book=1 用读书词表
+  const classic = q.get('classic');
+  if (classic) {
+    const [layout, name] = classic.split('-');
+    const S = SETS[name];
+    const Drawer = requireAt(q.get('book') ? 'utils/bookPosterDrawer.js' : 'utils/moviePosterDrawer.js');
+    const movies = S.list.map(e => ({
+      key: e.date + '-' + e.ts, date: e.date, poster: e.poster, title: e.title, year: e.year,
+      byline: e.director ? '导演 ' + e.director : '', tags: e.genres || [],
+      dateLabel: Number(e.date.slice(5, 7)) + '月' + Number(e.date.slice(8, 10)) + '日', watchDateText: '',
+      rating: e.rating, moodEmoji: '', moodLabel: e.moodLabel || '', note: '', platformRatings: []
+    }));
+    const size = layout === 'whole' ? Drawer.computeSize(movies.length) : Drawer.computeLayoutSize(layout, movies);
+    document.body.innerHTML = '<canvas id="c" style="width:1080px;height:auto;box-shadow:none;border-radius:0"></canvas>';
+    document.body.style.cssText = 'margin:0;padding:0;background:#000';
+    const canvas = document.getElementById('c');
+    canvas.width = size.width; canvas.height = size.height;
+    const words = '观影阅读总结部日平均分月标记吧小程序使用生成' + movies.map(m => m.title).join('') + (S.customTitle || '');
+    for (const w of ['500', '600', '700', '900']) { await document.fonts.load(w + ' 40px "Noto Sans SC"', words); await document.fonts.load(w + ' 40px "Noto Serif SC"', words); }
+    const covers = {};
+    for (const m of movies) covers[m.key] = await loadImg(m.poster);
+    const data = { movies, customTitle: S.customTitle || '', periodLead: S.mode === 'year' ? '2026年度' : '2026年' + S.month + '月', totalCount: movies.length, fullStats: Drawer.summarize(movies), ymDot: S.mode === 'year' ? '2026' : '2026.' + String(S.month).padStart(2, '0') };
+    new Drawer(canvas, canvas.getContext('2d'), size.width, size.height).draw(data, covers, q.get('theme') || undefined, layout);
+    document.title = 'H=' + Math.round(size.height * 1080 / size.width);
+    return;
+  }
+  const one = q.get('one');
+  if (one) {
+    const [id, name] = one.split('-');
+    document.body.innerHTML = '<canvas id="c" style="width:1080px;height:auto;box-shadow:none;border-radius:0"></canvas>';
+    document.body.style.cssText = 'margin:0;padding:0;background:#000';
+    const size = await render(id, name, document.getElementById('c'));
+    document.title = 'H=' + size.height;
+    return;
+  }
+  // ?palettes=1：小票的全部配色一起出
+  if (q.get('palettes')) {
+    const row = document.createElement('div'); row.className = 'row'; document.body.appendChild(row);
+    for (const p of Object.keys(poster.get('statement').PALETTE)) {
+      const cell = document.createElement('div'); cell.className = 'cell';
+      const c = document.createElement('canvas'); c.style.height = 'auto'; cell.appendChild(c);
+      const cap = document.createElement('div'); cap.className = 'cap'; cap.textContent = p; cell.appendChild(cap);
+      row.appendChild(cell);
+      await render('statement', 'month', c, p);
+    }
+    return;
+  }
+  const name = q.get('set') || 'month';
+  const row = document.createElement('div'); row.className = 'row'; document.body.appendChild(row);
+  for (const id of poster.available('range').filter(i => i !== 'classic')) {
+    const cell = document.createElement('div'); cell.className = 'cell';
+    const c = document.createElement('canvas'); c.style.height = 'auto'; cell.appendChild(c); row.appendChild(cell);
+    await render(id, name, c);
+  }
+}
+main().catch(e => log(e.stack || e));
+</script></body></html>

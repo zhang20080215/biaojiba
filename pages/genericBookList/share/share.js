@@ -7,7 +7,8 @@ const DataLoader = require('../../../utils/dataLoader.js');
 var adConfig = require('../../../utils/adConfig');
 const rewardedSaveGate = require('../../../utils/rewardedSaveGate.js');
 const userStore = require('../../../utils/userStore.js');
-var { getThemeConfig } = require('../../../utils/genericBookThemeConfig.js');
+var { THEME_CONFIG, getThemeConfig } = require('../../../utils/genericBookThemeConfig.js');
+var themeRegistryLoader = require('../../../utils/themeRegistryLoader.js');
 var { simplifyTitle } = require('../../../utils/bookFormat.js');
 // 查询参数（排序方向 / 自建书单 listId）与列表页同一份：DataLoader.queryOptions
 
@@ -79,6 +80,7 @@ Page({
     async onLoad(options) {
         try {
             const theme = (options && options.theme) || '';
+            await themeRegistryLoader.ensureTheme(theme, THEME_CONFIG);
             const cfg = getThemeConfig(theme);
             const listId = (cfg.custom && options.listId) || '';
             if (cfg.custom && options.title) cfg.title = decodeURIComponent(options.title);
